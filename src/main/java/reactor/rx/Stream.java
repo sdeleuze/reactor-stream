@@ -1696,10 +1696,14 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
-	 * Return a {@code Mono<Void>} that completes when this {@link Mono} completes.
+	 * Return a {@code Stream<V>} that completes when this {@link Mono} completes.
+	 *
+	 * @param sourceSupplier
+	 * @param <V>
 	 *
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public final <V> Stream<V> after(Supplier<? extends Publisher<V>> sourceSupplier) {
 		return new StreamBarrier<>(new FluxFlatMap<>(
 				new FluxMapSignal<>(this, null, null, sourceSupplier),
