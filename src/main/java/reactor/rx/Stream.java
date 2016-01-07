@@ -1685,6 +1685,19 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
+	 *
+	 * {@code stream.to(Mono::from).subscribe(Subscribers.unbounded()) }
+	 *
+	 * @param transfomer
+	 * @param <P>
+	 *
+	 * @return
+	 */
+	public final <V, P extends Publisher<V>> P as(Function<? super Stream<O>, P> transfomer) {
+		return transfomer.apply(this);
+	}
+
+	/**
 	 * Ignore the sequence and return onComplete
 	 *
 	 * @return {@literal new Stream}
@@ -3949,7 +3962,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 
 	/**
 	 *
-	 * {@code flux.to(Processors.queue()).subscribe(Subscribers.unbounded()) }
+	 * {@code stream.to(Processors.queue()).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param subscriber
 	 * @param <E>
