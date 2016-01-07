@@ -2891,6 +2891,18 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
+	 * Attach a No-Op Stream that only serves the purpose of dropping incoming values if not enough demand is signaled
+	 * downstream. A dropping stream will prevent underlying dispatcher to be saturated (and sometimes blocking).
+	 *
+	 * @return a dropping stream
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> onBackpressureDrop(Consumer<? super O> onDropped) {
+		return new StreamDrop<>(this, onDropped);
+	}
+
+	/**
 	 * @return
 	 *
 	 * @since 2.5
