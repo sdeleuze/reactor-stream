@@ -18,6 +18,7 @@ package reactor.rx;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
@@ -63,7 +64,10 @@ import reactor.rx.stream.StreamDefer;
 import reactor.rx.stream.StreamFuture;
 import reactor.rx.stream.StreamIterable;
 import reactor.rx.stream.StreamJust;
+import reactor.rx.stream.StreamKv;
 import reactor.rx.stream.StreamRange;
+import reactor.rx.stream.StreamReduceByKey;
+import reactor.rx.stream.StreamScanByKey;
 import reactor.rx.stream.StreamSwitchMap;
 import reactor.rx.stream.StreamTimerPeriod;
 import reactor.rx.stream.StreamTimerSingle;
@@ -101,487 +105,6 @@ import reactor.rx.stream.StreamWithLatestFrom;
  * @author Jon Brisbin
  */
 public class Streams {
-
-	/**
-	 * @see Flux#yield(Consumer)
-	 * @return a new {@link Stream}
-	 */
-	public static <T> Stream<T> yield(Consumer<? super ReactiveSession<T>> sessionConsumer) {
-		return from(Flux.yield(sessionConsumer));
-	}
-
-	/**
-	 * Create a {@link Stream} reacting on requests with the passed {@link BiConsumer}
-	 *
-	 * @param requestConsumer A {@link BiConsumer} with left argument request and right argument target subscriber
-	 * @param <T>             The type of the data sequence
-	 * @return a Stream
-	 * @since 2.0.2
-	 */
-	public static <T> Stream<T> createWith(BiConsumer<Long, SubscriberWithContext<T, Void>> requestConsumer) {
-		if (requestConsumer == null) throw new IllegalArgumentException("Supplier must be provided");
-		return createWith(requestConsumer, null, null);
-	}
-
-	/**
-	 * Create a {@link Stream} reacting on requests with the passed {@link BiConsumer}
-	 * The argument {@code contextFactory} is executed once by new subscriber to generate a context shared by every
-	 * request calls.
-	 *
-	 * @param requestConsumer A {@link BiConsumer} with left argument request and right argument target subscriber
-	 * @param contextFactory  A {@link Function} called for every new subscriber returning an immutable context (IO
-	 *                        connection...)
-	 * @param <T>             The type of the data sequence
-	 * @param <C>             The type of contextual information to be read by the requestConsumer
-	 * @return a Stream
-	 * @since 2.0.2
-	 */
-	public static <T, C> Stream<T> createWith(BiConsumer<Long, SubscriberWithContext<T, C>> requestConsumer,
-	                                          Function<Subscriber<? super T>, C> contextFactory) {
-		return createWith(requestConsumer, contextFactory, null);
-	}
-
-	/**
-	 * Create a {@link Stream} reacting on requests with the passed {@link BiConsumer}.
-	 * The argument {@code contextFactory} is executed once by new subscriber to generate a context shared by every
-	 * request calls.
-	 * The argument {@code shutdownConsumer} is executed once by subscriber termination event (cancel, onComplete,
-	 * onError).
-	 *
-	 * @param requestConsumer  A {@link BiConsumer} with left argument request and right argument target subscriber
-	 * @param contextFactory   A {@link Function} called once for every new subscriber returning an immutable context
-	 *                         (IO connection...)
-	 * @param shutdownConsumer A {@link Consumer} called once everytime a subscriber terminates: cancel, onComplete(),
-	 *                         onError()
-	 * @param <T>              The type of the data sequence
-	 * @param <C>              The type of contextual information to be read by the requestConsumer
-	 * @return a fresh Reactive Streams publisher ready to be subscribed
-	 * @since 2.0.2
-	 */
-	public static <T, C> Stream<T> createWith(BiConsumer<Long, SubscriberWithContext<T, C>> requestConsumer,
-	                                          Function<Subscriber<? super T>, C> contextFactory,
-	                                          Consumer<C> shutdownConsumer) {
-		return Streams.from(Flux.generate(requestConsumer, contextFactory, shutdownConsumer));
-	}
-
-	/**
-	 * @see Flux#create(Consumer)
-	 */
-	public static <T> Stream<T> create(Consumer<SubscriberWithContext<T, Void>> request) {
-		return from(Flux.create(request));
-	}
-
-	/**
-	 * @see Flux#create(Consumer, Function)
-	 */
-	public static <T, C> Stream<T> create(Consumer<SubscriberWithContext<T, C>> request,
-			Function<Subscriber<? super T>, C> onSubscribe) {
-		return from(Flux.create(request, onSubscribe));
-	}
-
-	/**
-	 * @see Flux#create(Consumer, Function, Consumer)
-	 */
-	public static <T, C> Stream<T> create(Consumer<SubscriberWithContext<T, C>> request,
-			Function<Subscriber<? super T>, C> onSubscribe,
-			Consumer<C> onTerminate) {
-		return from(Flux.create(request, onSubscribe, onTerminate));
-	}
-
-	/**
-	 * A simple decoration of the given {@link Publisher} to expose {@link Stream} API and proxy any subscribe call to
-	 * the publisher.
-	 * The Publisher has to first call onSubscribe and receive a subscription request callback before any onNext
-	 * call or
-	 * will risk loosing events.
-	 *
-	 * @param publisher the publisher to decorate the Stream subscriber
-	 * @param <T>       the type of values passing through the {@literal Stream}
-	 * @return a new {@link Stream}
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> Stream<T> from(final Publisher<T> publisher) {
-		if (Stream.class.isAssignableFrom(publisher.getClass())) {
-			return (Stream<T>) publisher;
-		}
-
-		if (Supplier.class.isAssignableFrom(publisher.getClass())) {
-			T t = ((Supplier<T>)publisher).get();
-			if(t != null){
-				return just(t);
-			}
-		}
-		return new StreamBarrier.Identity<>(publisher);
-	}
-
-	/**
-	 * A simple decoration of the given {@link Processor} to expose {@link Stream} API and proxy any subscribe call to
-	 * the Processor.
-	 * The Processor has to first call onSubscribe and receive a subscription request callback before any onNext
-	 * call or
-	 * will risk loosing events.
-	 *
-	 * @param processor the processor to decorate with the Stream API
-	 * @param <I>       the type of values observed by the receiving subscriber
-	 * @param <O>       the type of values passing through the sending {@literal Stream}
-	 * @return a new {@link Stream}
-	 */
-	@SuppressWarnings("unchecked")
-	public static <I, O> StreamProcessor<I, O> from(final Processor<I, O> processor) {
-		if (StreamProcessor.class.isAssignableFrom(processor.getClass())) {
-			return (StreamProcessor<I, O>) processor;
-		}
-		return StreamProcessor.from(processor);
-	}
-
-	/**
-	 *
-	 * @param publisher
-	 * @param operator
-	 * @param <I>
-	 * @param <O>
-	 * @return
-	 */
-	public static <I, O> Stream<O> lift(final Publisher<I> publisher,
-			Function<Subscriber<? super O>, Subscriber<? super I>> operator) {
-		return new StreamBarrier.Operator<>(publisher, operator);
-	}
-
-	/**
-	 * Supply a {@link Publisher} everytime subscribe is called on the returned stream. The passed {@link reactor.fn
-	 * .Supplier}
-	 * will be invoked and it's up to the developer to choose to return a new instance of a {@link Publisher} or reuse
-	 * one,
-	 * effecitvely behaving like {@link Streams#from(Publisher)}.
-	 *
-	 * @param supplier the publisher factory to call on subscribe
-	 * @param <T>      the type of values passing through the {@literal Stream}
-	 * @return a new {@link Stream}
-	 */
-	public static <T> Stream<T> defer(Supplier<? extends Publisher<T>> supplier) {
-		return new StreamDefer<>(supplier);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit a complete signal to any new subscriber.
-	 *
-	 * @return a new {@link Stream}
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> Stream<T> empty() {
-		return (Stream<T>) StreamJust.EMPTY;
-	}
-
-	/**
-	 * Build a {@literal Stream} that will never emit anything.
-	 *
-	 * @return a new {@link Stream}
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> Stream<T> never() {
-		return (Stream<T>) NEVER;
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit an error signal to any new subscriber.
-	 *
-	 * @return a new {@link Stream}
-	 */
-	public static <O, T extends Throwable> Stream<O> fail(T throwable) {
-		return from(Mono.<O>error(throwable));
-	}
-
-	/**
-	 * Build a {@literal Stream} whom data is sourced by each element of the passed iterable on subscription request.
-	 * <p>
-	 * It will use the passed dispatcher to emit signals.
-	 *
-	 * @param values The values to {@code onNext()}
-	 * @param <T>    type of the values
-	 * @return a {@link Stream} based on the given values
-	 */
-	public static <T> Stream<T> fromIterable(Iterable<? extends T> values) {
-		return new StreamIterable<>(values);
-	}
-
-	/**
-	 * Build a {@literal Stream} whom data is sourced by each element of the passed iterator on subscription request.
-	 * <p>
-	 * It will use the passed dispatcher to emit signals.
-	 *
-	 * @param values The values to {@code onNext()}
-	 * @param <T>    type of the values
-	 * @return a {@link Stream} based on the given values
-	 */
-	public static <T> Stream<T> fromIterator(Iterator<? extends T> values) {
-		return from(Flux.fromIterator(values));
-	}
-
-	/**
-	 * Build a {@literal Stream} whom data is sourced by each element of the passed array on subscription request.
-	 * <p>
-	 * It will use the passed dispatcher to emit signals.
-	 *
-	 * @param values The values to {@code onNext()}
-	 * @param <T>    type of the values
-	 * @return a {@link Stream} based on the given values
-	 */
-	public static <T> Stream<T> fromArray(T[] values) {
-		return from(Flux.fromArray(values));
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit the result of the future and then complete.
-	 * The future will be polled for an unbounded amount of time.
-	 *
-	 * @param future the future to poll value from
-	 * @return a new {@link Stream}
-	 */
-	public static <T> Stream<T> fromFuture(Future<? extends T> future) {
-		return StreamFuture.create(future);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit the result of the future and then complete.
-	 * The future will be polled for an unbounded amount of time.
-	 *
-	 * @param future the future to poll value from
-	 * @return a new {@link Stream}
-	 */
-	public static <T> Stream<T> fromFuture(Future<? extends T> future, long time, TimeUnit unit) {
-		return StreamFuture.create(future, time, unit);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit a sequence of int within the specified range and then
-	 * complete.
-	 *
-	 * @param start the starting value to be emitted
-	 * @param count   the number ot times to emit an increment including the first value
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Integer> range(int start, int count) {
-		return new StreamRange(start, count);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> timer(long delay) {
-		return timer(Timers.globalOrNew(), delay, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param timer the timer to run on
-	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> timer(Timer timer, long delay) {
-		return timer(timer, delay, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
-	 * @param unit  the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> timer(long delay, TimeUnit unit) {
-		return timer(Timers.globalOrNew(), delay, unit);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param timer the timer to run on
-	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
-	 * @param unit  the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> timer(Timer timer, long delay, TimeUnit unit) {
-		return new StreamTimerSingle(delay, unit, timer);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after on each period from the subscribe
-	 * call.
-	 * It will never complete until cancelled.
-	 *
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> period(long period) {
-		return period(Timers.globalOrNew(), -1l, period, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after on each period from the subscribe
-	 * call.
-	 * It will never complete until cancelled.
-	 *
-	 * @param timer  the timer to run on
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> period(Timer timer, long period) {
-		return period(timer, -1l, period, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param delay  the timespan in SECONDS to wait before emitting 0l
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> period(long delay, long period) {
-		return period(Timers.globalOrNew(), delay, period, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param timer  the timer to run on
-	 * @param delay  the timespan in SECONDS to wait before emitting 0l
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> period(Timer timer, long delay, long period) {
-		return period(timer, delay, period, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> period(long period, TimeUnit unit) {
-		return period(Timers.globalOrNew(), -1l, period, unit);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param timer  the timer to run on
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> period(Timer timer, long period, TimeUnit unit) {
-		return period(timer, -1l, period, unit);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param delay  the timespan in [unit] to wait before emitting 0l
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> period(long delay, long period, TimeUnit unit) {
-		return period(Timers.globalOrNew(), delay, period, unit);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param timer  the timer to run on
-	 * @param delay  the timespan in [unit] to wait before emitting 0l
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> period(Timer timer, long delay, long period, TimeUnit unit) {
-		return new StreamTimerPeriod(TimeUnit.MILLISECONDS.convert(delay, unit), period, unit, timer);
-	}
-
-	/**
-	 * Build a {@literal Stream} whom data is sourced by the passed element on subscription
-	 * request. After all data is being dispatched, a complete signal will be emitted.
-	 * <p>
-	 *
-	 * @param value1 The only value to {@code onNext()}
-	 * @param <T>    type of the values
-	 * @return a {@link Stream} based on the given values
-	 */
-	public static <T> Stream<T> just(T value1) {
-		if(value1 == null){
-			throw new Exceptions.Spec213_ArgumentIsNull();
-		}
-
-		return new StreamJust<T>(value1);
-	}
-
-	/**
-	 * Build a {@literal Stream} whom data is sourced by each element of the passed iterable on subscription
-	 * request.
-	 * <p>
-	 *
-	 * @param values The values to {@code onNext()}
-	 * @param <T>    type of the values
-	 * @return a {@link Stream} based on the given values
-	 */
-	@SafeVarargs
-	@SuppressWarnings({"unchecked", "varargs"})
-	public static <T> Stream<T> just(T... values) {
-		return from(Flux.fromArray(Objects.requireNonNull(values)));
-	}
-
-
-	/**
-	 * @see Flux#convert(Object)
-	 * @since 2.5
-	 */
-	public static <T> Stream<T> convert(Object source) {
-		return from(Flux.<T>convert(source));
-	}
-
-	/**
-	 * Build a Synchronous {@literal Action} whose data are emitted by the most recent {@link Subscriber#onNext(Object)}
-	 * signaled publisher.
-	 * The stream will complete once both the publishers source and the last switched to publisher have completed.
-	 *
-	 * @param <T> type of the value
-	 * @return a {@link StreamProcessor} accepting publishers and producing inner data T
-	 * @since 2.0
-	 */
-	public static <T> StreamProcessor<Publisher<? extends T>, T> switchOnNext() {
-		Processor<Publisher<? extends T>, Publisher<? extends T>> emitter = Processors.replay();
-		StreamProcessor<Publisher<? extends T>, T> p = StreamProcessor.from(emitter, switchOnNext(emitter));
-		p.onSubscribe(EmptySubscription.INSTANCE);
-		return p;
-	}
-
-	/**
-	 * Build a Synchronous {@literal Stream} whose data are emitted by the most recent passed publisher.
-	 * The stream will complete once both the publishers source and the last switched to publisher have completed.
-	 *
-	 * @param mergedPublishers The publisher of upstream {@link Publisher} to subscribe to.
-	 * @param <T>              type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> Stream<T> switchOnNext(
-	  Publisher<Publisher<? extends T>> mergedPublishers) {
-		return new StreamSwitchMap<>(mergedPublishers, IDENTITY_FUNCTION, XS_QUEUE_SUPPLIER, ReactiveState.XS_BUFFER_SIZE);
-	}
-
 	/**
 	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
 
@@ -612,95 +135,61 @@ public class Streams {
 	}
 
 	/**
-	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
-	 * Each source publisher will be consumed until complete in sequence, with the same order than they have been
-	 * passed
-	 * to.
+	 * Wait 30 Seconds until a terminal signal from the passed publisher has been emitted.
+	 * If the terminal signal is an error, it will propagate to the caller.
+	 * Effectively this is making sure a stream has completed before the return of this call.
+	 * It is usually used in controlled environment such as tests.
 	 *
-	 * @param mergedPublishers The list of upstream {@link Publisher} to subscribe to.
-	 * @param <T>              type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0
+	 * @param publisher the publisher to listen for terminal signals
 	 */
-	@SuppressWarnings("unchecked")
-	public static <T> Stream<T> concat(Iterable<? extends Publisher<? extends T>> mergedPublishers) {
-		return new StreamConcatIterable<>(mergedPublishers);
+	public static void await(Publisher<?> publisher) throws InterruptedException {
+		await(publisher, 30000, TimeUnit.MILLISECONDS);
 	}
 
 	/**
-	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
-	 * Each source publisher will be consumed until complete in sequence, with the same order than they have been
-	 * passed
-	 * to.
+	 * Wait {code timeout} in {@code unit} until a terminal signal from the passed publisher has been emitted.
+	 * If the terminal signal is an error, it will propagate to the caller.
+	 * Effectively this is making sure a stream has completed before the return of this call.
+	 * It is usually used in controlled environment such as tests.
 	 *
-	 * @param concatdPublishers The publisher of upstream {@link Publisher} to subscribe to.
-	 * @param <T>               type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0
+	 * @param publisher the publisher to listen for terminal signals
+	 * @param timeout   the maximum wait time in unit
+	 * @param unit      the TimeUnit to use for the timeout
 	 */
-	public static <T> Stream<T> concat(Publisher<? extends Publisher<? extends T>> concatdPublishers) {
-		return from(Flux.concat(concatdPublishers));
+	public static void await(Publisher<?> publisher, long timeout, TimeUnit unit) throws InterruptedException {
+		final AtomicReference<Throwable> exception = new AtomicReference<>();
+
+		final CountDownLatch latch = new CountDownLatch(1);
+		publisher.subscribe(new BaseSubscriber<Object>() {
+			Subscription s;
+
+			@Override
+			public void onComplete() {
+				s = null;
+				latch.countDown();
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				s = null;
+				exception.set(throwable);
+				latch.countDown();
+			}
+
+			@Override
+			public void onSubscribe(Subscription subscription) {
+				s = subscription;
+				subscription.request(Long.MAX_VALUE);
+			}
+		});
+
+		latch.await(timeout, unit);
+		if (exception.get() != null) {
+			InterruptedException ie = new InterruptedException();
+			Exceptions.addCause(ie, exception.get());
+			throw ie;
+		}
 	}
-
-	/**
-	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
-	 * Each source publisher will be consumed until complete in sequence, with the same order than they have been
-	 * passed
-	 * to.
-	 *
-	 * @param sources The upstream {@link Publisher} to subscribe to.
-	 * @param <T>     type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0, 2.5
-	 */
-	@SuppressWarnings("varargs")
-	@SafeVarargs
-	public static <T> Stream<T> concat(Publisher<? extends T>... sources) {
-		return new StreamConcatArray<>(sources);
-	}
-
-	/**
-	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
-
-	 *
-	 * @param mergedPublishers The list of upstream {@link Publisher} to subscribe to.
-	 * @param <T>              type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> Stream<T> merge(Iterable<? extends Publisher<? extends T>> mergedPublishers) {
-		return from(Flux.merge(mergedPublishers));
-	}
-
-	/**
-	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
-
-	 *
-	 * @param mergedPublishers The publisher of upstream {@link Publisher} to subscribe to.
-	 * @param <T>              type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0
-	 */
-	public static <T, E extends T> Stream<E> merge(Publisher<? extends Publisher<E>> mergedPublishers) {
-		return from(Flux.merge(mergedPublishers));
-	}
-
-	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
-	 *
-	 * @param sources The upstreams {@link Publisher} to subscribe to.
-	 * @param <T>     type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0, 2.5
-	 */
-	@SafeVarargs
-	@SuppressWarnings({"unchecked", "varargs"})
-	public static <T> Stream<T> merge(Publisher<? extends T>... sources) {
-		return from(Flux.merge(sources));
-	}
-
 
 	/**
 	 * Build a {@literal Stream} whose data are generated by the combination of the most recent published values from
@@ -753,6 +242,7 @@ public class Streams {
 			BiFunction<? super T1, ? super T2, ? extends V> combinator) {
 		return new StreamWithLatestFrom<>(source1, source2, combinator);
 	}
+
 	/**
 	 * Build a {@literal Stream} whose data are generated by the combination of the most recent published values from
 	 * all publishers.
@@ -959,6 +449,726 @@ public class Streams {
 					}
 		                    }
 		);
+	}
+
+	/**
+	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
+	 * Each source publisher will be consumed until complete in sequence, with the same order than they have been
+	 * passed
+	 * to.
+	 *
+	 * @param mergedPublishers The list of upstream {@link Publisher} to subscribe to.
+	 * @param <T>              type of the value
+	 * @return a {@link Stream} based on the produced value
+	 * @since 2.0
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Stream<T> concat(Iterable<? extends Publisher<? extends T>> mergedPublishers) {
+		return new StreamConcatIterable<>(mergedPublishers);
+	}
+
+	/**
+	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
+	 * Each source publisher will be consumed until complete in sequence, with the same order than they have been
+	 * passed
+	 * to.
+	 *
+	 * @param concatdPublishers The publisher of upstream {@link Publisher} to subscribe to.
+	 * @param <T>               type of the value
+	 * @return a {@link Stream} based on the produced value
+	 * @since 2.0
+	 */
+	public static <T> Stream<T> concat(Publisher<? extends Publisher<? extends T>> concatdPublishers) {
+		return from(Flux.concat(concatdPublishers));
+	}
+
+	/**
+	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
+	 * Each source publisher will be consumed until complete in sequence, with the same order than they have been
+	 * passed
+	 * to.
+	 *
+	 * @param sources The upstream {@link Publisher} to subscribe to.
+	 * @param <T>     type of the value
+	 * @return a {@link Stream} based on the produced value
+	 * @since 2.0, 2.5
+	 */
+	@SuppressWarnings("varargs")
+	@SafeVarargs
+	public static <T> Stream<T> concat(Publisher<? extends T>... sources) {
+		return new StreamConcatArray<>(sources);
+	}
+
+	/**
+	 * @see Flux#convert(Object)
+	 * @since 2.5
+	 */
+	public static <T> Stream<T> convert(Object source) {
+		return from(Flux.<T>convert(source));
+	}
+
+	/**
+	 * @see Flux#create(Consumer)
+	 */
+	public static <T> Stream<T> create(Consumer<SubscriberWithContext<T, Void>> request) {
+		return from(Flux.create(request));
+	}
+
+	/**
+	 * @see Flux#create(Consumer, Function)
+	 */
+	public static <T, C> Stream<T> create(Consumer<SubscriberWithContext<T, C>> request,
+			Function<Subscriber<? super T>, C> onSubscribe) {
+		return from(Flux.create(request, onSubscribe));
+	}
+
+	/**
+	 * @see Flux#create(Consumer, Function, Consumer)
+	 */
+	public static <T, C> Stream<T> create(Consumer<SubscriberWithContext<T, C>> request,
+			Function<Subscriber<? super T>, C> onSubscribe,
+			Consumer<C> onTerminate) {
+		return from(Flux.create(request, onSubscribe, onTerminate));
+	}
+
+	/**
+	 * Create a {@link Stream} reacting on requests with the passed {@link BiConsumer}
+	 *
+	 * @param requestConsumer A {@link BiConsumer} with left argument request and right argument target subscriber
+	 * @param <T>             The type of the data sequence
+	 * @return a Stream
+	 * @since 2.0.2
+	 */
+	public static <T> Stream<T> createWith(BiConsumer<Long, SubscriberWithContext<T, Void>> requestConsumer) {
+		if (requestConsumer == null) throw new IllegalArgumentException("Supplier must be provided");
+		return createWith(requestConsumer, null, null);
+	}
+
+	/**
+	 * Create a {@link Stream} reacting on requests with the passed {@link BiConsumer}
+	 * The argument {@code contextFactory} is executed once by new subscriber to generate a context shared by every
+	 * request calls.
+	 *
+	 * @param requestConsumer A {@link BiConsumer} with left argument request and right argument target subscriber
+	 * @param contextFactory  A {@link Function} called for every new subscriber returning an immutable context (IO
+	 *                        connection...)
+	 * @param <T>             The type of the data sequence
+	 * @param <C>             The type of contextual information to be read by the requestConsumer
+	 * @return a Stream
+	 * @since 2.0.2
+	 */
+	public static <T, C> Stream<T> createWith(BiConsumer<Long, SubscriberWithContext<T, C>> requestConsumer,
+	                                          Function<Subscriber<? super T>, C> contextFactory) {
+		return createWith(requestConsumer, contextFactory, null);
+	}
+
+	/**
+	 * Create a {@link Stream} reacting on requests with the passed {@link BiConsumer}.
+	 * The argument {@code contextFactory} is executed once by new subscriber to generate a context shared by every
+	 * request calls.
+	 * The argument {@code shutdownConsumer} is executed once by subscriber termination event (cancel, onComplete,
+	 * onError).
+	 *
+	 * @param requestConsumer  A {@link BiConsumer} with left argument request and right argument target subscriber
+	 * @param contextFactory   A {@link Function} called once for every new subscriber returning an immutable context
+	 *                         (IO connection...)
+	 * @param shutdownConsumer A {@link Consumer} called once everytime a subscriber terminates: cancel, onComplete(),
+	 *                         onError()
+	 * @param <T>              The type of the data sequence
+	 * @param <C>              The type of contextual information to be read by the requestConsumer
+	 * @return a fresh Reactive Streams publisher ready to be subscribed
+	 * @since 2.0.2
+	 */
+	public static <T, C> Stream<T> createWith(BiConsumer<Long, SubscriberWithContext<T, C>> requestConsumer,
+	                                          Function<Subscriber<? super T>, C> contextFactory,
+	                                          Consumer<C> shutdownConsumer) {
+		return Streams.from(Flux.generate(requestConsumer, contextFactory, shutdownConsumer));
+	}
+
+	/**
+	 * Supply a {@link Publisher} everytime subscribe is called on the returned stream. The passed {@link reactor.fn
+	 * .Supplier}
+	 * will be invoked and it's up to the developer to choose to return a new instance of a {@link Publisher} or reuse
+	 * one,
+	 * effecitvely behaving like {@link Streams#from(Publisher)}.
+	 *
+	 * @param supplier the publisher factory to call on subscribe
+	 * @param <T>      the type of values passing through the {@literal Stream}
+	 * @return a new {@link Stream}
+	 */
+	public static <T> Stream<T> defer(Supplier<? extends Publisher<T>> supplier) {
+		return new StreamDefer<>(supplier);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit a complete signal to any new subscriber.
+	 *
+	 * @return a new {@link Stream}
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Stream<T> empty() {
+		return (Stream<T>) StreamJust.EMPTY;
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit an error signal to any new subscriber.
+	 *
+	 * @return a new {@link Stream}
+	 */
+	public static <O, T extends Throwable> Stream<O> fail(T throwable) {
+		return from(Mono.<O>error(throwable));
+	}
+
+	/**
+	 * A simple decoration of the given {@link Publisher} to expose {@link Stream} API and proxy any subscribe call to
+	 * the publisher.
+	 * The Publisher has to first call onSubscribe and receive a subscription request callback before any onNext
+	 * call or
+	 * will risk loosing events.
+	 *
+	 * @param publisher the publisher to decorate the Stream subscriber
+	 * @param <T>       the type of values passing through the {@literal Stream}
+	 * @return a new {@link Stream}
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Stream<T> from(final Publisher<T> publisher) {
+		if (Stream.class.isAssignableFrom(publisher.getClass())) {
+			return (Stream<T>) publisher;
+		}
+
+		if (Supplier.class.isAssignableFrom(publisher.getClass())) {
+			T t = ((Supplier<T>)publisher).get();
+			if(t != null){
+				return just(t);
+			}
+		}
+		return new StreamBarrier.Identity<>(publisher);
+	}
+
+	/**
+	 * A simple decoration of the given {@link Processor} to expose {@link Stream} API and proxy any subscribe call to
+	 * the Processor.
+	 * The Processor has to first call onSubscribe and receive a subscription request callback before any onNext
+	 * call or
+	 * will risk loosing events.
+	 *
+	 * @param processor the processor to decorate with the Stream API
+	 * @param <I>       the type of values observed by the receiving subscriber
+	 * @param <O>       the type of values passing through the sending {@literal Stream}
+	 * @return a new {@link Stream}
+	 */
+	@SuppressWarnings("unchecked")
+	public static <I, O> StreamProcessor<I, O> from(final Processor<I, O> processor) {
+		if (StreamProcessor.class.isAssignableFrom(processor.getClass())) {
+			return (StreamProcessor<I, O>) processor;
+		}
+		return StreamProcessor.from(processor);
+	}
+
+	/**
+	 * Build a {@literal Stream} whom data is sourced by each element of the passed array on subscription request.
+	 * <p>
+	 * It will use the passed dispatcher to emit signals.
+	 *
+	 * @param values The values to {@code onNext()}
+	 * @param <T>    type of the values
+	 * @return a {@link Stream} based on the given values
+	 */
+	public static <T> Stream<T> fromArray(T[] values) {
+		return from(Flux.fromArray(values));
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit the result of the future and then complete.
+	 * The future will be polled for an unbounded amount of time.
+	 *
+	 * @param future the future to poll value from
+	 * @return a new {@link Stream}
+	 */
+	public static <T> Stream<T> fromFuture(Future<? extends T> future) {
+		return StreamFuture.create(future);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit the result of the future and then complete.
+	 * The future will be polled for an unbounded amount of time.
+	 *
+	 * @param future the future to poll value from
+	 * @return a new {@link Stream}
+	 */
+	public static <T> Stream<T> fromFuture(Future<? extends T> future, long time, TimeUnit unit) {
+		return StreamFuture.create(future, time, unit);
+	}
+
+	/**
+	 * Build a {@literal Stream} whom data is sourced by each element of the passed iterable on subscription request.
+	 * <p>
+	 * It will use the passed dispatcher to emit signals.
+	 *
+	 * @param values The values to {@code onNext()}
+	 * @param <T>    type of the values
+	 * @return a {@link Stream} based on the given values
+	 */
+	public static <T> Stream<T> fromIterable(Iterable<? extends T> values) {
+		return new StreamIterable<>(values);
+	}
+
+	/**
+	 * Build a {@literal Stream} whom data is sourced by each element of the passed iterator on subscription request.
+	 * <p>
+	 * It will use the passed dispatcher to emit signals.
+	 *
+	 * @param values The values to {@code onNext()}
+	 * @param <T>    type of the values
+	 * @return a {@link Stream} based on the given values
+	 */
+	public static <T> Stream<T> fromIterator(Iterator<? extends T> values) {
+		return from(Flux.fromIterator(values));
+	}
+
+	/**
+	 * Build a Synchronous {@literal Stream} whose data are aggregated from the passed publishers
+	 * (1 element consumed for each merged publisher. resulting in an array of size of {@param mergedPublishers}.
+
+	 *
+	 * @param sources The upstreams {@link Publisher} to subscribe to.
+	 * @param <T>     type of the value
+	 * @return a {@link Stream} based on the produced value
+	 * @since 2.0
+	 */
+	@SuppressWarnings({"unchecked", "varargs"})
+	@SafeVarargs
+	public static <T> Stream<List<T>> join(Publisher<? extends T>... sources) {
+		return from(Flux.zip(FluxZip.JOIN_FUNCTION, sources));
+	}
+
+	/**
+	 * Build a Synchronous {@literal Stream} whose data are aggregated from the passed publishers
+	 * (1 element consumed for each merged publisher. resulting in an array of size of {@param mergedPublishers}.
+
+	 *
+	 * @param sources The list of upstream {@link Publisher} to subscribe to.
+	 * @param <T>     type of the value
+	 * @return a {@link Stream} based on the produced value
+	 * @since 2.0
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Stream<List<T>> join(Iterable<? extends Publisher<?>> sources) {
+		return zip(sources, FluxZip.JOIN_FUNCTION);
+	}
+
+	/**
+	 * Build a {@literal Stream} whom data is sourced by the passed element on subscription
+	 * request. After all data is being dispatched, a complete signal will be emitted.
+	 * <p>
+	 *
+	 * @param value1 The only value to {@code onNext()}
+	 * @param <T>    type of the values
+	 * @return a {@link Stream} based on the given values
+	 */
+	public static <T> Stream<T> just(T value1) {
+		if(value1 == null){
+			throw new Exceptions.Spec213_ArgumentIsNull();
+		}
+
+		return new StreamJust<T>(value1);
+	}
+
+	/**
+	 * Build a {@literal Stream} whom data is sourced by each element of the passed iterable on subscription
+	 * request.
+	 * <p>
+	 *
+	 * @param values The values to {@code onNext()}
+	 * @param <T>    type of the values
+	 * @return a {@link Stream} based on the given values
+	 */
+	@SafeVarargs
+	@SuppressWarnings({"unchecked", "varargs"})
+	public static <T> Stream<T> just(T... values) {
+		return from(Flux.fromArray(Objects.requireNonNull(values)));
+	}
+
+	/**
+	 *
+	 * @param publisher
+	 * @param operator
+	 * @param <I>
+	 * @param <O>
+	 * @return
+	 */
+	public static <I, O> Stream<O> lift(final Publisher<I> publisher,
+			Function<Subscriber<? super O>, Subscriber<? super I>> operator) {
+		return new StreamBarrier.Operator<>(publisher, operator);
+	}
+
+	/**
+	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
+
+	 *
+	 * @param mergedPublishers The list of upstream {@link Publisher} to subscribe to.
+	 * @param <T>              type of the value
+	 * @return a {@link Stream} based on the produced value
+	 * @since 2.0
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Stream<T> merge(Iterable<? extends Publisher<? extends T>> mergedPublishers) {
+		return from(Flux.merge(mergedPublishers));
+	}
+
+	/**
+	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
+
+	 *
+	 * @param mergedPublishers The publisher of upstream {@link Publisher} to subscribe to.
+	 * @param <T>              type of the value
+	 * @return a {@link Stream} based on the produced value
+	 * @since 2.0
+	 */
+	public static <T, E extends T> Stream<E> merge(Publisher<? extends Publisher<E>> mergedPublishers) {
+		return from(Flux.merge(mergedPublishers));
+	}
+
+	/**
+	 * Build a {@literal Stream} whose data are generated by the passed publishers.
+
+	 *
+	 * @param sources The upstreams {@link Publisher} to subscribe to.
+	 * @param <T>     type of the value
+	 * @return a {@link Stream} based on the produced value
+	 * @since 2.0, 2.5
+	 */
+	@SafeVarargs
+	@SuppressWarnings({"unchecked", "varargs"})
+	public static <T> Stream<T> merge(Publisher<? extends T>... sources) {
+		return from(Flux.merge(sources));
+	}
+
+	/**
+	 * Build a {@literal Stream} that will never emit anything.
+	 *
+	 * @return a new {@link Stream}
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Stream<T> never() {
+		return (Stream<T>) NEVER;
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after on each period from the subscribe
+	 * call.
+	 * It will never complete until cancelled.
+	 *
+	 * @param period the period in SECONDS before each following increment
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> period(long period) {
+		return period(Timers.globalOrNew(), -1l, period, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after on each period from the subscribe
+	 * call.
+	 * It will never complete until cancelled.
+	 *
+	 * @param timer  the timer to run on
+	 * @param period the period in SECONDS before each following increment
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> period(Timer timer, long period) {
+		return period(timer, -1l, period, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param delay  the timespan in SECONDS to wait before emitting 0l
+	 * @param period the period in SECONDS before each following increment
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> period(long delay, long period) {
+		return period(Timers.globalOrNew(), delay, period, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param timer  the timer to run on
+	 * @param delay  the timespan in SECONDS to wait before emitting 0l
+	 * @param period the period in SECONDS before each following increment
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> period(Timer timer, long delay, long period) {
+		return period(timer, delay, period, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param period the period in [unit] before each following increment
+	 * @param unit   the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> period(long period, TimeUnit unit) {
+		return period(Timers.globalOrNew(), -1l, period, unit);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param timer  the timer to run on
+	 * @param period the period in [unit] before each following increment
+	 * @param unit   the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> period(Timer timer, long period, TimeUnit unit) {
+		return period(timer, -1l, period, unit);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param delay  the timespan in [unit] to wait before emitting 0l
+	 * @param period the period in [unit] before each following increment
+	 * @param unit   the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> period(long delay, long period, TimeUnit unit) {
+		return period(Timers.globalOrNew(), delay, period, unit);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param timer  the timer to run on
+	 * @param delay  the timespan in [unit] to wait before emitting 0l
+	 * @param period the period in [unit] before each following increment
+	 * @param unit   the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> period(Timer timer, long delay, long period, TimeUnit unit) {
+		return new StreamTimerPeriod(TimeUnit.MILLISECONDS.convert(delay, unit), period, unit, timer);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit a sequence of int within the specified range and then
+	 * complete.
+	 *
+	 * @param start the starting value to be emitted
+	 * @param count   the number ot times to emit an increment including the first value
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Integer> range(int start, int count) {
+		return new StreamRange(start, count);
+	}
+
+	/**
+	 * @param publisher
+	 * @param accumulator
+	 * @param <KEY>
+	 * @param <VALUE>
+	 * @return
+	 */
+	public static <KEY, VALUE> Stream<Tuple2<KEY, VALUE>> reduceByKey(Publisher<Tuple2<KEY, VALUE>> publisher,
+	                                                                  BiFunction<VALUE, VALUE, VALUE> accumulator) {
+		return reduceByKey(publisher, null, null, accumulator);
+	}
+
+	/**
+	 * @param publisher
+	 * @param mapStream
+	 * @param accumulator
+	 * @param <KEY>
+	 * @param <VALUE>
+	 * @return
+	 */
+	public static <KEY, VALUE> Stream<Tuple2<KEY, VALUE>> reduceByKey(Publisher<Tuple2<KEY, VALUE>> publisher,
+	                                                                  StreamKv<KEY, VALUE> mapStream,
+	                                                                  BiFunction<VALUE, VALUE, VALUE> accumulator) {
+		return reduceByKey(publisher, mapStream.getStore(), mapStream, accumulator);
+	}
+
+	/**
+	 * @param publisher
+	 * @param store
+	 * @param listener
+	 * @param accumulator
+	 * @param <KEY>
+	 * @param <VALUE>
+	 * @return
+	 */
+	public static <KEY, VALUE> Stream<Tuple2<KEY, VALUE>> reduceByKey(Publisher<Tuple2<KEY, VALUE>> publisher,
+	                                                                  Map<KEY, VALUE> store,
+	                                                                  Publisher<? extends StreamKv.Signal<KEY,
+	                                                                    VALUE>> listener,
+	                                                                  BiFunction<VALUE, VALUE, VALUE> accumulator) {
+		return reduceByKeyOn(publisher, store, listener, accumulator);
+	}
+
+	/**
+	 * @param publisher
+	 * @param store
+	 * @param listener
+	 * @param accumulator
+	 * @param <KEY>
+	 * @param <VALUE>
+	 * @return
+	 */
+	public static <KEY, VALUE> Stream<Tuple2<KEY, VALUE>> reduceByKeyOn(Publisher<Tuple2<KEY, VALUE>> publisher,
+	                                                                    Map<KEY, VALUE> store,
+	                                                                    Publisher<? extends StreamKv.Signal<KEY,
+	                                                                      VALUE>> listener,
+	                                                                    BiFunction<VALUE, VALUE, VALUE> accumulator) {
+		return new StreamReduceByKey<>(publisher, accumulator, store, listener);
+	}
+
+	/**
+	 * @param publisher
+	 * @param accumulator
+	 * @param <KEY>
+	 * @param <VALUE>
+	 * @return
+	 */
+	public static <KEY, VALUE> Stream<Tuple2<KEY, VALUE>> scanByKey(Publisher<Tuple2<KEY, VALUE>> publisher,
+	                                                                BiFunction<VALUE, VALUE, VALUE> accumulator) {
+		return scanByKey(publisher, null, null, accumulator);
+	}
+
+	/**
+	 * @param publisher
+	 * @param mapStream
+	 * @param accumulator
+	 * @param <KEY>
+	 * @param <VALUE>
+	 * @return
+	 */
+	public static <KEY, VALUE> Stream<Tuple2<KEY, VALUE>> scanByKey(Publisher<Tuple2<KEY, VALUE>> publisher,
+	                                                                StreamKv<KEY, VALUE> mapStream,
+	                                                                BiFunction<VALUE, VALUE, VALUE> accumulator) {
+		return scanByKey(publisher, mapStream.getStore(), mapStream, accumulator);
+	}
+
+	/**
+	 * @param publisher
+	 * @param store
+	 * @param listener
+	 * @param accumulator
+	 * @param <KEY>
+	 * @param <VALUE>
+	 * @return
+	 */
+	public static <KEY, VALUE> Stream<Tuple2<KEY, VALUE>> scanByKey(Publisher<Tuple2<KEY, VALUE>> publisher,
+	                                                                Map<KEY, VALUE> store,
+	                                                                Publisher<? extends StreamKv.Signal<KEY, VALUE>>
+	                                                                  listener,
+	                                                                BiFunction<VALUE, VALUE, VALUE> accumulator) {
+		return scanByKeyOn(publisher, store, listener, accumulator);
+	}
+
+	/**
+	 * @param publisher
+	 * @param store
+	 * @param listener
+	 * @param accumulator
+	 * @param <KEY>
+	 * @param <VALUE>
+	 * @return
+	 */
+	public static <KEY, VALUE> Stream<Tuple2<KEY, VALUE>> scanByKeyOn(Publisher<Tuple2<KEY, VALUE>> publisher,
+	                                                                  Map<KEY, VALUE> store,
+	                                                                  Publisher<? extends StreamKv.Signal<KEY,
+	                                                                    VALUE>> listener,
+	                                                                  BiFunction<VALUE, VALUE, VALUE> accumulator) {
+		return new StreamScanByKey<>(publisher, accumulator, listener, store);
+	}
+
+	/**
+	 * Build a Synchronous {@literal Action} whose data are emitted by the most recent {@link Subscriber#onNext(Object)}
+	 * signaled publisher.
+	 * The stream will complete once both the publishers source and the last switched to publisher have completed.
+	 *
+	 * @param <T> type of the value
+	 * @return a {@link StreamProcessor} accepting publishers and producing inner data T
+	 * @since 2.0
+	 */
+	public static <T> StreamProcessor<Publisher<? extends T>, T> switchOnNext() {
+		Processor<Publisher<? extends T>, Publisher<? extends T>> emitter = Processors.replay();
+		StreamProcessor<Publisher<? extends T>, T> p = StreamProcessor.from(emitter, switchOnNext(emitter));
+		p.onSubscribe(EmptySubscription.INSTANCE);
+		return p;
+	}
+
+	/**
+	 * Build a Synchronous {@literal Stream} whose data are emitted by the most recent passed publisher.
+	 * The stream will complete once both the publishers source and the last switched to publisher have completed.
+	 *
+	 * @param mergedPublishers The publisher of upstream {@link Publisher} to subscribe to.
+	 * @param <T>              type of the value
+	 * @return a {@link Stream} based on the produced value
+	 * @since 2.0
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Stream<T> switchOnNext(
+	  Publisher<Publisher<? extends T>> mergedPublishers) {
+		return new StreamSwitchMap<>(mergedPublishers, IDENTITY_FUNCTION, XS_QUEUE_SUPPLIER, ReactiveState.XS_BUFFER_SIZE);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
+	 *
+	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> timer(long delay) {
+		return timer(Timers.globalOrNew(), delay, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
+	 *
+	 * @param timer the timer to run on
+	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> timer(Timer timer, long delay) {
+		return timer(timer, delay, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
+	 *
+	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
+	 * @param unit  the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> timer(long delay, TimeUnit unit) {
+		return timer(Timers.globalOrNew(), delay, unit);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
+	 *
+	 * @param timer the timer to run on
+	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
+	 * @param unit  the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> timer(Timer timer, long delay, TimeUnit unit) {
+		return new StreamTimerSingle(delay, unit, timer);
+	}
+
+	/**
+	 * @see Flux#yield(Consumer)
+	 * @return a new {@link Stream}
+	 */
+	public static <T> Stream<T> yield(Consumer<? super ReactiveSession<T>> sessionConsumer) {
+		return from(Flux.yield(sessionConsumer));
 	}
 
 	/**
@@ -1375,103 +1585,18 @@ public class Streams {
 		return zip(sources, (Function<Tuple, Tuple>) IDENTITY_FUNCTION);
 	}
 
-	/**
-	 * Build a Synchronous {@literal Stream} whose data are aggregated from the passed publishers
-	 * (1 element consumed for each merged publisher. resulting in an array of size of {@param mergedPublishers}.
-
-	 *
-	 * @param sources The upstreams {@link Publisher} to subscribe to.
-	 * @param <T>     type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0
-	 */
-	@SuppressWarnings({"unchecked", "varargs"})
-	@SafeVarargs
-	public static <T> Stream<List<T>> join(Publisher<? extends T>... sources) {
-		return from(Flux.zip(FluxZip.JOIN_FUNCTION, sources));
+	protected Streams() {
 	}
 
-	/**
-	 * Build a Synchronous {@literal Stream} whose data are aggregated from the passed publishers
-	 * (1 element consumed for each merged publisher. resulting in an array of size of {@param mergedPublishers}.
 
-	 *
-	 * @param sources The list of upstream {@link Publisher} to subscribe to.
-	 * @param <T>     type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> Stream<List<T>> join(Iterable<? extends Publisher<?>> sources) {
-		return zip(sources, FluxZip.JOIN_FUNCTION);
-	}
-
-	/**
-	 * Wait 30 Seconds until a terminal signal from the passed publisher has been emitted.
-	 * If the terminal signal is an error, it will propagate to the caller.
-	 * Effectively this is making sure a stream has completed before the return of this call.
-	 * It is usually used in controlled environment such as tests.
-	 *
-	 * @param publisher the publisher to listen for terminal signals
-	 */
-	public static void await(Publisher<?> publisher) throws InterruptedException {
-		await(publisher, 30000, TimeUnit.MILLISECONDS);
-	}
-
-	/**
-	 * Wait {code timeout} in {@code unit} until a terminal signal from the passed publisher has been emitted.
-	 * If the terminal signal is an error, it will propagate to the caller.
-	 * Effectively this is making sure a stream has completed before the return of this call.
-	 * It is usually used in controlled environment such as tests.
-	 *
-	 * @param publisher the publisher to listen for terminal signals
-	 * @param timeout   the maximum wait time in unit
-	 * @param unit      the TimeUnit to use for the timeout
-	 */
-	public static void await(Publisher<?> publisher, long timeout, TimeUnit unit) throws InterruptedException {
-		final AtomicReference<Throwable> exception = new AtomicReference<>();
-
-		final CountDownLatch latch = new CountDownLatch(1);
-		publisher.subscribe(new BaseSubscriber<Object>() {
-			Subscription s;
-
-			@Override
-			public void onComplete() {
-				s = null;
-				latch.countDown();
-			}
-
-			@Override
-			public void onError(Throwable throwable) {
-				s = null;
-				exception.set(throwable);
-				latch.countDown();
-			}
-
-			@Override
-			public void onSubscribe(Subscription subscription) {
-				s = subscription;
-				subscription.request(Long.MAX_VALUE);
-			}
-		});
-
-		latch.await(timeout, unit);
-		if (exception.get() != null) {
-			InterruptedException ie = new InterruptedException();
-			Exceptions.addCause(ie, exception.get());
-			throw ie;
-		}
-	}
 
 	static final Stream NEVER = from(Flux.never());
-
 	static final Function IDENTITY_FUNCTION = new Function() {
 		@Override
 		public Object apply(Object o) {
 			return o;
 		}
 	};
-
 	static final Supplier XS_QUEUE_SUPPLIER = new Supplier() {
 		@Override
 		public Object get() {
@@ -1479,6 +1604,4 @@ public class Streams {
 		}
 	};
 
-	protected Streams() {
-	}
 }

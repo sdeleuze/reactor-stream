@@ -454,7 +454,7 @@ public class StreamTests extends AbstractReactorTest {
 		                          .elapsed()
 		                          .skip(1)
 		                          .nest()
-		                          .flatMap(self -> BiStreams.reduceByKey(self, (acc, next) -> acc + next))
+		                          .flatMap(self -> Streams.reduceByKey(self, (acc, next) -> acc + next))
 		                          .log("elapsed")
 		                          .sort((a, b) -> a.t1.compareTo(b.t1))
 		                          .reduce(-1L, (acc, next) -> acc > 0l ? ((next.t1 + acc) / 2) : next.t1)

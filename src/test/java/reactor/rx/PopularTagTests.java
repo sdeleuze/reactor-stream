@@ -62,10 +62,10 @@ public class PopularTagTests extends AbstractReactorTest {
 			.map(w -> Tuple.of(w, 1))
 		    .window(2, SECONDS)
 			.flatMap(s ->
-				BiStreams.reduceByKey(s, (acc, next) -> acc + next)
-				  .sort((a, b) -> -a.t2.compareTo(b.t2))
-				  .take(10)
-				  .finallyDo(_s -> LOG.info("------------------------ window complete! ----------------------"))
+				Streams.reduceByKey(s, (acc, next) -> acc + next)
+				       .sort((a, b) -> -a.t2.compareTo(b.t2))
+				       .take(10)
+				       .finallyDo(_s -> LOG.info("------------------------ window complete! ----------------------"))
 			)
 			.consume(
 			  entry -> LOG.info(entry.t1 + ": " + entry.t2),
