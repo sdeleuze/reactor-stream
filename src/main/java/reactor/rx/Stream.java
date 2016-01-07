@@ -184,9 +184,12 @@ import reactor.rx.subscriber.Tap;
  *   subscriber.onComplete();
  * }).consume(System.out::println);
  *
- * Broadcaster<Integer> inputStream1 = Broadcaster.create(env);
- * Broadcaster<Integer> inputStream2 = Broadcaster.create(env);
- * Stream.merge(environment, inputStream1, inputStream2).map(i -> i*2).consume(System.out::println);
+ * Broadcaster<Integer> inputStream1 = Broadcaster.create();
+ * Broadcaster<Integer> inputStream2 = Broadcaster.create();
+ * inputStream1.mergeWith(inputStream2).map(i -> i*2).consume(System.out::println);
+ *
+ * inputStream1.onNext(1);
+ * inputStream2.onNext(2);
  *
  * }
  * </pre>
