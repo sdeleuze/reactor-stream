@@ -171,9 +171,9 @@ import reactor.rx.subscriber.Tap;
  * Examples of use (In Java8 but would also work with Anonymous classes or Groovy Closures for instance):
  * <pre>
  * {@code
- * Streams.just(1, 2, 3).map(i -> i*2) //...
+ * Stream.just(1, 2, 3).map(i -> i*2) //...
  *
- * Broadcaster<String> stream = Streams.broadcast()
+ * Broadcaster<String> stream = Stream.broadcast()
  * strean.map(i -> i*2).consume(System.out::println);
  * stream.onNext("hello");
  *
@@ -186,7 +186,7 @@ import reactor.rx.subscriber.Tap;
  *
  * Broadcaster<Integer> inputStream1 = Broadcaster.create(env);
  * Broadcaster<Integer> inputStream2 = Broadcaster.create(env);
- * Streams.merge(environment, inputStream1, inputStream2).map(i -> i*2).consume(System.out::println);
+ * Stream.merge(environment, inputStream1, inputStream2).map(i -> i*2).consume(System.out::println);
  *
  * }
  * </pre>
@@ -683,7 +683,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * .Supplier}
 	 * will be invoked and it's up to the developer to choose to return a new instance of a {@link Publisher} or reuse
 	 * one,
-	 * effecitvely behaving like {@link Streams#from(Publisher)}.
+	 * effecitvely behaving like {@link Stream#from(Publisher)}.
 	 *
 	 * @param supplier the publisher factory to call on subscribe
 	 * @param <T>      the type of values passing through the {@literal Stream}
@@ -3117,7 +3117,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * stream emits the relative signals.
 	 *
 	 * @param backOffStream the function providing a stream signalling an anonymous object on each complete
-	 * a new stream that applies some backoff policy, e.g. @{link Streams#timer(long)}
+	 * a new stream that applies some backoff policy, e.g. @{link Stream#timer(long)}
 	 *
 	 * @return a new repeated {@code Stream}
 	 *
@@ -3209,7 +3209,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * stream emits an error signal.
 	 *
 	 * @param backOffStream the function taking the error stream as an downstream and returning a new stream that
-	 * applies some backoff policy e.g. Streams.timer
+	 * applies some backoff policy e.g. Stream.timer
 	 *
 	 * @return a new fault-tolerant {@code Stream}
 	 *
