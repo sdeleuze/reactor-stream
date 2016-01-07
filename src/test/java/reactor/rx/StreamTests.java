@@ -830,7 +830,7 @@ public class StreamTests extends AbstractReactorTest {
 	public void zipOfNull() {
 		try {
 			Stream<String> as = Streams.just("x");
-			Stream<String> bs = Streams.<String>just(null);
+			Stream<String> bs = Streams.just((String[])null);
 
 			assertNull(Streams.zip(as, bs) .next().get());
 		}
