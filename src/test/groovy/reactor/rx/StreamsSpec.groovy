@@ -56,7 +56,7 @@ class StreamsSpec extends Specification {
 	def 'A deferred Stream with an initial value makes that value available immediately'() {
 		given:
 			'a composable with an initial value'
-			def stream = Streams.just('test')
+			def stream = Stream.just('test')
 
 		when:
 			'the value is retrieved'
@@ -70,7 +70,7 @@ class StreamsSpec extends Specification {
 	def 'A deferred Stream with an initial value makes that value available once if broadcasted'() {
 		given:
 			'a composable with an initial value'
-			def stream = Streams.just('test').broadcast()
+			def stream = Stream.just('test').broadcast()
 
 		when:
 			'the value is retrieved'
@@ -90,7 +90,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'the error is retrieved after 2 sec'
-			Streams.await(stream.dispatchOn(asyncGroup).timeout(2, TimeUnit.SECONDS).next())
+		Stream.await(stream.dispatchOn(asyncGroup).timeout(2, TimeUnit.SECONDS).next())
 
 		then:
 			'an error has been thrown'
@@ -100,7 +100,7 @@ class StreamsSpec extends Specification {
 	def 'A deferred Stream with an initial value makes that value available later'() {
 		given:
 			'a composable with an initial value'
-			Stream stream = Streams.just('test')
+			Stream stream = Stream.just('test')
 
 		when:
 			'the value is not retrieved'
@@ -125,7 +125,7 @@ class StreamsSpec extends Specification {
 			'a composable with an initial value'
 			def e = null
 			def latch = new CountDownLatch(1)
-			def stream = Streams.fromIterable([1, 2, 3])
+			def stream = Stream.fromIterable([1, 2, 3])
 					.broadcast()
 					.when(Throwable) { e = it }
 					.doOnComplete { latch.countDown() }
@@ -149,7 +149,7 @@ class StreamsSpec extends Specification {
 	def 'A deferred Stream with initial values can be consumed multiple times'() {
 		given:
 			'a composable with an initial value'
-			def stream = Streams.just('test', 'test2', 'test3').map { it }.log()
+			def stream = Stream.just('test', 'test2', 'test3').map { it }.log()
 
 		when:
 			'the value is retrieved'
@@ -164,7 +164,7 @@ class StreamsSpec extends Specification {
 	def 'A deferred Stream can filter terminal states'() {
 		given:
 			'a composable with an initial value'
-			def stream = Streams.just('test')
+			def stream = Stream.just('test')
 
 		when:
 			'the complete signal is observed and stream is retrieved'
@@ -176,7 +176,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'the error signal is observed and stream is retrieved'
-			stream = Streams.fail(new Exception())
+			stream = Stream.fail(new Exception())
 			stream.after().next().get()
 
 		then:
@@ -187,7 +187,7 @@ class StreamsSpec extends Specification {
 	def 'A deferred Stream can listen for terminal states'() {
 		given:
 			'a composable with an initial value'
-			def stream = Streams.just('test')
+			def stream = Stream.just('test')
 
 		when:
 			'the complete signal is observed and stream is retrieved'
@@ -208,7 +208,7 @@ class StreamsSpec extends Specification {
 	def 'A deferred Stream can be translated into a list'() {
 		given:
 			'a composable with an initial value'
-			Stream stream = Streams.just('test', 'test2', 'test3')
+			Stream stream = Stream.just('test', 'test2', 'test3')
 
 		when:
 			'the stream is retrieved'
@@ -224,7 +224,7 @@ class StreamsSpec extends Specification {
 	def 'A deferred Stream can be translated into a completable queue'() {
 		given:
 			'a composable with an initial value'
-			def stream = Streams.just('test', 'test2', 'test3').log().dispatchOn(asyncGroup)
+			def stream = Stream.just('test', 'test2', 'test3').log().dispatchOn(asyncGroup)
 
 		when:
 			'the stream is retrieved'
@@ -249,7 +249,7 @@ class StreamsSpec extends Specification {
 		given:
 			String test = ""
 			'a composable with an initial value'
-			def stream = Streams.<String> createWith{ n, s -> s.onNext test }
+			def stream = Stream.<String> createWith{ n, s -> s.onNext test }
 
 		when:
 			'the value is retrieved'
@@ -262,7 +262,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'nothing is provided'
-			Streams.<String> createWith(null)
+		Stream.<String> createWith(null)
 
 		then:
 			"error is thrown"
@@ -272,7 +272,7 @@ class StreamsSpec extends Specification {
   def "Read Queues from Publishers"() {
 
 	given: "Iterable publisher of 1000 to read queue"
-	def pub = Streams.fromIterable(1..1000)
+	def pub = Stream.fromIterable(1..1000)
 	def queue = pub.toBlockingQueue()
 
 	when: "read the queue"
@@ -293,7 +293,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream with a known set of values makes those values available immediately'() {
 		given:
 			'a composable with values 1 to 5 inclusive'
-			Stream s = Streams.fromIterable([1, 2, 3, 4, 5])
+			Stream s = Stream.fromIterable([1, 2, 3, 4, 5])
 
 		when:
 			'the first value is retrieved'
@@ -312,7 +312,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can sample values over time'() {
 		given:
 			'a composable with values 1 to INT_MAX inclusive'
-			def s = Streams.range(1, Integer.MAX_VALUE)
+			def s = Stream.range(1, Integer.MAX_VALUE)
 
 		when:
 			'the most recent value is retrieved'
@@ -331,7 +331,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can sample values over time with consumeOn'() {
 		given:
 			'a composable with values 1 to INT_MAX inclusive'
-			def s = Streams.range(1, Integer.MAX_VALUE)
+			def s = Stream.range(1, Integer.MAX_VALUE)
 
 		when:
 			'the most recent value is retrieved'
@@ -349,7 +349,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be enforced to dispatch values distinct from their immediate predecessors'() {
 		given:
 			'a composable with values 1 to 3 with duplicates'
-			Stream s = Streams.fromIterable([1, 1, 2, 2, 3])
+			Stream s = Stream.fromIterable([1, 1, 2, 2, 3])
 
 		when:
 			'the values are filtered and result is collected'
@@ -363,7 +363,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be enforced to dispatch values with keys distinct from their immediate predecessors keys'() {
 		given:
 			'a composable with values 1 to 5 with duplicate keys'
-			Stream s = Streams.fromIterable([2, 4, 3, 5, 2, 5])
+			Stream s = Stream.fromIterable([2, 4, 3, 5, 2, 5])
 
 		when:
 			'the values are filtered and result is collected'
@@ -377,7 +377,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be enforced to dispatch distinct values'() {
 		given:
 			'a composable with values 1 to 4 with duplicates'
-			Stream s = Streams.fromIterable([1, 2, 3, 1, 2, 3, 4])
+			Stream s = Stream.fromIterable([1, 2, 3, 1, 2, 3, 4])
 
 		when:
 			'the values are filtered and result is collected'
@@ -391,7 +391,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be enforced to dispatch values having distinct keys'() {
 		given:
 			'a composable with values 1 to 4 with duplicate keys'
-			Stream s = Streams.fromIterable([1, 2, 3, 1, 2, 3, 4])
+			Stream s = Stream.fromIterable([1, 2, 3, 1, 2, 3, 4])
 
 		when:
 			'the values are filtered and result is collected'
@@ -405,7 +405,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can check if there is a value satisfying a predicate'() {
 		given:
 			'a composable with values 1 to 5'
-			Stream s = Streams.fromIterable([1, 2, 3, 4, 5])
+			Stream s = Stream.fromIterable([1, 2, 3, 4, 5])
 
 		when:
 			'checking for existence of values > 2 and the result of the check is collected'
@@ -427,7 +427,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'checking always true predicate on empty stream and collecting the result'
-			tap = Streams.empty().exists { true }.get();
+			tap = Stream.empty().exists { true }.get();
 
 		then:
 			'collected should be false'
@@ -437,7 +437,7 @@ class StreamsSpec extends Specification {
 	def "A Stream's initial values are passed to consumers"() {
 		given:
 			'a composable with values 1 to 5 inclusive'
-			Stream stream = Streams.fromIterable([1, 2, 3, 4, 5])
+			Stream stream = Stream.fromIterable([1, 2, 3, 4, 5])
 
 		when:
 			'a Consumer is registered'
@@ -454,7 +454,7 @@ class StreamsSpec extends Specification {
 	def "Stream 'state' related signals can be consumed"() {
 		given:
 			'a composable with values 1 to 5 inclusive'
-			def stream = Streams.fromIterable([1, 2, 3, 4, 5])
+			def stream = Stream.fromIterable([1, 2, 3, 4, 5])
 			def values = []
 			def signals = []
 
@@ -484,7 +484,7 @@ class StreamsSpec extends Specification {
 	def "Stream can emit a default value if empty"() {
 		given:
 			'a composable that only completes'
-			def stream = Streams.<String> empty()
+			def stream = Stream.<String> empty()
 			def values = []
 
 		when:
@@ -542,7 +542,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'A new error consumer is subscribed'
-		  Streams.fail(new RuntimeException()).when(RuntimeException) { errors++ }.consume()
+		Stream.fail(new RuntimeException()).when(RuntimeException) { errors++ }.consume()
 
 		then:
 			'it is called since publisher is in error state'
@@ -554,7 +554,7 @@ class StreamsSpec extends Specification {
 		given:
 			'a composable with a known number of values'
 			def d = Broadcaster.<Iterable<String>> create()
-			Stream<String> composable = d.flatMap{ Streams.fromIterable(it) }
+			Stream<String> composable = d.flatMap{ Stream.fromIterable(it) }
 
 		when:
 			'accept list of Strings'
@@ -619,7 +619,7 @@ class StreamsSpec extends Specification {
 			def source = Broadcaster.<Integer> create()
 			Stream<Integer> mapped = source.
 					dispatchOn(asyncGroup).
-					flatMap { v -> Streams.just(v * 2) }.
+					flatMap { v -> Stream.just(v * 2) }.
 					when(Throwable) { it.printStackTrace() }
 
 
@@ -645,7 +645,7 @@ class StreamsSpec extends Specification {
 
 			def source3 = Broadcaster.<Integer> create()
 
-			def tap = Streams.merge(source1, source2, source3).log().buffer(3).log().tap()
+			def tap = Stream.merge(source1, source2, source3).log().buffer(3).log().tap()
 
 		when:
 			'the sources accept a value'
@@ -666,7 +666,7 @@ class StreamsSpec extends Specification {
 			'source composables to merge, buffer and tap'
 			def source1 = Broadcaster.<Integer> create()
 			def source2 = Broadcaster.<Integer> create()
-			def zippedStream = Streams.zip(source1, source2, (BiFunction) { t1, t2 -> println t1; t1 + t2 }).log()
+			def zippedStream = Stream.zip(source1, source2, (BiFunction) { t1, t2 -> println t1; t1 + t2 }).log()
 			def tap = zippedStream.tap()
 
 		when:
@@ -697,12 +697,12 @@ class StreamsSpec extends Specification {
 	def "Multiple iterable Stream's values can be zipped"() {
 		given:
 			'source composables to zip, buffer and tap'
-			def odds = Streams.just(1, 3, 5, 7, 9)
-			def even = Streams.just(2, 4, 6)
+			def odds = Stream.just(1, 3, 5, 7, 9)
+			def even = Stream.just(2, 4, 6)
 
 		when:
 			'the sources are zipped'
-			def zippedStream = Streams.zip(odds.log('left'), even.log('right'), (BiFunction) { t1, t2 -> [t1, t2] })
+			def zippedStream = Stream.zip(odds.log('left'), even.log('right'), (BiFunction) { t1, t2 -> [t1, t2] })
 			def tap = zippedStream.log().toList()
 
 		then:
@@ -712,7 +712,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the sources are zipped in a flat map'
 			zippedStream = odds.log('before-flatmap').flatMap {
-				Streams.zip(Streams.just(it), even, (BiFunction) { t1, t2 -> [t1, t2] }).log('second-fm')
+				Stream.zip(Stream.just(it), even, (BiFunction) { t1, t2 -> [t1, t2] }).log('second-fm')
 			}
 			tap = zippedStream.log('after-zip').toList()
 
@@ -726,12 +726,12 @@ class StreamsSpec extends Specification {
 	def "A different way of consuming"() {
 		given:
 			'source composables to zip, buffer and tap'
-			def odds = Streams.just(1, 3, 5, 7, 9)
-			def even = Streams.just(2, 4, 6)
+			def odds = Stream.just(1, 3, 5, 7, 9)
+			def even = Stream.just(2, 4, 6)
 
 		when:
 			'the sources are zipped'
-			def mergedStream = Streams.merge(odds, even)
+			def mergedStream = Stream.merge(odds, even)
 			def res = []
 			mergedStream.consume(
 					{ res << it; println it },
@@ -748,7 +748,7 @@ class StreamsSpec extends Specification {
 	def "Adaptive consuming"() {
 		given:
 			'source iterable'
-			def s = Streams.just(1, 2, 3, 4, 5, 6, 7, 8)
+			def s = Stream.just(1, 2, 3, 4, 5, 6, 7, 8)
 
 		when:
 			'the source is consumed every in 3 times'
@@ -773,7 +773,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'the sources are zipped'
-			def mergedStream = Streams.combineLatest(w1, w2, w3, { t -> t[0] + t[1] + t[2] })
+			def mergedStream = Stream.combineLatest(w1, w2, w3, { t -> t[0] + t[1] + t[2] })
 			def res = []
 
 			mergedStream.consume(
@@ -806,12 +806,12 @@ class StreamsSpec extends Specification {
 	def "A simple concat"() {
 		given:
 			'source composables to zip, buffer and tap'
-			def firsts = Streams.just(1, 2, 3)
-			def lasts = Streams.just(4, 5)
+			def firsts = Stream.just(1, 2, 3)
+			def lasts = Stream.just(4, 5)
 
 		when:
 			'the sources are zipped'
-			def mergedStream = Streams.concat(firsts, lasts)
+			def mergedStream = Stream.concat(firsts, lasts)
 			def res = []
 			mergedStream.consume(
 					{ res << it; println it },
@@ -852,11 +852,11 @@ class StreamsSpec extends Specification {
 	def "A mapped concat"() {
 		given:
 			'source composables to zip, buffer and tap'
-			def firsts = Streams.just(1, 2, 3)
+			def firsts = Stream.just(1, 2, 3)
 
 		when:
 			'the sources are zipped'
-			def mergedStream = firsts.concatMap { Streams.range(it, 2) }
+			def mergedStream = firsts.concatMap { Stream.range(it, 2) }
 			def res = []
 			println mergedStream.consume(
 					{ res << it; println it },
@@ -890,7 +890,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can return a value at a certain index'() {
 		given:
 			'a composable with values 1 to 5'
-			def s = Streams.just(1, 2, 3, 4, 5)
+			def s = Stream.just(1, 2, 3, 4, 5)
 			def error = 0
 			def errorConsumer = { error++ }
 
@@ -923,7 +923,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can return a value at a certain index or a default value'() {
 		given:
 			'a composable with values 1 to 5'
-			def s = Streams.just(1, 2, 3, 4, 5)
+			def s = Stream.just(1, 2, 3, 4, 5)
 
 		when:
 			'element at index 2 is requested'
@@ -1049,7 +1049,7 @@ class StreamsSpec extends Specification {
 	def "A known set of values can be reduced"() {
 		given:
 			'a composable with a known set of values'
-			Stream source = Streams.fromIterable([1, 2, 3, 4, 5])
+			Stream source = Stream.fromIterable([1, 2, 3, 4, 5])
 
 		when:
 			'a reduce function is registered'
@@ -1072,7 +1072,7 @@ class StreamsSpec extends Specification {
 	def "When reducing a known set of values, only the final value is passed to consumers"() {
 		given:
 			'a composable with a known set of values and a reduce function'
-			def reduced = Streams.<Integer> just(1, 2, 3, 4, 5)
+			def reduced = Stream.<Integer> just(1, 2, 3, 4, 5)
 					.reduce(new Reduction())
 
 		when:
@@ -1256,7 +1256,7 @@ class StreamsSpec extends Specification {
 	def 'Collect will accumulate multiple lists of accepted values and pass it to a consumer'() {
 		given:
 			'a source and a collected stream'
-			def numbers = Streams.fromIterable([1, 2, 3, 4, 5, 6, 7, 8]);
+			def numbers = Stream.fromIterable([1, 2, 3, 4, 5, 6, 7, 8]);
 
 		when:
 			'non overlapping buffers'
@@ -1335,7 +1335,7 @@ class StreamsSpec extends Specification {
 	def 'Window will reroute multiple stream of accepted values and pass it to a consumer'() {
 		given:
 			'a source and a collected stream'
-			def numbers = Streams.fromIterable([1, 2, 3, 4, 5, 6, 7, 8])
+			def numbers = Stream.fromIterable([1, 2, 3, 4, 5, 6, 7, 8])
 
 		when:
 			'non overlapping buffers'
@@ -1627,7 +1627,7 @@ class StreamsSpec extends Specification {
 	def 'Creating Stream from publisher'() {
 		given:
 			'a source stream with a given publisher'
-			def s = Streams.<String> yield {
+			def s = Stream.<String> yield {
 				it.onNext('test1')
 				it.onNext('test2')
 				it.onNext('test3')
@@ -1647,7 +1647,7 @@ class StreamsSpec extends Specification {
 	def 'Creating Stream from publisher factory'() {
 		given:
 			'a source stream with a given publisher'
-			def s = Streams.createWith(
+			def s = Stream.createWith(
 					{ long n, SubscriberWithContext<String, Void> sub ->
 						(1..3).each {
 							sub.onNext("test$it")
@@ -1676,8 +1676,8 @@ class StreamsSpec extends Specification {
 			'a source stream with a given publisher factory'
 			def i = 0
 			def res = []
-			def s = Streams.<Integer> defer {
-				Streams.just(i++)
+			def s = Stream.<Integer> defer {
+				Stream.just(i++)
 			}.log()
 
 		when:
@@ -1696,7 +1696,7 @@ class StreamsSpec extends Specification {
 		given:
 			'a source stream with a given publisher factory'
 			def terminated = false
-			def s = Streams.<Integer> from {
+			def s = Stream.<Integer> from {
 				it.onSubscribe(new Subscription() {
 					@Override
 					void request(long n) {
@@ -1727,7 +1727,7 @@ class StreamsSpec extends Specification {
 			'a source stream with a given publisher factory'
 			def emitter = Processors.emitter()
 			emitter.start()
-			def s = Streams.from(emitter)
+			def s = Stream.from(emitter)
 
 		when:
 			'accept a value'
@@ -1749,7 +1749,7 @@ class StreamsSpec extends Specification {
 			'a source stream with a given globalTimer'
 
 			def res = 0l
-			def c = Streams.timer(1)
+			def c = Stream.timer(1)
 			def timeStart = System.currentTimeMillis()
 
 		when:
@@ -1766,7 +1766,7 @@ class StreamsSpec extends Specification {
 		when:
 			'consuming periodic'
 			def i = []
-			c = Streams.period(0, 1).log().consume {
+			c = Stream.period(0, 1).log().consume {
 				i << it
 			}
 			sleep(2500)
@@ -1781,7 +1781,7 @@ class StreamsSpec extends Specification {
 	def 'Creating Stream from range'() {
 		given:
 			'a source stream with a given range'
-			def s = Streams.range(1, 10)
+			def s = Stream.range(1, 10)
 
 		when:
 			'accept a value'
@@ -1795,7 +1795,7 @@ class StreamsSpec extends Specification {
 	def 'Counting Stream from range'() {
 		given:
 			'a source stream with a given range'
-			def s = Streams.range(1, 10)
+			def s = Stream.range(1, 10)
 
 		when:
 			'accept a value'
@@ -1809,7 +1809,7 @@ class StreamsSpec extends Specification {
 	def 'Creating Empty Streams from publisher'() {
 		given:
 			'a source stream pre-completed'
-			def s = Streams.empty()
+			def s = Stream.empty()
 
 		when:
 			'consume it'
@@ -1833,7 +1833,7 @@ class StreamsSpec extends Specification {
 	def 'Caching Stream from publisher'() {
 		given:
 			'a slow source stream'
-			def s = Streams.<Integer> yield {
+			def s = Stream.<Integer> yield {
 				it.submit 1
 				sleep 200
 				it.submit 2
@@ -1882,7 +1882,7 @@ class StreamsSpec extends Specification {
 				'hello future'
 			} as Callable<String>)
 
-			def s = Streams.fromFuture(future)
+			def s = Stream.fromFuture(future)
 
 		when:
 			'consume it'
@@ -1910,7 +1910,7 @@ class StreamsSpec extends Specification {
 				'hello future too long'
 			} as Callable<String>)
 
-			s = Streams.fromFuture(future, 100, TimeUnit.MILLISECONDS).dispatchOn(asyncGroup)
+			s = Stream.fromFuture(future, 100, TimeUnit.MILLISECONDS).dispatchOn(asyncGroup)
 			nexts = []
 			errors = []
 
@@ -1963,7 +1963,7 @@ class StreamsSpec extends Specification {
 		given:
 			'a source and a collected stream'
 			def random = new Random()
-			def source = Streams.yield {
+			def source = Stream.yield {
 				it.submit random.nextInt()
 			}.dispatchOn(asyncGroup)
 
@@ -2027,7 +2027,7 @@ class StreamsSpec extends Specification {
 			def error = null
 			def value = reduced.onErrorResumeWith(){
 				error = it
-			  	Streams.just(-5)
+			  Stream.just(-5)
 			}.tap()
 			println value.debug()
 
@@ -2054,7 +2054,7 @@ class StreamsSpec extends Specification {
 		given:
 			'a source and a timeout'
 			def source = Broadcaster.<Integer> create()
-			def reduced = source.timeout(1500, TimeUnit.MILLISECONDS, Streams.just(10))
+			def reduced = source.timeout(1500, TimeUnit.MILLISECONDS, Stream.just(10))
 			def error = null
 			def value = reduced.when(TimeoutException) {
 				error = it
@@ -2083,7 +2083,7 @@ class StreamsSpec extends Specification {
 		when:
 			'A source stream emits next signals followed by an error'
 			def res = []
-			def myStream = Streams.yield { aSubscriber ->
+			def myStream = Stream.yield { aSubscriber ->
 				aSubscriber.emit('Three')
 				aSubscriber.emit('Two')
 				aSubscriber.emit('One')
@@ -2093,7 +2093,7 @@ class StreamsSpec extends Specification {
 
 		and:
 			'A fallback stream will emit values and complete'
-			def myFallback = Streams.yield { aSubscriber ->
+			def myFallback = Stream.yield { aSubscriber ->
 				aSubscriber.emit('0')
 				aSubscriber.emit('1')
 				aSubscriber.emit('2')
@@ -2118,7 +2118,7 @@ class StreamsSpec extends Specification {
 		when:
 			'A source stream emits next signals followed by an error'
 			def res = []
-			def myStream = Streams.yield { aSubscriber ->
+			def myStream = Stream.yield { aSubscriber ->
 				aSubscriber.onNext('Three')
 				aSubscriber.onNext('Two')
 				aSubscriber.onNext('One')
@@ -2141,7 +2141,7 @@ class StreamsSpec extends Specification {
 		when:
 			'A source stream emits next signals followed by complete'
 			List res = []
-			def myStream = Streams.yield { aSubscriber ->
+			def myStream = Stream.yield { aSubscriber ->
 				aSubscriber.emit('Three')
 				aSubscriber.emit('Two')
 				aSubscriber.emit('One')
@@ -2162,7 +2162,7 @@ class StreamsSpec extends Specification {
 		when:
 			'A source stream emits next signals followed by complete'
 			res = []
-			myStream = Streams.yield { aSubscriber ->
+			myStream = Stream.yield { aSubscriber ->
 				aSubscriber.emit('Three')
 				aSubscriber.failWith(new Exception())
 			}
@@ -2183,7 +2183,7 @@ class StreamsSpec extends Specification {
 		when:
 			'A source stream emits next signals followed by complete'
 			def res = []
-			def myStream = Streams.yield { aSubscriber ->
+			def myStream = Stream.yield { aSubscriber ->
 				aSubscriber.onNext(Signal.next(1))
 				aSubscriber.onNext(Signal.next(2))
 				aSubscriber.onNext(Signal.next(3))
@@ -2207,7 +2207,7 @@ class StreamsSpec extends Specification {
 		when:
 			'A source stream emits next signals followed by an error'
 			def res = []
-			def myStream = Streams.yield { aSubscriber ->
+			def myStream = Stream.yield { aSubscriber ->
 				aSubscriber.onNext('Three')
 				aSubscriber.onNext('Two')
 				aSubscriber.onNext('One')
@@ -2215,7 +2215,7 @@ class StreamsSpec extends Specification {
 
 		and:
 			'Another stream will emit values and complete'
-			def myFallback = Streams.yield { aSubscriber ->
+			def myFallback = Stream.yield { aSubscriber ->
 				aSubscriber.onNext('0')
 				aSubscriber.onNext('1')
 				aSubscriber.onNext('2')
@@ -2224,7 +2224,7 @@ class StreamsSpec extends Specification {
 
 		and:
 			'The streams are switched'
-			def switched = Streams.switchOnNext(Streams.just(myStream, myFallback))
+			def switched = Stream.switchOnNext(Stream.just(myStream, myFallback))
 			switched.consume(
 					{ println(Thread.currentThread().name + ' ' + it); res << it },                          // onNext
 					{ println("Error: " + it.message) }, // onError
@@ -2239,7 +2239,7 @@ class StreamsSpec extends Specification {
 		when:
 			'A source stream emits next signals followed by an error'
 			def res = []
-			def myStream = Streams.<Integer> yield { aSubscriber ->
+			def myStream = Stream.<Integer> yield { aSubscriber ->
 				aSubscriber.onNext(1)
 				aSubscriber.onNext(2)
 				aSubscriber.onNext(3)
@@ -2248,7 +2248,7 @@ class StreamsSpec extends Specification {
 
 		and:
 			'The streams are switched'
-			def switched = myStream.log('lol').switchMap { Streams.range(it, 3) }.log("after-lol")
+			def switched = myStream.log('lol').switchMap { Stream.range(it, 3) }.log("after-lol")
 			switched.consume(
 					{ println(Thread.currentThread().name + ' ' + it); res << it },                          // onNext
 					{ println("Error: " + it.message) }, // onError
@@ -2335,8 +2335,7 @@ class StreamsSpec extends Specification {
 			.log('request')
 					.requestWhen {
 				it
-						.flatMap { v ->
-					Streams.period(avgTime, TimeUnit.MILLISECONDS).map { 1l }
+						.flatMap { v -> Stream.period(avgTime, TimeUnit.MILLISECONDS).map { 1l }
 				}
 			}
 			.elapsed()
@@ -2433,7 +2432,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be materialized for recursive signal or introspection'() {
 		given:
 			'a composable with an initial value'
-			def stream = Streams.just('test')
+			def stream = Stream.just('test')
 
 		when:
 			'the stream is retrieved and a consumer is dynamically added'
@@ -2494,7 +2493,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can re-subscribe its oldest parent on error signals'() {
 		given:
 			'a composable with an initial value'
-			def stream = Streams.fromIterable(['test', 'test2', 'test3'])
+			def stream = Stream.fromIterable(['test', 'test2', 'test3'])
 
 		when:
 			'the stream triggers an error for the 2 first elements and is using retry(2) to ignore them'
@@ -2543,7 +2542,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the stream triggers an error for the 2 first elements and is using retry(matcher) to ignore them'
 			i = 0
-			stream = Streams.fromIterable(['test', 'test2', 'test3'])
+			stream = Stream.fromIterable(['test', 'test2', 'test3'])
 			value = stream.doOnNext {
 				if (i++ < 2) {
 					throw new RuntimeException()
@@ -2582,11 +2581,11 @@ class StreamsSpec extends Specification {
 		when:
 			'when composable with an initial value'
 			def counter = 0
-			def value = Streams.yield {
+			def value = Stream.yield {
 				counter++
 				it.onError(new RuntimeException("always fails $counter"))
 			}.retryWhen { attempts ->
-			  attempts.log('zipWith').zipWith(Streams.range(1, 3), { t1, t2 -> t2 }).flatMap { i ->
+			  attempts.log('zipWith').zipWith(Stream.range(1, 3), { t1, t2 -> t2 }).flatMap { i ->
 					println "delay retry by " + i + " second(s)"
 				  println attempts.debug()
 					Streams.timer(i)
@@ -2605,7 +2604,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can re-subscribe its oldest parent on complete signals'() {
 		given:
 			'a composable with an initial value'
-			def stream = Streams.fromIterable(['test', 'test2', 'test3'])
+			def stream = Stream.fromIterable(['test', 'test2', 'test3'])
 
 		when:
 			'using repeat(2) to ignore complete twice and resubscribe'
@@ -2648,13 +2647,13 @@ class StreamsSpec extends Specification {
 		when:
 			'when composable with an initial value'
 			def counter = 0
-			Streams.yield {
+		Stream.yield {
 				counter++
 				it.onComplete()
 			}.log('repeat').repeatWhen { attempts ->
-				attempts.zipWith(Streams.range(1, 3)) { t1, t2 -> t2 }.flatMap { i ->
+				attempts.zipWith(Stream.range(1, 3)) { t1, t2 -> t2 }.flatMap { i ->
 					println "delay repeat by " + i + " second(s)"
-					Streams.timer(i)
+				  Stream.timer(i)
 				}
 			}.log('test').subscribe()
 	  sleep 10000
@@ -2667,7 +2666,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be timestamped'() {
 		given:
 			'a composable with an initial value and a relative time'
-			def stream = Streams.just('test')
+			def stream = Stream.just('test')
 			def timestamp = System.currentTimeMillis()
 
 		when:
@@ -2683,7 +2682,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be benchmarked'() {
 		given:
 			'a composable with an initial value and a relative time'
-			def stream = Streams.just('test')
+			def stream = Stream.just('test')
 			long timestamp = System.currentTimeMillis()
 
 		when:
@@ -2703,7 +2702,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be sorted'() {
 		given:
 			'a composable with an initial value and a relative time'
-			def stream = Streams.fromIterable([43, 32122, 422, 321, 43, 443311])
+			def stream = Stream.fromIterable([43, 32122, 422, 321, 43, 443311])
 
 		when:
 			'sorted operation is added and the stream is retrieved'
@@ -2715,7 +2714,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'a composable with an initial value and a relative time'
-			stream = Streams.fromIterable([43, 32122, 422, 321, 43, 443311])
+			stream = Stream.fromIterable([43, 32122, 422, 321, 43, 443311])
 
 		and:
 			'sorted operation is added for up to 3 elements ordered at once and the stream is retrieved'
@@ -2728,7 +2727,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'a composable with an initial value and a relative time'
-			stream = Streams.fromIterable([1, 2, 3, 4])
+			stream = Stream.fromIterable([1, 2, 3, 4])
 
 		and:
 			'revese sorted operation is added and the stream is retrieved'
@@ -2745,7 +2744,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be limited'() {
 		given:
 			'a composable with an initial values'
-			def stream = Streams.fromIterable(['test', 'test2', 'test3'])
+			def stream = Stream.fromIterable(['test', 'test2', 'test3'])
 
 		when:
 			'take to the first 2 elements'
@@ -2775,12 +2774,12 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be limited in time'() {
 		given:
 			'a composable with an initial values'
-			def stream = Streams.range(0, Integer.MAX_VALUE)
+			def stream = Stream.range(0, Integer.MAX_VALUE)
 					.dispatchOn(asyncGroup)
 
 		when:
 			'take to the first 2 elements'
-			Streams.await(stream.take(2, TimeUnit.SECONDS))
+		Stream.await(stream.take(2, TimeUnit.SECONDS))
 
 		then:
 			'the second is the last available'
@@ -2791,7 +2790,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be skipped'() {
 		given:
 			'a composable with an initial values'
-			def stream = Streams.fromIterable(['test', 'test2', 'test3'])
+			def stream = Stream.fromIterable(['test', 'test2', 'test3'])
 
 		when:
 			'skip to the second element'
@@ -2822,7 +2821,7 @@ class StreamsSpec extends Specification {
 	def 'A Stream can be skipped in time'() {
 		given:
 			'a composable with an initial values'
-			def stream = Streams.range(0, 1000)
+			def stream = Stream.range(0, 1000)
 					.dispatchOn(asyncGroup)
 
 		when:
@@ -2856,7 +2855,7 @@ class StreamsSpec extends Specification {
   def "error publishers don't fast fail"(){
 	when: 'preparing error publisher'
 		Publisher<Object> publisher = error(new IllegalStateException("boo"));
-		Streams.from(publisher).onErrorReturn{ ex -> "error"}
+	Stream.from(publisher).onErrorReturn{ ex -> "error"}
 	    def a = 1
 
 	then: 'no exceptions'

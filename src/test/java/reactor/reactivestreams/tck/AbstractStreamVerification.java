@@ -43,7 +43,6 @@ import reactor.Timers;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.Assert;
 import reactor.rx.Stream;
-import reactor.rx.Streams;
 import reactor.rx.broadcast.Broadcaster;
 
 /**
@@ -101,7 +100,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 
 	@Override
 	public Publisher<Integer> createFailedPublisher() {
-		return Streams.fail(new Exception("oops")).cast(Integer.class);
+		return Stream.fail(new Exception("oops")).cast(Integer.class);
 	}
 
 	public abstract Processor<Integer, Integer> createProcessor(int bufferSize);
@@ -123,7 +122,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 				list.add(i);
 			}
 
-			return Streams
+			return Stream
 			  .fromIterable(list)
 			  .log("iterable-publisher")
 			  .filter(integer -> true)
@@ -132,7 +131,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 		} else {
 			final Random random = new Random();
 
-			return Streams
+			return Stream
 			  .<Integer>createWith((n, s) -> s.onNext(random.nextInt()))
 			  .log("random-publisher")
 			  .map(Math::abs);

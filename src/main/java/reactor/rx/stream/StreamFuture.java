@@ -22,7 +22,6 @@ import reactor.Flux;
 import reactor.core.subscriber.SubscriberWithContext;
 import reactor.fn.Consumer;
 import reactor.rx.Stream;
-import reactor.rx.Streams;
 
 /**
  * A Stream that emits a result of a {@link Future} and then complete.
@@ -83,10 +82,10 @@ public final class StreamFuture<T> {
 			throw new IllegalArgumentException("Given time is negative : "+time+" "+unit);
 		}
 		else if(future.isCancelled()) {
-			return Streams.empty();
+			return Stream.empty();
 		}
 
-		return Streams.from(Flux.create(new Consumer<SubscriberWithContext<T, Void>>() {
+		return Stream.from(Flux.create(new Consumer<SubscriberWithContext<T, Void>>() {
 			@Override
 			public void accept(SubscriberWithContext<T, Void> s) {
 				try {

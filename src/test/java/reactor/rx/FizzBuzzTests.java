@@ -43,7 +43,7 @@ public class FizzBuzzTests extends AbstractReactorTest {
 		final Timer timer = new Timer();
 		AtomicLong globalCounter = new AtomicLong();
 
-		Control c = Streams.createWith((demand, subscriber) -> {
+		Control c = Stream.createWith((demand, subscriber) -> {
 			System.out.println("demand is " + demand);
 			if (!subscriber.isCancelled()) {
 				for (int i = 0; i < demand; i++) {
@@ -60,17 +60,17 @@ public class FizzBuzzTests extends AbstractReactorTest {
 				}
 			}
 		}).log("oooo")
-		  .flatMap((s) -> Streams.yield((sub) -> timer.schedule(new TimerTask() {
+		                  .flatMap((s) -> Stream.yield((sub) -> timer.schedule(new TimerTask() {
 			  @Override
 			  public void run() {
 				  sub.onNext(s);
 				  sub.onComplete();
 			  }
 		  }, 10)))
-		  .capacity(batchSize)
-		  .log()
-	    	.take(numOfItems+1)
-		  .consume();
+		                  .capacity(batchSize)
+		                  .log()
+		                  .take(numOfItems+1)
+		                  .consume();
 
 		while (!c.isTerminated()) ;
 	}
@@ -87,10 +87,10 @@ public class FizzBuzzTests extends AbstractReactorTest {
 		//this line works
 //        Broadcaster<String> ring = Broadcaster.create(Environment.get());
 
-		Stream<String> stream = Streams.from(ring.start());
+		Stream<String> stream = Stream.from(ring.start());
 
 		Stream<String> stream2 = stream
-				.zipWith(Streams.createWith((d, s) -> {
+				.zipWith(Stream.createWith((d, s) -> {
 			  for (int i = 0; i < d; i++) {
 				  if(!s.isCancelled()) {
 					  s.onNext(System.currentTimeMillis());

@@ -25,7 +25,6 @@ import org.testng.SkipException;
 import reactor.Processors;
 import reactor.fn.BiFunction;
 import reactor.rx.Stream;
-import reactor.rx.Streams;
 
 /**
  * @author Stephane Maldini
@@ -40,7 +39,7 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 	@Override
 	public Processor<Integer, Integer> createProcessor(int bufferSize) {
 
-		Stream<String> otherStream = Streams.just("test", "test2", "test3");
+		Stream<String> otherStream = Stream.just("test", "test2", "test3");
 		System.out.println("Providing new downstream");
 		Processor<Integer, Integer> p = Processors.queue("stream-raw-fork", bufferSize);
 
@@ -48,22 +47,22 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 		cumulatedJoin.set(0);
 
 		BiFunction<Integer, String, Integer> combinator = (t1, t2) -> t1;
-		return Processors.create(p, Streams.from(p)
-		                                   .forkJoin(2, stream -> stream.scan((prev, next) -> next)
+		return Processors.create(p, Stream.from(p)
+		                                  .forkJoin(2, stream -> stream.scan((prev, next) -> next)
 		                                                                .map(integer -> -integer)
 		                                                                .filter(integer -> integer <= 0)
 		                                                                .every(1)
 		                                                                .map(integer -> -integer)
 		                                                                .buffer(batch, 50, TimeUnit.MILLISECONDS)
-		                                                                .flatMap(Streams::fromIterable)
+		                                                                .flatMap(Stream::fromIterable)
 		                                                                .doOnNext(array -> cumulated.getAndIncrement())
-		                                                                .flatMap(i -> Streams.zip(Streams.just(i),
+		                                                                .flatMap(i -> Stream.zip(Stream.just(i),
 		                                                                                          otherStream,
 		                                                                                          combinator))
 		                                                                .doOnNext(this::monitorThreadUse))
-		                                   .doOnNext(array -> cumulatedJoin.getAndIncrement())
-		                                   .process(Processors.topic("stream-raw-join", bufferSize))
-		                                   .when(Throwable.class, Throwable::printStackTrace));
+		                                  .doOnNext(array -> cumulatedJoin.getAndIncrement())
+		                                  .process(Processors.topic("stream-raw-join", bufferSize))
+		                                  .when(Throwable.class, Throwable::printStackTrace));
 	}
 
 	@Override

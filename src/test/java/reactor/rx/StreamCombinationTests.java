@@ -80,8 +80,8 @@ public class StreamCombinationTests extends AbstractReactorTest {
 	public void testMerge1ToN() throws Exception {
 		final int n = 1000;
 
-		Stream<Integer> stream = Streams.merge(Streams.just(1)
-		                                              .map(i -> Streams.range(0, n)));
+		Stream<Integer> stream = Stream.merge(Stream.just(1)
+		                                            .map(i -> Stream.range(0, n)));
 
 		final CountDownLatch latch = new CountDownLatch(n);
 		awaitLatch(stream.consume(integer -> latch.countDown()), latch);
@@ -96,7 +96,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 			//allSensors().add(sensorOdd.reduce(this::computeMin).timeout(1000));
 		}
 
-		return Streams.from(sensorOdd);
+		return Stream.from(sensorOdd);
 	}
 
 	public Stream<SensorData> sensorEven() {
@@ -107,7 +107,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 			// add substream to "master" list
 			//allSensors().add(sensorEven.reduce(this::computeMin).timeout(1000));
 		}
-		return Streams.from(sensorEven);
+		return Stream.from(sensorEven);
 	}
 
 	@Test
@@ -138,9 +138,9 @@ public class StreamCombinationTests extends AbstractReactorTest {
 
 		CountDownLatch latch = new CountDownLatch(elements + 1);
 
-		Control tail = Streams.concat(sensorEven(), sensorOdd())
-		                      .log("concat")
-		                      .consume(i -> latch.countDown(), null, latch::countDown);
+		Control tail = Stream.concat(sensorEven(), sensorOdd())
+		                     .log("concat")
+		                     .consume(i -> latch.countDown(), null, latch::countDown);
 
 		System.out.println(tail.debug());
 		generateData(elements);
@@ -229,9 +229,9 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 69;
 		CountDownLatch latch = new CountDownLatch(elements / 2);
 
-		Control tail = Streams.zip(sensorEven(), sensorOdd(), this::computeMin)
-		                      .log("sampleZipTest")
-		                      .consume(x -> latch.countDown());
+		Control tail = Stream.zip(sensorEven(), sensorOdd(), this::computeMin)
+		                     .log("sampleZipTest")
+		                     .consume(x -> latch.countDown());
 
 		generateData(elements);
 

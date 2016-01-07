@@ -526,13 +526,13 @@ public final class Promise<O> extends Mono<O>
 		if (out == null) {
 			SignalType endState = this.endState;
 			if (endState == SignalType.COMPLETE) {
-				return Streams.<O>empty();
+				return Stream.<O>empty();
 			}
 			else if(endState == SignalType.NEXT) {
-				return Streams.just(value);
+				return Stream.just(value);
 			}
 			else if (endState == SignalType.ERROR) {
-				return Streams.fail(error);
+				return Stream.fail(error);
 			}
 			else {
 				out = Broadcaster.replayLastOrDefault(value, timer);
