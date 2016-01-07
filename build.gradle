@@ -132,7 +132,7 @@ project.tasks.withType(Test).all {
 
 
 configure(rootProject) {
-  configuration.all {
+  configurations.all {
 	resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
   }
   repositories {
