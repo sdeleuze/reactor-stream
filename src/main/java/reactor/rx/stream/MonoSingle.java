@@ -51,7 +51,7 @@ public final class MonoSingle<T> extends reactor.Mono.MonoBarrier<T, T> {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Supplier<T> completeOnEmptySequence() {
-		return COMPLETE_ON_EMPTY_SEQUENCE;
+		return (Supplier<T>)COMPLETE_ON_EMPTY_SEQUENCE;
 	}
 
 	final Supplier<? extends T> defaultSupplier;
