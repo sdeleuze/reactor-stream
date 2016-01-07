@@ -1706,7 +1706,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	@SuppressWarnings("unchecked")
 	public final <V> Stream<V> after(Supplier<? extends Publisher<V>> sourceSupplier) {
 		return new StreamBarrier<>(new FluxFlatMap<>(
-				new FluxMapSignal<>(this, null, null, sourceSupplier),
+				new FluxMapSignal<>(after(), null, null, sourceSupplier),
 				IDENTITY_FUNCTION,
 				ReactiveState.SMALL_BUFFER_SIZE, 32));
 	}
