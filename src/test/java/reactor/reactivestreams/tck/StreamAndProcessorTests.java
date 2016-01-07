@@ -47,7 +47,7 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 		cumulatedJoin.set(0);
 
 		BiFunction<Integer, String, Integer> combinator = (t1, t2) -> t1;
-		return Processors.create(p, Stream.from(p)
+		return Processors.create(p, Stream.fromProcessor(p)
 		                                  .forkJoin(2, stream -> stream.scan((prev, next) -> next)
 		                                                                .map(integer -> -integer)
 		                                                                .filter(integer -> integer <= 0)

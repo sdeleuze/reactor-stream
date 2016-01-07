@@ -742,26 +742,6 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
-	 * A simple decoration of the given {@link Processor} to expose {@link Stream} API and proxy any subscribe call to
-	 * the Processor.
-	 * The Processor has to first call onSubscribe and receive a subscription request callback before any onNext
-	 * call or
-	 * will risk loosing events.
-	 *
-	 * @param processor the processor to decorate with the Stream API
-	 * @param <I>       the type of values observed by the receiving subscriber
-	 * @param <O>       the type of values passing through the sending {@literal Stream}
-	 * @return a new {@link Stream}
-	 */
-	@SuppressWarnings("unchecked")
-	public static <I, O> StreamProcessor<I, O> from(final Processor<I, O> processor) {
-		if (StreamProcessor.class.isAssignableFrom(processor.getClass())) {
-			return (StreamProcessor<I, O>) processor;
-		}
-		return StreamProcessor.from(processor);
-	}
-
-	/**
 	 * Build a {@literal Stream} whom data is sourced by each element of the passed array on subscription request.
 	 * <p>
 	 * It will use the passed dispatcher to emit signals.
@@ -820,6 +800,26 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 */
 	public static <T> Stream<T> fromIterator(Iterator<? extends T> values) {
 		return from(Flux.fromIterator(values));
+	}
+
+	/**
+	 * A simple decoration of the given {@link Processor} to expose {@link Stream} API and proxy any subscribe call to
+	 * the Processor.
+	 * The Processor has to first call onSubscribe and receive a subscription request callback before any onNext
+	 * call or
+	 * will risk loosing events.
+	 *
+	 * @param processor the processor to decorate with the Stream API
+	 * @param <I>       the type of values observed by the receiving subscriber
+	 * @param <O>       the type of values passing through the sending {@literal Stream}
+	 * @return a new {@link Stream}
+	 */
+	@SuppressWarnings("unchecked")
+	public static <I, O> StreamProcessor<I, O> fromProcessor(final Processor<I, O> processor) {
+		if (StreamProcessor.class.isAssignableFrom(processor.getClass())) {
+			return (StreamProcessor<I, O>) processor;
+		}
+		return StreamProcessor.from(processor);
 	}
 
 	/**

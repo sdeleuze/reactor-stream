@@ -87,7 +87,7 @@ public class FizzBuzzTests extends AbstractReactorTest {
 		//this line works
 //        Broadcaster<String> ring = Broadcaster.create(Environment.get());
 
-		Stream<String> stream = Stream.from(ring.start());
+		Stream<String> stream = Stream.fromProcessor(ring.start());
 
 		Stream<String> stream2 = stream
 				.zipWith(Stream.createWith((d, s) -> {

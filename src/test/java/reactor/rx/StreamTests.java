@@ -473,7 +473,7 @@ public class StreamTests extends AbstractReactorTest {
 	public void konamiCode() throws InterruptedException {
 		final RingBufferProcessor<Integer> keyboardStream = RingBufferProcessor.create();
 
-		Mono<List<Boolean>> konamis = Stream.from(keyboardStream.start())
+		Mono<List<Boolean>> konamis = Stream.fromProcessor(keyboardStream.start())
 		                                    .skipWhile(key -> KeyEvent.VK_UP != key)
 		                                    .buffer(10, 1)
 		                                    .map(keys -> keys.size() == 10 &&
@@ -1356,11 +1356,11 @@ public class StreamTests extends AbstractReactorTest {
 		                                          .log("begin-persistence");
 
 		final RingBufferProcessor<Integer> computationBroadcaster = RingBufferProcessor.create("computation", BACKLOG);
-		final Stream<String> computationStream = Stream.from(computationBroadcaster)
+		final Stream<String> computationStream = Stream.fromProcessor(computationBroadcaster)
 		                                               .map(i -> Integer.toString(i));
 
 		final RingBufferProcessor<Integer> persistenceBroadcaster = RingBufferProcessor.create("persistence", BACKLOG);
-		final Stream<String> persistenceStream = Stream.from(persistenceBroadcaster)
+		final Stream<String> persistenceStream = Stream.fromProcessor(persistenceBroadcaster)
 		                                               .map(i -> "done " + i);
 
 		forkStream.subscribe(computationBroadcaster);

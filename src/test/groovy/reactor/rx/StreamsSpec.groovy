@@ -1727,7 +1727,7 @@ class StreamsSpec extends Specification {
 			'a source stream with a given publisher factory'
 			def emitter = Processors.emitter()
 			emitter.start()
-			def s = Stream.from(emitter)
+			def s = Stream.fromProcessor(emitter)
 
 		when:
 			'accept a value'
