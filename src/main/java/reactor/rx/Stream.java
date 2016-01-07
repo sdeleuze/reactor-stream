@@ -3069,7 +3069,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @since 1.1, 2.0, 2.5
 	 */
 	public final <A> Mono<A> reduce(final A initial, BiFunction<A, ? super O, A> fn) {
-		return reduce(new Supplier<A>() {
+		return reduceWith(new Supplier<A>() {
 			@Override
 			public A get() {
 				return initial;
@@ -3089,7 +3089,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @since 1.1, 2.0, 2.5
 	 */
-	public final <A> Mono<A> reduce(final Supplier<A> initial, BiFunction<A, ? super O, A> fn) {
+	public final <A> Mono<A> reduceWith(final Supplier<A> initial, BiFunction<A, ? super O, A> fn) {
 		return new MonoReduce<>(this, initial, fn);
 	}
 
