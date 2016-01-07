@@ -14,16 +14,11 @@ endif::[]
 
 include::gettingstarted.adoc[]
 
-include::20to21.adoc[]
+include::20to25.adoc[]
 
-[[reactor-core]]
-= *reactor-core*
-include::core.adoc[]
-include::core-publisher.adoc[]
-include::core-subscriber.adoc[]
-include::core-processor.adoc[]
-include::core-timer.adoc[]
-include::core-buffer.adoc[]
+[[reactor-stream]]
+= *reactor-stream*
+include::streams.adoc[]
 
 [[reactor-samples]]
 == Cookbook
