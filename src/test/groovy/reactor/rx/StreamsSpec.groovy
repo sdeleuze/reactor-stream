@@ -168,7 +168,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'the complete signal is observed and stream is retrieved'
-			def tap = stream.after().next()
+			def tap = stream.after()
 
 		then:
 			'it is available'
@@ -177,7 +177,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the error signal is observed and stream is retrieved'
 			stream = Stream.fail(new Exception())
-			stream.after().next().get()
+			stream.after().get()
 
 		then:
 			'it is available'

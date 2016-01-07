@@ -1685,13 +1685,26 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
+	 * Ignore the sequence and return onComplete
+	 *
 	 * @return {@literal new Stream}
 	 *
 	 * @see Flux#after)
 	 */
-	@SuppressWarnings("unchecked")
-	public final Stream<Void> after() {
-		return new StreamBarrier.Identity<>(new MonoIgnoreElements<>(this));
+	public final Mono<Void> after() {
+		return new MonoIgnoreElements<>(this);
+	}
+
+	/**
+	 * Return a {@code Mono<Void>} that completes when this {@link Mono} completes.
+	 *
+	 * @return
+	 */
+	public final <V> Stream<V> after(Supplier<? extends Publisher<V>> sourceSupplier) {
+		return new StreamBarrier<>(new FluxFlatMap<>(
+				new FluxMapSignal<>(this, null, null, sourceSupplier),
+				IDENTITY_FUNCTION,
+				ReactiveState.SMALL_BUFFER_SIZE, 32));
 	}
 
 	/**
