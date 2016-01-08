@@ -220,7 +220,7 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		@Override
 		public void onComplete() {
 
-			BackpressureUtils.postComplete(actual, buffer, REQUESTED, this, this);
+			DrainUtils.postComplete(actual, buffer, REQUESTED, this, this);
 		}
 
 		@Override

@@ -58,11 +58,11 @@ public class Promise<O> extends Mono<O>
 		implements Processor<O, O>, Consumer<O>, ReactiveState.Bounded, Subscription, ReactiveState
 		.FailState,  ReactiveState.Upstream, ReactiveState.Downstream, ReactiveState.ActiveUpstream {
 
+	final static AtomicReferenceFieldUpdater<Promise, SignalType> STATE_UPDATER =
+			PlatformDependent.newAtomicReferenceFieldUpdater(Promise.class, "endState");
 	private final static Promise                            COMPLETE  = success(null);
 	private static final AtomicIntegerFieldUpdater<Promise> REQUESTED =
 			AtomicIntegerFieldUpdater.newUpdater(Promise.class, "requested");
-
-
 
 	/**
 	 * Create synchronous {@link Promise} and use the given error to complete the {@link Promise} immediately.
@@ -200,19 +200,13 @@ public class Promise<O> extends Mono<O>
 			return new Promise<>(value, timer);
 		}
 	}
-
 	private final Timer        timer;
 	protected     Subscription subscription;
-
 	Broadcaster<O> outboundStream;
-
 	volatile int requested = 0;
 	volatile SignalType endState;
 	volatile O          value;
 	volatile Throwable  error;
-
-	final static AtomicReferenceFieldUpdater<Promise, SignalType> STATE_UPDATER =
-			PlatformDependent.newAtomicReferenceFieldUpdater(Promise.class, "endState");
 
 
 	/**
@@ -368,37 +362,35 @@ public class Promise<O> extends Mono<O>
 	}
 
 	/**
-	 * Returns the value that completed this promise. Returns {@code null} if the promise has not been completed. If the
+	 * Block the calling thread for the specified time, waiting for the completion of this {@code Promise}. If the
 	 * promise is completed with an error a RuntimeException that wraps the error is thrown.
 	 *
-	 * @return the value that completed the promise, or {@code null} if it has not been completed
+	 * @param timeout the timeout value
+	 * @param unit the {@link TimeUnit} of the timeout value
 	 *
-	 * @throws RuntimeException if the promise was completed with an error
+	 * @return the value of this {@code Promise} or {@code null} if the timeout is reached and the {@code Promise} has
+	 * not completed
 	 */
-	public final O peek() {
-		request(1);
-		SignalType endState = this.endState;
+	@Override
+	public O get(long timeout, TimeUnit unit) {
+		try {
+			return await(timeout, unit);
+		}
+		catch (InterruptedException ie) {
+			Thread.currentThread()
+			      .interrupt();
+			throw CancelException.get();
+		}
+	}
 
-		if (endState == SignalType.NEXT) {
-			return value;
-		}
-		else if (endState == SignalType.ERROR) {
-			if (RuntimeException.class.isInstance(error)) {
-				throw (RuntimeException) error;
-			}
-			else {
-				throw ReactorFatalException.create(error);
-			}
-		}
-		else {
-			return null;
-		}
+	@Override
+	public final Throwable getError() {
+		return reason();
 	}
 
 	public final Timer getTimer() {
 		return timer;
 	}
-
 
 	/**
 	 * Indicates whether this {@code Promise} has been completed with an error.
@@ -506,24 +498,30 @@ public class Promise<O> extends Mono<O>
 	}
 
 	/**
-	 * Block the calling thread for the specified time, waiting for the completion of this {@code Promise}. If the
+	 * Returns the value that completed this promise. Returns {@code null} if the promise has not been completed. If the
 	 * promise is completed with an error a RuntimeException that wraps the error is thrown.
 	 *
-	 * @param timeout the timeout value
-	 * @param unit the {@link TimeUnit} of the timeout value
+	 * @return the value that completed the promise, or {@code null} if it has not been completed
 	 *
-	 * @return the value of this {@code Promise} or {@code null} if the timeout is reached and the {@code Promise} has
-	 * not completed
+	 * @throws RuntimeException if the promise was completed with an error
 	 */
-	@Override
-	public O get(long timeout, TimeUnit unit) {
-		try {
-			return await(timeout, unit);
+	public O peek() {
+		request(1);
+		SignalType endState = this.endState;
+
+		if (endState == SignalType.NEXT) {
+			return value;
 		}
-		catch (InterruptedException ie) {
-			Thread.currentThread()
-			      .interrupt();
-			throw CancelException.get();
+		else if (endState == SignalType.ERROR) {
+			if (RuntimeException.class.isInstance(error)) {
+				throw (RuntimeException) error;
+			}
+			else {
+				throw ReactorFatalException.create(error);
+			}
+		}
+		else {
+			return null;
 		}
 	}
 
@@ -601,11 +599,6 @@ public class Promise<O> extends Mono<O>
 		return subscription;
 	}
 
-	@Override
-	public final Throwable getError() {
-		return reason();
-	}
-
 	static final class PromiseFulfilled<T> extends Promise<T> implements Supplier<T>{
 
 		public PromiseFulfilled(T value, Timer timer) {
@@ -618,8 +611,13 @@ public class Promise<O> extends Mono<O>
 		}
 
 		@Override
+		public T peek() {
+			return value;
+		}
+
+		@Override
 		public void subscribe(Subscriber<? super T> subscriber) {
-			subscriber.onSubscribe(new ScalarSubscription<>(this, value));
+			subscriber.onSubscribe(new ScalarSubscription<>(subscriber, value));
 		}
 	}
 }

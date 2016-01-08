@@ -567,7 +567,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 
 			done = true;
 
-			BackpressureUtils.postComplete(actual, buffers, REQUESTED, this, this);
+			DrainUtils.postComplete(actual, buffers, REQUESTED, this, this);
 		}
 
 		@Override
