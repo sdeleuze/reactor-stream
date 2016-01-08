@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Processor;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Mono;
@@ -59,6 +60,8 @@ public final class Promise<O> extends Mono<O>
 	private static final AtomicIntegerFieldUpdater<Promise> REQUESTED =
 			AtomicIntegerFieldUpdater.newUpdater(Promise.class, "requested");
 
+
+
 	/**
 	 * Create synchronous {@link Promise} and use the given error to complete the {@link Promise} immediately.
 	 *
@@ -82,6 +85,26 @@ public final class Promise<O> extends Mono<O>
 	 */
 	public static <T> Promise<T> error(Timer timer, Throwable error) {
 		return new Promise<T>(error, timer);
+	}
+
+	/**
+	 * Transform a publisher into a Promise thus subscribing to the passed source.
+	 *
+	 * @param source the data source
+	 * @param <T> the type of the value
+	 *
+	 * @return A {@link Promise} that is completed with the given error
+	 */
+	public static <T> Promise<T> from(Publisher<T> source) {
+		if(source == null){
+			return Promise.success(null);
+		}
+		if(Promise.class.isAssignableFrom(source.getClass())){
+			return (Promise<T>)source;
+		}
+		Promise<T> p = Promise.prepare();
+		source.subscribe(p);
+		return p;
 	}
 
 	/**
