@@ -29,6 +29,7 @@ import reactor.Timers;
 import reactor.core.error.CancelException;
 import reactor.core.error.Exceptions;
 import reactor.core.error.ReactorFatalException;
+import reactor.core.subscription.ScalarSubscription;
 import reactor.core.support.BackpressureUtils;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.SignalType;
@@ -53,7 +54,7 @@ import reactor.rx.broadcast.Broadcaster;
  * @author Stephane Maldini
  * @see <a href="https://github.com/promises-aplus/promises-spec">Promises/A+ specification</a>
  */
-public final class Promise<O> extends Mono<O>
+public class Promise<O> extends Mono<O>
 		implements Processor<O, O>, Consumer<O>, ReactiveState.Bounded, Subscription, ReactiveState
 		.FailState,  ReactiveState.Upstream, ReactiveState.Downstream, ReactiveState.ActiveUpstream {
 
@@ -192,7 +193,12 @@ public final class Promise<O> extends Mono<O>
 	 * @return A {@link Promise} that is completed with the given value
 	 */
 	public static <T> Promise<T> success(Timer timer, T value) {
-		return new Promise<T>(value, timer);
+		if(value != null) {
+			return new PromiseFulfilled<>(value, timer);
+		}
+		else{
+			return new Promise<>(value, timer);
+		}
 	}
 
 	private final Timer        timer;
@@ -273,7 +279,7 @@ public final class Promise<O> extends Mono<O>
 	 * @throws InterruptedException if the thread is interruped while awaiting completion
 	 * @throws RuntimeException     if the promise is completed with an error
 	 */
-	public O await() throws InterruptedException {
+	public final O await() throws InterruptedException {
 		return await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
 	}
 
@@ -288,7 +294,7 @@ public final class Promise<O> extends Mono<O>
 	 *
 	 * @throws InterruptedException if the thread is interruped while awaiting completion
 	 */
-	public O await(long timeout, TimeUnit unit) throws InterruptedException {
+	public final O await(long timeout, TimeUnit unit) throws InterruptedException {
 		request(1);
 		if (!isPending()) {
 			return peek();
@@ -328,7 +334,7 @@ public final class Promise<O> extends Mono<O>
 	 * @throws InterruptedException if the thread is interruped while awaiting completion
 	 * @throws RuntimeException     if the promise is completed with an error
 	 */
-	public boolean awaitSuccess() throws InterruptedException {
+	public final boolean awaitSuccess() throws InterruptedException {
 		return awaitSuccess(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
 	}
 
@@ -342,13 +348,13 @@ public final class Promise<O> extends Mono<O>
 	 *
 	 * @throws InterruptedException if the thread is interruped while awaiting completion
 	 */
-	public boolean awaitSuccess(long timeout, TimeUnit unit) throws InterruptedException {
+	public final boolean awaitSuccess(long timeout, TimeUnit unit) throws InterruptedException {
 		await(timeout, unit);
 		return isSuccess();
 	}
 
 	@Override
-	public void cancel() {
+	public final void cancel() {
 		Subscription subscription = this.subscription;
 		if (subscription != null) {
 			this.subscription = null;
@@ -357,7 +363,7 @@ public final class Promise<O> extends Mono<O>
 	}
 
 	@Override
-	public Subscriber downstream() {
+	public final Subscriber downstream() {
 		return outboundStream;
 	}
 
@@ -369,7 +375,7 @@ public final class Promise<O> extends Mono<O>
 	 *
 	 * @throws RuntimeException if the promise was completed with an error
 	 */
-	public O peek() {
+	public final O peek() {
 		request(1);
 		SignalType endState = this.endState;
 
@@ -389,7 +395,7 @@ public final class Promise<O> extends Mono<O>
 		}
 	}
 
-	public Timer getTimer() {
+	public final Timer getTimer() {
 		return timer;
 	}
 
@@ -399,7 +405,7 @@ public final class Promise<O> extends Mono<O>
 	 *
 	 * @return {@code true} if this {@code Promise} was completed with an error, {@code false} otherwise.
 	 */
-	public boolean isError() {
+	public final boolean isError() {
 		return endState == SignalType.ERROR;
 	}
 
@@ -410,12 +416,12 @@ public final class Promise<O> extends Mono<O>
 	 *
 	 * @see #isTerminated()
 	 */
-	public boolean isPending() {
+	public final boolean isPending() {
 		return endState == null;
 	}
 
 	@Override
-	public boolean isStarted() {
+	public final boolean isStarted() {
 		return requested > 0;
 	}
 
@@ -424,22 +430,22 @@ public final class Promise<O> extends Mono<O>
 	 *
 	 * @return {@code true} if this {@code Promise} is successful, {@code false} otherwise.
 	 */
-	public boolean isSuccess() {
+	public final boolean isSuccess() {
 		return endState == SignalType.NEXT || endState == SignalType.COMPLETE;
 	}
 
 	@Override
-	public boolean isTerminated() {
+	public final boolean isTerminated() {
 		return endState == SignalType.COMPLETE || endState == SignalType.ERROR;
 	}
 
 	@Override
-	public void onComplete() {
+	public final void onComplete() {
 		onNext(null);
 	}
 
 	@Override
-	public void onError(Throwable cause) {
+	public final void onError(Throwable cause) {
 		if (this.endState != null ||
 				!STATE_UPDATER.compareAndSet(this, null, SignalType.ERROR)) {
 				Exceptions.onErrorDropped(cause);
@@ -455,7 +461,7 @@ public final class Promise<O> extends Mono<O>
 	}
 
 	@Override
-	public void onNext(O value) {
+	public final void onNext(O value) {
 		Subscriber<O> subscriber;
 
 		SignalType endSignal = null == value ? SignalType.COMPLETE : SignalType.NEXT;
@@ -490,7 +496,7 @@ public final class Promise<O> extends Mono<O>
 	}
 
 	@Override
-	public void onSubscribe(Subscription subscription) {
+	public final void onSubscribe(Subscription subscription) {
 		if (BackpressureUtils.validate(this.subscription, subscription)) {
 			this.subscription = subscription;
 			if (requested == 1) {
@@ -527,7 +533,7 @@ public final class Promise<O> extends Mono<O>
 	 *
 	 * @return the error (if any)
 	 */
-	public Throwable reason() {
+	public final Throwable reason() {
 		return error;
 	}
 
@@ -549,7 +555,7 @@ public final class Promise<O> extends Mono<O>
 		}
 	}
 
-	public Stream<O> stream() {
+	public final Stream<O> stream() {
 		Broadcaster<O> out = outboundStream;
 		if (out == null) {
 			SignalType endState = this.endState;
@@ -582,7 +588,7 @@ public final class Promise<O> extends Mono<O>
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return "{" +
 				"value : \"" + value + "\", " +
 				(endState != null ? "state : \"" + endState + "\", " : "") +
@@ -596,7 +602,24 @@ public final class Promise<O> extends Mono<O>
 	}
 
 	@Override
-	public Throwable getError() {
+	public final Throwable getError() {
 		return reason();
+	}
+
+	static final class PromiseFulfilled<T> extends Promise<T> implements Supplier<T>{
+
+		public PromiseFulfilled(T value, Timer timer) {
+			super(value, timer);
+		}
+
+		@Override
+		public T get() {
+			return value;
+		}
+
+		@Override
+		public void subscribe(Subscriber<? super T> subscriber) {
+			subscriber.onSubscribe(new ScalarSubscription<>(this, value));
+		}
 	}
 }
