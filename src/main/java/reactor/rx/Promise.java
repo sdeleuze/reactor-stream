@@ -36,6 +36,7 @@ import reactor.core.support.internal.PlatformDependent;
 import reactor.core.timer.Timer;
 import reactor.fn.BiConsumer;
 import reactor.fn.Consumer;
+import reactor.fn.Supplier;
 import reactor.rx.broadcast.Broadcaster;
 
 /**
@@ -95,12 +96,16 @@ public final class Promise<O> extends Mono<O>
 	 *
 	 * @return A {@link Promise} that is completed with the given error
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> Promise<T> from(Publisher<T> source) {
 		if(source == null){
 			return Promise.success(null);
 		}
 		if(Promise.class.isAssignableFrom(source.getClass())){
 			return (Promise<T>)source;
+		}
+		if(Supplier.class.isAssignableFrom(source.getClass())){
+			return success(((Supplier<T>)source).get());
 		}
 		Promise<T> p = Promise.prepare();
 		source.subscribe(p);
