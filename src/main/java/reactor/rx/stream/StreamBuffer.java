@@ -15,14 +15,21 @@
  */
 package reactor.rx.stream;
 
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import reactor.fn.*;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
-import reactor.core.support.*;
+import reactor.core.support.BackpressureUtils;
+import reactor.core.support.ReactiveState;
+import reactor.fn.BooleanSupplier;
+import reactor.fn.Supplier;
+import reactor.rx.support.DrainUtils;
 
 /**
  * Buffers a certain number of subsequent elements and emits the buffers.
@@ -452,7 +459,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 				return;
 			}
 
-			if (BackpressureUtils.postCompleteRequest(n, actual, buffers, REQUESTED, this, this)) {
+			if (DrainUtils.postCompleteRequest(n, actual, buffers, REQUESTED, this, this)) {
 				return;
 			}
 

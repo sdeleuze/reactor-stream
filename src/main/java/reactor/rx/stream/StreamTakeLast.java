@@ -17,12 +17,14 @@ package reactor.rx.stream;
 
 import java.util.ArrayDeque;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
-import reactor.fn.BooleanSupplier;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.support.*;
+import reactor.core.support.BackpressureUtils;
+import reactor.fn.BooleanSupplier;
+import reactor.rx.support.DrainUtils;
 
 /**
  * Emits the last N values the source emitted before its completion.
@@ -179,7 +181,7 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		@Override
 		public void request(long n) {
 			if (BackpressureUtils.validate(n)) {
-				BackpressureUtils.postCompleteRequest(n, actual, buffer, REQUESTED, this, this);
+				DrainUtils.postCompleteRequest(n, actual, buffer, REQUESTED, this, this);
 			}
 		}
 
