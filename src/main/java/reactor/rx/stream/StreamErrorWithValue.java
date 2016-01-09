@@ -19,54 +19,48 @@ package reactor.rx.stream;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.error.Exceptions;
+import reactor.core.subscriber.SubscriberBarrier;
 import reactor.fn.BiConsumer;
 
 /**
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-final public class StreamErrorWithValue<T, E extends Throwable> extends StreamFallback<T> {
+final public class StreamErrorWithValue<T, E extends Throwable> extends StreamBarrier<T, T> {
 
 	private final BiConsumer<Object, ? super E> consumer;
 	private final Class<E>                      selector;
 
-	public StreamErrorWithValue(Publisher<T> source, Class<E> selector, BiConsumer<Object, ? super E> consumer, Publisher<?
-			extends
-			T> fallback) {
-		super(source, fallback);
+	public StreamErrorWithValue(Publisher<T> source, Class<E> selector, BiConsumer<Object, ? super E> consumer) {
+		super(source);
 		this.consumer = consumer;
 		this.selector = selector;
 	}
 
 	@Override
 	public Subscriber<? super T> apply(Subscriber<? super T> subscriber) {
-		return new ErrorWithValueAction<>(subscriber, selector, consumer, fallback);
+		return new ErrorWithValueAction<>(subscriber, selector, consumer);
 	}
 
-	final static class ErrorWithValueAction<T, E extends Throwable> extends FallbackAction<T> {
+	final static class ErrorWithValueAction<T, E extends Throwable> extends SubscriberBarrier<T, T> {
 
 		private final BiConsumer<Object, ? super E> consumer;
 		private final Class<E>                      selector;
 
 		public ErrorWithValueAction(Subscriber<? super T> subscriber,
 				Class<E> selector,
-				BiConsumer<Object, ? super E> consumer,
-				Publisher<? extends T> fallback) {
-			super(subscriber, fallback);
+				BiConsumer<Object, ? super E> consumer) {
+			super(subscriber);
 			this.consumer = consumer;
 			this.selector = selector;
 		}
 
 		@Override
 		@SuppressWarnings("unchecked")
-		protected void checkedError(Throwable cause) {
+		protected void doError(Throwable cause) {
 			if (selector.isAssignableFrom(cause.getClass())) {
 				if (consumer != null) {
 					consumer.accept(Exceptions.getFinalValueCause(cause), (E) cause);
-				}
-				else if (fallback != null) {
-					doSwitch();
-					return;
 				}
 			}
 			subscriber.onError(cause);

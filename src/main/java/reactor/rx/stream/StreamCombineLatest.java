@@ -15,15 +15,24 @@
  */
 package reactor.rx.stream;
 
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import reactor.fn.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
-import reactor.core.subscription.*;
-import reactor.core.support.*;
+import reactor.core.subscription.CancelledSubscription;
+import reactor.core.subscription.EmptySubscription;
+import reactor.core.support.BackpressureUtils;
+import reactor.core.support.ReactiveState;
+import reactor.fn.Function;
+import reactor.fn.Supplier;
 
 /**
  * Combines the latest values from multiple sources through a function.
@@ -36,25 +45,21 @@ import reactor.core.support.*;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-public final class StreamCombineLatest<T, R> 
-extends reactor.rx.Stream<R>
-implements 
-														   ReactiveState.Factory,
-														   ReactiveState.LinkedUpstreams {
+public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
+		implements ReactiveState.Factory, ReactiveState.LinkedUpstreams {
 
 	final Publisher<? extends T>[] array;
 
 	final Iterable<? extends Publisher<? extends T>> iterable;
 
 	final Function<Object[], R> combiner;
-	
+
 	final Supplier<? extends Queue<SourceAndArray>> queueSupplier;
-	
+
 	final int bufferSize;
 
 	public StreamCombineLatest(Publisher<? extends T>[] array,
-			Function<Object[], R> combiner, Supplier<? extends Queue<SourceAndArray>> queueSupplier,
-					int bufferSize) {
+			Function<Object[], R> combiner, Supplier<? extends Queue<SourceAndArray>> queueSupplier, int bufferSize) {
 		if (bufferSize <= 0) {
 			throw new IllegalArgumentException("BUFFER_SIZE > 0 required but it was " + bufferSize);
 		}
@@ -65,14 +70,13 @@ implements
 		this.queueSupplier = Objects.requireNonNull(queueSupplier, "queueSupplier");
 		this.bufferSize = bufferSize;
 	}
-	
+
 	public StreamCombineLatest(Iterable<? extends Publisher<? extends T>> iterable,
-			Function<Object[], R> combiner, Supplier<? extends Queue<SourceAndArray>> queueSupplier,
-					int bufferSize) {
+			Function<Object[], R> combiner, Supplier<? extends Queue<SourceAndArray>> queueSupplier, int bufferSize) {
 		if (bufferSize <= 0) {
 			throw new IllegalArgumentException("BUFFER_SIZE > 0 required but it was " + bufferSize);
 		}
-		
+
 		this.array = null;
 		this.iterable = Objects.requireNonNull(iterable, "iterable");
 		this.combiner = Objects.requireNonNull(combiner, "combiner");
@@ -138,8 +142,7 @@ implements
 				}
 
 				if (p == null) {
-					EmptySubscription.error(s, new NullPointerException("The Publisher returned by the iterator is " +
-					  "null"));
+					EmptySubscription.error(s, new NullPointerException("The Publisher returned by the iterator is " + "null"));
 					return;
 				}
 
@@ -168,69 +171,68 @@ implements
 			}).subscribe(s);
 			return;
 		}
-		
+
 		Queue<SourceAndArray> queue;
-		
+
 		try {
 			queue = queueSupplier.get();
 		} catch (Throwable e) {
 			EmptySubscription.error(s, e);
 			return;
 		}
-		
+
 		if (queue == null) {
 			EmptySubscription.error(s, new NullPointerException("The queueSupplier returned a null queue"));
 			return;
 		}
-		
-		StreamCombineLatestCoordinator<T, R> coordinator = 
+
+		StreamCombineLatestCoordinator<T, R> coordinator =
 				new StreamCombineLatestCoordinator<>(s, combiner, n, queue, bufferSize);
-		
+
 		s.onSubscribe(coordinator);
-		
+
 		coordinator.subscribe(a, n);
 	}
-	
-	static final class StreamCombineLatestCoordinator<T, R> implements Subscription, LinkedUpstreams,
-																		  ActiveDownstream {
+
+	static final class StreamCombineLatestCoordinator<T, R> implements Subscription, LinkedUpstreams, ActiveDownstream {
 
 		final Subscriber<? super R> actual;
-		
+
 		final Function<Object[], R> combiner;
-		
+
 		final StreamCombineLatestInner<T>[] subscribers;
-		
+
 		final Queue<SourceAndArray> queue;
-		
+
 		final Object[] latest;
 
 		int nonEmptySources;
-		
+
 		int completedSources;
-		
+
 		volatile boolean cancelled;
-		
+
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<StreamCombineLatestCoordinator> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(StreamCombineLatestCoordinator.class, "requested");
-		
+
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<StreamCombineLatestCoordinator> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(StreamCombineLatestCoordinator.class, "wip");
-		
+
 		volatile boolean done;
-		
+
 		volatile Throwable error;
-		
+
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<StreamCombineLatestCoordinator, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(StreamCombineLatestCoordinator.class, Throwable.class, "error");
-		
+
 		static final Throwable TERMINAL_ERROR = new Throwable();
-		
-		public StreamCombineLatestCoordinator(Subscriber<? super R> actual, 
+
+		public StreamCombineLatestCoordinator(Subscriber<? super R> actual,
 				Function<Object[], R> combiner, int n, Queue<SourceAndArray> queue,
 				int bufferSize) {
 			this.actual = actual;
@@ -275,7 +277,7 @@ implements
 
 		void subscribe(Publisher<? extends T>[] sources, int n) {
 			StreamCombineLatestInner<T>[] a = subscribers;
-			
+
 			for (int i = 0; i < n; i++) {
 				if (done || cancelled) {
 					return;
@@ -283,39 +285,49 @@ implements
 				sources[i].subscribe(a[i]);
 			}
 		}
-		
+
 		void innerValue(int index, T value) {
+
+			boolean replenishInsteadOfDrain;
+
 			synchronized (this) {
 				Object[] os = latest;
 
 				int localNonEmptySources = nonEmptySources;
-				
+
 				if (os[index] == null) {
 					localNonEmptySources++;
 					nonEmptySources = localNonEmptySources;
 				}
-				
+
 				os[index] = value;
 
 				if (os.length == localNonEmptySources) {
 					SourceAndArray sa = new SourceAndArray(subscribers[index], os.clone());
-					
+
 					queue.offer(sa);
+
+					replenishInsteadOfDrain = false;
 				} else {
-					return;
+					replenishInsteadOfDrain = true;
 				}
 			}
-			
-			drain();
+
+			if (replenishInsteadOfDrain) {
+				subscribers[index].requestOne();
+			}
+			else {
+				drain();
+			}
 		}
-		
+
 		void innerComplete(int index) {
 			synchronized (this) {
 				Object[] os = latest;
-				
+
 				if (os[index] != null) {
 					int localCompletedSources = completedSources + 1;
-					
+
 					if (localCompletedSources == os.length) {
 						done = true;
 					} else {
@@ -328,17 +340,17 @@ implements
 			}
 			drain();
 		}
-		
+
 		void innerError(Throwable e) {
-			
+
 			for (;;) {
 				Throwable ex = error;
-				
+
 				if (ex == TERMINAL_ERROR) {
 					Exceptions.onErrorDropped(ex);
 					return;
 				}
-				
+
 				Throwable u;
 				if (ex == null) {
 					u = e;
@@ -347,94 +359,94 @@ implements
 					u.addSuppressed(ex);
 					u.addSuppressed(e);
 				}
-				
+
 				if (ERROR.compareAndSet(this, ex, u)) {
 					done = true;
 					break;
 				}
 			}
-			
+
 			drain();
 		}
-		
+
 		void drain() {
 			if (WIP.getAndIncrement(this) != 0) {
 				return;
 			}
-			
+
 			final Subscriber<? super R> a = actual;
 			final Queue<SourceAndArray> q = queue;
-			
+
 			int missed = 1;
-			
+
 			for (;;) {
-				
+
 				long r = requested;
 				long e = 0L;
-				
+
 				while (e != r) {
 					boolean d = done;
-					
+
 					SourceAndArray v = q.poll();
-					
+
 					boolean empty = v == null;
-					
+
 					if (checkTerminated(d, empty, a, q)) {
 						return;
 					}
-					
+
 					if (empty) {
 						break;
 					}
-					
+
 					R w;
-					
+
 					try {
 						w = combiner.apply(v.array);
 					} catch (Throwable ex) {
 						innerError(ex);
 						continue;
 					}
-					
+
 					if (w == null) {
 						innerError(new NullPointerException("The combiner returned a null value"));
 						continue;
 					}
-					
+
 					a.onNext(w);
-					
+
 					v.source.requestOne();
-					
+
 					e++;
 				}
-				
+
 				if (e == r) {
 					if (checkTerminated(done, q.isEmpty(), a, q)) {
 						return;
 					}
 				}
-				
+
 				if (e != 0L && r != Long.MAX_VALUE) {
 					REQUESTED.addAndGet(this, -e);
 				}
-				
+
 				missed = WIP.addAndGet(this, -missed);
 				if (missed == 0) {
 					break;
 				}
 			}
 		}
-		
+
 		boolean checkTerminated(boolean d, boolean empty, Subscriber<?> a, Queue<?> q) {
 			if (cancelled) {
 				cancelAll();
 				q.clear();
 				return true;
 			}
-			
+
 			if (d) {
 				Throwable e = ERROR.getAndSet(this, TERMINAL_ERROR);
-				
+
 				if (e != null) {
 					cancelAll();
 					q.clear();
@@ -450,36 +462,35 @@ implements
 			}
 			return false;
 		}
-		
+
 		void cancelAll() {
 			for (StreamCombineLatestInner<T> inner : subscribers) {
 				inner.cancel();
 			}
 		}
 	}
-	
+
 	static final class StreamCombineLatestInner<T>
 			implements Subscriber<T>, Inner, UpstreamDemand, DownstreamDemand, UpstreamPrefetch, Upstream, Downstream {
 
 		final StreamCombineLatestCoordinator<T, ?> parent;
 
 		final int index;
-		
+
 		final int limit;
-		
+
 		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<StreamCombineLatestInner, Subscription> S =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamCombineLatestInner.class, Subscription.class, "s");
+				AtomicReferenceFieldUpdater.newUpdater(StreamCombineLatestInner.class, Subscription.class, "s");
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<StreamCombineLatestInner> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(StreamCombineLatestInner.class, "requested");
+				AtomicLongFieldUpdater.newUpdater(StreamCombineLatestInner.class, "requested");
 
 		int produced;
-		
-		
+
 		public StreamCombineLatestInner(StreamCombineLatestCoordinator<T, ?> parent, int index, int bufferSize) {
 			this.parent = parent;
 			this.index = index;
@@ -535,7 +546,7 @@ implements
 		public void onComplete() {
 			parent.innerComplete(index);
 		}
-		
+
 		public void cancel() {
 			Subscription a = s;
 			if (a != CancelledSubscription.INSTANCE) {
@@ -545,9 +556,9 @@ implements
 				}
 			}
 		}
-		
+
 		public void requestOne() {
-			
+
 			int p = produced + 1;
 			if (p == limit) {
 				produced = 0;
@@ -570,7 +581,7 @@ implements
 			} else {
 				produced = p;
 			}
-			
+
 		}
 
 		@Override
@@ -598,14 +609,14 @@ implements
 			return limit - produced;
 		}
 	}
-	
+
 	/**
 	 * The queue element type for internal use with StreamCombineLatest.
 	 */
 	public static final class SourceAndArray {
 		final StreamCombineLatestInner<?> source;
 		final Object[] array;
-		
+
 		SourceAndArray(StreamCombineLatestInner<?> source, Object[] array) {
 			this.source = source;
 			this.array = array;
