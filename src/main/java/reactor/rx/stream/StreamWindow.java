@@ -52,7 +52,7 @@ public class StreamWindow<T> extends StreamBatch<T, Stream<T>> {
 		return new WindowAction<>(prepareSub(subscriber), batchSize, timespan, unit, timer);
 	}
 
-	final static class Window<T> extends Stream<T> implements Subscriber<T>, Subscription{
+	final static class Window<T> extends Stream<T> implements Subscriber<T>, Subscription, Downstream, Inner{
 
 		final protected FluxProcessor<T, T> processor;
 		final protected Timer               timer;
@@ -116,12 +116,17 @@ public class StreamWindow<T> extends StreamBatch<T, Stream<T>> {
 		}
 
 		@Override
+		public Object downstream() {
+			return processor;
+		}
+
+		@Override
 		public String toString() {
 			return super.toString();
 		}
 	}
 
-	final static class WindowAction<T> extends BatchAction<T, Stream<T>> {
+	final static class WindowAction<T> extends BatchAction<T, Stream<T>> implements FeedbackLoop{
 
 		private final Timer timer;
 
@@ -135,10 +140,6 @@ public class StreamWindow<T> extends StreamBatch<T, Stream<T>> {
 
 			super(actual, backlog, true, true, true, timespan, unit, timer);
 			this.timer = timer;
-		}
-
-		public Window<T> currentWindow() {
-			return currentWindow;
 		}
 
 		protected Stream<T> createWindowStream() {
@@ -160,20 +161,24 @@ public class StreamWindow<T> extends StreamBatch<T, Stream<T>> {
 		}
 
 		@Override
-		protected void doError(Throwable ev) {
+		protected void checkedError(Throwable ev) {
 			if (currentWindow != null) {
 				currentWindow.onError(ev);
 			}
-			super.doError(ev);
+			super.checkedError(ev);
 		}
 
 		@Override
-		protected void doComplete() {
-			if (currentWindow != null) {
-				currentWindow.onComplete();
-				currentWindow = null;
+		protected void checkedComplete() {
+			try {
+				if (currentWindow != null) {
+					currentWindow.onComplete();
+					currentWindow = null;
+				}
 			}
-			super.doComplete();
+			finally {
+				super.checkedComplete();
+			}
 		}
 
 		@Override
@@ -192,10 +197,19 @@ public class StreamWindow<T> extends StreamBatch<T, Stream<T>> {
 		protected void flushCallback(T event) {
 			if (currentWindow != null) {
 				currentWindow.onComplete();
-				currentWindow = null;
+				//currentWindow = null;
 			}
 		}
 
+		@Override
+		public Object delegateInput() {
+			return currentWindow;
+		}
+
+		@Override
+		public Object delegateOutput() {
+			return null;
+		}
 	}
 
 

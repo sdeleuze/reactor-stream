@@ -209,8 +209,12 @@ public abstract class StreamBatch<T, V> extends StreamBarrier<T, V> {
 
 		@Override
 		protected void checkedComplete() {
-			flushCallback(null);
-			subscriber.onComplete();
+			try {
+				flushCallback(null);
+			}
+			finally {
+				subscriber.onComplete();
+			}
 		}
 
 		@Override
