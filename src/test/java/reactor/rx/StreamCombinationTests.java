@@ -147,21 +147,43 @@ public class StreamCombinationTests extends AbstractReactorTest {
 
 		awaitLatch(tail, latch);
 	}
-/*
+
 	@Test
 	public void sampleCombineLatestTest() throws Exception {
 		int elements = 40;
 		CountDownLatch latch = new CountDownLatch(elements / 2 + 1);
 
-		Control tail = Streams.combineLatest(sensorOdd().cache(), sensorEven().cache(), this::computeMin)
+		Control tail = Stream.combineLatest(sensorOdd(), sensorEven(), this::computeMin)
 		                      .log("combineLatest")
 		                      .consume(i -> latch.countDown(), null, latch::countDown);
 
 		generateData(elements);
 
 		awaitLatch(tail, latch);
-	}*/
+	}
 
+	/*@Test
+	public void sampleCombineLatestSample() throws Exception {
+		Broadcaster<Double> doubleStream = Broadcaster.create();
+
+		Stream<Double> mainStream = doubleStream.onBackpressureDrop();
+
+		Stream<Double> avgStream = mainStream.buffer(1000).map(l -> l.stream().mapToDouble(Double::doubleValue).average().getAsDouble());
+
+		Stream<Double> avgAvgStream = mainStream
+				.buffer(100).map(l -> l.stream().mapToDouble(Double::doubleValue).average().getAsDouble());
+
+		Stream.combineLatest(
+				mainStream.map(v ->Tuple.of(System.nanoTime(), v)),
+				avgStream,
+				avgAvgStream,
+				x -> (((Tuple2<Long,?>)x[0]).getT1())
+		).consume(System.out::println);
+
+
+		new Random().doubles().forEach(doubleStream::onNext);
+	}
+*/
 	@Test
 	public void concatWithTest() throws Exception {
 		int elements = 40;

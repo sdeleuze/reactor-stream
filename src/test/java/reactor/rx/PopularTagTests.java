@@ -15,15 +15,15 @@
  */
 package reactor.rx;
 
-import org.junit.Test;
-import reactor.core.support.Logger;
-import reactor.AbstractReactorTest;
-import reactor.fn.tuple.Tuple;
-import reactor.rx.subscriber.Control;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+
+import org.junit.Test;
+import reactor.AbstractReactorTest;
+import reactor.core.support.Logger;
+import reactor.fn.tuple.Tuple;
+import reactor.rx.subscriber.Control;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -61,17 +61,17 @@ public class PopularTagTests extends AbstractReactorTest {
 			)
 		        .map(w -> Tuple.of(w, 1))
 		        .window(2, SECONDS)
-		        .log()
 		        .flatMap(s ->
 				Stream.reduceByKey(s, (acc, next) -> acc + next)
 				      .sort((a, b) -> -a.t2.compareTo(b.t2))
 				      .take(10)
-				      .finallyDo(_s -> LOG.info("------------------------ window complete! ----------------------"))
+				      .finallyDo(_s -> LOG.info("------------------------ window " + _s.getType()+"! " +
+						      "----------------------"))
 			)
 		        .consume(
 			  entry -> LOG.info(entry.t1 + ": " + entry.t2),
 			  error -> LOG.error("", error),
-			  () -> latch.countDown()
+				        latch::countDown
 			);
 
 		awaitLatch(top10every1second, latch);
