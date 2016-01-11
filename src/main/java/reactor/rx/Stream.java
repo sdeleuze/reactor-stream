@@ -63,7 +63,6 @@ import reactor.core.support.Assert;
 import reactor.core.support.QueueSupplier;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
-import reactor.core.support.rb.disruptor.RingBuffer;
 import reactor.core.timer.Timer;
 import reactor.fn.BiConsumer;
 import reactor.fn.BiFunction;
@@ -4557,10 +4556,5 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 			return o;
 		}
 	};
-	static final Supplier XS_QUEUE_SUPPLIER = new Supplier() {
-		@Override
-		public Object get() {
-			return RingBuffer.newSequencedQueue(RingBuffer.createSingleProducer(ReactiveState.XS_BUFFER_SIZE));
-		}
-	};
+	static final Supplier XS_QUEUE_SUPPLIER = QueueSupplier.get(ReactiveState.XS_BUFFER_SIZE);
 }
