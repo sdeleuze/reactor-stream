@@ -60,6 +60,7 @@ import reactor.core.subscriber.SubscriberWithContext;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.Assert;
+import reactor.core.support.Logger;
 import reactor.core.support.QueueSupplier;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
@@ -2710,7 +2711,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @since 2.0
 	 */
 	public final Stream<O> log() {
-		return log(null, FluxLog.ALL);
+		return log(null, Logger.ALL);
 	}
 
 	/**
@@ -2723,7 +2724,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @since 2.0
 	 */
 	public final Stream<O> log(String category) {
-		return log(category, FluxLog.ALL);
+		return log(category, Logger.ALL);
 	}
 
 	/**
