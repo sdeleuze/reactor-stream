@@ -55,10 +55,12 @@ import reactor.core.publisher.FluxZip;
 import reactor.core.publisher.MonoIgnoreElements;
 import reactor.core.publisher.MonoNext;
 import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.subscriber.BlockingIterable;
 import reactor.core.subscriber.SubscriberWithContext;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.Assert;
+import reactor.core.support.QueueSupplier;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
 import reactor.core.support.rb.disruptor.RingBuffer;
@@ -1735,13 +1737,13 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * {@code stream.as(Mono::from).subscribe(Subscribers.unbounded()) }
 	 *
-	 * @param transfomer
+	 * @param transformer
 	 * @param <P>
 	 *
 	 * @return
 	 */
-	public final <V, P extends Publisher<V>> P as(Function<? super Stream<O>, P> transfomer) {
-		return transfomer.apply(this);
+	public final <V, P extends Publisher<V>> P as(Function<? super Stream<O>, P> transformer) {
+		return transformer.apply(this);
 	}
 
 	/**
@@ -4059,6 +4061,49 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	@SuppressWarnings("unchecked")
 	public final BlockingQueue<O> toBlockingQueue(int maximum, Queue<O> store) {
 		return new BlockingQueueSubscriber<>(this, null, store, false, maximum);
+	}
+
+	/**
+	 *
+	 *
+	 * @return
+	 */
+	public final Iterable<O> toIterable() {
+		return toIterable(getCapacity());
+	}
+
+	/**
+	 *
+	 *
+	 * @return
+	 */
+	public final Iterable<O> toIterable(long batchSize) {
+		return toIterable(batchSize, null);
+	}
+
+	/**
+	 *
+	 *
+	 * @return
+	 */
+	public final Iterable<O> toIterable(final long batchSize, Supplier<Queue<O>> queueProvider) {
+		final Supplier<Queue<O>> provider;
+		if(queueProvider == null){
+			provider = QueueSupplier.get(batchSize);
+		}
+		else{
+			provider = queueProvider;
+		}
+		return new BlockingIterable<>(this, batchSize, provider);
+	}
+
+	/**
+	 *
+	 *
+	 * @return
+	 */
+	public final Iterator<O> toIterator() {
+		return toIterable(1L).iterator();
 	}
 
 	/**
