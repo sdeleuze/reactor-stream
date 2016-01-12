@@ -793,19 +793,6 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
-	 * Build a {@literal Stream} whom data is sourced by each element of the passed iterator on subscription request.
-	 * <p>
-	 * It will use the passed dispatcher to emit signals.
-	 *
-	 * @param values The values to {@code onNext()}
-	 * @param <T>    type of the values
-	 * @return a {@link Stream} based on the given values
-	 */
-	public static <T> Stream<T> fromIterator(Iterator<? extends T> values) {
-		return from(Flux.fromIterator(values));
-	}
-
-	/**
 	 * A simple decoration of the given {@link Processor} to expose {@link Stream} API and proxy any subscribe call to
 	 * the Processor.
 	 * The Processor has to first call onSubscribe and receive a subscription request callback before any onNext
