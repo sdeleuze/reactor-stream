@@ -1064,6 +1064,12 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Integer> range(int start, int count) {
+		if(count == 0){
+			return empty();
+		}
+		if(count == 1){
+			return just(start);
+		}
 		return new StreamRange(start, count);
 	}
 
