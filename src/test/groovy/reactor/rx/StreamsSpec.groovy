@@ -19,7 +19,6 @@ import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription
 import reactor.Processors
 import reactor.Timers
-import reactor.core.error.ReactorFatalException
 import reactor.core.processor.ProcessorGroup
 import reactor.core.processor.RingBufferProcessor
 import reactor.core.subscriber.SubscriberWithContext
@@ -916,7 +915,7 @@ class StreamsSpec extends Specification {
 
 		then:
 			'error is thrown'
-			thrown ReactorFatalException
+			thrown IndexOutOfBoundsException
 			error == 1
 	}
 
