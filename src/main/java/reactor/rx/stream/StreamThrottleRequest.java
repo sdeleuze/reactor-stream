@@ -61,6 +61,9 @@ public final class StreamThrottleRequest<T> extends StreamBarrier<T, T> {
 			super(actual);
 
 			Assert.state(timer != null, "Timer must be supplied");
+			Assert.isTrue(period >= timer.period(), "Timer minimum period is "+timer.period() + "ms which is less " +
+					"than " +
+					"the given "+period +"ms");
 			this.periodTask = new Consumer<Long>() {
 				@Override
 				public void accept(Long aLong) {

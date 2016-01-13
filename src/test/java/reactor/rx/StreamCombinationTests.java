@@ -152,9 +152,10 @@ public class StreamCombinationTests extends AbstractReactorTest {
 	@Test
 	public void sampleCombineLatestTest() throws Exception {
 		int elements = 40;
-		CountDownLatch latch = new CountDownLatch(elements / 2 + 1);
+		CountDownLatch latch = new CountDownLatch(elements / 2);
 
-		Control tail = Stream.combineLatest(sensorOdd().cache(), sensorEven().cache(), this::computeMin)
+		Control tail = Stream.combineLatest(sensorOdd().cache().throttle(50), sensorEven().cache().throttle(50),
+		this::computeMin)
 		                      .log("combineLatest")
 		                      .consume(i -> latch.countDown(), null, latch::countDown);
 
@@ -168,9 +169,10 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 40;
 		CountDownLatch latch = new CountDownLatch(elements + 1);
 
-		Control tail = Stream.range(1, elements).forkJoin(d -> Mono.just(d+"!"), d -> Mono.just(d+"?"))
-		                                                      .log("forkJoin")
-		                                                      .consume(i -> latch.countDown(), null, latch::countDown);
+		Control tail = Stream.range(1, elements)
+		                     .forkJoin(d -> Mono.just(d + "!"), d -> Mono.just(d + "?"))
+		                     .log("forkJoin")
+		                     .consume(i -> latch.countDown(), null, latch::countDown);
 
 		generateData(elements);
 
