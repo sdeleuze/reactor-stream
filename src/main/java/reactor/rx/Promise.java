@@ -577,7 +577,6 @@ public class Promise<O> extends Mono<O>
 		}
 
 		if (out != null && subscription != null){
-
 			out.onSubscribe(this);
 		}
 
