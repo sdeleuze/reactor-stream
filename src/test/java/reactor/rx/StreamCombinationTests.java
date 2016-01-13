@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import reactor.AbstractReactorTest;
+import reactor.Mono;
 import reactor.Processors;
 import reactor.core.support.Logger;
 import reactor.fn.Consumer;
@@ -156,6 +157,20 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		Control tail = Stream.combineLatest(sensorOdd().cache(), sensorEven().cache(), this::computeMin)
 		                      .log("combineLatest")
 		                      .consume(i -> latch.countDown(), null, latch::countDown);
+
+		generateData(elements);
+
+		awaitLatch(tail, latch);
+	}
+
+	@Test
+	public void sampleForkJoin() throws Exception {
+		int elements = 40;
+		CountDownLatch latch = new CountDownLatch(elements + 1);
+
+		Control tail = Stream.range(1, elements).forkJoin(d -> Mono.just(d+"!"), d -> Mono.just(d+"?"))
+		                                                      .log("forkJoin")
+		                                                      .consume(i -> latch.countDown(), null, latch::countDown);
 
 		generateData(elements);
 
