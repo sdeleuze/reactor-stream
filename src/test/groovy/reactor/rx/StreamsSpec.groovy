@@ -1753,10 +1753,8 @@ class StreamsSpec extends Specification {
 
 		when:
 			'consuming'
-			c.consume {
-				res = System.currentTimeMillis() - timeStart
-			}
-			sleep(2500)
+			c.get()
+			res = System.currentTimeMillis() - timeStart
 
 		then:
 			'ready'

@@ -21,9 +21,7 @@ import java.util.concurrent.TimeUnit;
 import org.reactivestreams.Subscriber;
 import reactor.core.error.Exceptions;
 import reactor.core.timer.Timer;
-import reactor.fn.Consumer;
 import reactor.rx.Stream;
-import reactor.rx.subscription.PushSubscription;
 
 /**
  * A Stream that emits {@link 0} after an initial delay and ever incrementing long counter if the period argument is
@@ -60,7 +58,7 @@ public final class StreamTimerPeriod extends Stream<Long> {
 	final private Timer    timer;
 
 	public StreamTimerPeriod(long delay, long period, TimeUnit unit, Timer timer) {
-		this.delay = delay >= 0l ? delay : -1l;
+		this.delay = delay >= 0L ? delay : -1L;
 		this.unit = unit != null ? unit : TimeUnit.SECONDS;
 		this.period = period;
 		this.timer = timer;
@@ -69,7 +67,7 @@ public final class StreamTimerPeriod extends Stream<Long> {
 	@Override
 	public void subscribe(final Subscriber<? super Long> subscriber) {
 		try {
-			subscriber.onSubscribe(new TimerSubscription(this, subscriber));
+			subscriber.onSubscribe(timer.interval(subscriber, period, unit, delay));
 		}
 		catch (Throwable throwable) {
 			Exceptions.throwIfFatal(throwable);
@@ -82,30 +80,4 @@ public final class StreamTimerPeriod extends Stream<Long> {
 		return timer;
 	}
 
-	private class TimerSubscription extends PushSubscription<Long> {
-
-		long counter = 0l;
-		final Pausable registration = timer.schedule(new Consumer<Long>() {
-			@Override
-			public void accept(Long aLong) {
-				subscriber.onNext(counter++);
-			}
-		}, period, unit, delay == -1 ? TimeUnit.MILLISECONDS.convert(period, unit) : delay);
-
-		public TimerSubscription(Stream<Long> publisher, Subscriber<? super Long> subscriber) {
-			super(publisher, subscriber);
-		}
-
-		@Override
-		public void cancel() {
-			registration.cancel();
-			timer.cancel();
-			super.cancel();
-		}
-	}
-
-	@Override
-	public String toString() {
-		return "delay=" + delay + "ms" + (period > 0 ? ", period=" + period : "") + ", period-unit=" + unit;
-	}
 }

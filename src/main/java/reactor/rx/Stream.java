@@ -152,7 +152,6 @@ import reactor.rx.stream.StreamThrottleRequest;
 import reactor.rx.stream.StreamThrottleRequestWhen;
 import reactor.rx.stream.StreamTimeout;
 import reactor.rx.stream.StreamTimerPeriod;
-import reactor.rx.stream.StreamTimerSingle;
 import reactor.rx.stream.StreamUsing;
 import reactor.rx.stream.StreamWindow;
 import reactor.rx.stream.StreamWindowShift;
@@ -1218,7 +1217,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> timer(long delay) {
+	public static Mono<Long> timer(long delay) {
 		return timer(Timers.globalOrNew(), delay, TimeUnit.SECONDS);
 	}
 
@@ -1229,7 +1228,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> timer(Timer timer, long delay) {
+	public static Mono<Long> timer(Timer timer, long delay) {
 		return timer(timer, delay, TimeUnit.SECONDS);
 	}
 
@@ -1240,8 +1239,28 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @param unit  the time unit
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> timer(long delay, TimeUnit unit) {
+	public static Mono<Long> timer(long delay, TimeUnit unit) {
 		return timer(Timers.globalOrNew(), delay, unit);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
+	 *
+	 * @param timer the timer to run on
+	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
+	 * @param unit  the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Mono<Long> timer(Timer timer, long delay, TimeUnit unit) {
+		return Mono.delay(delay, unit, timer);
+	}
+
+	/**
+	 * @see Flux#yield(Consumer)
+	 * @return a new {@link Stream}
+	 */
+	public static <T> Stream<T> yield(Consumer<? super ReactiveSession<T>> sessionConsumer) {
+		return from(Flux.yield(sessionConsumer));
 	}
 
 	/**
@@ -1288,26 +1307,6 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	public static <T, D> Stream<T> using(Callable<? extends D> resourceSupplier, Function<? super D, ? extends
 			Publisher<? extends T>> sourceSupplier, Consumer<? super D> resourceCleanup, boolean eager) {
 		return new StreamUsing<>(resourceSupplier, sourceSupplier, resourceCleanup, eager);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param timer the timer to run on
-	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
-	 * @param unit  the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> timer(Timer timer, long delay, TimeUnit unit) {
-		return new StreamTimerSingle(delay, unit, timer);
-	}
-
-	/**
-	 * @see Flux#yield(Consumer)
-	 * @return a new {@link Stream}
-	 */
-	public static <T> Stream<T> yield(Consumer<? super ReactiveSession<T>> sessionConsumer) {
-		return from(Flux.yield(sessionConsumer));
 	}
 
 	/**
@@ -4199,11 +4198,13 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @since 2.0
 	 */
+	@SuppressWarnings("unchecked")
 	public final Stream<O> timeout(final long timeout, final TimeUnit unit, final Publisher<? extends O> fallback) {
 		final Timer timer = getTimer();
 		Assert.state(timer != null, "Cannot use default timer as no environment has been provided to this " + "Stream");
 
-		final Stream<Long> _timer = timer(timer, timeout, unit == null ? TimeUnit.MILLISECONDS : unit);
+		final Mono<Long> _timer = timer(timer, timeout, unit == null ? TimeUnit.MILLISECONDS : unit)
+				.otherwiseJust(0L);
 		final Supplier<Publisher<Long>> first = new Supplier<Publisher<Long>>() {
 			@Override
 			public Publisher<Long> get() {

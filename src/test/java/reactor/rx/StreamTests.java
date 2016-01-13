@@ -540,8 +540,8 @@ public class StreamTests extends AbstractReactorTest {
 				                                               circuitSwitcher.onNext(openCircuit);
 				                                               successes.set(0);
 				                                               Stream.timer(1)
-				                                                     .consume(ignore -> circuitSwitcher.onNext(
-						                                                      closeCircuit));
+				                                                     .subscribe(Subscribers.consumer(ignore -> circuitSwitcher.onNext(
+						                                                     closeCircuit)));
 			                                               }
 		                                               })
 		                                               .log("faultTolerant")

@@ -17,15 +17,19 @@ package reactor.rx.stream;
 
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.*;
-import reactor.fn.*;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
-import reactor.core.subscriber.*;
-import reactor.core.subscription.*;
+import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.core.subscription.CancelledSubscription;
+import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.Function;
+import reactor.fn.Supplier;
 
 /**
  * Signals a timeout (or switches to another sequence) in case a per-item
@@ -358,6 +362,7 @@ public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 					BackpressureUtils.reportSubscriptionSet();
 				}
 			}
+			s.request(Long.MAX_VALUE);
 		}
 
 		@Override
