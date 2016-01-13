@@ -494,6 +494,10 @@ public class Promise<O> extends Mono<O>
 			if (requested == 1) {
 				subscription.request(1L);
 			}
+			Broadcaster<O> outboundStream = this.outboundStream;
+			if(outboundStream != null) {
+				outboundStream.onSubscribe(this);
+			}
 		}
 	}
 
@@ -572,7 +576,7 @@ public class Promise<O> extends Mono<O>
 			outboundStream = out;
 		}
 
-		if (out != null){
+		if (out != null && subscription != null){
 
 			out.onSubscribe(this);
 		}
