@@ -296,7 +296,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'the first value is retrieved'
-			def first = s.sampleFirst().tap()
+			def first = s.sampleFirst(5).tap()
 
 		and:
 			'the last value is retrieved'
@@ -1276,7 +1276,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'non overlapping buffers'
-			res = numbers.throttle(100).log('beforeBuffer').buffer(200l, 300l, TimeUnit.MILLISECONDS).log('afterBuffer').buffer().promise()
+			res = numbers.throttleRequest(100).log('beforeBuffer').buffer(200l, 300l, TimeUnit.MILLISECONDS).log('afterBuffer').buffer().promise()
 
 		then:
 			'the collected lists are available'
@@ -1355,7 +1355,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'non overlapping buffers'
-			res = numbers.throttle(100).window(200l, 300l, TimeUnit.MILLISECONDS).flatMap { it.log('fm').buffer() }
+			res = numbers.throttleRequest(100).window(200l, 300l, TimeUnit.MILLISECONDS).flatMap { it.log('fm').buffer() }
 					.buffer().promise()
 
 		then:
@@ -1930,7 +1930,7 @@ class StreamsSpec extends Specification {
 		given:
 			'a source and a collected stream'
 			def source = Broadcaster.<Integer> create()
-			def reduced = source.buffer(2).log().throttle(300)
+			def reduced = source.buffer(2).log().throttleRequest(300)
 			def value = reduced.tap()
 
 		when:
@@ -1966,7 +1966,7 @@ class StreamsSpec extends Specification {
 
 			def values = []
 
-			source.throttle(200).consume {
+			source.throttleRequest(200).consume {
 				values << it
 			}
 
@@ -2303,7 +2303,7 @@ class StreamsSpec extends Specification {
 			.onBackpressureBlock()
 			.doOnNext { value = it }
 			.log('overflow-drop-test')
-			.throttle(100)
+			.throttleRequest(100)
 			.subscribe(tail)
 
 	tail.sendRequest(5)
@@ -2341,7 +2341,7 @@ class StreamsSpec extends Specification {
 			long avgTime = 150l
 
 			def reduced = source
-					.throttle(avgTime)
+					.throttleRequest(avgTime)
 					.elapsed()
 					.log('el')
 					.take(10)
@@ -2414,7 +2414,7 @@ class StreamsSpec extends Specification {
 
 			def reduced = source
 					.buffer()
-					.throttle(avgTime)
+					.throttleRequest(avgTime)
 					.map { timeWindow -> timeWindow.size() }
 					.finallyDo { latch.countDown() }
 
@@ -2760,7 +2760,7 @@ class StreamsSpec extends Specification {
 
 		and:
 			'sorted operation is added for up to 3 elements ordered at once and the stream is retrieved'
-			value = stream.sort(3).buffer(6).tap()
+			value = stream.window(3).flatMap{ it.sort() }.buffer(6).tap()
 			println value.debug()
 
 		then:

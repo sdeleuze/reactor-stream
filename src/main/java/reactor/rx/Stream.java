@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -142,7 +143,6 @@ import reactor.rx.stream.StreamSkip;
 import reactor.rx.stream.StreamSkipLast;
 import reactor.rx.stream.StreamSkipUntil;
 import reactor.rx.stream.StreamSkipWhile;
-import reactor.rx.stream.StreamSort;
 import reactor.rx.stream.StreamStateCallback;
 import reactor.rx.stream.StreamSwitchIfEmpty;
 import reactor.rx.stream.StreamSwitchMap;
@@ -151,8 +151,10 @@ import reactor.rx.stream.StreamTakeLast;
 import reactor.rx.stream.StreamTakeUntil;
 import reactor.rx.stream.StreamTakeUntilPredicate;
 import reactor.rx.stream.StreamTakeWhile;
+import reactor.rx.stream.StreamThrottleFirst;
 import reactor.rx.stream.StreamThrottleRequest;
 import reactor.rx.stream.StreamThrottleRequestWhen;
+import reactor.rx.stream.StreamThrottleTimeout;
 import reactor.rx.stream.StreamTimeout;
 import reactor.rx.stream.StreamTimerPeriod;
 import reactor.rx.stream.StreamUsing;
@@ -3704,14 +3706,15 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
-	 * Create a new {@code Stream} whose values will be only the first value of each batch. Requires a {@code
-	 * getCapacity()} to have been set. <p> When a new batch is triggered, the first value of that next batch will be
-	 * pushed into this {@code Stream}.
+	 * Create a new {@code Stream} whose values will be only the first value signalled after the next {@code other}
+	 * emission.
 	 *
-	 * @return a new {@link Stream} whose values are the first value of each batch
+	 * @param other the sampler stream
+	 *
+	 * @return a new {@link Stream} whose values are the  value of each batch
 	 */
-	public final Stream<O> sampleFirst() {
-		return sampleFirst((int) Math.min(Integer.MAX_VALUE, getCapacity()));
+	public final <U> Stream<O> sample(Publisher<U> other) {
+		return new StreamSample<>(this, other);
 	}
 
 	/**
@@ -3734,8 +3737,26 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @return a new {@link Stream} whose values are the first value of each batch
 	 */
-	public final Stream<O> sampleFirst(long timespan, TimeUnit unit) {
-		return sampleFirst(Integer.MAX_VALUE, timespan, unit);
+	public final Stream<O> sampleFirst(final long timespan, final TimeUnit unit) {
+		return sampleFirst(new Function<O, Publisher<Long>>() {
+			@Override
+			public Publisher<Long> apply(O o) {
+				return timer(timespan, unit);
+			}
+		});
+	}
+
+	/**
+	 * Takes a value from upstream then uses the duration provided by a
+	 * generated Publisher to skip other values until that other Publisher signals.
+	 *
+	 * @param sampler the sampling function returning eventually to stop skipping upstream next
+	 * @param <U>
+	 *
+	 * @return a new {@link Stream} whose values are the first value of each batch
+	 */
+	public final <U> Stream<O> sampleFirst(Function<? super O, ? extends Publisher<U>> sampler) {
+		return new StreamThrottleFirst<>(this, sampler);
 	}
 
 	/**
@@ -3764,17 +3785,18 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	public final Stream<O> sampleFirst(final int maxSize, final long timespan, final TimeUnit unit, final Timer timer) {
 		return new StreamDebounce<O>(this, true, maxSize, timespan, unit, timer);
 	}
-
 	/**
-	 * Create a new {@code Stream} whose values will be only the first value signalled after the next {@code other}
-	 * emission.
+	 * Emits the last value from upstream only if there were no newer values emitted
+	 * during the time window provided by a publisher for that particular last value.
 	 *
-	 * @param other the sampler stream
+	 * @param throttler the throttling function to Publisher
+	 * @param <U> the throttling type
 	 *
-	 * @return a new {@link Stream} whose values are the  value of each batch
+	 * @return a new {@link Stream} whose values are the first value of each batch
 	 */
-	public final <U> Stream<O> sample(Publisher<U> other) {
-		return new StreamSample<>(this, other);
+	@SuppressWarnings("unchecked")
+	public final <U> Stream<O> sampleTimeout(Function<? super O, ? extends Publisher<U>> throttler) {
+		return new StreamThrottleTimeout<>(this, throttler, (Supplier<Queue<Object>>)XS_QUEUE_SUPPLIER);
 	}
 
 	/**
@@ -3926,12 +3948,11 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 
 	/**
 	 * Stage incoming values into a {@link java.util.PriorityQueue<O>} that will be re-ordered and signaled to the
-	 * returned fresh {@link Stream}. Possible flush triggers are: {@link #getCapacity()}, complete signal or request
-	 * signal. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
+	 * returned fresh {@link Mono}. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
 	 *
-	 * @return a new {@link Stream} whose values re-ordered using a PriorityQueue.
+	 * @return a new {@link Mono} whose values re-ordered using a PriorityQueue.
 	 *
-	 * @since 2.0
+	 * @since 2.0, 2.5
 	 */
 	public final Stream<O> sort() {
 		return sort(null);
@@ -3939,48 +3960,36 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 
 	/**
 	 * Stage incoming values into a {@link java.util.PriorityQueue<O>} that will be re-ordered and signaled to the
-	 * returned fresh {@link Stream}. Possible flush triggers are: {@link #getCapacity()}, complete signal or request
-	 * signal. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
-	 *
-	 * @param maxCapacity a fixed maximum number or elements to re-order at once.
-	 *
-	 * @return a new {@link Stream} whose values re-ordered using a PriorityQueue.
-	 *
-	 * @since 2.0
-	 */
-	public final Stream<O> sort(int maxCapacity) {
-		return sort(maxCapacity, null);
-	}
-
-	/**
-	 * Stage incoming values into a {@link java.util.PriorityQueue<O>} that will be re-ordered and signaled to the
-	 * returned fresh {@link Stream}. Possible flush triggers are: {@link #getCapacity()}, complete signal or request
-	 * signal. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
+	 * returned fresh {@link Mono}. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
 	 *
 	 * @param comparator A {@link Comparator<O>} to evaluate incoming data
 	 *
-	 * @return a new {@link Stream} whose values re-ordered using a PriorityQueue.
+	 * @return a new {@link Mono} whose values re-ordered using a PriorityQueue.
 	 *
-	 * @since 2.0
+	 * @since 2.0, 2.5
 	 */
-	public final Stream<O> sort(Comparator<? super O> comparator) {
-		return sort((int) Math.min(Integer.MAX_VALUE, getCapacity()), comparator);
-	}
-
-	/**
-	 * Stage incoming values into a {@link java.util.PriorityQueue<O>} that will be re-ordered and signaled to the
-	 * returned fresh {@link Stream}. Possible flush triggers are: {@link #getCapacity()}, complete signal or request
-	 * signal. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
-	 *
-	 * @param maxCapacity a fixed maximum number or elements to re-order at once.
-	 * @param comparator A {@link Comparator<O>} to evaluate incoming data
-	 *
-	 * @return a new {@link Stream} whose values re-ordered using a PriorityQueue.
-	 *
-	 * @since 2.0
-	 */
-	public final Stream<O> sort(final int maxCapacity, final Comparator<? super O> comparator) {
-		return new StreamSort<O>(this, maxCapacity, comparator);
+	public final Stream<O> sort(final Comparator<? super O> comparator) {
+		return new StreamBarrier<>(collect(new Supplier<PriorityQueue<O>>() {
+			@Override
+			public PriorityQueue<O> get() {
+				if (comparator == null) {
+					return new PriorityQueue<>();
+				}
+				else {
+					return new PriorityQueue<>(ReactiveState.MEDIUM_BUFFER_SIZE, comparator);
+				}
+			}
+		}, new BiConsumer<PriorityQueue<O>, O>() {
+			@Override
+			public void accept(PriorityQueue<O> e, O o) {
+				e.add(o);
+			}
+		}).flatMap(new Function<PriorityQueue<O>, Publisher<? extends O>>() {
+			@Override
+			public Publisher<? extends O> apply(PriorityQueue<O> os) {
+				return fromIterable(os);
+			}
+		}));
 	}
 
 	/**
@@ -4194,11 +4203,43 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @since 2.0
 	 */
-	public final Stream<O> throttle(final long period) {
+	public final Stream<O> throttleRequest(final long period) {
 		final Timer timer = getTimer();
 		Assert.state(timer != null, "Cannot use default timer as no environment has been provided to this " + "Stream");
 
 		return new StreamThrottleRequest<O>(this, timer, period);
+	}
+
+	/**
+	 * @see #sampleFirst(Function)
+	 *
+	 * @return a new {@link Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final <U> Stream<O> throttleFirst(Function<? super O, ? extends Publisher<U>> throttler) {
+		return sampleFirst(throttler);
+	}
+
+	/**
+	 * @see #sample(Publisher)
+	 *
+	 * @return a new {@link Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final <U> Stream<O> throttleLast(Publisher<U> throttler) {
+		return sample(throttler);
+	}
+	/**
+	 * @see #sampleTimeout(Function)
+	 *
+	 * @return a new {@link Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final <U> Stream<O> throttleTimeout(Function<? super O, ? extends Publisher<U>> throttler) {
+		return sampleTimeout(throttler);
 	}
 
 	/**

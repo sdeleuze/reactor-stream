@@ -177,7 +177,7 @@ public class StreamTests extends AbstractReactorTest {
 	public void testFirstAndLast() throws InterruptedException {
 		Stream<Integer> s = Stream.fromIterable(Arrays.asList(1, 2, 3, 4, 5));
 
-		Stream<Integer> first = s.sampleFirst();
+		Stream<Integer> first = s.sampleFirst(5);
 		Stream<Integer> last = s.every(5);
 
 		assertThat("First is 1",
@@ -450,7 +450,7 @@ public class StreamTests extends AbstractReactorTest {
 
 		Promise<Long> result = source.onBackpressureBuffer()
 		                          .dispatchOn(asyncGroup)
-		                          .throttle(avgTime)
+		                          .throttleRequest(avgTime)
 		                          .elapsed()
 		                          .skip(1)
 		                          .nest()
@@ -894,7 +894,7 @@ public class StreamTests extends AbstractReactorTest {
 			Stream.just(source)
 			      .liftProcessor(() -> Processors.blackbox(Broadcaster.<String>create(),
 					       operationStream -> operationStream.dispatchOn(asyncGroup)
-					                                         .throttle(100)
+					                                         .throttleRequest(100)
 					                                         .map(s -> s + " MODIFIED")
 					                                         .map(s -> {
 						                                         latch.countDown();
