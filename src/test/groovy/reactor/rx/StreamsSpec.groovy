@@ -2630,7 +2630,7 @@ class StreamsSpec extends Specification {
 			  attempts.log('zipWith').zipWith(Stream.range(1, 3), { t1, t2 -> t2 }).flatMap { i ->
 					println "delay retry by " + i + " second(s)"
 				  println attempts.debug()
-					Stream.timer(i)
+					Stream.delay(i)
 				}
 			}.to(DataTestSubscriber.createWithTimeoutSecs(10))
 		println value.debug()
