@@ -2289,6 +2289,51 @@ class StreamsSpec extends Specification {
 			value == 5
 	}
 
+  def 'onBackpressureBlock will block events non requested'() {
+	given:
+	'a source and a timeout'
+	def source = Broadcaster.<Integer> create()
+
+	def value = null
+	def tail = DataTestSubscriber.createWithTimeoutSecs(3)
+
+	source
+			.log("block")
+			.dispatchOn(asyncGroup)
+			.onBackpressureBlock()
+			.doOnNext { value = it }
+			.log('overflow-drop-test')
+			.throttle(100)
+			.subscribe(tail)
+
+	tail.sendRequest(5)
+	println tail.debug()
+
+	when:
+	'the first values are accepted on the source, but we only have 5 requested elements out of 6'
+	source.onNext(1)
+	source.onNext(2)
+	source.onNext(3)
+	source.onNext(4)
+	source.onNext(5)
+
+	println tail.debug()
+
+	then:
+	tail.assertNumNextSignalsReceived(5)
+
+	when:
+	'we try to consume the tail to check if 6 has been buffered'
+	source.onNext(6)
+	tail.sendRequest(1)
+	source.onComplete()
+
+	then:
+	'last value known is 5'
+	tail.assertNumNextSignalsReceived(6)
+		.assertCompleteReceived()
+  }
+
 	def 'A Stream can be throttled'() {
 		given:
 			'a source and a throttled stream'

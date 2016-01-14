@@ -45,6 +45,7 @@ import reactor.Processors;
 import reactor.Subscribers;
 import reactor.Timers;
 import reactor.core.error.Exceptions;
+import reactor.core.error.InsufficientCapacityException;
 import reactor.core.processor.ProcessorGroup;
 import reactor.core.publisher.FluxDefaultIfEmpty;
 import reactor.core.publisher.FluxFlatMap;
@@ -64,6 +65,7 @@ import reactor.core.support.Logger;
 import reactor.core.support.QueueSupplier;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;
+import reactor.core.support.WaitStrategy;
 import reactor.core.timer.Timer;
 import reactor.fn.BiConsumer;
 import reactor.fn.BiFunction;
@@ -95,6 +97,7 @@ import reactor.rx.stream.Signal;
 import reactor.rx.stream.StreamAccumulate;
 import reactor.rx.stream.StreamBarrier;
 import reactor.rx.stream.StreamBatch;
+import reactor.rx.stream.StreamBlock;
 import reactor.rx.stream.StreamBuffer;
 import reactor.rx.stream.StreamBufferBoundary;
 import reactor.rx.stream.StreamBufferShiftTimeout;
@@ -3225,6 +3228,32 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
+	 * Attach a No-Op Stream that only serves the purpose of blocking incoming values if not enough demand is signaled
+	 * downstream. A blocking capable stream will prevent underlying dispatcher to be saturated and behave in an
+	 * uncontrolled fashion while focusing on low latency with an eager demand upstream.
+	 *
+	 * @return a blocking stream
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> onBackpressureBlock() {
+		return onBackpressureBlock(new WaitStrategy.Blocking());
+	}
+
+	/**
+	 * Attach a No-Op Stream that only serves the purpose of blocking incoming values if not enough demand is signaled
+	 * downstream. A blocking capable stream will prevent underlying dispatcher to be saturated and behave in an
+	 * uncontrolled fashion while focusing on low latency with an eager demand upstream.
+	 *
+	 * @return a blocking stream
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> onBackpressureBlock(WaitStrategy waitStrategy) {
+		return new StreamBlock<>(this, waitStrategy);
+	}
+
+	/**
 	 * Attach a No-Op Stream that only serves the purpose of buffering incoming values if not enough demand is signaled
 	 * downstream. A buffering capable stream will prevent underlying dispatcher to be saturated (and sometimes
 	 * blocking).
@@ -3286,6 +3315,24 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 */
 	public final Stream<O> onBackpressureDrop(Consumer<? super O> onDropped) {
 		return new StreamDrop<>(this, onDropped);
+	}
+
+	/**
+	 * Attach a No-Op Stream that only serves the purpose of buffering incoming values if not enough demand is signaled
+	 * downstream. A buffering capable stream will prevent underlying dispatcher to be saturated (and sometimes
+	 * blocking).
+	 *
+	 * @return a buffered stream
+	 *
+	 * @since 2.0, 2.5
+	 */
+	public final Stream<O> onBackpressureError() {
+		return onBackpressureDrop(new Consumer<O>() {
+			@Override
+			public void accept(O o) {
+				throw InsufficientCapacityException.get();
+			}
+		});
 	}
 
 	/**

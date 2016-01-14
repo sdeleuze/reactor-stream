@@ -15,15 +15,16 @@
  */
 package reactor.rx.stream;
 
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLongFieldUpdater;
-
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.error.AlertException;
+import reactor.core.error.CancelException;
 import reactor.core.error.Exceptions;
 import reactor.core.support.BackpressureUtils;
-import reactor.fn.Consumer;
+import reactor.core.support.WaitStrategy;
+import reactor.core.support.rb.disruptor.Sequence;
+import reactor.core.support.rb.disruptor.Sequencer;
 
 /**
  * Drops values if the subscriber doesn't request fast enough.
@@ -35,65 +36,55 @@ import reactor.fn.Consumer;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-public final class StreamDrop<T> extends StreamBarrier<T, T> {
+public final class StreamBlock<T> extends StreamBarrier<T, T> {
 
-	static final Consumer<Object> NOOP = new Consumer<Object>() {
-		@Override
-		public void accept(Object t) {
+	final WaitStrategy waitStrategy;
 
-		}
-	};
-
-	final Consumer<? super T> onDrop;
-
-	public StreamDrop(Publisher<? extends T> source) {
+	public StreamBlock(Publisher<? extends T> source, WaitStrategy waitStrategy) {
 		super(source);
-		this.onDrop = NOOP;
-	}
-
-
-	public StreamDrop(Publisher<? extends T> source, Consumer<? super T> onDrop) {
-		super(source);
-		this.onDrop = Objects.requireNonNull(onDrop, "onDrop");
+		this.waitStrategy = waitStrategy;
 	}
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		source.subscribe(new StreamDropSubscriber<>(s, onDrop));
+		source.subscribe(new StreamBlockSubscriber<>(s, waitStrategy));
 	}
 
-	static final class StreamDropSubscriber<T>
+	static final class StreamBlockSubscriber<T>
 			implements Subscriber<T>, Subscription, Downstream, Upstream, ActiveUpstream,
-					   DownstreamDemand, FeedbackLoop {
+					   DownstreamDemand, ActiveDownstream, Runnable {
 
 		final Subscriber<? super T> actual;
 
-		final Consumer<? super T> onDrop;
+		final WaitStrategy waitStrategy;
 
 		Subscription s;
 
-		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamDropSubscriber> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(StreamDropSubscriber.class, "requested");
+		static final Sequence REQUESTED = Sequencer.newSequence(0L);
 
 		boolean done;
 
-		public StreamDropSubscriber(Subscriber<? super T> actual, Consumer<? super T> onDrop) {
+		volatile boolean cancelled;
+
+		public StreamBlockSubscriber(Subscriber<? super T> actual, WaitStrategy waitStrategy) {
 			this.actual = actual;
-			this.onDrop = onDrop;
+			this.waitStrategy = waitStrategy;
 		}
 
 		@Override
 		public void request(long n) {
 			if (BackpressureUtils.validate(n)) {
-				BackpressureUtils.addAndGet(REQUESTED, this, n);
+				BackpressureUtils.getAndAdd(REQUESTED, n);
+				waitStrategy.signalAllWhenBlocking();
 			}
 		}
 
 		@Override
 		public void cancel() {
 			s.cancel();
+			cancelled = true;
+			waitStrategy.signalAllWhenBlocking();
 		}
 
 		@Override
@@ -110,37 +101,29 @@ public final class StreamDrop<T> extends StreamBarrier<T, T> {
 		@Override
 		public void onNext(T t) {
 
-			if (done) {
-				try {
-					onDrop.accept(t);
-				} catch (Throwable e) {
-					Exceptions.onNextDropped(t);
-				}
+			if (done || cancelled) {
+				Exceptions.onNextDropped(t);
 				return;
 			}
 
-			if (requested != 0L) {
-
-				actual.onNext(t);
-
-				if (requested != Long.MAX_VALUE) {
-					REQUESTED.decrementAndGet(this);
-				}
-
-			} else {
-				try {
-					onDrop.accept(t);
-				} catch (Throwable e) {
-					cancel();
-
-					onError(e);
+			try {
+				for(;;) {
+					waitStrategy.waitFor(1L, REQUESTED, this);
+					if(BackpressureUtils.getAndSub(REQUESTED, 1L) != 0L) {
+						break;
+					}
 				}
 			}
+			catch (AlertException | CancelException | InterruptedException ie){
+				cancel();
+				Exceptions.onNextDropped(t);
+			}
+			actual.onNext(t);
 		}
 
 		@Override
 		public void onError(Throwable t) {
-			if (done) {
+			if (done || cancelled) {
 				Exceptions.onErrorDropped(t);
 				return;
 			}
@@ -151,12 +134,19 @@ public final class StreamDrop<T> extends StreamBarrier<T, T> {
 
 		@Override
 		public void onComplete() {
-			if (done) {
+			if (done || cancelled) {
 				return;
 			}
 			done = true;
 
 			actual.onComplete();
+		}
+
+		@Override
+		public void run() {
+			if(cancelled){
+				throw CancelException.INSTANCE;
+			}
 		}
 
 		@Override
@@ -176,22 +166,17 @@ public final class StreamDrop<T> extends StreamBarrier<T, T> {
 
 		@Override
 		public long requestedFromDownstream() {
-			return requested;
-		}
-
-		@Override
-		public Object delegateInput() {
-			return onDrop;
-		}
-
-		@Override
-		public Object delegateOutput() {
-			return null;
+			return REQUESTED.get();
 		}
 
 		@Override
 		public Object upstream() {
 			return s;
+		}
+
+		@Override
+		public boolean isCancelled() {
+			return cancelled;
 		}
 	}
 }
