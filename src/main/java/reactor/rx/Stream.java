@@ -752,7 +752,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	/**
 	 * Build a {@literal Stream} whom data is sourced by each element of the passed array on subscription request.
 	 * <p>
-	 * It will use the passed dispatcher to emit signals.
+
 	 *
 	 * @param values The values to {@code onNext()}
 	 * @param <T>    type of the values
@@ -787,7 +787,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	/**
 	 * Build a {@literal Stream} whom data is sourced by each element of the passed iterable on subscription request.
 	 * <p>
-	 * It will use the passed dispatcher to emit signals.
+
 	 *
 	 * @param values The values to {@code onNext()}
 	 * @param <T>    type of the values
@@ -816,6 +816,44 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		}
 		return StreamProcessor.from(processor);
 	}
+
+	/**
+	 * Build a {@literal Stream} whom data is sourced by each element of the passed queue on subscription request.
+	 * <p>
+	 *
+	 * @param values The values to {@code onNext()}
+	 * @param <T> type of the values
+	 *
+	 * @return a {@link Stream} based on the given values
+	 */
+	public static <T> Stream<T> fromQueue(final Queue<? extends T> values) {
+		return fromIterable(new Iterable<T>() {
+
+			final Iterator<T> it = new Iterator<T>() {
+				@Override
+				public boolean hasNext() {
+					return !values.isEmpty();
+				}
+
+				@Override
+				public T next() {
+					return values.poll();
+				}
+
+				@Override
+				public void remove() {
+
+				}
+			};
+
+			@Override
+
+			public Iterator<T> iterator() {
+				return it;
+			}
+		});
+	}
+
 
 	/**
 	 * Build a Synchronous {@literal Stream} whose data are aggregated from the passed publishers
@@ -3987,7 +4025,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		}).flatMap(new Function<PriorityQueue<O>, Publisher<? extends O>>() {
 			@Override
 			public Publisher<? extends O> apply(PriorityQueue<O> os) {
-				return fromIterable(os);
+				return fromQueue(os);
 			}
 		}));
 	}
