@@ -2450,7 +2450,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @since 2.5
 	 */
 	public final Stream<O> defaultIfEmpty(final O defaultValue) {
-		return new StreamDefaultIfEmpty<>(this, defaultValue))
+		return new StreamDefaultIfEmpty<>(this, defaultValue);
 	}
 
 	/**
