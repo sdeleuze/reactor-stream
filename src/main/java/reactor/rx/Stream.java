@@ -704,6 +704,52 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		return new StreamDefer<>(supplier);
 	}
 
+
+	/**
+	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
+	 *
+	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
+	 * @return a new {@link Stream}
+	 */
+	public static Mono<Long> delay(long delay) {
+		return delay(Timers.globalOrNew(), delay, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
+	 *
+	 * @param timer the timer to run on
+	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
+	 * @return a new {@link Stream}
+	 */
+	public static Mono<Long> delay(Timer timer, long delay) {
+		return delay(timer, delay, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
+	 *
+	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
+	 * @param unit  the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Mono<Long> delay(long delay, TimeUnit unit) {
+		return delay(Timers.globalOrNew(), delay, unit);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
+	 *
+	 * @param timer the timer to run on
+	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
+	 * @param unit  the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Mono<Long> delay(Timer timer, long delay, TimeUnit unit) {
+		return Mono.delay(delay, unit, timer);
+	}
+
+
 	/**
 	 * Build a {@literal Stream} that will only emit a complete signal to any new subscriber.
 	 *
@@ -991,8 +1037,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @param period the period in SECONDS before each following increment
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> period(long period) {
-		return period(Timers.globalOrNew(), -1l, period, TimeUnit.SECONDS);
+	public static Stream<Long> interval(long period) {
+		return interval(Timers.globalOrNew(), -1l, period, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -1004,8 +1050,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @param period the period in SECONDS before each following increment
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> period(Timer timer, long period) {
-		return period(timer, -1l, period, TimeUnit.SECONDS);
+	public static Stream<Long> interval(Timer timer, long period) {
+		return interval(timer, -1l, period, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -1016,8 +1062,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @param period the period in SECONDS before each following increment
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> period(long delay, long period) {
-		return period(Timers.globalOrNew(), delay, period, TimeUnit.SECONDS);
+	public static Stream<Long> interval(long delay, long period) {
+		return interval(Timers.globalOrNew(), delay, period, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -1029,8 +1075,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @param period the period in SECONDS before each following increment
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> period(Timer timer, long delay, long period) {
-		return period(timer, delay, period, TimeUnit.SECONDS);
+	public static Stream<Long> interval(Timer timer, long delay, long period) {
+		return interval(timer, delay, period, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -1041,8 +1087,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @param unit   the time unit
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> period(long period, TimeUnit unit) {
-		return period(Timers.globalOrNew(), -1l, period, unit);
+	public static Stream<Long> interval(long period, TimeUnit unit) {
+		return interval(Timers.globalOrNew(), -1l, period, unit);
 	}
 
 	/**
@@ -1054,8 +1100,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @param unit   the time unit
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> period(Timer timer, long period, TimeUnit unit) {
-		return period(timer, -1l, period, unit);
+	public static Stream<Long> interval(Timer timer, long period, TimeUnit unit) {
+		return interval(timer, -1l, period, unit);
 	}
 
 	/**
@@ -1067,8 +1113,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @param unit   the time unit
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> period(long delay, long period, TimeUnit unit) {
-		return period(Timers.globalOrNew(), delay, period, unit);
+	public static Stream<Long> interval(long delay, long period, TimeUnit unit) {
+		return interval(Timers.globalOrNew(), delay, period, unit);
 	}
 
 	/**
@@ -1081,7 +1127,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @param unit   the time unit
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> period(Timer timer, long delay, long period, TimeUnit unit) {
+	public static Stream<Long> interval(Timer timer, long delay, long period, TimeUnit unit) {
 		return new StreamTimerPeriod(TimeUnit.MILLISECONDS.convert(delay, unit), period, unit, timer);
 	}
 
@@ -1253,51 +1299,6 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	  Publisher<Publisher<? extends T>> mergedPublishers) {
 		return new StreamSwitchMap<>(mergedPublishers, IDENTITY_FUNCTION, XS_QUEUE_SUPPLIER, ReactiveState.XS_BUFFER_SIZE);
 	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
-	 * @return a new {@link Stream}
-	 */
-	public static Mono<Long> timer(long delay) {
-		return timer(Timers.globalOrNew(), delay, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param timer the timer to run on
-	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
-	 * @return a new {@link Stream}
-	 */
-	public static Mono<Long> timer(Timer timer, long delay) {
-		return timer(timer, delay, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
-	 * @param unit  the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Mono<Long> timer(long delay, TimeUnit unit) {
-		return timer(Timers.globalOrNew(), delay, unit);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param timer the timer to run on
-	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
-	 * @param unit  the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Mono<Long> timer(Timer timer, long delay, TimeUnit unit) {
-		return Mono.delay(delay, unit, timer);
-	}
-
 	/**
 	 * @see Flux#yield(Consumer)
 	 * @return a new {@link Stream}
@@ -3596,7 +3597,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @since 2.0, 2.5
 	 */
-	public final Stream<O> repeatWhen(final Function<Stream<?>, ? extends Publisher<?>> backOffStream) {
+	public final Stream<O> repeatWhen(final Function<Stream<Long>, ? extends Publisher<?>> backOffStream) {
 		return new StreamRepeatWhen<O>(this, backOffStream);
 	}
 
@@ -3779,7 +3780,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		return sampleFirst(new Function<O, Publisher<Long>>() {
 			@Override
 			public Publisher<Long> apply(O o) {
-				return timer(timespan, unit);
+				return delay(timespan, unit);
 			}
 		});
 	}
@@ -3937,7 +3938,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	public final Stream<O> skip(final long time, final TimeUnit unit, final Timer timer) {
 		if (time > 0) {
 			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the stream");
-			return skipUntil(timer(timer, time, unit));
+			return skipUntil(delay(timer, time, unit));
 		}
 		else {
 			return this;
@@ -4159,7 +4160,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	public final Stream<O> take(final long time, final TimeUnit unit, final Timer timer) {
 		if (time > 0) {
 			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the stream");
-			return takeUntil(timer(timer, time, unit));
+			return takeUntil(delay(timer, time, unit));
 		}
 		else {
 			return empty();
@@ -4329,7 +4330,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		final Timer timer = getTimer();
 		Assert.state(timer != null, "Cannot use default timer as no environment has been provided to this " + "Stream");
 
-		final Mono<Long> _timer = timer(timer, timeout, unit == null ? TimeUnit.MILLISECONDS : unit)
+		final Mono<Long> _timer = delay(timer, timeout, unit == null ? TimeUnit.MILLISECONDS : unit)
 				.otherwiseJust(0L);
 		final Supplier<Publisher<Long>> first = new Supplier<Publisher<Long>>() {
 			@Override

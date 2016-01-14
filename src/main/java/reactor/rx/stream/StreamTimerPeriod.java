@@ -33,7 +33,7 @@ import reactor.rx.Stream;
  * Create such stream with the provided factory, E.g with a delay of 1 second, then every 2 seconds.:
  * <pre>
  * {@code
- * Streams.timer(1, 2).consume(
+ * Streams.delay(1, 2).consume(
  * log::info,
  * log::error,
  * (-> log.info("complete"))

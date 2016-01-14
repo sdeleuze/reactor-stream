@@ -90,7 +90,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 		counters.clear();
 		final Processor<Integer, Integer> p = createProcessor(bufferSize);
 
-		/*Streams.period(200, TimeUnit.MILLISECONDS)
+		/*Streams.interval(200, TimeUnit.MILLISECONDS)
 		  .consume(i -> System.out.println(p.debug()) );*/
 
 		processorReferences.add(p);

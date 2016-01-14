@@ -1,30 +1,15 @@
-/*
- * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package reactor.rx.stream;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import reactor.fn.Function;
 
-import org.reactivestreams.*;
-
-import reactor.core.processor.EmitterProcessor;
-import reactor.core.subscriber.*;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+import reactor.core.subscriber.SubscriberMultiSubscription;
 import reactor.core.subscription.DeferredSubscription;
 import reactor.core.subscription.EmptySubscription;
+import reactor.fn.Function;
 
 /**
  * Repeats a source when a companion sequence
@@ -42,10 +27,10 @@ import reactor.core.subscription.EmptySubscription;
  */
 public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 
-	final Function<? super reactor.rx.Stream<Object>, ? extends Publisher<? extends Object>> whenSourceFactory;
+	final Function<? super reactor.rx.Stream<Long>, ? extends Publisher<? extends Object>> whenSourceFactory;
 
 	public StreamRepeatWhen(Publisher<? extends T> source,
-							   Function<? super reactor.rx.Stream<Object>, ? extends Publisher<? extends Object>> whenSourceFactory) {
+			Function<? super reactor.rx.Stream<Long>, ? extends Publisher<? extends Object>> whenSourceFactory) {
 		super(source);
 		this.whenSourceFactory = Objects.requireNonNull(whenSourceFactory, "whenSourceFactory");
 	}
@@ -58,12 +43,13 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 		reactor.rx.subscriber.SerializedSubscriber<T> serial = new reactor.rx.subscriber.SerializedSubscriber<>(s);
 
 		StreamRepeatWhenMainSubscriber<T> main = new StreamRepeatWhenMainSubscriber<>(serial, other
-		  .completionSignal, source);
+				.completionSignal, source);
 		other.main = main;
 
+		other.completionSignal.onSubscribe(EmptySubscription.INSTANCE);
 		serial.onSubscribe(main);
 
-		Publisher<? extends Object> p;
+		Publisher<?> p;
 
 		try {
 			p = whenSourceFactory.apply(other);
@@ -88,21 +74,21 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 
 		final DeferredSubscription otherArbiter;
 
-		final Subscriber<Object> signaller;
+		final Subscriber<Long> signaller;
 
 		final Publisher<? extends T> source;
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<StreamRepeatWhenMainSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(StreamRepeatWhenMainSubscriber.class, "wip");
+				AtomicIntegerFieldUpdater.newUpdater(StreamRepeatWhenMainSubscriber.class, "wip");
 
 		volatile boolean cancelled;
 
-		static final Object NEXT = new Object();
+		long produced;
 
-		public StreamRepeatWhenMainSubscriber(Subscriber<? super T> actual, Subscriber<Object> signaller,
-												 Publisher<? extends T> source) {
+		public StreamRepeatWhenMainSubscriber(Subscriber<? super T> actual, Subscriber<Long> signaller,
+				Publisher<? extends T> source) {
 			super(actual);
 			this.signaller = signaller;
 			this.source = source;
@@ -125,7 +111,7 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 			otherArbiter.cancel();
 		}
 
-		public void setWhen(Subscription w) {
+		void setWhen(Subscription w) {
 			otherArbiter.set(w);
 		}
 
@@ -138,7 +124,7 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 		public void onNext(T t) {
 			subscriber.onNext(t);
 
-			producedOne();
+			produced++;
 		}
 
 		@Override
@@ -150,9 +136,11 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 
 		@Override
 		public void onComplete() {
+			long p = produced;
+			produced = 0;
+			produced(p);
 			otherArbiter.request(1);
-
-			signaller.onNext(NEXT);
+			signaller.onNext(p);
 		}
 
 		void resubscribe() {
@@ -183,17 +171,16 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class StreamRepeatWhenOtherSubscriber 
-	extends reactor.rx.Stream<Object>
-	implements Subscriber<Object>, FeedbackLoop, Trace, Inner {
+	static final class StreamRepeatWhenOtherSubscriber
+			extends reactor.rx.Stream<Long>
+			implements Subscriber<Object>, FeedbackLoop, Trace, Inner {
 		StreamRepeatWhenMainSubscriber<?> main;
 
-		final EmitterProcessor<Object> completionSignal = new EmitterProcessor<>();
+		final reactor.core.processor.EmitterProcessor<Long> completionSignal = new reactor.core.processor.EmitterProcessor<>();
 
 		@Override
 		public void onSubscribe(Subscription s) {
 			main.setWhen(s);
-			completionSignal.onSubscribe(EmptySubscription.INSTANCE);
 		}
 
 		@Override
@@ -212,7 +199,7 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 		}
 
 		@Override
-		public void subscribe(Subscriber<? super Object> s) {
+		public void subscribe(Subscriber<? super Long> s) {
 			completionSignal.subscribe(s);
 		}
 

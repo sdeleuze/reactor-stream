@@ -539,7 +539,7 @@ public class StreamTests extends AbstractReactorTest {
 				                                               System.out.println("failures: " + failures + " successes:" + successes);
 				                                               circuitSwitcher.onNext(openCircuit);
 				                                               successes.set(0);
-				                                               Stream.timer(1)
+				                                               Stream.delay(1)
 				                                                     .subscribe(Subscribers.consumer(ignore -> circuitSwitcher.onNext(
 						                                                     closeCircuit)));
 			                                               }
@@ -1239,7 +1239,7 @@ public class StreamTests extends AbstractReactorTest {
 	}
 
 	/**
-	 * This test case demonstrates a silent failure of {@link Stream#period(long)} when a resolution is specified that
+	 * This test case demonstrates a silent failure of {@link Stream#interval(long)} when a resolution is specified that
 	 * is less than the backing {@link Timer} class.
 	 *
 	 * @throws InterruptedException - on failure.
@@ -1259,7 +1259,7 @@ public class StreamTests extends AbstractReactorTest {
 		                        .toEpochMilli();
 		long elapsed = System.nanoTime();
 
-		Control ctrl = Stream.period(delayMS, TimeUnit.MILLISECONDS)
+		Control ctrl = Stream.interval(delayMS, TimeUnit.MILLISECONDS)
 		                     .map((signal) -> {
 			                      return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - elapsed);
 		                      })

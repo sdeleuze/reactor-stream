@@ -1748,7 +1748,7 @@ class StreamsSpec extends Specification {
 			'a source stream with a given globalTimer'
 
 			def res = 0l
-			def c = Stream.timer(1)
+			def c = Stream.delay(1)
 			def timeStart = System.currentTimeMillis()
 
 		when:
@@ -1763,7 +1763,7 @@ class StreamsSpec extends Specification {
 		when:
 			'consuming periodic'
 			def i = []
-			c = Stream.period(0, 1).log().consume {
+			c = Stream.interval(0, 1).log().consume {
 				i << it
 			}
 			sleep(2500)
@@ -2377,7 +2377,7 @@ class StreamsSpec extends Specification {
 			.log('request')
 					.requestWhen {
 				it
-						.flatMap { v -> Stream.period(avgTime, TimeUnit.MILLISECONDS).map { 1l }
+						.flatMap { v -> Stream.interval(avgTime, TimeUnit.MILLISECONDS).map { 1l }
 				}
 			}
 			.elapsed()
@@ -2695,7 +2695,30 @@ class StreamsSpec extends Specification {
 			}.log('repeat').repeatWhen { attempts ->
 				attempts.zipWith(Stream.range(1, 3)) { t1, t2 -> t2 }.flatMap { i ->
 					println "delay repeat by " + i + " second(s)"
-				  Stream.timer(i)
+				  Stream.delay(i)
+				}
+			}.log('test').subscribe()
+	  sleep 10000
+
+		then:
+			'Promise completed after 3 tries'
+			counter == 4
+	}
+
+	def 'A Stream can re-subscribe its oldest parent on complete signals after backoff stream and volume'() {
+		when:
+			'when composable with an initial value'
+			def counter = 0
+		Stream.yield {
+				counter++
+				if(counter == 4){
+				  it.onNext('hey')
+				}
+				it.onComplete()
+			}.repeatWhen { attempts ->
+				attempts.log('repeat').takeWhile{ println it; it == 0L }.flatMap { i ->
+					println "delay repeat by 1 second"
+				  Stream.delay(1)
 				}
 			}.log('test').subscribe()
 	  sleep 10000
