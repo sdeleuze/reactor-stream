@@ -15,14 +15,16 @@
  */
 package reactor.rx.stream;
 
-import java.util.*;
-import reactor.fn.Supplier;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.Supplier;
 
 /**
  * Expects and emits a single item from the source or signals
@@ -177,7 +179,7 @@ public final class MonoSingle<T> extends reactor.Mono.MonoBarrier<T, T> {
 						return;
 					}
 
-					set(t);
+					complete(t);
 				} else {
 					subscriber.onError(new NoSuchElementException("Source was empty"));
 				}

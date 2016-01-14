@@ -48,7 +48,6 @@ import reactor.Timers;
 import reactor.core.error.Exceptions;
 import reactor.core.error.InsufficientCapacityException;
 import reactor.core.processor.ProcessorGroup;
-import reactor.core.publisher.FluxDefaultIfEmpty;
 import reactor.core.publisher.FluxFlatMap;
 import reactor.core.publisher.FluxLog;
 import reactor.core.publisher.FluxMapSignal;
@@ -109,6 +108,7 @@ import reactor.rx.stream.StreamCombineLatest;
 import reactor.rx.stream.StreamConcatArray;
 import reactor.rx.stream.StreamConcatIterable;
 import reactor.rx.stream.StreamDebounce;
+import reactor.rx.stream.StreamDefaultIfEmpty;
 import reactor.rx.stream.StreamDefer;
 import reactor.rx.stream.StreamDelaySubscription;
 import reactor.rx.stream.StreamDematerialize;
@@ -2450,7 +2450,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @since 2.5
 	 */
 	public final Stream<O> defaultIfEmpty(final O defaultValue) {
-		return new StreamBarrier<>(new FluxDefaultIfEmpty<O>(this, defaultValue));
+		return new StreamDefaultIfEmpty<>(this, defaultValue))
 	}
 
 	/**

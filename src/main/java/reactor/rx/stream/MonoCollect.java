@@ -16,14 +16,16 @@
 package reactor.rx.stream;
 
 import java.util.Objects;
-import reactor.fn.*;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.BiConsumer;
+import reactor.fn.Supplier;
 
 /**
  * Collects the values of the source sequence into a container returned by
@@ -138,7 +140,7 @@ public final class MonoCollect<T, R> extends reactor.Mono.MonoBarrier<T, R> {
 				return;
 			}
 			done = true;
-			set(container);
+			complete(container);
 		}
 
 		@Override

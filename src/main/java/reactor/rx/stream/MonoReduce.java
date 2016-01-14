@@ -16,14 +16,16 @@
 package reactor.rx.stream;
 
 import java.util.Objects;
-import reactor.fn.*;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.BiFunction;
+import reactor.fn.Supplier;
 
 /**
  * Aggregates the source values with the help of an accumulator
@@ -149,7 +151,7 @@ public final class MonoReduce<T, R> extends reactor.Mono.MonoBarrier<T, R> {
 			}
 			done = true;
 
-			set(value);
+			complete(value);
 		}
 
 		@Override

@@ -16,13 +16,14 @@
 package reactor.rx.stream;
 
 import java.util.Objects;
-import reactor.fn.Supplier;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.Supplier;
 
 /**
  * Emits only the element at the given index position or signals a
@@ -161,7 +162,7 @@ public final class MonoElementAt<T> extends reactor.Mono.MonoBarrier<T, T> {
 					return;
 				}
 
-				set(t);
+				complete(t);
 			}
 		}
 

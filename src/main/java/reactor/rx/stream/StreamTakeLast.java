@@ -129,7 +129,7 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 			if (v == null) {
 				subscriber.onComplete();
 			}
-			set(v);
+			complete(v);
 		}
 
 		@Override

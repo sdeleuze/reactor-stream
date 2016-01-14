@@ -16,13 +16,14 @@
 package reactor.rx.stream;
 
 import java.util.Objects;
-import reactor.fn.Predicate;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.Predicate;
 
 /**
  * Emits a single boolean true if all values of the source sequence match
@@ -103,7 +104,7 @@ public final class MonoAll<T> extends reactor.Mono.MonoBarrier<T, Boolean> {
 				done = true;
 				s.cancel();
 
-				set(false);
+				complete(false);
 			}
 		}
 
@@ -124,7 +125,7 @@ public final class MonoAll<T> extends reactor.Mono.MonoBarrier<T, Boolean> {
 				return;
 			}
 			done = true;
-			set(true);
+			complete(true);
 		}
 
 		@Override

@@ -15,8 +15,9 @@
  */
 package reactor.rx.stream;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.support.BackpressureUtils;
 
@@ -64,12 +65,12 @@ public final class MonoIsEmpty<T> extends reactor.Mono.MonoBarrier<T, Boolean> {
 		public void onNext(T t) {
 			s.cancel();
 
-			set(false);
+			complete(false);
 		}
 
 		@Override
 		public void onComplete() {
-			set(true);
+			complete(true);
 		}
 
 		@Override

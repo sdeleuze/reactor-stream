@@ -15,8 +15,9 @@
  */
 package reactor.rx.stream;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.support.BackpressureUtils;
 
@@ -76,7 +77,7 @@ public final class MonoCount<T> extends reactor.Mono.MonoBarrier<T, Long> {
 
 		@Override
 		public void onComplete() {
-			set(counter);
+			complete(counter);
 		}
 
 		@Override
