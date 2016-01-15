@@ -782,11 +782,11 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Stream<T> from(final Publisher<T> publisher) {
-		if (Stream.class.isAssignableFrom(publisher.getClass())) {
+		if (publisher instanceof Stream) {
 			return (Stream<T>) publisher;
 		}
 
-		if (Supplier.class.isAssignableFrom(publisher.getClass())) {
+		if (publisher instanceof Supplier) {
 			T t = ((Supplier<T>)publisher).get();
 			if(t != null){
 				return just(t);
@@ -2455,9 +2455,42 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 
 	/**
 	 * @param subscriptionDelay
+	 *
+	 * @return
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> delaySubscription(long seconds) {
+		return delaySubscription(seconds, TimeUnit.SECONDS);
+	}
+	/**
+	 * @param subscriptionDelay
+	 *
+	 * @return
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> delaySubscription(long delay, TimeUnit unit) {
+		return delaySubscription(delay, unit, Timers.global());
+	}
+	/**
+	 * @param subscriptionDelay
+	 *
+	 * @return
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> delaySubscription(long delay, TimeUnit unit, Timer timer) {
+		return delaySubscription(delay(timer, delay, unit));
+	}
+
+	/**
+	 * @param subscriptionDelay
 	 * @param <U>
 	 *
 	 * @return
+	 *
+	 * @since 2.5
 	 */
 	public final <U> Stream<O> delaySubscription(Publisher<U> subscriptionDelay) {
 		return new StreamDelaySubscription<>(this, subscriptionDelay);
@@ -2477,7 +2510,9 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
+	 * @see Flux#dispatchOn
 	 *
+	 * @return a new dispatched {@link Stream}
 	 */
 	public final Stream<O> dispatchOn(final ProcessorGroup processorProvider) {
 		return new DispatchOn<>(this, processorProvider);
@@ -3472,14 +3507,13 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a subscribed Promise (caching the signal unlike {@link #next)
 	 */
 	public final Promise<O> promise() {
-		Promise<O> p = Promise.prepare();
-		p.request(1);
-		subscribe(p);
-		return p;
+		return Promise.from(this);
 	}
 
 	/**
+	 * @see Flux#publishOn
 	 *
+	 * @return a new dispatched {@link Stream}
 	 */
 	public final Stream<O> publishOn(final ProcessorGroup processorProvider) {
 		return new PublishOn<>(this, processorProvider);

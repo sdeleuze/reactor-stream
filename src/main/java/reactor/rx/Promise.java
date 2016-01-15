@@ -29,10 +29,10 @@ import reactor.Timers;
 import reactor.core.error.CancelException;
 import reactor.core.error.Exceptions;
 import reactor.core.error.ReactorFatalException;
+import reactor.core.subscription.EmptySubscription;
 import reactor.core.subscription.ScalarSubscription;
 import reactor.core.support.BackpressureUtils;
 import reactor.core.support.ReactiveState;
-import reactor.core.support.SignalType;
 import reactor.core.support.internal.PlatformDependent;
 import reactor.core.timer.Timer;
 import reactor.fn.BiConsumer;
@@ -42,7 +42,7 @@ import reactor.rx.broadcast.Broadcaster;
 
 /**
  * A {@code Promise} is a stateful event container that accepts a single value or error. In addition to {@link #peek()
- * getting} or {@link #await() awaiting} the value, consumers can be registered to the outbound {@link #stream()} or via
+ * getting} or {@link #await() awaiting} the value, consumers can be registered to the outbound stream or via
  * , consumers can be registered to be notified of {@link #doOnError(Consumer) notified an error}, {@link
  * #doOnSuccess(Consumer) a value}, or {@link #doOnTerminate(BiConsumer)} both}. <p> A promise also provides methods for
  * composing actions with the future value much like a {@link Stream}. However, where a {@link
@@ -55,14 +55,27 @@ import reactor.rx.broadcast.Broadcaster;
  * @see <a href="https://github.com/promises-aplus/promises-spec">Promises/A+ specification</a>
  */
 public class Promise<O> extends Mono<O>
-		implements Processor<O, O>, Consumer<O>, ReactiveState.Bounded, Subscription, ReactiveState
-		.FailState,  ReactiveState.Upstream, ReactiveState.Downstream, ReactiveState.ActiveUpstream {
+		implements Processor<O, O>, Consumer<O>, ReactiveState.Bounded, Subscription, ReactiveState.FailState,
+		           ReactiveState.Upstream, ReactiveState.ActiveDownstream, ReactiveState.Downstream,
+		           ReactiveState.ActiveUpstream {
 
-	final static AtomicReferenceFieldUpdater<Promise, SignalType> STATE_UPDATER =
-			PlatformDependent.newAtomicReferenceFieldUpdater(Promise.class, "endState");
-	private final static Promise                            COMPLETE  = success(null);
-	private static final AtomicIntegerFieldUpdater<Promise> REQUESTED =
+	final static AtomicIntegerFieldUpdater<Promise>              STATE     =
+			AtomicIntegerFieldUpdater.newUpdater(Promise.class, "state");
+	final static AtomicIntegerFieldUpdater<Promise>              WIP       =
+			AtomicIntegerFieldUpdater.newUpdater(Promise.class, "wip");
+	final static AtomicIntegerFieldUpdater<Promise>              REQUESTED =
 			AtomicIntegerFieldUpdater.newUpdater(Promise.class, "requested");
+	final static AtomicReferenceFieldUpdater<Promise, Processor> PROCESSOR =
+			PlatformDependent.newAtomicReferenceFieldUpdater(Promise.class, "processor");
+
+	final static Promise   COMPLETE                = success(null);
+	final static int       STATE_CANCELLED         = -1;
+	final static int       STATE_READY             = 0;
+	final static int       STATE_SUBSCRIBED        = 1;
+	final static int       STATE_POST_SUBSCRIBED   = 2;
+	final static int       STATE_SUCCESS_VALUE     = 3;
+	final static int       STATE_COMPLETE_NO_VALUE = 4;
+	final static int       STATE_ERROR             = 5;
 
 	/**
 	 * Create synchronous {@link Promise} and use the given error to complete the {@link Promise} immediately.
@@ -200,13 +213,18 @@ public class Promise<O> extends Mono<O>
 			return new Promise<>(value, timer);
 		}
 	}
-	private final Timer        timer;
-	protected     Subscription subscription;
-	Broadcaster<O> outboundStream;
-	volatile int requested = 0;
-	volatile SignalType endState;
-	volatile O          value;
-	volatile Throwable  error;
+
+	final Timer        timer;
+	final Publisher<O> source;
+
+	Subscription subscription;
+
+	volatile Processor<O, O> processor;
+	volatile O               value;
+	volatile Throwable       error;
+	volatile int             state;
+	volatile int             wip;
+	volatile int             requested;
 
 
 	/**
@@ -216,6 +234,18 @@ public class Promise<O> extends Mono<O>
 	 */
 	Promise(Timer timer) {
 		this.timer = timer;
+		this.source = null;
+	}
+
+	/**
+	 * Creates a new unfulfilled promise
+	 *
+	 * @param timer The default Timer for time-sensitive downstream actions if any.
+	 * @param source the optional source publisher
+	 */
+	Promise(Publisher<O> source, Timer timer) {
+		this.timer = timer;
+		this.source = source;
 	}
 
 	/**
@@ -226,8 +256,9 @@ public class Promise<O> extends Mono<O>
 	 */
 	Promise(O value, Timer timer) {
 		this.timer = timer;
-		endState = value == null ? SignalType.COMPLETE : SignalType.NEXT;
 		this.value = value;
+		this.source = null;
+		STATE.lazySet(this, value == null ? STATE_COMPLETE_NO_VALUE : STATE_SUCCESS_VALUE);
 	}
 
 	/**
@@ -240,21 +271,9 @@ public class Promise<O> extends Mono<O>
 	 */
 	Promise(Throwable error, Timer timer) {
 		this.timer = timer;
-		endState = SignalType.ERROR;
 		this.error = error;
-	}
-
-	/**
-	 * Creates a new promise that has the given state. <p> The {@code observable} is used when notifying the Promise's
-	 * consumers, determining the thread on which they are called. The given {@code env} is used to determine the
-	 * default await timeout.
-	 *
-	 * @param state The state of the promise
-	 * @param timer The default Timer for time-sensitive downstream actions if any.
-	 */
-	Promise(SignalType state, Timer timer) {
-		this(timer);
-		this.endState = state;
+		this.source = null;
+		STATE.lazySet(this, STATE_ERROR);
 	}
 
 	@Override
@@ -297,20 +316,18 @@ public class Promise<O> extends Mono<O>
 		long delay = System.currentTimeMillis() + TimeUnit.MILLISECONDS.convert(timeout, unit);
 
 		for (; ; ) {
-			SignalType endState = this.endState;
-			if (endState != null) {
+			int endState = this.state;
 				switch (endState) {
-					case NEXT:
+					case STATE_SUCCESS_VALUE:
 						return value;
-					case ERROR:
+					case STATE_ERROR:
 						if (error instanceof RuntimeException) {
 							throw (RuntimeException) error;
 						}
 						throw ReactorFatalException.create(error);
-					case COMPLETE:
+					case STATE_COMPLETE_NO_VALUE:
 						return null;
 				}
-			}
 			if (delay < System.currentTimeMillis()) {
 				throw CancelException.get();
 			}
@@ -349,16 +366,24 @@ public class Promise<O> extends Mono<O>
 
 	@Override
 	public final void cancel() {
-		Subscription subscription = this.subscription;
-		if (subscription != null) {
-			this.subscription = null;
-			subscription.cancel();
+		int state = this.state;
+		for (; ; ) {
+			if (state != STATE_READY && state != STATE_SUBSCRIBED && state != STATE_POST_SUBSCRIBED) {
+				return;
+			}
+			if (STATE.compareAndSet(this, state, STATE_CANCELLED)) {
+				break;
+			}
+			state = this.state;
+		}
+		if (WIP.getAndIncrement(this) == 0) {
+			drainLoop();
 		}
 	}
 
 	@Override
 	public final Subscriber downstream() {
-		return outboundStream;
+		return processor;
 	}
 
 	/**
@@ -398,7 +423,7 @@ public class Promise<O> extends Mono<O>
 	 * @return {@code true} if this {@code Promise} was completed with an error, {@code false} otherwise.
 	 */
 	public final boolean isError() {
-		return endState == SignalType.ERROR;
+		return state == STATE_ERROR;
 	}
 
 	/**
@@ -409,12 +434,12 @@ public class Promise<O> extends Mono<O>
 	 * @see #isTerminated()
 	 */
 	public final boolean isPending() {
-		return endState == null;
+		return !isTerminated() && !isCancelled();
 	}
 
 	@Override
 	public final boolean isStarted() {
-		return requested > 0;
+		return state > STATE_READY && !isTerminated();
 	}
 
 	/**
@@ -423,12 +448,12 @@ public class Promise<O> extends Mono<O>
 	 * @return {@code true} if this {@code Promise} is successful, {@code false} otherwise.
 	 */
 	public final boolean isSuccess() {
-		return endState == SignalType.NEXT || endState == SignalType.COMPLETE;
+		return state == STATE_COMPLETE_NO_VALUE || state == STATE_SUCCESS_VALUE;
 	}
 
 	@Override
 	public final boolean isTerminated() {
-		return endState == SignalType.COMPLETE || endState == SignalType.ERROR;
+		return state > STATE_POST_SUBSCRIBED;
 	}
 
 	@Override
@@ -437,53 +462,76 @@ public class Promise<O> extends Mono<O>
 	}
 
 	@Override
+	public boolean isCancelled() {
+		return state == STATE_CANCELLED;
+	}
+
+	@Override
 	public final void onError(Throwable cause) {
-		if (this.endState != null ||
-				!STATE_UPDATER.compareAndSet(this, null, SignalType.ERROR)) {
-				Exceptions.onErrorDropped(cause);
+		Subscription s = subscription;
+
+		if ((source != null && s == null) || this.error != null) {
+			Exceptions.onErrorDropped(cause);
 			return;
 		}
 
 		this.error = cause;
 		subscription = null;
 
-		if (outboundStream != null) {
-			outboundStream.onError(error);
+		int state = this.state;
+		for (; ; ) {
+			if (state != STATE_READY && state != STATE_SUBSCRIBED && state != STATE_POST_SUBSCRIBED) {
+				Exceptions.onErrorDropped(cause);
+				return;
+			}
+			if (STATE.compareAndSet(this, state, STATE_ERROR)) {
+				break;
+			}
+			state = this.state;
+		}
+		if (WIP.getAndIncrement(this) == 0) {
+			drainLoop();
 		}
 	}
 
 	@Override
 	public final void onNext(O value) {
-		Subscriber<O> subscriber;
+		Subscription s = subscription;
 
-		SignalType endSignal = null == value ? SignalType.COMPLETE : SignalType.NEXT;
-
-		if (this.endState != null ||
-				!STATE_UPDATER.compareAndSet(this, null, endSignal)) {
-			if (value != null) {
-				Exceptions.onNextDropped(value);
-			}
+		if (value != null && ((source != null && s == null) || this.value != null)) {
+			Exceptions.onNextDropped(value);
 			return;
 		}
+		subscription = null;
 
+		final int finalState;
 		if(value != null) {
+			finalState = STATE_SUCCESS_VALUE;
 			this.value = value;
-		}
-		subscriber = outboundStream;
-
-		if (subscriber != null) {
-			if (value != null) {
-				subscriber.onNext(value);
-			}
-			subscriber.onComplete();
-		}
-
-		if (value != null) {
-			Subscription s = subscription;
 			if (s != null) {
-				subscription = null;
 				s.cancel();
 			}
+		}
+		else {
+			finalState = STATE_COMPLETE_NO_VALUE;
+		}
+		int state = this.state;
+		for (; ; ) {
+			if (state != STATE_READY && state != STATE_SUBSCRIBED && state != STATE_POST_SUBSCRIBED) {
+				if(value != null) {
+					Exceptions.onNextDropped(value);
+				}
+				return;
+			}
+			if (STATE.compareAndSet(this, state, finalState)) {
+				break;
+			}
+			state = this.state;
+		}
+
+
+		if (WIP.getAndIncrement(this) == 0) {
+			drainLoop();
 		}
 	}
 
@@ -491,14 +539,52 @@ public class Promise<O> extends Mono<O>
 	public final void onSubscribe(Subscription subscription) {
 		if (BackpressureUtils.validate(this.subscription, subscription)) {
 			this.subscription = subscription;
-			if (requested == 1) {
+			if (STATE.compareAndSet(this, STATE_READY, STATE_SUBSCRIBED) && REQUESTED.getAndSet(this, 2) != 2){
 				subscription.request(1L);
 			}
-			Broadcaster<O> outboundStream = this.outboundStream;
-			if(outboundStream != null) {
-				outboundStream.onSubscribe(this);
+
+			if (WIP.getAndIncrement(this) == 0) {
+				drainLoop();
 			}
 		}
+	}
+
+	/**
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public Stream<O> stream() {
+		Processor<O, O> processor = this.processor;
+		if (processor != NOOP_PROCESSOR && processor != null) {
+			return Stream.from(processor);
+		}
+		int endState = this.state;
+		if (endState == STATE_COMPLETE_NO_VALUE) {
+			return Stream.empty();
+		}
+		else if (endState == STATE_SUCCESS_VALUE) {
+			return Stream.just(value);
+		}
+		else if (endState == STATE_ERROR) {
+			return Stream.fail(error);
+		}
+
+		Processor<O, O> out = processor;
+		if (out == null) {
+			out = Broadcaster.replayLastOrDefault(value, timer);
+			if (PROCESSOR.compareAndSet(this, null, out)) {
+				if (source != null) {
+					source.subscribe(this);
+				}
+				else {
+					out.onSubscribe(this);
+				}
+			}
+			else {
+				out = (Processor<O, O>) PROCESSOR.get(this);
+			}
+		}
+		return Stream.from(out);
 	}
 
 	/**
@@ -511,12 +597,12 @@ public class Promise<O> extends Mono<O>
 	 */
 	public O peek() {
 		request(1);
-		SignalType endState = this.endState;
+		int endState = this.state;
 
-		if (endState == SignalType.NEXT) {
+		if (endState == STATE_SUCCESS_VALUE) {
 			return value;
 		}
-		else if (endState == SignalType.ERROR) {
+		else if (endState == STATE_ERROR) {
 			if (RuntimeException.class.isInstance(error)) {
 				throw (RuntimeException) error;
 			}
@@ -543,56 +629,117 @@ public class Promise<O> extends Mono<O>
 	public final void request(long n) {
 		try {
 			BackpressureUtils.checkRequest(n);
+			if(!REQUESTED.compareAndSet(this, 0, 1)
+				&& REQUESTED.compareAndSet(this, 1, 2)){
+				Subscription s = subscription;
+				if(s != null){
+					s.request(1L);
+				}
+			}
 		}
 		catch (Throwable e) {
 			Exceptions.throwIfFatal(e);
 			onError(e);
-			return;
 		}
-		if (REQUESTED.compareAndSet(this, 0, 1)) {
-			Subscription subscription = this.subscription;
-			if (subscription != null) {
-				subscription.request(1);
-			}
+		if (WIP.getAndIncrement(this) == 0) {
+			drainLoop();
 		}
-	}
-
-	public final Stream<O> stream() {
-		Broadcaster<O> out = outboundStream;
-		if (out == null) {
-			SignalType endState = this.endState;
-			if (endState == SignalType.COMPLETE) {
-				return Stream.<O>empty();
-			}
-			else if(endState == SignalType.NEXT) {
-				return Stream.just(value);
-			}
-			else if (endState == SignalType.ERROR) {
-				return Stream.fail(error);
-			}
-			else {
-				out = Broadcaster.replayLastOrDefault(value, timer);
-			}
-			outboundStream = out;
-		}
-
-		if (out != null && subscription != null){
-			out.onSubscribe(this);
-		}
-
-		return outboundStream;
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void subscribe(final Subscriber<? super O> subscriber) {
-		stream().subscribe(subscriber);
+		int endState = this.state;
+		if (endState == STATE_COMPLETE_NO_VALUE) {
+			EmptySubscription.complete(subscriber);
+			return;
+		}
+		else if (endState == STATE_SUCCESS_VALUE) {
+			subscriber.onSubscribe(new ScalarSubscription<>(subscriber, value));
+			return;
+		}
+		else if (endState == STATE_ERROR) {
+			EmptySubscription.error(subscriber, error);
+			return;
+		}
+		Processor<O, O> out = processor;
+		if (out == null) {
+			out = Broadcaster.replayLastOrDefault(value, timer);
+			if (PROCESSOR.compareAndSet(this, null, out)) {
+				if (source != null) {
+					source.subscribe(this);
+				}
+				else {
+					out.onSubscribe(this);
+				}
+			}
+			else {
+				out = (Processor<O, O>) PROCESSOR.get(this);
+			}
+		}
+		out.subscribe(subscriber);
+		if (WIP.getAndIncrement(this) == 0) {
+			drainLoop();
+		}
 	}
 
+	@SuppressWarnings("unchecked")
+	final void drainLoop() {
+		int missed = 1;
+
+		int state;
+		for (; ; ) {
+			state = this.state;
+			if (state > STATE_POST_SUBSCRIBED) {
+				Processor<O, O> p = (Processor<O, O>) PROCESSOR.getAndSet(this, NOOP_PROCESSOR);
+				if (p != NOOP_PROCESSOR && p != null) {
+					switch (state) {
+						case STATE_COMPLETE_NO_VALUE:
+							p.onComplete();
+							break;
+						case STATE_SUCCESS_VALUE:
+							p.onNext(value);
+							p.onComplete();
+							break;
+						case STATE_ERROR:
+							p.onError(error);
+							break;
+					}
+					return;
+				}
+			}
+			Subscription subscription = this.subscription;
+
+			if(subscription != null) {
+				if (state == STATE_CANCELLED && PROCESSOR.getAndSet(this, NOOP_PROCESSOR) != NOOP_PROCESSOR) {
+					this.subscription = null;
+					subscription.cancel();
+					return;
+				}
+
+				if (REQUESTED.get(this) == 1 && REQUESTED.compareAndSet(this, 1, 2)) {
+					subscription.request(1L);
+				}
+			}
+
+			if (state == STATE_SUBSCRIBED && STATE.compareAndSet(this, STATE_SUBSCRIBED, STATE_POST_SUBSCRIBED)) {
+				Processor<O, O> p = (Processor<O, O>) PROCESSOR.get(this);
+				if (p != null && p != NOOP_PROCESSOR) {
+					p.onSubscribe(this);
+				}
+			}
+
+			missed = WIP.addAndGet(this, -missed);
+			if (missed == 0) {
+				break;
+			}
+		}
+	}
 	@Override
 	public final String toString() {
 		return "{" +
 				"value : \"" + value + "\", " +
-				(endState != null ? "state : \"" + endState + "\", " : "") +
+				"state : \"" + state + "\", " +
 				"error : \"" + error + "\" " +
 				'}';
 	}
@@ -602,10 +749,18 @@ public class Promise<O> extends Mono<O>
 		return subscription;
 	}
 
-	static final class PromiseFulfilled<T> extends Promise<T> implements Supplier<T>{
+	static final class PromiseFulfilled<T> extends Promise<T> implements Supplier<T> {
+
+		final Stream<T> just;
 
 		public PromiseFulfilled(T value, Timer timer) {
 			super(value, timer);
+			if (value != null) {
+				just = Stream.just(value);
+			}
+			else {
+				just = null;
+			}
 		}
 
 		@Override
@@ -619,8 +774,43 @@ public class Promise<O> extends Mono<O>
 		}
 
 		@Override
+		public Stream<T> stream() {
+			return just == null ? Stream.<T>empty() : just;
+		}
+
+		@Override
 		public void subscribe(Subscriber<? super T> subscriber) {
 			subscriber.onSubscribe(new ScalarSubscription<>(subscriber, value));
+		}
+	}
+
+	final static NoopProcessor NOOP_PROCESSOR = new NoopProcessor();
+
+	final static class NoopProcessor implements Processor, Trace {
+
+		@Override
+		public void subscribe(Subscriber s) {
+
+		}
+
+		@Override
+		public void onSubscribe(Subscription s) {
+
+		}
+
+		@Override
+		public void onNext(Object o) {
+
+		}
+
+		@Override
+		public void onError(Throwable t) {
+
+		}
+
+		@Override
+		public void onComplete() {
+
 		}
 	}
 }

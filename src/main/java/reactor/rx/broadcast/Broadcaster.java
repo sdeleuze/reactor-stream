@@ -220,6 +220,29 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	}
 
 	/**
+	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
+	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
+	 * subscribing to the returned instance.
+	 * @param <T> the type of values passing through the {@literal Broadcaster}
+	 * @return a new {@link Broadcaster}
+	 */
+	public static <T> Broadcaster<T> replay() {
+		return replay(null);
+	}
+
+	/**
+	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
+	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
+	 * subscribing to the returned instance.
+	 * @param timer the Reactor {@link Timer} to use downstream
+	 * @param <T> the type of values passing through the {@literal Broadcaster}
+	 * @return a new {@link Broadcaster}
+	 */
+	public static <T> Broadcaster<T> replay(Timer timer) {
+		return new Broadcaster<T>(Processors.<T>replay(), timer, false);
+	}
+
+	/**
 	 * Build a {@literal Broadcaster}, rfirst broadcasting the most recent signal then starting with the passed value,
 	 * then ready to broadcast values with {@link reactor.rx.broadcast
 	 * .Broadcaster#onNext(Object)},

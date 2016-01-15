@@ -20,7 +20,6 @@ import org.reactivestreams.Subscription
 import reactor.Processors
 import reactor.Timers
 import reactor.core.processor.ProcessorGroup
-import reactor.core.processor.RingBufferProcessor
 import reactor.core.subscriber.SubscriberWithContext
 import reactor.core.subscriber.test.DataTestSubscriber
 import reactor.core.support.ReactiveStateUtils
@@ -1009,10 +1008,14 @@ class StreamsSpec extends Specification {
 	def "When a processor is streamed"() {
 		given:
 			'a source composable and a async downstream'
-			def source = Broadcaster.<Integer> create()
-			def processor = RingBufferProcessor.<Integer> create()
+			def source = Broadcaster.<Integer> replay()
 
-			def res = source.process(processor).map { it * 2 }.log('processed').buffer().promise()
+			def res = source
+					.publishOn(Processors.ioGroup("test",32,2))
+					.delaySubscription(1L)
+					.map { it * 2 }
+					.buffer()
+					.promise()
 
 		when:
 			'the source accepts a value'
