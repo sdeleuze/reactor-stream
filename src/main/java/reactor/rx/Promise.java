@@ -667,9 +667,6 @@ public class Promise<O> extends Mono<O>
 				if (source != null) {
 					source.subscribe(this);
 				}
-				else {
-					out.onSubscribe(this);
-				}
 			}
 			else {
 				out = (Processor<O, O>) PROCESSOR.get(this);
