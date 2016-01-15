@@ -629,12 +629,10 @@ public class Promise<O> extends Mono<O>
 	public final void request(long n) {
 		try {
 			BackpressureUtils.checkRequest(n);
-			if(!REQUESTED.compareAndSet(this, 0, 1)
-				&& REQUESTED.compareAndSet(this, 1, 2)){
-				Subscription s = subscription;
-				if(s != null){
-					s.request(1L);
-				}
+			Subscription s = subscription;
+			if(!REQUESTED.compareAndSet(this, 0, 1) &&
+				s != null && REQUESTED.compareAndSet(this, 1, 2)){
+				s.request(1L);
 			}
 		}
 		catch (Throwable e) {
