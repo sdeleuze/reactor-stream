@@ -13,204 +13,689 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package reactor.rx.stream;
 
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayDeque;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
+import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.Processors;
-import reactor.core.processor.FluxProcessor;
-import reactor.core.support.ReactiveState;
-import reactor.core.timer.Timer;
-import reactor.rx.Stream;
+import reactor.core.error.Exceptions;
+import reactor.core.subscription.EmptySubscription;
+import reactor.core.support.BackpressureUtils;
+import reactor.fn.Supplier;
+import reactor.rx.broadcast.UnicastProcessor;
 
 /**
- * WindowAction is forwarding events on a steam until {@param backlog} is reached, after that streams collected events
- * further, complete it and create a fresh new stream.
- * @author Stephane Maldini
- * @since 2.0, 2.5
+ * Splits the source sequence into possibly overlapping publishers.
+ * 
+ * @param <T> the value type
  */
-public class StreamWindow<T> extends StreamBatch<T, Stream<T>> {
 
-	protected final Timer timer;
+/**
+ * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
+ * @since 2.5
+ */
+public final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>> {
 
-	public StreamWindow(Publisher<T> source, Timer timer, int backlog) {
-		super(source, backlog, true, true, true);
-		this.timer = timer;
+	final int size;
+	
+	final int skip;
+	
+	final Supplier<? extends Queue<T>> processorQueueSupplier;
+
+	final Supplier<? extends Queue<UnicastProcessor<T>>> overflowQueueSupplier;
+
+	public StreamWindow(Publisher<? extends T> source, int size, 
+			Supplier<? extends Queue<T>> processorQueueSupplier) {
+		super(source);
+		if (size <= 0) {
+			throw new IllegalArgumentException("size > 0 required but it was " + size);
+		}
+		this.size = size;
+		this.skip = size;
+		this.processorQueueSupplier = Objects.requireNonNull(processorQueueSupplier, "processorQueueSupplier");
+		this.overflowQueueSupplier = null; // won't be needed here
 	}
 
-	public StreamWindow(Publisher<T> source, int backlog, long timespan, TimeUnit unit, Timer timer) {
-		super(source, backlog, true, true, true, timespan, unit, timer);
-		this.timer = timer;
+	
+	public StreamWindow(Publisher<? extends T> source, int size, int skip, 
+			Supplier<? extends Queue<T>> processorQueueSupplier,
+			Supplier<? extends Queue<UnicastProcessor<T>>> overflowQueueSupplier) {
+		super(source);
+		if (size <= 0) {
+			throw new IllegalArgumentException("size > 0 required but it was " + size);
+		}
+		if (skip <= 0) {
+			throw new IllegalArgumentException("skip > 0 required but it was " + skip);
+		}
+		this.size = size;
+		this.skip = skip;
+		this.processorQueueSupplier = Objects.requireNonNull(processorQueueSupplier, "processorQueueSupplier");
+		this.overflowQueueSupplier = Objects.requireNonNull(overflowQueueSupplier, "overflowQueueSupplier");
 	}
-
+	
 	@Override
-	public Subscriber<? super T> apply(Subscriber<? super Stream<T>> subscriber) {
-		return new WindowAction<>(prepareSub(subscriber), batchSize, timespan, unit, timer);
+	public void subscribe(Subscriber<? super reactor.rx.Stream<T>> s) {
+		if (skip == size) {
+			source.subscribe(new StreamWindowExact<>(s, size, processorQueueSupplier));
+		} else
+		if (skip > size) {
+			source.subscribe(new StreamWindowSkip<>(s, size, skip, processorQueueSupplier));
+		} else {
+			Queue<UnicastProcessor<T>> overflowQueue;
+			
+			try {
+				overflowQueue = overflowQueueSupplier.get();
+			} catch (Throwable e) {
+				EmptySubscription.error(s, e);
+				return;
+			}
+			
+			if (overflowQueue == null) {
+				EmptySubscription.error(s, new NullPointerException("The overflowQueueSupplier returned a null queue"));
+				return;
+			}
+			
+			source.subscribe(new StreamWindowOverlap<>(s, size, skip, processorQueueSupplier, overflowQueue));
+		}
 	}
+	
+	static final class StreamWindowExact<T> implements Subscriber<T>, Subscription, Runnable {
+		
+		final Subscriber<? super reactor.rx.Stream<T>> actual;
 
-	final static class Window<T> extends Stream<T> implements Subscriber<T>, Subscription, Downstream, Inner{
+		final Supplier<? extends Queue<T>> processorQueueSupplier;
+		
+		final int size;
 
-		final protected FluxProcessor<T, T> processor;
-		final protected Timer               timer;
+		volatile int wip;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<StreamWindowExact> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(StreamWindowExact.class, "wip");
 
-		protected int count = 0;
+		volatile int once;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<StreamWindowExact> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(StreamWindowExact.class, "once");
 
-		public Window(Timer timer) {
-			this(timer, ReactiveState.SMALL_BUFFER_SIZE);
+		int index;
+		
+		Subscription s;
+		
+		UnicastProcessor<T> window;
+		
+		boolean done;
+		
+		public StreamWindowExact(Subscriber<? super reactor.rx.Stream<T>> actual, int size,
+				Supplier<? extends Queue<T>> processorQueueSupplier) {
+			this.actual = actual;
+			this.size = size;
+			this.processorQueueSupplier = processorQueueSupplier;
+			this.wip = 1;
 		}
-
-		public Window(Timer timer, int size) {
-			this.processor = Processors.emitter(size);
-			this.processor.onSubscribe(this);
-			this.timer = timer;
-		}
-
-		@Override
-		public Timer getTimer() {
-			return timer;
-		}
-
-		@Override
-		public long getCapacity() {
-			return processor.getCapacity();
-		}
-
+		
 		@Override
 		public void onSubscribe(Subscription s) {
-			s.cancel();
+			if (BackpressureUtils.validate(this.s, s)) {
+				this.s = s;
+				actual.onSubscribe(this);
+			}
 		}
-
+		
 		@Override
 		public void onNext(T t) {
-			count++;
-			processor.onNext(t);
+			if (done) {
+				Exceptions.onNextDropped(t);
+				return;
+			}
+			
+			int i = index;
+			
+			UnicastProcessor<T> w = window;
+			if (i == 0) {
+				WIP.getAndIncrement(this);
+				
+				
+				Queue<T> q;
+				
+				try {
+					q = processorQueueSupplier.get();
+				} catch (Throwable ex) {
+					done = true;
+					cancel();
+					
+					actual.onError(ex);
+					return;
+				}
+				
+				if (q == null) {
+					done = true;
+					cancel();
+					
+					actual.onError(new NullPointerException("The processorQueueSupplier returned a null queue"));
+					return;
+				}
+				
+				w = new UnicastProcessor<>(q, this);
+				window = w;
+				
+				actual.onNext(w);
+			}
+			
+			i++;
+			
+			w.onNext(t);
+			
+			if (i == size) {
+				index = 0;
+				window = null;
+				w.onComplete();
+			} else {
+				index = i;
+			}
 		}
-
+		
 		@Override
 		public void onError(Throwable t) {
-			processor.onError(t);
+			if (done) {
+				Exceptions.onErrorDropped(t);
+				return;
+			}
+			Processor<T, T> w = window;
+			if (w != null) {
+				window = null;
+				w.onError(t);
+			}
+			
+			actual.onError(t);
 		}
-
+		
 		@Override
 		public void onComplete() {
-			processor.onComplete();
-		}
+			if (done) {
+				return;
+			}
 
-		@Override
-		public void subscribe(Subscriber<? super T> s) {
-			processor.subscribe(s);
+			Processor<T, T> w = window;
+			if (w != null) {
+				window = null;
+				w.onComplete();
+			}
+			
+			actual.onComplete();
 		}
-
+		
 		@Override
 		public void request(long n) {
-
+			if (BackpressureUtils.validate(n)) {
+				long u = BackpressureUtils.multiplyCap(size, n);
+				s.request(u);
+			}
 		}
-
+		
 		@Override
 		public void cancel() {
-
+			if (ONCE.compareAndSet(this, 0, 1)) {
+				run();
+			}
 		}
 
 		@Override
-		public Object downstream() {
-			return processor;
+		public void run() {
+			if (WIP.decrementAndGet(this) == 0) {
+				s.cancel();
+			}
+		}
+	}
+	
+	static final class StreamWindowSkip<T> implements Subscriber<T>, Subscription, Runnable {
+		
+		final Subscriber<? super reactor.rx.Stream<T>> actual;
+
+		final Supplier<? extends Queue<T>> processorQueueSupplier;
+		
+		final int size;
+		
+		final int skip;
+
+		volatile int wip;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<StreamWindowSkip> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(StreamWindowSkip.class, "wip");
+
+		volatile int once;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<StreamWindowSkip> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(StreamWindowSkip.class, "once");
+
+		volatile int firstRequest;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<StreamWindowSkip> FIRST_REQUEST =
+				AtomicIntegerFieldUpdater.newUpdater(StreamWindowSkip.class, "firstRequest");
+
+		int index;
+		
+		Subscription s;
+		
+		UnicastProcessor<T> window;
+		
+		boolean done;
+		
+		public StreamWindowSkip(Subscriber<? super reactor.rx.Stream<T>> actual, int size, int skip,
+				Supplier<? extends Queue<T>> processorQueueSupplier) {
+			this.actual = actual;
+			this.size = size;
+			this.skip = skip;
+			this.processorQueueSupplier = processorQueueSupplier;
+			this.wip = 1;
+		}
+		
+		@Override
+		public void onSubscribe(Subscription s) {
+			if (BackpressureUtils.validate(this.s, s)) {
+				this.s = s;
+				actual.onSubscribe(this);
+			}
+		}
+		
+		@Override
+		public void onNext(T t) {
+			if (done) {
+				Exceptions.onNextDropped(t);
+				return;
+			}
+			
+			int i = index;
+			
+			UnicastProcessor<T> w = window;
+			if (i == 0) {
+				WIP.getAndIncrement(this);
+				
+				
+				Queue<T> q;
+				
+				try {
+					q = processorQueueSupplier.get();
+				} catch (Throwable ex) {
+					done = true;
+					cancel();
+					
+					actual.onError(ex);
+					return;
+				}
+				
+				if (q == null) {
+					done = true;
+					cancel();
+					
+					actual.onError(new NullPointerException("The processorQueueSupplier returned a null queue"));
+					return;
+				}
+				
+				w = new UnicastProcessor<>(q, this);
+				window = w;
+				
+				actual.onNext(w);
+			}
+			
+			i++;
+			
+			if (w != null) {
+				w.onNext(t);
+			}
+			
+			if (i == size) {
+				window = null;
+				w.onComplete();
+			}
+			
+			if (i == skip) {
+				index = 0;
+			} else {
+				index = i;
+			}
+		}
+		
+		@Override
+		public void onError(Throwable t) {
+			if (done) {
+				Exceptions.onErrorDropped(t);
+				return;
+			}
+			Processor<T, T> w = window;
+			if (w != null) {
+				window = null;
+				w.onError(t);
+			}
+			
+			actual.onError(t);
+		}
+		
+		@Override
+		public void onComplete() {
+			if (done) {
+				return;
+			}
+
+			Processor<T, T> w = window;
+			if (w != null) {
+				window = null;
+				w.onComplete();
+			}
+			
+			actual.onComplete();
+		}
+		
+		@Override
+		public void request(long n) {
+			if (BackpressureUtils.validate(n)) {
+				if (firstRequest == 0 && FIRST_REQUEST.compareAndSet(this, 0, 1)) {
+					long u = BackpressureUtils.multiplyCap(size, n);
+					long v = BackpressureUtils.multiplyCap(skip - size, n - 1);
+					long w = BackpressureUtils.addCap(u, v);
+					s.request(w);
+				} else {
+					long u = BackpressureUtils.multiplyCap(skip, n);
+					s.request(u);
+				}
+			}
+		}
+		
+		@Override
+		public void cancel() {
+			if (ONCE.compareAndSet(this, 0, 1)) {
+				run();
+			}
 		}
 
 		@Override
-		public String toString() {
-			return super.toString();
+		public void run() {
+			if (WIP.decrementAndGet(this) == 0) {
+				s.cancel();
+			}
 		}
 	}
 
-	final static class WindowAction<T> extends BatchAction<T, Stream<T>> implements FeedbackLoop{
+	static final class StreamWindowOverlap<T> implements Subscriber<T>, Subscription, Runnable {
+		
+		final Subscriber<? super reactor.rx.Stream<T>> actual;
 
-		private final Timer timer;
+		final Supplier<? extends Queue<T>> processorQueueSupplier;
 
-		private Window<T> currentWindow;
+		final Queue<UnicastProcessor<T>> queue;
+		
+		final int size;
+		
+		final int skip;
 
-		public WindowAction(Subscriber<? super Stream<T>> actual,
-				int backlog,
-				long timespan,
-				TimeUnit unit,
-				Timer timer) {
+		final ArrayDeque<UnicastProcessor<T>> windows;
 
-			super(actual, backlog, true, true, true, timespan, unit, timer);
-			this.timer = timer;
+		volatile int wip;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<StreamWindowOverlap> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(StreamWindowOverlap.class, "wip");
+
+		volatile int once;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<StreamWindowOverlap> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(StreamWindowOverlap.class, "once");
+
+		volatile int firstRequest;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<StreamWindowOverlap> FIRST_REQUEST =
+				AtomicIntegerFieldUpdater.newUpdater(StreamWindowOverlap.class, "firstRequest");
+
+		volatile long requested;
+		@SuppressWarnings("rawtypes")
+		static final AtomicLongFieldUpdater<StreamWindowOverlap> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(StreamWindowOverlap.class, "requested");
+
+		volatile int dw;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<StreamWindowOverlap> DW =
+				AtomicIntegerFieldUpdater.newUpdater(StreamWindowOverlap.class, "dw");
+
+		int index;
+		
+		int produced;
+		
+		Subscription s;
+		
+		volatile boolean done;
+		Throwable error;
+		
+		volatile boolean cancelled;
+		
+		public StreamWindowOverlap(Subscriber<? super reactor.rx.Stream<T>> actual, int size, int skip,
+				Supplier<? extends Queue<T>> processorQueueSupplier,
+				Queue<UnicastProcessor<T>> overflowQueue) {
+			this.actual = actual;
+			this.size = size;
+			this.skip = skip;
+			this.processorQueueSupplier = processorQueueSupplier;
+			this.wip = 1;
+			this.queue = overflowQueue;
+			this.windows = new ArrayDeque<>();
 		}
-
-		protected Stream<T> createWindowStream() {
-			Window<T> _currentWindow = new Window<T>(timer);
-			_currentWindow.onSubscribe(new Subscription(){
-
-				@Override
-				public void cancel() {
-					currentWindow = null;
+		
+		@Override
+		public void onSubscribe(Subscription s) {
+			if (BackpressureUtils.validate(this.s, s)) {
+				this.s = s;
+				actual.onSubscribe(this);
+			}
+		}
+		
+		@Override
+		public void onNext(T t) {
+			if (done) {
+				Exceptions.onNextDropped(t);
+				return;
+			}
+			
+			int i = index;
+			
+			if (i == 0) {
+				if (!cancelled) {
+					WIP.getAndIncrement(this);
+					
+					
+					Queue<T> q;
+					
+					try {
+						q = processorQueueSupplier.get();
+					} catch (Throwable ex) {
+						done = true;
+						cancel();
+						
+						actual.onError(ex);
+						return;
+					}
+					
+					if (q == null) {
+						done = true;
+						cancel();
+						
+						actual.onError(new NullPointerException("The processorQueueSupplier returned a null queue"));
+						return;
+					}
+					
+					UnicastProcessor<T> w = new UnicastProcessor<>(q, this);
+					
+					windows.offer(w);
+					
+					queue.offer(w);
+					drain();
 				}
+			}
+			
+			i++;
 
-				@Override
-				public void request(long n) {
-
+			for (Processor<T, T> w : windows) {
+				w.onNext(t);
+			}
+			
+			int p = produced + 1;
+			if (p == size) {
+				produced = p - skip;
+				
+				Processor<T, T> w = windows.poll();
+				if (w != null) {
+					w.onComplete();
 				}
-			});
-			currentWindow = _currentWindow;
-			return _currentWindow;
-		}
-
-		@Override
-		protected void checkedError(Throwable ev) {
-			if (currentWindow != null) {
-				currentWindow.onError(ev);
+			} else {
+				produced = p;
 			}
-			super.checkedError(ev);
+			
+			if (i == skip) {
+				index = 0;
+			} else {
+				index = i;
+			}
 		}
-
+		
 		@Override
-		protected void checkedComplete() {
-			try {
-				if (currentWindow != null) {
-					currentWindow.onComplete();
-					currentWindow = null;
+		public void onError(Throwable t) {
+			if (done) {
+				Exceptions.onErrorDropped(t);
+				return;
+			}
+
+			for (Processor<T, T> w : windows) {
+				w.onError(t);
+			}
+			windows.clear();
+			
+			error = t;
+			done = true;
+			drain();
+		}
+		
+		@Override
+		public void onComplete() {
+			if (done) {
+				return;
+			}
+
+			for (Processor<T, T> w : windows) {
+				w.onComplete();
+			}
+			windows.clear();
+			
+			done = true;
+			drain();
+		}
+		
+		void drain() {
+			if (DW.getAndIncrement(this) != 0) {
+				return;
+			}
+			
+			final Subscriber<? super reactor.rx.Stream<T>> a = actual;
+			final Queue<UnicastProcessor<T>> q = queue;
+			int missed = 1;
+			
+			for (;;) {
+				
+				long r = requested;
+				long e = 0;
+				
+				while (e != r) {
+					boolean d = done;
+					
+					UnicastProcessor<T> t = q.poll();
+					
+					boolean empty = t == null;
+					
+					if (checkTerminated(d, empty, a, q)) {
+						return;
+					}
+					
+					if (empty) {
+						break;
+					}
+					
+					a.onNext(t);
+					
+					e++;
+				}
+				
+				if (e == r) {
+					if (checkTerminated(done, q.isEmpty(), a, q)) {
+						return;
+					}
+				}
+				
+				if (e != 0L && r != Long.MAX_VALUE) {
+					REQUESTED.addAndGet(this, -e);
+				}
+				
+				missed = DW.addAndGet(this, -missed);
+				if (missed == 0) {
+					break;
 				}
 			}
-			finally {
-				super.checkedComplete();
+		}
+		
+		boolean checkTerminated(boolean d, boolean empty, Subscriber<?> a, Queue<?> q) {
+			if (cancelled) {
+				q.clear();
+				return true;
+			}
+			
+			if (d) {
+				Throwable e = error;
+				
+				if (e != null) {
+					q.clear();
+					a.onError(e);
+					return true;
+				} else
+				if (empty) {
+					a.onComplete();
+					return true;
+				}
+			}
+			
+			return false;
+		}
+		
+		@Override
+		public void request(long n) {
+			if (BackpressureUtils.validate(n)) {
+				if (firstRequest == 0 && FIRST_REQUEST.compareAndSet(this, 0, 1)) {
+					long u = BackpressureUtils.multiplyCap(skip, n - 1);
+					long v = BackpressureUtils.addCap(size, u);
+					s.request(v);
+				} else {
+					long u = BackpressureUtils.multiplyCap(skip, n);
+					s.request(u);
+				}
+				
+				BackpressureUtils.addAndGet(REQUESTED, this, n);
+				drain();
+			}
+		}
+		
+		@Override
+		public void cancel() {
+			if (ONCE.compareAndSet(this, 0, 1)) {
+				run();
 			}
 		}
 
 		@Override
-		protected void firstCallback(T event) {
-			subscriber.onNext(createWindowStream());
-		}
-
-		@Override
-		protected void nextCallback(T event) {
-			if (currentWindow != null) {
-				currentWindow.onNext(event);
+		public void run() {
+			if (WIP.decrementAndGet(this) == 0) {
+				s.cancel();
 			}
-		}
-
-		@Override
-		protected void flushCallback(T event) {
-			if (currentWindow != null) {
-				currentWindow.onComplete();
-				//currentWindow = null;
-			}
-		}
-
-		@Override
-		public Object delegateInput() {
-			return currentWindow;
-		}
-
-		@Override
-		public Object delegateOutput() {
-			return null;
 		}
 	}
-
 
 }

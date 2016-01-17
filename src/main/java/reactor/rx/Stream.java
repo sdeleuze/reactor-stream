@@ -17,7 +17,9 @@
 package reactor.rx;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -84,6 +86,7 @@ import reactor.fn.tuple.Tuple7;
 import reactor.fn.tuple.Tuple8;
 import reactor.rx.broadcast.Broadcaster;
 import reactor.rx.broadcast.StreamProcessor;
+import reactor.rx.broadcast.UnicastProcessor;
 import reactor.rx.stream.GroupedStream;
 import reactor.rx.stream.MonoAll;
 import reactor.rx.stream.MonoAny;
@@ -100,9 +103,8 @@ import reactor.rx.stream.StreamBatch;
 import reactor.rx.stream.StreamBlock;
 import reactor.rx.stream.StreamBuffer;
 import reactor.rx.stream.StreamBufferBoundary;
-import reactor.rx.stream.StreamBufferShiftTimeout;
 import reactor.rx.stream.StreamBufferStartEnd;
-import reactor.rx.stream.StreamBufferTimeout;
+import reactor.rx.stream.StreamBufferTimeOrSize;
 import reactor.rx.stream.StreamCallback;
 import reactor.rx.stream.StreamCombineLatest;
 import reactor.rx.stream.StreamConcatArray;
@@ -122,6 +124,7 @@ import reactor.rx.stream.StreamFilter;
 import reactor.rx.stream.StreamFinally;
 import reactor.rx.stream.StreamFuture;
 import reactor.rx.stream.StreamGroupBy;
+import reactor.rx.stream.StreamInterval;
 import reactor.rx.stream.StreamIterable;
 import reactor.rx.stream.StreamJust;
 import reactor.rx.stream.StreamKv;
@@ -156,12 +159,11 @@ import reactor.rx.stream.StreamThrottleRequest;
 import reactor.rx.stream.StreamThrottleRequestWhen;
 import reactor.rx.stream.StreamThrottleTimeout;
 import reactor.rx.stream.StreamTimeout;
-import reactor.rx.stream.StreamTimerPeriod;
 import reactor.rx.stream.StreamUsing;
 import reactor.rx.stream.StreamWindow;
-import reactor.rx.stream.StreamWindowShift;
-import reactor.rx.stream.StreamWindowShiftWhen;
-import reactor.rx.stream.StreamWindowWhen;
+import reactor.rx.stream.StreamWindowBoundary;
+import reactor.rx.stream.StreamWindowStartEnd;
+import reactor.rx.stream.StreamWindowTimeOrSize;
 import reactor.rx.stream.StreamWithLatestFrom;
 import reactor.rx.stream.StreamZipIterable;
 import reactor.rx.subscriber.AdaptiveSubscriber;
@@ -1128,7 +1130,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Long> interval(Timer timer, long delay, long period, TimeUnit unit) {
-		return new StreamTimerPeriod(TimeUnit.MILLISECONDS.convert(delay, unit), period, unit, timer);
+		return new StreamInterval(TimeUnit.MILLISECONDS.convert(delay, unit), period, unit, timer);
 	}
 
 	/**
@@ -2015,9 +2017,6 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 */
 	@SuppressWarnings("unchecked")
 	public final Stream<List<O>> buffer(final int maxSize, final int skip) {
-		if (maxSize == skip) {
-			return buffer(maxSize);
-		}
 		return new StreamBuffer<>(this, maxSize, skip, LIST_SUPPLIER);
 	}
 
@@ -2043,7 +2042,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
 	 */
 	public final Stream<List<O>> buffer(long timespan, TimeUnit unit, Timer timer) {
-		return buffer(Integer.MAX_VALUE, timespan, unit, timer);
+		return buffer(interval(timer, timespan, unit));
 	}
 
 	/**
@@ -2078,7 +2077,12 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		if (timespan == timeshift) {
 			return buffer(timespan, unit, timer);
 		}
-		return new StreamBufferShiftTimeout<O>(this, timeshift, timespan, unit, timer);
+		return buffer(interval(timer, 0L, timeshift, unit), new Function<Long, Publisher<Long>>() {
+			@Override
+			public Publisher<Long> apply(Long aLong) {
+				return delay(timer, timespan, unit);
+			}
+		});
 	}
 
 	/**
@@ -2110,7 +2114,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 			final long timespan,
 			final TimeUnit unit,
 			final Timer timer) {
-		return new StreamBufferTimeout<>(this, maxSize, timespan, unit, timer);
+		return new StreamBufferTimeOrSize<>(this, maxSize, timespan, unit, timer);
 	}
 
 	/**
@@ -2454,7 +2458,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
-	 * @param subscriptionDelay
+	 * @param seconds
 	 *
 	 * @return
 	 *
@@ -2464,7 +2468,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		return delaySubscription(seconds, TimeUnit.SECONDS);
 	}
 	/**
-	 * @param subscriptionDelay
+	 * @param delay
+	 * @param unit
 	 *
 	 * @return
 	 *
@@ -2474,7 +2479,9 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		return delaySubscription(delay, unit, Timers.global());
 	}
 	/**
-	 * @param subscriptionDelay
+	 * @param delay
+	 * @param unit
+	 * @param timer
 	 *
 	 * @return
 	 *
@@ -3798,7 +3805,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @return a new {@link Stream} whose values are the first value of each batch)
 	 */
-	public final Stream<O> sampleFirst(final int batchSize) {
+	public final Stream<O> everyFirst(final int batchSize) {
 		return new StreamDebounce<O>(this, batchSize, true);
 	}
 
@@ -4580,13 +4587,146 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @since 2.0, 2.5
 	 */
+	@SuppressWarnings("unchecked")
 	public final Mono<List<O>> toList() {
-		return buffer(Integer.MAX_VALUE).next();
+		return collect((Supplier<List<O>>) LIST_SUPPLIER, new BiConsumer<List<O>, O>() {
+			@Override
+			public void accept(List<O> o, O d) {
+				o.add(d);
+			}
+		});
 	}
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
+	/**
+	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
+	 * the most recent emitted item for this key.
+	 *
+	 * @param keyExtractor
+	 *
+	 * @return the mono of all data from this Stream
+	 *
+	 * @since 2.5
+	 */
+	@SuppressWarnings("unchecked")
+	public final <K> Mono<Map<K, O>> toMap(Function<? super O, ? extends K> keyExtractor) {
+		return toMap(keyExtractor, (Function<O, O>)IDENTITY_FUNCTION);
+	}
+
+	/**
+	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
+	 * the most recent extracted item for this key.
+	 *
+	 * @param keyExtractor
+	 * @param valueExtractor
+	 *
+	 * @return the mono of all data from this Stream
+	 *
+	 * @since 2.5
+	 */
+	public final <K, V> Mono<Map<K, V>> toMap(Function<? super O, ? extends K> keyExtractor,
+			Function<? super O, ? extends V> valueExtractor) {
+		return toMap(keyExtractor, valueExtractor, new Supplier<Map<K, V>>() {
+			@Override
+			public Map<K, V> get() {
+				return new HashMap<>();
+			}
+		});
+	}
+
+	/**
+	 * Convert all the sequence into a supplied map where the key is extracted by the given function and the value will
+	 * be the most recent extracted item for this key.
+	 *
+	 * @param keyExtractor
+	 * @param valueExtractor
+	 * @param mapSupplier
+	 *
+	 * @return the mono of all data from this Stream
+	 *
+	 * @since 2.5
+	 */
+	public final <K, V> Mono<Map<K, V>> toMap(
+			final Function<? super O, ? extends K> keyExtractor,
+			final Function<? super O, ? extends V> valueExtractor,
+			Supplier<Map<K, V>> mapSupplier) {
+		Objects.requireNonNull(keyExtractor, "Key extractor is null");
+		Objects.requireNonNull(valueExtractor, "Value extractor is null");
+		Objects.requireNonNull(mapSupplier, "Map supplier is null");
+		return collect(mapSupplier, new BiConsumer<Map<K, V>, O>() {
+			@Override
+			public void accept(Map<K, V> m, O d) {
+				m.put(keyExtractor.apply(d), valueExtractor.apply(d));
+			}
+		});
+	}
+
+	/**
+	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
+	 * all the emitted item for this key.
+	 *
+	 * @param keyExtractor
+	 *
+	 * @return the mono of all data from this Stream
+	 *
+	 * @since 2.5
+	 */
+	@SuppressWarnings("unchecked")
+	public final <K> Mono<Map<K, Collection<O>>> toMultimap(Function<? super O, ? extends K> keyExtractor) {
+		return toMultimap(keyExtractor, (Function<O, O>)IDENTITY_FUNCTION);
+	}
+
+	/**
+	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
+	 * all the extracted items for this key.
+	 *
+	 * @param keyExtractor
+	 * @param valueExtractor
+	 *
+	 * @return the mono of all data from this Stream
+	 *
+	 * @since 2.5
+	 */
+	public final <K, V> Mono<Map<K, Collection<V>>> toMultimap(Function<? super O, ? extends K> keyExtractor,
+			Function<? super O, ? extends V> valueExtractor) {
+		return toMultimap(keyExtractor, valueExtractor, new Supplier<Map<K, Collection<V>>>() {
+			@Override
+			public Map<K, Collection<V>> get() {
+				return new HashMap<>();
+			}
+		});
+	}
+
+	/**
+	 * Convert all the sequence into a supplied map where the key is extracted by the given function and the value will
+	 * be all the extracted items for this key.
+	 *
+	 * @param keyExtractor
+	 * @param valueExtractor
+	 * @param mapSupplier
+	 *
+	 * @return the mono of all data from this Stream
+	 *
+	 * @since 2.5
+	 */
+	public final <K, V> Mono<Map<K, Collection<V>>> toMultimap(
+			final Function<? super O, ? extends K> keyExtractor,
+			final Function<? super O, ? extends V> valueExtractor,
+			Supplier<Map<K, Collection<V>>> mapSupplier) {
+		Objects.requireNonNull(keyExtractor, "Key extractor is null");
+		Objects.requireNonNull(valueExtractor, "Value extractor is null");
+		Objects.requireNonNull(mapSupplier, "Map supplier is null");
+		return collect(mapSupplier, new BiConsumer<Map<K, Collection<V>>, O>() {
+			@Override
+			public void accept(Map<K, Collection<V>> m, O d) {
+				K key = keyExtractor.apply(d);
+				Collection<V> values = m.get(key);
+				if(values == null){
+					values = new ArrayList<>();
+					m.put(key, values);
+				}
+				values.add(valueExtractor.apply(d));
+			}
+		});
 	}
 
 	/**
@@ -4642,7 +4782,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @since 2.0
 	 */
 	public final Stream<Stream<O>> window(final int backlog) {
-		return new StreamWindow<O>(this, getTimer(), backlog);
+		return new StreamWindow<>(this, backlog, QueueSupplier.<O>get(backlog));
 	}
 
 	/**
@@ -4656,22 +4796,21 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
 	 */
 	public final Stream<Stream<O>> window(final int maxSize, final int skip) {
-		if (maxSize == skip) {
-			return window(maxSize);
-		}
-		return new StreamWindowShift<O>(this, getTimer(), maxSize, skip);
+		return new StreamWindow<>(this, maxSize, skip, QueueSupplier.<O>get(maxSize), QueueSupplier
+				.<UnicastProcessor<O>>get(XS_BUFFER_SIZE));
 	}
 
 	/**
 	 * Re-route incoming values into bucket streams that will be pushed into the returned {@code Stream} every  and
-	 * complete every time {@code boundarySupplier} stream emits an item.
+	 * complete every time {@code boundarySupplier} emits an item.
 	 *
-	 * @param boundarySupplier the factory to create the stream to listen to for separating each window
+	 * @param boundarySupplier the the stream to listen to for separating each window
 	 *
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
 	 */
-	public final Stream<Stream<O>> window(final Supplier<? extends Publisher<?>> boundarySupplier) {
-		return new StreamWindowWhen<O>(this, getTimer(), boundarySupplier);
+	public final Stream<Stream<O>> window(final Publisher<?> boundarySupplier) {
+		return new StreamWindowBoundary<>(this, boundarySupplier, QueueSupplier.<O>get(XS_BUFFER_SIZE), QueueSupplier
+				.get(XS_BUFFER_SIZE));
 	}
 
 	/**
@@ -4684,9 +4823,13 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
 	 */
-	public final Stream<Stream<O>> window(final Publisher<?> bucketOpening,
-			final Supplier<? extends Publisher<?>> boundarySupplier) {
-		return new StreamWindowShiftWhen<O>(this, getTimer(), bucketOpening, boundarySupplier);
+	public final <U, V> Stream<Stream<O>> window(final Publisher<U> bucketOpening,
+			final Function<? super U, ? extends Publisher<V>> boundarySupplier) {
+		return new StreamWindowStartEnd<>(this,
+				bucketOpening,
+				boundarySupplier,
+				QueueSupplier.get(XS_BUFFER_SIZE),
+				QueueSupplier.<O>get(XS_BUFFER_SIZE));
 	}
 
 	/**
@@ -4701,7 +4844,9 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @since 2.0
 	 */
 	public final Stream<Stream<O>> window(long timespan, TimeUnit unit) {
-		return window(Integer.MAX_VALUE, timespan, unit);
+		Timer t = getTimer();
+		if(t == null) t = Timers.global();
+		return window(interval(t, timespan, unit));
 	}
 
 	/**
@@ -4717,7 +4862,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @since 2.0
 	 */
 	public final Stream<Stream<O>> window(final int maxSize, final long timespan, final TimeUnit unit) {
-		return new StreamWindow<O>(this, maxSize, timespan, unit, getTimer());
+		return new StreamWindowTimeOrSize<>(this, maxSize, timespan, unit, getTimer());
 	}
 
 	/**
@@ -4735,13 +4880,17 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		if (timeshift == timespan) {
 			return window(timespan, unit);
 		}
-		return new StreamWindowShift<O>(this,
-				Integer.MAX_VALUE,
-				Integer.MAX_VALUE,
-				timespan,
-				timeshift,
-				unit,
-				getTimer());
+
+		Timer t = getTimer();
+		if(t == null) t = Timers.global();
+		final Timer timer = t;
+
+		return window(interval(timer, 0L, timeshift, unit), new Function<Long, Publisher<Long>>() {
+			@Override
+			public Publisher<Long> apply(Long aLong) {
+				return delay(timer, timespan, unit);
+			}
+		});
 	}
 
 	/**

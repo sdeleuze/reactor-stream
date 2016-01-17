@@ -50,14 +50,14 @@ import reactor.rx.Stream;
  *
  * @author Stephane Maldini
  */
-public final class StreamTimerPeriod extends Stream<Long> {
+public final class StreamInterval extends Stream<Long> {
 
 	final private long     delay;
 	final private long     period;
 	final private TimeUnit unit;
 	final private Timer    timer;
 
-	public StreamTimerPeriod(long delay, long period, TimeUnit unit, Timer timer) {
+	public StreamInterval(long delay, long period, TimeUnit unit, Timer timer) {
 		this.delay = delay >= 0L ? delay : -1L;
 		this.unit = unit != null ? unit : TimeUnit.SECONDS;
 		this.period = period;

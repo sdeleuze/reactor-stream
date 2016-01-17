@@ -295,7 +295,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'the first value is retrieved'
-			def first = s.sampleFirst(5).tap()
+			def first = s.everyFirst(5).tap()
 
 		and:
 			'the last value is retrieved'
@@ -1376,7 +1376,7 @@ class StreamsSpec extends Specification {
 		when:
 			'non overlapping buffers'
 			def boundaryStream = Broadcaster.<Integer> create()
-			def res = numbers.window { boundaryStream }.flatMap { it.buffer().log() }.buffer().promise()
+			def res = numbers.window(boundaryStream).flatMap { it.buffer().log() }.buffer().promise()
 
 			numbers.onNext(1)
 			numbers.onNext(2)

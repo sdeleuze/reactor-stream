@@ -28,9 +28,9 @@ import reactor.core.timer.Timer;
  * @author Stephane Maldini
  * @since 1.1, 2.5
  */
-public final class StreamBufferTimeout<T> extends StreamBatch<T, List<T>> {
+public final class StreamBufferTimeOrSize<T> extends StreamBatch<T, List<T>> {
 
-	public StreamBufferTimeout(Publisher<T> source, int maxSize, long timespan, TimeUnit unit, Timer timer) {
+	public StreamBufferTimeOrSize(Publisher<T> source, int maxSize, long timespan, TimeUnit unit, Timer timer) {
 		super(source, maxSize, true, false, true, timespan, unit, timer);
 	}
 

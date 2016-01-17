@@ -177,7 +177,7 @@ public class StreamTests extends AbstractReactorTest {
 	public void testFirstAndLast() throws InterruptedException {
 		Stream<Integer> s = Stream.fromIterable(Arrays.asList(1, 2, 3, 4, 5));
 
-		Stream<Integer> first = s.sampleFirst(5);
+		Stream<Integer> first = s.everyFirst(5);
 		Stream<Integer> last = s.every(5);
 
 		assertThat("First is 1",
