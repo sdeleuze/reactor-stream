@@ -4796,8 +4796,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
 	 */
 	public final Stream<Stream<O>> window(final int maxSize, final int skip) {
-		return new StreamWindow<>(this, maxSize, skip, QueueSupplier.<O>get(maxSize), QueueSupplier
-				.<UnicastProcessor<O>>get(XS_BUFFER_SIZE));
+		return new StreamWindow<>(this, maxSize, skip, QueueSupplier.<O>get(XS_BUFFER_SIZE), QueueSupplier
+				.<UnicastProcessor<O>>get(Integer.MAX_VALUE));
 	}
 
 	/**

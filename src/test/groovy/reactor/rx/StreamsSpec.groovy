@@ -1349,11 +1349,11 @@ class StreamsSpec extends Specification {
 
 		when:
 			'overlapping buffers'
-			res = numbers.window(3, 2).flatMap { it.buffer() }.buffer().promise()
+			res = numbers.log("n").window(3, 2).log('w').flatMap { it.log('b').toList() }.toList()
 
 		then:
 			'the collected overlapping lists are available'
-			res.await() == [[1, 2, 3], [3, 4, 5], [5, 6, 7], [7, 8]]
+			res.get() == [[1, 2, 3], [3, 4, 5], [5, 6, 7], [7, 8]]
 
 
 		when:
