@@ -1,33 +1,25 @@
-/*
- * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package reactor.rx.stream;
 
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import reactor.fn.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
-import reactor.rx.broadcast.UnicastProcessor;
-import reactor.core.subscription.*;
-import reactor.core.support.*;
+import reactor.core.subscription.DeferredSubscription;
+import reactor.core.subscription.EmptySubscription;
+import reactor.core.support.BackpressureUtils;
+import reactor.fn.Function;
+import reactor.fn.Supplier;
 
 /**
- * Splits the source sequence into potentially overlapping windowEnds controlled by items of a 
+ * Splits the source sequence into potentially overlapping windowEnds controlled by items of a
  * start Publisher and end Publishers derived from the start values.
  *
  * @param <T> the source value type
@@ -42,11 +34,11 @@ import reactor.core.support.*;
 public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reactor.rx.Stream<T>>{
 
 	final Publisher<U> start;
-	
+
 	final Function<? super U, ? extends Publisher<V>> end;
-	
+
 	final Supplier<? extends Queue<Object>> drainQueueSupplier;
-	
+
 	final Supplier<? extends Queue<T>> processorQueueSupplier;
 
 	public StreamWindowStartEnd(Publisher<? extends T> source, Publisher<U> start,
@@ -58,79 +50,78 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 		this.drainQueueSupplier = Objects.requireNonNull(drainQueueSupplier, "drainQueueSupplier");
 		this.processorQueueSupplier = Objects.requireNonNull(processorQueueSupplier, "processorQueueSupplier");
 	}
-	
+
 	@Override
 	public void subscribe(Subscriber<? super reactor.rx.Stream<T>> s) {
 
 		Queue<Object> q;
-		
+
 		try {
 			q = drainQueueSupplier.get();
 		} catch (Throwable e) {
 			EmptySubscription.error(s, e);
 			return;
 		}
-		
+
 		if (q == null) {
 			EmptySubscription.error(s, new NullPointerException("The drainQueueSupplier returned a null queue"));
 			return;
 		}
-		
+
 		StreamWindowStartEndMain<T, U, V> main = new StreamWindowStartEndMain<>(s, q, end, processorQueueSupplier);
-		
+
 		s.onSubscribe(main);
-		
+
 		start.subscribe(main.starter);
-		
+
 		source.subscribe(main);
 	}
-	
-	static final class StreamWindowStartEndMain<T, U, V> 
-	implements Subscriber<T>, Subscription, Runnable {
-		
+
+	static final class StreamWindowStartEndMain<T, U, V> implements Subscriber<T>, Subscription, Runnable {
+
 		final Subscriber<? super reactor.rx.Stream<T>> actual;
-		
+
 		final Queue<Object> queue;
-		
+
 		final StreamWindowStartEndStarter<T, U, V> starter;
-		
+
 		final Function<? super U, ? extends Publisher<V>> end;
-		
+
 		final Supplier<? extends Queue<T>> processorQueueSupplier;
-		
+
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<StreamWindowStartEndMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(StreamWindowStartEndMain.class, "requested");
-		
+
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<StreamWindowStartEndMain> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(StreamWindowStartEndMain.class, "wip");
-		
+
 		volatile boolean cancelled;
-		
+
 		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<StreamWindowStartEndMain, Subscription> S =
 				AtomicReferenceFieldUpdater.newUpdater(StreamWindowStartEndMain.class, Subscription.class,  "s");
-		
+
 		volatile int once;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<StreamWindowStartEndMain> ONCE =
 				AtomicIntegerFieldUpdater.newUpdater(StreamWindowStartEndMain.class, "once");
-		
+
 		volatile int open;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<StreamWindowStartEndMain> OPEN =
 				AtomicIntegerFieldUpdater.newUpdater(StreamWindowStartEndMain.class, "open");
-		
+
 		Set<StreamWindowStartEndEnder<T, V>> windowEnds;
-		
-		Set<UnicastProcessor<T>> windows;
+
+		Set<reactor.rx.broadcast.UnicastProcessor<T>> windows;
 
 		volatile boolean mainDone;
-		
+
 		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<StreamWindowStartEndMain, Throwable> ERROR =
@@ -148,20 +139,22 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 			this.processorQueueSupplier = processorQueueSupplier;
 			this.open = 1;
 		}
-		
+
 		@Override
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.setOnce(S, this, s)) {
 				s.request(Long.MAX_VALUE);
 			}
 		}
-		
+
 		@Override
 		public void onNext(T t) {
-			queue.offer(t);
+			synchronized (this) {
+				queue.offer(t);
+			}
 			drain();
 		}
-		
+
 		@Override
 		public void onError(Throwable t) {
 			if (Exceptions.addThrowable(ERROR, this, t)) {
@@ -170,37 +163,39 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 				Exceptions.onErrorDropped(t);
 			}
 		}
-		
+
 		@Override
 		public void onComplete() {
 			closeMain();
 			starter.cancel();
 			mainDone = true;
-			
+
 			drain();
 		}
-		
+
 		@Override
 		public void request(long n) {
 			if (BackpressureUtils.validate(n)) {
 				BackpressureUtils.addAndGet(REQUESTED, this, n);
 			}
 		}
-		
+
 		@Override
 		public void cancel() {
 			cancelled = true;
-			
+
 			starter.cancel();
 			closeMain();
 		}
-		
+
 		void starterNext(U u) {
 			NewWindow<U> nw = new NewWindow<>(u);
-			queue.offer(nw);
+			synchronized (this) {
+				queue.offer(nw);
+			}
 			drain();
 		}
-		
+
 		void starterError(Throwable e) {
 			if (Exceptions.addThrowable(ERROR, this, e)) {
 				drain();
@@ -208,18 +203,20 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 				Exceptions.onErrorDropped(e);
 			}
 		}
-		
+
 		void starterComplete() {
 			closeMain();
 			drain();
 		}
-		
+
 		void endSignal(StreamWindowStartEndEnder<T, V> end) {
 			remove(end);
-			queue.offer(end);
+			synchronized (this) {
+				queue.offer(end);
+			}
 			drain();
 		}
-		
+
 		void endError(Throwable e) {
 			if (Exceptions.addThrowable(ERROR, this, e)) {
 				drain();
@@ -227,20 +224,20 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 				Exceptions.onErrorDropped(e);
 			}
 		}
-		
+
 		void closeMain() {
 			if (ONCE.compareAndSet(this, 0, 1)) {
 				run();
 			}
 		}
-		
+
 		@Override
 		public void run() {
 			if (OPEN.decrementAndGet(this) == 0) {
 				BackpressureUtils.terminate(S, this);
 			}
 		}
-		
+
 		boolean add(StreamWindowStartEndEnder<T, V> ender) {
 			synchronized (starter) {
 				Set<StreamWindowStartEndEnder<T, V>> set = windowEnds;
@@ -252,7 +249,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 			ender.cancel();
 			return false;
 		}
-		
+
 		void remove(StreamWindowStartEndEnder<T, V> ender) {
 			synchronized (starter) {
 				Set<StreamWindowStartEndEnder<T, V>> set = windowEnds;
@@ -261,7 +258,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 				}
 			}
 		}
-		
+
 		void removeAll() {
 			Set<StreamWindowStartEndEnder<T, V>> set;
 			synchronized (starter) {
@@ -271,24 +268,24 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 				}
 				windowEnds = null;
 			}
-			
+
 			for (Subscription s : set) {
 				s.cancel();
 			}
 		}
-		
+
 		void drain() {
 			if (WIP.getAndIncrement(this) != 0) {
 				return;
 			}
-			
-			final Subscriber<? super UnicastProcessor<T>> a = actual;
+
+			final Subscriber<? super reactor.rx.broadcast.UnicastProcessor<T>> a = actual;
 			final Queue<Object> q = queue;
-			
+
 			int missed = 1;
-			
+
 			for (;;) {
-				
+
 				for (;;) {
 					Throwable e = error;
 					if (e != null) {
@@ -298,58 +295,58 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 							starter.cancel();
 							removeAll();
 
-							for (UnicastProcessor<T> w : windows) {
+							for (reactor.rx.broadcast.UnicastProcessor<T> w : windows) {
 								w.onError(e);
 							}
 							windows = null;
-							
+
 							q.clear();
-							
+
 							a.onError(e);
 						}
-						
+
 						return;
 					}
-					
+
 					if (mainDone || open == 0) {
 						removeAll();
 
-						for (UnicastProcessor<T> w : windows) {
+						for (reactor.rx.broadcast.UnicastProcessor<T> w : windows) {
 							w.onComplete();
 						}
 						windows = null;
-						
+
 						a.onComplete();
 						return;
 					}
-					
+
 					Object o = q.poll();
-					
+
 					if (o == null) {
 						break;
 					}
-					
+
 					if (o instanceof NewWindow) {
 						if (!cancelled && open != 0 && !mainDone) {
 							@SuppressWarnings("unchecked")
 							NewWindow<U> newWindow = (NewWindow<U>) o;
-							
+
 							Queue<T> pq;
-							
+
 							try {
 								pq = processorQueueSupplier.get();
 							} catch (Throwable ex) {
 								Exceptions.addThrowable(ERROR, this, ex);
 								continue;
 							}
-							
+
 							if (pq == null) {
 								Exceptions.addThrowable(ERROR, this, new NullPointerException("The processorQueueSupplier returned a null queue"));
 								continue;
 							}
-							
+
 							Publisher<V> p;
-							
+
 							try {
 								p = end.apply(newWindow.value);
 							} catch (Throwable ex) {
@@ -363,15 +360,16 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 							}
 
 							OPEN.getAndIncrement(this);
-							
-							UnicastProcessor<T> w = new UnicastProcessor<>(pq, this);
-							
+
+							reactor.rx.broadcast.UnicastProcessor<T> w =
+									new reactor.rx.broadcast.UnicastProcessor<>(pq, this);
+
 							StreamWindowStartEndEnder<T, V> end = new StreamWindowStartEndEnder<>(this, w);
-							
+
 							windows.add(w);
-							
+
 							if (add(end)) {
-								
+
 								long r = requested;
 								if (r != 0L) {
 									a.onNext(w);
@@ -382,7 +380,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 									Exceptions.addThrowable(ERROR, this, new IllegalStateException("Could not emit window due to lack of requests"));
 									continue;
 								}
-								
+
 								p.subscribe(end);
 							}
 						}
@@ -390,18 +388,18 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 					if (o instanceof StreamWindowStartEndEnder) {
 						@SuppressWarnings("unchecked")
 						StreamWindowStartEndEnder<T, V> end = (StreamWindowStartEndEnder<T, V>) o;
-						
+
 						end.window.onComplete();
 					} else {
 						@SuppressWarnings("unchecked")
 						T v = (T)o;
-						
-						for (UnicastProcessor<T> w : windows) {
+
+						for (reactor.rx.broadcast.UnicastProcessor<T> w : windows) {
 							w.onNext(v);
 						}
 					}
 				}
-				
+
 				missed = WIP.addAndGet(this, -missed);
 				if (missed == 0) {
 					break;
@@ -409,13 +407,11 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 			}
 		}
 	}
-	
-	static final class StreamWindowStartEndStarter<T, U, V>
-	extends DeferredSubscription
-	implements Subscriber<U> {
+
+	static final class StreamWindowStartEndStarter<T, U, V> extends DeferredSubscription implements Subscriber<U> {
 
 		final StreamWindowStartEndMain<T, U, V> main;
-		
+
 		public StreamWindowStartEndStarter(StreamWindowStartEndMain<T, U, V> main) {
 			this.main = main;
 		}
@@ -441,22 +437,21 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 		public void onComplete() {
 			main.starterComplete();
 		}
-		
+
 	}
-	
-	static final class StreamWindowStartEndEnder<T, V> 
-	extends DeferredSubscription
-	implements Subscriber<V> {
+
+	static final class StreamWindowStartEndEnder<T, V> extends DeferredSubscription implements Subscriber<V> {
 
 		final StreamWindowStartEndMain<T, ?, V> main;
-		
-		final UnicastProcessor<T> window;
-		
-		public StreamWindowStartEndEnder(StreamWindowStartEndMain<T, ?, V> main, UnicastProcessor<T> window) {
+
+		final reactor.rx.broadcast.UnicastProcessor<T> window;
+
+		public StreamWindowStartEndEnder(StreamWindowStartEndMain<T, ?, V> main,
+				reactor.rx.broadcast.UnicastProcessor<T> window) {
 			this.main = main;
 			this.window = window;
 		}
-		
+
 		@Override
 		public void onSubscribe(Subscription s) {
 			if (set(s)) {
@@ -467,7 +462,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 		@Override
 		public void onNext(V t) {
 			cancel();
-			
+
 			main.endSignal(this);
 		}
 
@@ -480,9 +475,9 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 		public void onComplete() {
 			main.endSignal(this);
 		}
-		
+
 	}
-	
+
 	static final class NewWindow<U> {
 		final U value;
 		public NewWindow(U value) {
