@@ -1665,7 +1665,6 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a {@link Stream} based on the produced value
 	 * @since 2.0
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T1, T2, T3, T4, T5, T6, T7, V> Stream<V> zip(Publisher<? extends T1> source1,
 	                                                            Publisher<? extends T2> source2,
 	                                                            Publisher<? extends T3> source3,
@@ -1675,9 +1674,9 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	                                                            Publisher<? extends T7> source7,
 	                                                            Function<Tuple7<T1, T2, T3, T4, T5, T6, T7>,
 	                                                              V> combinator) {
-		return from((Flux<V>) Flux.zip(combinator, new Publisher[]{source1, source2, source3, source4, source5,
+		return from((Flux.zip(source1, source2, source3, source4, source5,
 				source6,
-				source7}));
+				source7, combinator)));
 	}
 
 	/**
@@ -1739,7 +1738,6 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a {@link Stream} based on the produced value
 	 * @since 2.0
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T1, T2, T3, T4, T5, T6, T7, T8, V> Stream<V> zip(Publisher<? extends T1> source1,
 	                                                            Publisher<? extends T2> source2,
 	                                                            Publisher<? extends T3> source3,
@@ -1750,9 +1748,12 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	                                                            Publisher<? extends T8> source8,
 	                                                            Function<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>,
 	                                                              V> combinator) {
-		return from((Flux<V>)Flux.zip(combinator, new Publisher[]{source1, source2, source3, source4, source5, source6,
+		return from(Flux.zip(source1, source2,
+				source3,
+				source4,
+				source5, source6,
 				source7,
-				source8}));
+				source8, combinator));
 	}
 
 	/**
