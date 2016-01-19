@@ -625,6 +625,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @return a new parameterized (unchecked) converted {@link Stream}
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> Stream<T> convert(Object source) {
 		if (source == null){
 			return empty();
