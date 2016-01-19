@@ -20,6 +20,7 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.subscription.BackpressureUtils;
 import reactor.core.support.Exceptions;
@@ -36,7 +37,7 @@ import reactor.fn.Supplier;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoElementAt<T> extends reactor.Mono.MonoBarrier<T, T> {
+public final class MonoElementAt<T> extends Mono.MonoBarrier<T, T> {
 
 	final long index;
 

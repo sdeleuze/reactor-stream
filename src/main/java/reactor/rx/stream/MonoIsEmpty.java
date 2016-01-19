@@ -18,6 +18,7 @@ package reactor.rx.stream;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.subscription.BackpressureUtils;
 
@@ -26,7 +27,7 @@ import reactor.core.subscription.BackpressureUtils;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoIsEmpty<T> extends reactor.Mono.MonoBarrier<T, Boolean> {
+public final class MonoIsEmpty<T> extends Mono.MonoBarrier<T, Boolean> {
 
 	public MonoIsEmpty(Publisher<? extends T> source) {
 		super(source);

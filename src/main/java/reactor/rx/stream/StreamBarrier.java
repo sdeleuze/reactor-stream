@@ -18,7 +18,7 @@ package reactor.rx.stream;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.Flux;
+import reactor.core.publisher.Flux;
 import reactor.core.support.Exceptions;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.ReactiveStateUtils;

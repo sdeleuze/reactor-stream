@@ -20,11 +20,11 @@ import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.Processors;
-import reactor.Timers;
 import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.Processors;
 import reactor.core.support.Exceptions;
 import reactor.core.timer.Timer;
+import reactor.core.timer.Timers;
 import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.rx.subscription.SwapSubscription;
 

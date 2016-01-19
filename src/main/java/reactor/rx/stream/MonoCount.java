@@ -18,6 +18,7 @@ package reactor.rx.stream;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.subscription.BackpressureUtils;
 
@@ -31,7 +32,7 @@ import reactor.core.subscription.BackpressureUtils;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoCount<T> extends reactor.Mono.MonoBarrier<T, Long> {
+public final class MonoCount<T> extends Mono.MonoBarrier<T, Long> {
 
 	public MonoCount(Publisher<? extends T> source) {
 		super(source);

@@ -20,9 +20,10 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.subscription.EmptySubscription;
 import reactor.core.subscription.BackpressureUtils;
+import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.Exceptions;
 import reactor.fn.BiFunction;
 import reactor.fn.Supplier;
@@ -39,7 +40,7 @@ import reactor.fn.Supplier;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoReduce<T, R> extends reactor.Mono.MonoBarrier<T, R> {
+public final class MonoReduce<T, R> extends Mono.MonoBarrier<T, R> {
 
 	final Supplier<R> initialSupplier;
 

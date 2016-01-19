@@ -38,10 +38,10 @@ import org.reactivestreams.Subscription;
 import org.reactivestreams.tck.TestEnvironment;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import reactor.Processors;
-import reactor.Timers;
+import reactor.core.publisher.Processors;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.Assert;
+import reactor.core.timer.Timers;
 import reactor.rx.Stream;
 import reactor.rx.broadcast.Broadcaster;
 

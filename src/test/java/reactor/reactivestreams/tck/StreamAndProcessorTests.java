@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Test;
 import org.reactivestreams.Processor;
 import org.testng.SkipException;
-import reactor.Processors;
+import reactor.core.publisher.Processors;
 import reactor.fn.BiFunction;
 import reactor.rx.Stream;
 

@@ -20,6 +20,7 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.subscription.BackpressureUtils;
 import reactor.core.support.Exceptions;
@@ -39,7 +40,7 @@ import reactor.fn.Predicate;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoAll<T> extends reactor.Mono.MonoBarrier<T, Boolean> {
+public final class MonoAll<T> extends Mono.MonoBarrier<T, Boolean> {
 
 	final Predicate<? super T> predicate;
 

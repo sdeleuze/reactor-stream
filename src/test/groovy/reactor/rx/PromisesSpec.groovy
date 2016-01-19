@@ -15,8 +15,8 @@
  */
 package reactor.rx
 
-import reactor.Mono
-import reactor.Processors
+import reactor.core.publisher.Mono
+import reactor.core.publisher.Processors
 import reactor.core.support.Exceptions
 import reactor.rx.broadcast.Broadcaster
 import spock.lang.Specification

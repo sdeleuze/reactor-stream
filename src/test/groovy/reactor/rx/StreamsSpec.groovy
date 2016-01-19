@@ -17,12 +17,12 @@ package reactor.rx
 
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription
-import reactor.Processors
-import reactor.Timers
 import reactor.core.publisher.ProcessorGroup
+import reactor.core.publisher.Processors
 import reactor.core.subscriber.SubscriberWithContext
 import reactor.core.subscriber.test.DataTestSubscriber
 import reactor.core.support.ReactiveStateUtils
+import reactor.core.timer.Timers
 import reactor.fn.BiFunction
 import reactor.rx.broadcast.Broadcaster
 import reactor.rx.stream.Signal
@@ -33,7 +33,7 @@ import spock.lang.Specification
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 
-import static reactor.Flux.error
+import static reactor.core.publisher.Flux.error
 
 class StreamsSpec extends Specification {
 
