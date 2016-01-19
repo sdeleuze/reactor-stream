@@ -47,6 +47,7 @@ import reactor.Mono;
 import reactor.Processors;
 import reactor.Subscribers;
 import reactor.Timers;
+import reactor.core.converter.DependencyUtils;
 import reactor.core.error.Exceptions;
 import reactor.core.error.InsufficientCapacityException;
 import reactor.core.processor.ProcessorGroup;
@@ -55,6 +56,7 @@ import reactor.core.publisher.FluxLog;
 import reactor.core.publisher.FluxMapSignal;
 import reactor.core.publisher.FluxResume;
 import reactor.core.publisher.FluxZip;
+import reactor.core.publisher.ForEachSequencer;
 import reactor.core.publisher.MonoIgnoreElements;
 import reactor.core.publisher.MonoNext;
 import reactor.core.subscriber.BaseSubscriber;
@@ -606,11 +608,47 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
-	 * @see Flux#convert(Object)
-	 * @since 2.5
+	 * Try to convert an object to a {@link Stream} using available support from reactor-core given the following
+	 * ordering  :
+	 * <ul>
+	 *     <li>null to {@link #empty()}</li>
+	 *     <li>Publisher to Stream</li>
+	 *     <li>Iterable to Stream</li>
+	 *     <li>Iterator to Stream</li>
+	 *     <li>RxJava 1 Single to Stream</li>
+	 *     <li>RxJava 1 Observable to Stream</li>
+	 *     <li>JDK 8 CompletableFuture to Stream</li>
+	 *     <li>JDK 9 Flow.Publisher to Stream</li>
+	 * </ul>
+	 *
+	 * @param source an object emitter to convert to a {@link Publisher}
+	 * @param <IN> a parameter candidate generic for the returned {@link Stream}
+	 *
+	 * @return a new parameterized (unchecked) converted {@link Stream}
 	 */
 	public static <T> Stream<T> convert(Object source) {
-		return from(Flux.<T>convert(source));
+		if (source == null){
+			return empty();
+		}
+		if (source instanceof Publisher) {
+			return from((Publisher<T>) source);
+		}
+		else if (source instanceof Iterable) {
+			return fromIterable((Iterable<T>) source);
+		}
+		else if (source instanceof Iterator) {
+			Iterator<T> defaultValues = (Iterator<T>)source;
+			if (!defaultValues.hasNext()) {
+				return empty();
+			}
+			ForEachSequencer.IteratorSequencer<T> iteratorPublisher =
+					new ForEachSequencer.IteratorSequencer<>(defaultValues);
+
+			return create(iteratorPublisher, iteratorPublisher);
+		}
+		else {
+			return (Stream<T>) from(DependencyUtils.convertToPublisher(source));
+		}
 	}
 
 	/**
