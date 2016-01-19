@@ -20,9 +20,9 @@ import java.util.concurrent.atomic.*;
 
 import org.reactivestreams.*;
 
+import reactor.core.subscription.BackpressureUtils;
 import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.core.subscription.CancelledSubscription;
-import reactor.core.support.*;
 
 /**
  * Samples the main source and emits its latest value whenever the other Publisher

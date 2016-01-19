@@ -22,7 +22,7 @@ import org.reactivestreams.*;
 
 import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.core.subscription.*;
-import reactor.core.support.BackpressureUtils;
+import reactor.core.subscription.BackpressureUtils;
 
 /**
  * Relays values from the main Publisher until another Publisher signals an event.

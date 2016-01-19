@@ -23,7 +23,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscription.CancelledSubscription;
 import reactor.core.subscription.EmptySubscription;
-import reactor.core.support.BackpressureUtils;
+import reactor.core.subscription.BackpressureUtils;
 import reactor.core.support.Exceptions;
 import reactor.fn.BiFunction;
 import reactor.rx.subscriber.SerializedSubscriber;

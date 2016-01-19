@@ -19,7 +19,7 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscriber;
-import reactor.core.support.BackpressureUtils;
+import reactor.core.subscription.BackpressureUtils;
 import reactor.fn.BooleanSupplier;
 
 /**
