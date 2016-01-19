@@ -52,7 +52,6 @@ import reactor.core.publisher.FluxZip;
 import reactor.core.publisher.ForEachSequencer;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoIgnoreElements;
-import reactor.core.publisher.MonoNext;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.Processors;
 import reactor.core.subscriber.BaseSubscriber;
@@ -621,7 +620,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * </ul>
 	 *
 	 * @param source an object emitter to convert to a {@link Publisher}
-	 * @param <IN> a parameter candidate generic for the returned {@link Stream}
+	 * @param <T> a parameter candidate generic for the returned {@link Stream}
 	 *
 	 * @return a new parameterized (unchecked) converted {@link Stream}
 	 */
@@ -3280,7 +3279,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @since 2.0, 2.5
 	 */
 	public final Mono<O> next() {
-		return new MonoNext<>(this);
+		return Mono.from(this);
 	}
 
 	/**
