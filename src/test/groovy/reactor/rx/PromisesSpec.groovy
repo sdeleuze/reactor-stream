@@ -117,11 +117,11 @@ class PromisesSpec extends Specification {
 
   def "An onSuccess consumer can be added to an already-rejected promise"() {
 	given: "a rejected Promise"
-	def promise = Promise.error(new Exception())
+	def promise = Mono.error(new Exception())
 
 	when: "an doOnSuccess consumer is added"
 	def ex = null
-	promise.doOnError { ex = it }.to(Promise.prepare())
+	promise.doOnError { ex = it }.as{ Promise.from(it) }
 
 	then: "no error is thrown"
 	ex in Exception
