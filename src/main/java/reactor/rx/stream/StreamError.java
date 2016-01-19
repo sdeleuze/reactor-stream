@@ -17,8 +17,8 @@ package reactor.rx.stream;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.error.CancelException;
 import reactor.core.subscriber.SubscriberBarrier;
+import reactor.core.support.Exceptions;
 import reactor.fn.Consumer;
 
 /**
@@ -58,7 +58,7 @@ final public class StreamError<T, E extends Throwable> extends StreamBarrier<T, 
 			try {
 				subscriber.onNext(ev);
 			}
-			catch (CancelException c){
+			catch (Exceptions.CancelException c){
 				doError(c);
 				throw c;
 			}

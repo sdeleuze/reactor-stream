@@ -18,8 +18,8 @@ package reactor.rx.stream;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.error.Exceptions;
 import reactor.core.subscriber.SubscriberBarrier;
+import reactor.core.support.Exceptions;
 import reactor.fn.BiConsumer;
 
 /**

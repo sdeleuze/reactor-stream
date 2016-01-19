@@ -18,10 +18,10 @@ package reactor.rx.subscriber;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Subscription;
-import reactor.core.error.Exceptions;
 import reactor.core.subscriber.ConsumerSubscriber;
 import reactor.core.subscription.CancelledSubscription;
 import reactor.core.subscription.EmptySubscription;
+import reactor.core.support.Exceptions;
 import reactor.core.support.ReactiveStateUtils;
 import reactor.core.support.internal.PlatformDependent;
 import reactor.fn.Consumer;

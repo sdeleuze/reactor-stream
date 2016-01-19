@@ -22,10 +22,8 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Processors;
 import reactor.Timers;
-import reactor.core.error.CancelException;
-import reactor.core.error.Exceptions;
-import reactor.core.error.InsufficientCapacityException;
 import reactor.core.processor.ProcessorGroup;
+import reactor.core.support.Exceptions;
 import reactor.core.timer.Timer;
 import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.rx.subscription.SwapSubscription;
@@ -93,7 +91,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	/**
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
-	 * subscribing to the returned instance. <p> Will not bubble up  any {@link CancelException}
+	 * subscribing to the returned instance. <p> Will not bubble up  any {@link Exceptions.CancelException}
 	 * @param <T> the type of values passing through the {@literal Broadcaster}
 	 * @return a new {@link Broadcaster}
 	 */
@@ -104,7 +102,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	/**
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
-	 * subscribing to the returned instance. <p> Will not bubble up  any {@link CancelException}
+	 * subscribing to the returned instance. <p> Will not bubble up  any {@link Exceptions.CancelException}
 	 * @param timer the Reactor {@link Timer} to use downstream
 	 * @param <T> the type of values passing through the {@literal Broadcaster}
 	 * @return a new {@link Broadcaster}
@@ -334,7 +332,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 			subscription.ack();
 			receiver.onNext(ev);
 		}
-		catch (InsufficientCapacityException | CancelException c) {
+		catch (Exceptions.InsufficientCapacityException | Exceptions.CancelException c) {
 			if (!ignoreDropped) {
 				throw c;
 			}
@@ -346,7 +344,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 		try {
 			receiver.onError(t);
 		}
-		catch (InsufficientCapacityException | CancelException c) {
+		catch (Exceptions.InsufficientCapacityException | Exceptions.CancelException c) {
 			//IGNORE
 		}
 	}
@@ -356,7 +354,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 		try {
 			receiver.onComplete();
 		}
-		catch (InsufficientCapacityException | CancelException c) {
+		catch (Exceptions.InsufficientCapacityException | Exceptions.CancelException c) {
 			//IGNORE
 		}
 	}

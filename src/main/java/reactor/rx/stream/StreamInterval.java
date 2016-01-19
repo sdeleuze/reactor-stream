@@ -19,7 +19,7 @@ package reactor.rx.stream;
 import java.util.concurrent.TimeUnit;
 
 import org.reactivestreams.Subscriber;
-import reactor.core.error.Exceptions;
+import reactor.core.support.Exceptions;
 import reactor.core.timer.Timer;
 import reactor.rx.Stream;
 

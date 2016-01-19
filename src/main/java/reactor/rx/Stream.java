@@ -48,8 +48,6 @@ import reactor.Processors;
 import reactor.Subscribers;
 import reactor.Timers;
 import reactor.core.converter.DependencyUtils;
-import reactor.core.error.Exceptions;
-import reactor.core.error.InsufficientCapacityException;
 import reactor.core.processor.ProcessorGroup;
 import reactor.core.publisher.FluxFlatMap;
 import reactor.core.publisher.FluxLog;
@@ -65,6 +63,7 @@ import reactor.core.subscriber.SubscriberWithContext;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.subscription.ReactiveSession;
 import reactor.core.support.Assert;
+import reactor.core.support.Exceptions;
 import reactor.core.support.Logger;
 import reactor.core.support.QueueSupplier;
 import reactor.core.support.ReactiveState;
@@ -3451,7 +3450,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		return onBackpressureDrop(new Consumer<O>() {
 			@Override
 			public void accept(O o) {
-				throw InsufficientCapacityException.get();
+				Exceptions.failWithOverflow();
 			}
 		});
 	}

@@ -18,10 +18,8 @@ package reactor.rx.stream;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.error.AlertException;
-import reactor.core.error.CancelException;
-import reactor.core.error.Exceptions;
 import reactor.core.support.BackpressureUtils;
+import reactor.core.support.Exceptions;
 import reactor.core.support.WaitStrategy;
 import reactor.core.support.rb.disruptor.Sequence;
 import reactor.core.support.rb.disruptor.Sequencer;
@@ -114,7 +112,7 @@ public final class StreamBlock<T> extends StreamBarrier<T, T> {
 					}
 				}
 			}
-			catch (AlertException | CancelException | InterruptedException ie){
+			catch (Exceptions.AlertException | Exceptions.CancelException | InterruptedException ie){
 				cancel();
 				Exceptions.onNextDropped(t);
 			}
@@ -145,7 +143,7 @@ public final class StreamBlock<T> extends StreamBarrier<T, T> {
 		@Override
 		public void run() {
 			if(cancelled){
-				throw CancelException.INSTANCE;
+				throw Exceptions.CancelException.INSTANCE;
 			}
 		}
 

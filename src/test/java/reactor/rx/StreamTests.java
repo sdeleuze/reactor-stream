@@ -53,10 +53,10 @@ import reactor.AbstractReactorTest;
 import reactor.Mono;
 import reactor.Processors;
 import reactor.Subscribers;
-import reactor.core.error.CancelException;
 import reactor.core.processor.ProcessorGroup;
 import reactor.core.processor.RingBufferProcessor;
 import reactor.core.publisher.FluxFactory;
+import reactor.core.support.Exceptions;
 import reactor.core.support.Logger;
 import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.fn.Consumer;
@@ -244,7 +244,7 @@ public class StreamTests extends AbstractReactorTest {
 		try {
 			deferred.onNext("bravo");
 		}
-		catch (CancelException ise) {
+		catch (Exceptions.CancelException ise) {
 			// Swallow
 		}
 		assertEquals(deferred.peek(), "alpha");
@@ -258,7 +258,7 @@ public class StreamTests extends AbstractReactorTest {
 		try {
 			deferred.onNext(error);
 		}
-		catch (CancelException ise) {
+		catch (Exceptions.CancelException ise) {
 			// Swallow
 		}
 		assertTrue(deferred.reason() instanceof Exception);
@@ -273,7 +273,7 @@ public class StreamTests extends AbstractReactorTest {
 			deferred.onNext("alpha");
 			fail();
 		}
-		catch (CancelException ise) {
+		catch (Exceptions.CancelException ise) {
 		}
 		assertTrue(deferred.reason() instanceof Exception);
 	}

@@ -17,8 +17,7 @@ package reactor.rx
 
 import reactor.Mono
 import reactor.Processors
-import reactor.core.error.CancelException
-import reactor.core.error.Exceptions
+import reactor.core.support.Exceptions
 import reactor.rx.broadcast.Broadcaster
 import spock.lang.Specification
 
@@ -344,7 +343,7 @@ class PromisesSpec extends Specification {
 	promise.onNext 1
 
 	then: "an CancelException is thrown"
-	thrown(CancelException)
+	thrown(Exceptions.CancelException)
   }
 
   def "An IllegalStateException is thrown if an attempt is made to reject a rejected promise"() {
@@ -632,7 +631,7 @@ class PromisesSpec extends Specification {
 	 p2.get(1, TimeUnit.SECONDS)
 
 	then: 'No value'
-	thrown CancelException
+	thrown Exceptions.CancelException
 
 	when: 'polling undefinitely'
 	def v = p2.get()

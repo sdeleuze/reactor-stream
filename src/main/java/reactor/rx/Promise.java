@@ -26,11 +26,10 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Mono;
 import reactor.Timers;
-import reactor.core.error.CancelException;
-import reactor.core.error.Exceptions;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.subscription.ScalarSubscription;
 import reactor.core.support.BackpressureUtils;
+import reactor.core.support.Exceptions;
 import reactor.core.support.ReactiveState;
 import reactor.core.support.internal.PlatformDependent;
 import reactor.core.timer.Timer;
@@ -328,7 +327,7 @@ public class Promise<O> extends Mono<O>
 						return null;
 				}
 			if (delay < System.currentTimeMillis()) {
-				throw CancelException.get();
+				Exceptions.failWithCancel();
 			}
 			Thread.sleep(1);
 		}
@@ -401,9 +400,10 @@ public class Promise<O> extends Mono<O>
 			return await(timeout, unit);
 		}
 		catch (InterruptedException ie) {
-			Thread.currentThread()
-			      .interrupt();
-			throw CancelException.get();
+			Thread.currentThread().interrupt();
+
+			Exceptions.failWithCancel();
+			return null;
 		}
 	}
 

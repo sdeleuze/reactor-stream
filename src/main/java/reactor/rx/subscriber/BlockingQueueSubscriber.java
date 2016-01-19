@@ -26,12 +26,10 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.error.CancelException;
-import reactor.core.error.Exceptions;
-import reactor.core.error.InsufficientCapacityException;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.support.Assert;
 import reactor.core.support.BackpressureUtils;
+import reactor.core.support.Exceptions;
 import reactor.core.support.ReactiveState;
 
 /**
@@ -139,7 +137,7 @@ public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements R
 	@Override
 	public void onNext(IN in) {
 		super.onNext(in);
-		if (terminated) throw CancelException.get();
+		if (terminated) Exceptions.onNextDropped(in);
 
 		long r = REMAINING.decrementAndGet(this);
 
@@ -147,7 +145,7 @@ public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements R
 			target.onNext(in);
 
 		} else if (!store.offer(in)) {
-			onError(InsufficientCapacityException.get());
+			Exceptions.failWithOverflow();
 		}
 
 		if (cancelAfterFirstRequestComplete && r == 0) {
@@ -278,7 +276,7 @@ public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements R
 		  TimeUnit.MILLISECONDS.convert(timeout, unit);
 
 		while ((res = store.poll()) == null) {
-			if (blockingTerminatedCheck()) throw CancelException.get();
+			if (blockingTerminatedCheck()) Exceptions.failWithCancel();
 
 			if (System.currentTimeMillis() > timespan) {
 				break;
@@ -354,7 +352,7 @@ public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements R
 
 		markRead();
 		IN res = store.poll();
-		if(res == null && blockingTerminatedCheck()) throw CancelException.get();
+		if(res == null && blockingTerminatedCheck()) Exceptions.failWithCancel();
 		return res;
 	}
 

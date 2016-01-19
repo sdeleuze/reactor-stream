@@ -21,11 +21,11 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.error.Exceptions;
 import reactor.core.processor.EmitterProcessor;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 import reactor.core.subscription.DeferredSubscription;
 import reactor.core.subscription.EmptySubscription;
+import reactor.core.support.Exceptions;
 import reactor.fn.Function;
 import reactor.rx.subscriber.SerializedSubscriber;
 
