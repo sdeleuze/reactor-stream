@@ -459,7 +459,7 @@ public class StreamTests extends AbstractReactorTest {
 		                          .sort((a, b) -> a.t1.compareTo(b.t1))
 		                          .reduce(-1L, (acc, next) -> acc > 0l ? ((next.t1 + acc) / 2) : next.t1)
 		                          .log("reduced-elapsed")
-		                          .to(Promise.prepare());
+		                          .subscribeWith(Promise.prepare());
 
 		for (int j = 0; j < 10; j++) {
 			source.onNext(1);

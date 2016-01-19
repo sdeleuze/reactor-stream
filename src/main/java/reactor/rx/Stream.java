@@ -4516,14 +4516,14 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 
 	/**
 	 *
-	 * {@code stream.to(Processors.queue()).subscribe(Subscribers.unbounded()) }
+	 * {@code stream.subscribeWith(Processors.queue()).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param subscriber
 	 * @param <E>
 	 *
 	 * @return this subscriber
 	 */
-	public final <E extends Subscriber<? super O>> E to(E subscriber) {
+	public final <E extends Subscriber<? super O>> E subscribeWith(E subscriber) {
 		subscribe(subscriber);
 		return subscriber;
 	}

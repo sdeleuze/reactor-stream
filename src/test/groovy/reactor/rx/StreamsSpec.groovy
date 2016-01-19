@@ -338,7 +338,7 @@ class StreamsSpec extends Specification {
 					.take(4, TimeUnit.SECONDS)
 					.publishOn(Processors.ioGroup("work", 8, 4))
 					.last()
-					.to(Promise.ready())
+					.subscribeWith(Promise.ready())
 
 		then:
 			last.await() > 20_000
@@ -871,7 +871,7 @@ class StreamsSpec extends Specification {
 		given:
 			'source composables to count and tap'
 			def source = Broadcaster.<Integer> create()
-			def tap = source.count().to(Promise.prepare())
+			def tap = source.count().subscribeWith(Promise.prepare())
 
 		when:
 			'the sources accept a value'
@@ -1113,7 +1113,7 @@ class StreamsSpec extends Specification {
 			'a composable that will accept 5 values and a reduce function'
 			def source = Broadcaster.<Integer> create()
 			def reduced = source.reduce(new Reduction())
-			def value = reduced.to(Promise.prepare())
+			def value = reduced.subscribeWith(Promise.prepare())
 
 		when:
 			'the expected number of values is accepted'
@@ -1133,7 +1133,7 @@ class StreamsSpec extends Specification {
 		given:
 			'a composable that will accept 2 values and a reduce function'
 			def source = Broadcaster.<Integer> create()
-			def value = source.reduce(new Reduction()).to(Promise.ready())
+			def value = source.reduce(new Reduction()).subscribeWith(Promise.ready())
 
 		when:
 			'the first value is accepted'
@@ -1158,7 +1158,7 @@ class StreamsSpec extends Specification {
 			'a composable with a reduce function'
 			def source = Broadcaster.<Integer> create()
 			def reduced = source.window(2).log().flatMap { it.log('lol').reduce(new Reduction()) }
-			def value = reduced.to(Promise.prepare())
+			def value = reduced.subscribeWith(Promise.prepare())
 
 		when:
 			'the first value is accepted'
@@ -1216,7 +1216,7 @@ class StreamsSpec extends Specification {
 			'a composable'
 			def source = Broadcaster.<Integer> create()
 			def reduced = source.capacity(1).buffer()
-			def value = reduced.to(Promise.prepare())
+			def value = reduced.subscribeWith(Promise.prepare())
 
 		when:
 			'the first value is accepted'
@@ -1235,7 +1235,7 @@ class StreamsSpec extends Specification {
 			'a source and a collected stream'
 			def source = Broadcaster.<Integer> create()
 			Stream reduced = source.buffer(2)
-			def value = reduced.to(Promise.prepare())
+			def value = reduced.subscribeWith(Promise.prepare())
 
 		when:
 			'the first value is accepted on the source'
@@ -2352,7 +2352,7 @@ class StreamsSpec extends Specification {
 				acc > 0l ? ((next.t1 + acc) / 2) : next.t1
 			}
 
-			def value = reduced.log().to(Promise.prepare())
+			def value = reduced.log().subscribeWith(Promise.prepare())
 			println value.debug()
 
 		when:
@@ -2391,7 +2391,7 @@ class StreamsSpec extends Specification {
 				acc > 0l ? ((next.t1 + acc) / 2) : next.t1
 			}
 
-			def value = reduced.log('promise').to(Promise.prepare())
+			def value = reduced.log('promise').subscribeWith(Promise.prepare())
 			println value.debug()
 
 		when:
@@ -2553,7 +2553,7 @@ class StreamsSpec extends Specification {
 					.log('afterRetry')
 					.count()
 
-			def value = stream.to(Promise.prepare())
+			def value = stream.subscribeWith(Promise.prepare())
 
 			println stream.debug()
 
@@ -2569,7 +2569,7 @@ class StreamsSpec extends Specification {
 				if (i++ < 2) {
 					throw new RuntimeException()
 				}
-			}.retry().count().to(Promise.prepare())
+			}.retry().count().subscribeWith(Promise.prepare())
 
 			println tap.debug()
 			println tap.debug()
@@ -2610,7 +2610,7 @@ class StreamsSpec extends Specification {
 				}
 			}.retry {
 				i <= 2
-			}.count().to(Promise.prepare())
+			}.count().subscribeWith(Promise.prepare())
 			stream.onNext('test')
 			stream.onNext('test2')
 			stream.onNext('test3')
@@ -2635,7 +2635,7 @@ class StreamsSpec extends Specification {
 				  println attempts.debug()
 					Stream.delay(i)
 				}
-			}.to(DataTestSubscriber.createWithTimeoutSecs(10))
+			}.subscribeWith(DataTestSubscriber.createWithTimeoutSecs(10))
 		println value.debug()
 		value.sendUnboundedRequest()
 

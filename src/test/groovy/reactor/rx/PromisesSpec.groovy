@@ -36,7 +36,7 @@ class PromisesSpec extends Specification {
 	def promise = Promise.ready()
 	def acceptedPromise
 
-	promise.doOnTerminate { success, failure -> acceptedPromise = failure }.to(Promise.ready())
+	promise.doOnTerminate { success, failure -> acceptedPromise = failure }.subscribeWith(Promise.ready())
 
 	when: "the promise is rejected"
 	promise.onError new Exception()
@@ -52,7 +52,7 @@ class PromisesSpec extends Specification {
 	when: "an onComplete consumer is added"
 	def acceptedPromise
 
-	promise.doOnTerminate { data, failure -> acceptedPromise = failure }.to(Promise.ready())
+	promise.doOnTerminate { data, failure -> acceptedPromise = failure }.subscribeWith(Promise.ready())
 
 	then: "the consumer is invoked with the promise"
 	acceptedPromise == promise.reason()
@@ -63,7 +63,7 @@ class PromisesSpec extends Specification {
 	def promise = Promise.ready()
 	def acceptedPromise
 
-	promise.doOnTerminate() { v, error -> acceptedPromise = v }.to(Promise.prepare())
+	promise.doOnTerminate() { v, error -> acceptedPromise = v }.subscribeWith(Promise.prepare())
 
 	when: "the promise is fulfilled"
 	promise.onNext 'test'
@@ -80,7 +80,7 @@ class PromisesSpec extends Specification {
 	when: "an onComplete consumer is added"
 	def acceptedPromise
 
-	promise.doOnTerminate{ self, err -> acceptedPromise = self}.to(Promise.prepare())
+	promise.doOnTerminate{ self, err -> acceptedPromise = self}.subscribeWith(Promise.prepare())
 
 	then: "the consumer is invoked with the promise"
 	acceptedPromise == promise.peek()
@@ -92,7 +92,7 @@ class PromisesSpec extends Specification {
 	def promise = Promise.ready()
 	def acceptedValue
 
-	promise.doOnSuccess { v -> acceptedValue = v }.to(Promise.prepare())
+	promise.doOnSuccess { v -> acceptedValue = v }.subscribeWith(Promise.prepare())
 
 	when: "the promise is fulfilled"
 	promise.onNext 'test'
@@ -108,7 +108,7 @@ class PromisesSpec extends Specification {
 	when: "an doOnSuccess consumer is added"
 	def acceptedValue
 
-	promise.doOnSuccess { v -> acceptedValue = v }.to(Promise.prepare())
+	promise.doOnSuccess { v -> acceptedValue = v }.subscribeWith(Promise.prepare())
 
 	then: "the consumer is invoked with the fulfilling value"
 	acceptedValue == 'test'
@@ -143,7 +143,7 @@ class PromisesSpec extends Specification {
 	def promise = Promise.ready()
 	def acceptedValue
 
-	promise.doOnError { v -> acceptedValue = v }.to(Promise.prepare())
+	promise.doOnError { v -> acceptedValue = v }.subscribeWith(Promise.prepare())
 
 	when: "the promise is rejected"
 	def failure = new Exception()
@@ -189,7 +189,7 @@ class PromisesSpec extends Specification {
 	def acceptedValue
 
 	promise.doOnError { v -> acceptedValue = v
-	}.to(Promise.prepare())
+	}.subscribeWith(Promise.prepare())
 	println promise.debug()
 
 	then: "the consumer is invoked with the rejecting value"
@@ -271,7 +271,7 @@ class PromisesSpec extends Specification {
 	given: "A promise with an doOnSuccess consumer registered using then"
 	Promise<String> promise = Promise.<String> ready()
 	def value = null
-	promise.doOnSuccess { value = it }.to(Promise.prepare())
+	promise.doOnSuccess { value = it }.subscribeWith(Promise.prepare())
 
 	when: "The promise is fulfilled"
 	promise.onNext 'test'
@@ -284,7 +284,7 @@ class PromisesSpec extends Specification {
 	given: "A promise with an doOnError consumer registered using then"
 	Promise<String> promise = Promise.<String> ready()
 	def value
-	promise.doOnSuccess {}.doOnError { value = it }.to(Promise.prepare())
+	promise.doOnSuccess {}.doOnError { value = it }.subscribeWith(Promise.prepare())
 
 	when: "The promise is rejected"
 	def e = new Exception()
@@ -300,7 +300,7 @@ class PromisesSpec extends Specification {
 
 	when: "An doOnSuccess consumer is registered via then"
 	def value
-	promise.doOnSuccess { value = it }.to(Promise.prepare())
+	promise.doOnSuccess { value = it }.subscribeWith(Promise.prepare())
 
 	then: "The consumer is called"
 	value == 'test'
@@ -378,7 +378,7 @@ class PromisesSpec extends Specification {
 	def promise2 = bc2.stream().log().promise()
 
 	when: "a combined promise is first created"
-	def combined = Mono.when(promise1, promise2).to(Promise.prepare())
+	def combined = Mono.when(promise1, promise2).subscribeWith(Promise.prepare())
 
 	then: "it is pending"
 	combined.pending
@@ -408,7 +408,7 @@ class PromisesSpec extends Specification {
 	def promise2 = Promise.<Integer> ready()
 
 	when: "a combined promise is first created"
-	def combined = Mono.when(promise1, promise2).to(Promise.prepare())
+	def combined = Mono.when(promise1, promise2).subscribeWith(Promise.prepare())
 
 	then: "it is pending"
 	combined.pending
@@ -470,7 +470,7 @@ class PromisesSpec extends Specification {
 
 
 	when: "a combined promise is first created"
-	def combined =  Mono.any(promise1, promise2).to(Promise.prepare())
+	def combined =  Mono.any(promise1, promise2).subscribeWith(Promise.prepare())
 
 	then: "it is fulfilled"
 	combined.awaitSuccess(3205, TimeUnit.MILLISECONDS)
@@ -601,7 +601,7 @@ class PromisesSpec extends Specification {
 	when: "p1 is consumed by p2"
 	Promise p2 = p1.doOnSuccess({ Integer.parseInt it }).
 			doOnError{ latch.countDown() }.
-			map { println('not in log'); true }.to(Promise.prepare())
+			map { println('not in log'); true }.subscribeWith(Promise.prepare())
 
 	and: "setting a value"
 	p1.onNext 'not a number'
