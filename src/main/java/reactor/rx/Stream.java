@@ -4819,10 +4819,20 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 */
 	public final <U, V> Stream<Stream<O>> window(final Publisher<U> bucketOpening,
 			final Function<? super U, ? extends Publisher<V>> boundarySupplier) {
+
+		long c = getCapacity();
+		/*if(c > 1 && c < 10_000_000){
+			return new StreamWindowBeginEnd<>(this,
+					bucketOpening,
+					boundarySupplier,
+					QueueSupplier.get(c),
+					(int)c);
+		}*/
+
 		return new StreamWindowStartEnd<>(this,
 				bucketOpening,
 				boundarySupplier,
-				QueueSupplier.get(XS_BUFFER_SIZE),
+				QueueSupplier.get(c),
 				QueueSupplier.<O>get(XS_BUFFER_SIZE));
 	}
 
