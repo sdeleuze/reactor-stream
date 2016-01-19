@@ -23,7 +23,7 @@ import org.reactivestreams.Processor;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import reactor.Processors;
-import reactor.core.processor.ProcessorGroup;
+import reactor.core.publisher.ProcessorGroup;
 import reactor.fn.BiFunction;
 import reactor.rx.Stream;
 import reactor.rx.broadcast.Broadcaster;

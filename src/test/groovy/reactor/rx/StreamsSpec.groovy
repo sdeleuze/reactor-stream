@@ -19,7 +19,7 @@ import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription
 import reactor.Processors
 import reactor.Timers
-import reactor.core.processor.ProcessorGroup
+import reactor.core.publisher.ProcessorGroup
 import reactor.core.subscriber.SubscriberWithContext
 import reactor.core.subscriber.test.DataTestSubscriber
 import reactor.core.support.ReactiveStateUtils

@@ -53,9 +53,9 @@ import reactor.AbstractReactorTest;
 import reactor.Mono;
 import reactor.Processors;
 import reactor.Subscribers;
-import reactor.core.processor.ProcessorGroup;
-import reactor.core.processor.RingBufferProcessor;
 import reactor.core.publisher.FluxFactory;
+import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.TopicProcessor;
 import reactor.core.support.Exceptions;
 import reactor.core.support.Logger;
 import reactor.core.support.NamedDaemonThreadFactory;
@@ -471,7 +471,7 @@ public class StreamTests extends AbstractReactorTest {
 
 	@Test
 	public void konamiCode() throws InterruptedException {
-		final RingBufferProcessor<Integer> keyboardStream = RingBufferProcessor.create();
+		final TopicProcessor<Integer> keyboardStream = TopicProcessor.create();
 
 		Mono<List<Boolean>> konamis = Stream.fromProcessor(keyboardStream.start())
 		                                    .skipWhile(key -> KeyEvent.VK_UP != key)
@@ -965,7 +965,7 @@ public class StreamTests extends AbstractReactorTest {
 		                             //.requestWhen(requests -> requests.dispatchOn(Environment.cachedDispatcher()))
 		                             .buffer(2)
 		                             .map(pairs -> new Point(pairs.get(0), pairs.get(1)))
-		                             .process(RingBufferProcessor.create(pool,
+		                             .process(TopicProcessor.create(pool,
 				                              32)); //.broadcast(); works because no async boundary
 
 		Stream<InnerSample> innerSamples = points.log("inner-1")
@@ -1355,11 +1355,11 @@ public class StreamTests extends AbstractReactorTest {
 		final Stream<Integer> forkStream2 = Stream.just(1, 2, 3)
 		                                          .log("begin-persistence");
 
-		final RingBufferProcessor<Integer> computationBroadcaster = RingBufferProcessor.create("computation", BACKLOG);
+		final TopicProcessor<Integer> computationBroadcaster = TopicProcessor.create("computation", BACKLOG);
 		final Stream<String> computationStream = Stream.fromProcessor(computationBroadcaster)
 		                                               .map(i -> Integer.toString(i));
 
-		final RingBufferProcessor<Integer> persistenceBroadcaster = RingBufferProcessor.create("persistence", BACKLOG);
+		final TopicProcessor<Integer> persistenceBroadcaster = TopicProcessor.create("persistence", BACKLOG);
 		final Stream<String> persistenceStream = Stream.fromProcessor(persistenceBroadcaster)
 		                                               .map(i -> "done " + i);
 

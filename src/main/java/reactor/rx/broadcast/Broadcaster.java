@@ -22,7 +22,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.Processors;
 import reactor.Timers;
-import reactor.core.processor.ProcessorGroup;
+import reactor.core.publisher.ProcessorGroup;
 import reactor.core.support.Exceptions;
 import reactor.core.timer.Timer;
 import reactor.rx.subscriber.SerializedSubscriber;
