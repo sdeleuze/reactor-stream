@@ -17,6 +17,7 @@
 package reactor.rx;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -48,7 +49,6 @@ import reactor.core.publisher.FluxFlatMap;
 import reactor.core.publisher.FluxLog;
 import reactor.core.publisher.FluxMapSignal;
 import reactor.core.publisher.FluxResume;
-import reactor.core.publisher.FluxZip;
 import reactor.core.publisher.ForEachSequencer;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoIgnoreElements;
@@ -953,7 +953,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	@SuppressWarnings({"unchecked", "varargs"})
 	@SafeVarargs
 	public static <T> Stream<List<T>> join(Publisher<? extends T>... sources) {
-		return from(Flux.zip(FluxZip.JOIN_FUNCTION, sources));
+		return from(Flux.zip(JOIN_FUNCTION, sources));
 	}
 
 	/**
@@ -968,7 +968,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Stream<List<T>> join(Iterable<? extends Publisher<?>> sources) {
-		return zip(sources, FluxZip.JOIN_FUNCTION);
+		return zip(sources, JOIN_FUNCTION);
 	}
 
 	/**
@@ -1451,9 +1451,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	                                            Publisher<? extends T3> source3,
 	                                            Function<Tuple3<T1, T2, T3>,
 	                                              ? extends V> combinator) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3},
-				combinator,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from(Flux.zip(source1, source2, source3, combinator));
 	}
 
 	/**
@@ -1473,9 +1471,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	public static <T1, T2, T3> Stream<Tuple3<T1, T2, T3>> zip(Publisher<? extends T1> source1,
 												              Publisher<? extends T2> source2,
 												              Publisher<? extends T3> source3) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3},
-				(Function<Tuple3<T1, T2, T3>, Tuple3<T1, T2, T3>>) IDENTITY_FUNCTION,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from(Flux.zip(source1, source2, source3));
 	}
 
 	/**
@@ -1502,9 +1498,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	                                                Publisher<? extends T4> source4,
 	                                                Function<Tuple4<T1, T2, T3, T4>,
 	                                                  V> combinator) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3, source4},
-				combinator,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from(Flux.zip(source1, source2, source3, source4,
+				combinator));
 	}
 
 	/**
@@ -1527,9 +1522,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 													                  Publisher<? extends T2> source2,
 													                  Publisher<? extends T3> source3,
 													                  Publisher<? extends T4> source4) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3, source4},
-				IDENTITY_FUNCTION,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from(Flux.zip(source1, source2, source3, source4));
 	}
 
 	/**
@@ -1558,9 +1551,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	                                                    Publisher<? extends T5> source5,
 	                                                    Function<Tuple5<T1, T2, T3, T4, T5>,
 	                                                      V> combinator) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3, source4, source5},
-				combinator,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from(Flux.zip(source1, source2, source3, source4, source5, combinator));
 	}
 
 	/**
@@ -1585,9 +1576,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 														                      Publisher<? extends T3> source3,
 														                      Publisher<? extends T4> source4,
 														                      Publisher<? extends T5> source5) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3, source4, source5},
-				(Function<Tuple5<T1, T2, T3, T4, T5>, Tuple5<T1, T2, T3, T4, T5>>) IDENTITY_FUNCTION,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from(Flux.zip(source1, source2, source3, source4, source5));
 	}
 
 	/**
@@ -1620,9 +1609,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	                                                        Publisher<? extends T6> source6,
 	                                                        Function<Tuple6<T1, T2, T3, T4, T5, T6>,
 	                                                          V> combinator) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3, source4, source5, source6},
-				combinator,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from(Flux.zip(source1, source2, source3, source4, source5, source6, combinator));
 	}
 
 	/**
@@ -1651,9 +1638,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 															                          Publisher<? extends T4> source4,
 															                          Publisher<? extends T5> source5,
 															                          Publisher<? extends T6> source6) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3, source4, source5, source6},
-				(Function<Tuple6<T1, T2, T3, T4, T5, T6>, Tuple6<T1, T2, T3, T4, T5, T6>>) IDENTITY_FUNCTION,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from(Flux.zip(source1, source2, source3, source4, source5, source6));
 	}
 
 	/**
@@ -1680,6 +1665,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a {@link Stream} based on the produced value
 	 * @since 2.0
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T1, T2, T3, T4, T5, T6, T7, V> Stream<V> zip(Publisher<? extends T1> source1,
 	                                                            Publisher<? extends T2> source2,
 	                                                            Publisher<? extends T3> source3,
@@ -1689,9 +1675,9 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	                                                            Publisher<? extends T7> source7,
 	                                                            Function<Tuple7<T1, T2, T3, T4, T5, T6, T7>,
 	                                                              V> combinator) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3, source4, source5, source6, source7},
-				combinator,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from((Flux<V>) Flux.zip(combinator, new Publisher[]{source1, source2, source3, source4, source5,
+				source6,
+				source7}));
 	}
 
 	/**
@@ -1724,9 +1710,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 			Publisher<? extends T5> source5,
 			Publisher<? extends T6> source6,
 			Publisher<? extends T7> source7) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3, source4, source5, source6, source7},
-				IDENTITY_FUNCTION,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from(Flux.zip(IDENTITY_FUNCTION, source1, source2, source3, source4, source5, source6, source7));
 	}
 
 	/**
@@ -1755,6 +1739,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a {@link Stream} based on the produced value
 	 * @since 2.0
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T1, T2, T3, T4, T5, T6, T7, T8, V> Stream<V> zip(Publisher<? extends T1> source1,
 	                                                            Publisher<? extends T2> source2,
 	                                                            Publisher<? extends T3> source3,
@@ -1765,9 +1750,9 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	                                                            Publisher<? extends T8> source8,
 	                                                            Function<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>,
 	                                                              V> combinator) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3, source4, source5, source6, source7},
-				combinator,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from((Flux<V>)Flux.zip(combinator, new Publisher[]{source1, source2, source3, source4, source5, source6,
+				source7,
+				source8}));
 	}
 
 	/**
@@ -1803,10 +1788,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 			Publisher<? extends T6> source6,
 			Publisher<? extends T7> source7,
 			Publisher<? extends T8> source8) {
-		return from(new FluxZip<>(new Publisher[]{source1, source2, source3, source4, source5, source6, source7,
-				source8},
-				IDENTITY_FUNCTION,
-				ReactiveState.XS_BUFFER_SIZE));
+		return from(Flux.zip(IDENTITY_FUNCTION, source1, source2, source3, source4, source5, source6, source7,
+				source8));
 	}
 
 	/**
@@ -1864,11 +1847,10 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		return from(sources).buffer()
 		                    .flatMap(new Function<List<? extends Publisher<?>>, Publisher<V>>() {
 			@Override
+			@SuppressWarnings("unchecked")
 			public Publisher<V> apply(List<? extends Publisher<?>> publishers) {
-				return new FluxZip<>(publishers.toArray(
-						new Publisher[publishers.size()]),
-						combinator,
-						ReactiveState.XS_BUFFER_SIZE);
+				return Flux.zip((Function<Tuple, V>)combinator, publishers.toArray(new Publisher[publishers
+						.size()]));
 			}
 		});
 	}
@@ -3082,7 +3064,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 */
 	@SuppressWarnings("unchecked")
 	public final <T> Stream<List<T>> joinWith(Publisher<T> publisher) {
-		return zipWith(publisher, (BiFunction<Object, Object, List<T>>) FluxZip.JOIN_BIFUNCTION);
+		return zipWith(publisher, (BiFunction<Object, Object, List<T>>) JOIN_BIFUNCTION);
 	}
 
 	/**
@@ -5215,4 +5197,26 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 		}
 	};
 	static final Supplier XS_QUEUE_SUPPLIER = QueueSupplier.get(ReactiveState.XS_BUFFER_SIZE);
+
+
+	/**
+	 *
+	 */
+	public static final Function JOIN_FUNCTION = new Function<Tuple, List>() {
+		@Override
+		public List<?> apply(Tuple ts) {
+			return Arrays.asList(ts.toArray());
+		}
+	};
+
+	/**
+	 *
+	 */
+	public static final BiFunction JOIN_BIFUNCTION = new BiFunction<Object, Object, List>() {
+		@Override
+		public List<?> apply(Object t1, Object t2) {
+			return Arrays.asList(t1, t2);
+		}
+	};
+
 }
