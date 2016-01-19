@@ -28,7 +28,6 @@ import reactor.Mono;
 import reactor.Timers;
 import reactor.core.error.CancelException;
 import reactor.core.error.Exceptions;
-import reactor.core.error.ReactorFatalException;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.subscription.ScalarSubscription;
 import reactor.core.support.BackpressureUtils;
@@ -324,7 +323,7 @@ public class Promise<O> extends Mono<O>
 						if (error instanceof RuntimeException) {
 							throw (RuntimeException) error;
 						}
-						throw ReactorFatalException.create(error);
+						Exceptions.fail(error);
 					case STATE_COMPLETE_NO_VALUE:
 						return null;
 				}
@@ -607,7 +606,8 @@ public class Promise<O> extends Mono<O>
 				throw (RuntimeException) error;
 			}
 			else {
-				throw ReactorFatalException.create(error);
+				Exceptions.onErrorDropped(error);
+				return null;
 			}
 		}
 		else {

@@ -16,12 +16,12 @@
 package reactor.rx.stream;
 
 import java.util.Objects;
-import reactor.fn.Supplier;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.ReactiveState;
+import reactor.fn.Supplier;
 
 /**
  * Defers the creation of the actual Publisher the Subscriber will be subscribed to.

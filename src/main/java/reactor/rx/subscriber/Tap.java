@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.error.ReactorFatalException;
+import reactor.core.error.Exceptions;
 import reactor.core.support.ReactiveStateUtils;
 import reactor.fn.Consumer;
 import reactor.fn.Supplier;
@@ -76,7 +76,7 @@ public final class Tap<T> implements Consumer<T>, Supplier<T>, Subscriber<T> {
 
 	@Override
 	public void onError(Throwable t) {
-		throw ReactorFatalException.create(t);
+		Exceptions.onErrorDropped(t);
 	}
 
 	@Override

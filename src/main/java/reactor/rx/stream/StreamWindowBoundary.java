@@ -169,7 +169,9 @@ public final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.r
 		
 		@Override
 		public void onNext(T t) {
-			queue.offer(t);
+			synchronized (this) {
+				queue.offer(t);
+			}
 			drain();
 		}
 		
@@ -185,7 +187,9 @@ public final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.r
 		
 		@Override
 		public void onComplete() {
-			queue.offer(BOUNDARY_MARKER);
+			synchronized (this) {
+				queue.offer(BOUNDARY_MARKER);
+			}
 			mainDone();
 			drain();
 		}
@@ -222,7 +226,9 @@ public final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.r
 		}
 		
 		void boundaryNext() {
-			queue.offer(BOUNDARY_MARKER);
+			synchronized (this) {
+				queue.offer(BOUNDARY_MARKER);
+			}
 
 			if (cancelled) {
 				boundary.cancel();
@@ -241,7 +247,9 @@ public final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.r
 		}
 		
 		void boundaryComplete() {
-			queue.offer(BOUNDARY_MARKER);
+			synchronized (this) {
+				queue.offer(BOUNDARY_MARKER);
+			}
 			mainDone();
 			drain();
 		}

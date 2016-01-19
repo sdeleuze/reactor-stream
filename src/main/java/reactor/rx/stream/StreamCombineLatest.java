@@ -59,7 +59,9 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
 	final int bufferSize;
 
 	public StreamCombineLatest(Publisher<? extends T>[] array,
-			Function<Object[], R> combiner, Supplier<? extends Queue<SourceAndArray>> queueSupplier, int bufferSize) {
+			Function<Object[], R> combiner,
+			Supplier<? extends Queue<SourceAndArray>> queueSupplier,
+			int bufferSize) {
 		if (bufferSize <= 0) {
 			throw new IllegalArgumentException("BUFFER_SIZE > 0 required but it was " + bufferSize);
 		}
@@ -72,7 +74,9 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
 	}
 
 	public StreamCombineLatest(Iterable<? extends Publisher<? extends T>> iterable,
-			Function<Object[], R> combiner, Supplier<? extends Queue<SourceAndArray>> queueSupplier, int bufferSize) {
+			Function<Object[], R> combiner,
+			Supplier<? extends Queue<SourceAndArray>> queueSupplier,
+			int bufferSize) {
 		if (bufferSize <= 0) {
 			throw new IllegalArgumentException("BUFFER_SIZE > 0 required but it was " + bufferSize);
 		}
@@ -142,7 +146,8 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
 				}
 
 				if (p == null) {
-					EmptySubscription.error(s, new NullPointerException("The Publisher returned by the iterator is " + "null"));
+					EmptySubscription.error(s,
+							new NullPointerException("The Publisher returned by the iterator is " + "null"));
 					return;
 				}
 
@@ -232,8 +237,7 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
 
 		static final Throwable TERMINAL_ERROR = new Throwable();
 
-		public StreamCombineLatestCoordinator(Subscriber<? super R> actual,
-				Function<Object[], R> combiner, int n, Queue<SourceAndArray> queue,
+		public StreamCombineLatestCoordinator(Subscriber<? super R> actual, Function<Object[], R> combiner, int n, Queue<SourceAndArray> queue,
 				int bufferSize) {
 			this.actual = actual;
 			this.combiner = combiner;
@@ -404,7 +408,8 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
 					try {
 						w = combiner.apply(v.array);
 					} catch (Throwable ex) {
-						innerError(ex);
+						innerError(Exceptions.unwrap(ex));
+						Exceptions.throwIfFatal(ex);
 						continue;
 					}
 

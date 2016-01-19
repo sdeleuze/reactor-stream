@@ -15,13 +15,15 @@
  */
 package reactor.rx.stream;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.subscription.EmptySubscription;
-import reactor.core.support.*;
+import reactor.core.support.BackpressureUtils;
+import reactor.core.support.ReactiveState;
 
 /**
  * Emits the contents of an Iterable source.

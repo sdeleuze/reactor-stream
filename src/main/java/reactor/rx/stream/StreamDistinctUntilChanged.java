@@ -16,12 +16,13 @@
 package reactor.rx.stream;
 
 import java.util.Objects;
-import reactor.fn.Function;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.Function;
 
 /**
  * Filters out subsequent and repeated elements.
@@ -88,8 +89,8 @@ public final class StreamDistinctUntilChanged<T, K> extends StreamBarrier<T, T> 
 				k = keyExtractor.apply(t);
 			} catch (Throwable e) {
 				s.cancel();
-
-				onError(e);
+				Exceptions.throwIfFatal(e);
+				onError(Exceptions.unwrap(e));
 				return;
 			}
 

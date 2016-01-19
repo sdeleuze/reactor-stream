@@ -16,12 +16,13 @@
 package reactor.rx.stream;
 
 import java.util.Objects;
-import reactor.fn.Function;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.Function;
 
 /**
  * Maps the values of the source publisher one-on-one via a mapper function.

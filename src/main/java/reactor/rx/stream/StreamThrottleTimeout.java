@@ -169,7 +169,8 @@ public final class StreamThrottleTimeout<T, U> extends StreamBarrier<T, T> {
 			try {
 				p = throttler.apply(t);
 			} catch (Throwable e) {
-				onError(e);
+				Exceptions.throwIfFatal(e);
+				onError(Exceptions.unwrap(e));
 				return;
 			}
 

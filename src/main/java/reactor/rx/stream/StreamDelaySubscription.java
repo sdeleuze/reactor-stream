@@ -17,8 +17,9 @@ package reactor.rx.stream;
 
 import java.util.Objects;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.subscriber.SubscriberDeferredSubscription;
 import reactor.core.support.BackpressureUtils;

@@ -16,12 +16,13 @@
 package reactor.rx.stream;
 
 import java.util.Objects;
-import reactor.fn.Predicate;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.Predicate;
 
 /**
  * Filters out values that make a filter function return false.
@@ -88,7 +89,8 @@ public final class StreamFilter<T> extends StreamBarrier<T, T> {
 			} catch (Throwable e) {
 				s.cancel();
 
-				onError(e);
+				Exceptions.throwIfFatal(e);
+				onError(Exceptions.unwrap(e));
 				return;
 			}
 			if (b) {

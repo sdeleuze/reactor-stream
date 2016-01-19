@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package reactor.rx.stream;
 
 import java.util.Objects;
@@ -6,10 +21,13 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.error.Exceptions;
+import reactor.core.processor.EmitterProcessor;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 import reactor.core.subscription.DeferredSubscription;
 import reactor.core.subscription.EmptySubscription;
 import reactor.fn.Function;
+import reactor.rx.subscriber.SerializedSubscriber;
 
 /**
  * Repeats a source when a companion sequence
@@ -39,14 +57,14 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 	public void subscribe(Subscriber<? super T> s) {
 
 		StreamRepeatWhenOtherSubscriber other = new StreamRepeatWhenOtherSubscriber();
+		other.completionSignal.onSubscribe(EmptySubscription.INSTANCE);
 
-		reactor.rx.subscriber.SerializedSubscriber<T> serial = new reactor.rx.subscriber.SerializedSubscriber<>(s);
+		SerializedSubscriber<T> serial = new SerializedSubscriber<>(s);
 
-		StreamRepeatWhenMainSubscriber<T> main = new StreamRepeatWhenMainSubscriber<>(serial, other
-				.completionSignal, source);
+		StreamRepeatWhenMainSubscriber<T> main = new StreamRepeatWhenMainSubscriber<>(serial, other.completionSignal,
+				source);
 		other.main = main;
 
-		other.completionSignal.onSubscribe(EmptySubscription.INSTANCE);
 		serial.onSubscribe(main);
 
 		Publisher<?> p;
@@ -54,7 +72,8 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 		try {
 			p = whenSourceFactory.apply(other);
 		} catch (Throwable e) {
-			s.onError(e);
+			Exceptions.throwIfFatal(e);
+			s.onError(Exceptions.unwrap(e));
 			return;
 		}
 
@@ -107,14 +126,6 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 			super.cancel();
 		}
 
-		void cancelWhen() {
-			otherArbiter.cancel();
-		}
-
-		void setWhen(Subscription w) {
-			otherArbiter.set(w);
-		}
-
 		@Override
 		public void onSubscribe(Subscription s) {
 			set(s);
@@ -141,6 +152,14 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 			produced(p);
 			otherArbiter.request(1);
 			signaller.onNext(p);
+		}
+
+		void cancelWhen() {
+			otherArbiter.cancel();
+		}
+
+		void setWhen(Subscription w) {
+			otherArbiter.set(w);
 		}
 
 		void resubscribe() {
@@ -171,12 +190,11 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class StreamRepeatWhenOtherSubscriber
-			extends reactor.rx.Stream<Long>
+	static final class StreamRepeatWhenOtherSubscriber extends reactor.rx.Stream<Long>
 			implements Subscriber<Object>, FeedbackLoop, Trace, Inner {
 		StreamRepeatWhenMainSubscriber<?> main;
 
-		final reactor.core.processor.EmitterProcessor<Long> completionSignal = new reactor.core.processor.EmitterProcessor<>();
+		final EmitterProcessor<Long> completionSignal = new EmitterProcessor<>();
 
 		@Override
 		public void onSubscribe(Subscription s) {

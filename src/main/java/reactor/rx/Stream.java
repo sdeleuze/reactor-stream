@@ -184,8 +184,8 @@ import reactor.rx.subscriber.Tap;
  * {@code
  * Stream.just(1, 2, 3).map(i -> i*2) //...
  *
- * Broadcaster<String> stream = Stream.broadcast()
- * strean.map(i -> i*2).consume(System.out::println);
+ * Broadcaster<String> stream = Broadcaster.create()
+ * stream.map(i -> i*2).consume(System.out::println);
  * stream.onNext("hello");
  *
  * Stream.yield( subscriber -> {
@@ -818,7 +818,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a new {@link Stream}
 	 */
 	public static <T> Stream<T> fromFuture(Future<? extends T> future) {
-		return StreamFuture.create(future);
+		return new StreamFuture<T>(future);
 	}
 
 	/**
@@ -829,7 +829,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return a new {@link Stream}
 	 */
 	public static <T> Stream<T> fromFuture(Future<? extends T> future, long time, TimeUnit unit) {
-		return StreamFuture.create(future, time, unit);
+		return new StreamFuture<T>(future, time, unit);
 	}
 
 	/**
@@ -1872,8 +1872,9 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @see Flux#after)
 	 */
+	@SuppressWarnings("unchecked")
 	public final Mono<Void> after() {
-		return new MonoIgnoreElements<>(this);
+		return (Mono<Void>)new MonoIgnoreElements<>(this);
 	}
 
 	/**
@@ -3023,9 +3024,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @see Flux#after)
 	 */
-	@SuppressWarnings("unchecked")
 	public final Mono<O> ignoreElements() {
-		return (Mono<O>) new MonoIgnoreElements<>(this);
+		return new MonoIgnoreElements<>(this);
 	}
 
 	/**
@@ -4373,12 +4373,6 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 
 		final Mono<Long> _timer = delay(timer, timeout, unit == null ? TimeUnit.MILLISECONDS : unit)
 				.otherwiseJust(0L);
-		final Supplier<Publisher<Long>> first = new Supplier<Publisher<Long>>() {
-			@Override
-			public Publisher<Long> get() {
-				return _timer;
-			}
-		};
 		final Function<O, Publisher<Long>> rest = new Function<O, Publisher<Long>>() {
 			@Override
 			public Publisher<Long> apply(O o) {
@@ -4386,7 +4380,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 			}
 		};
 
-		return timeout(first, rest, fallback);
+		return timeout(_timer, rest, fallback);
 	}
 
 	/**
@@ -4399,11 +4393,11 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @since 2.5
 	 */
-	public final <U> Stream<O> timeout(final Supplier<? extends Publisher<U>> allTimeout) {
+	public final <U> Stream<O> timeout(final Publisher<U> allTimeout) {
 		return timeout(allTimeout, new Function<O, Publisher<U>>() {
 			@Override
 			public Publisher<U> apply(O o) {
-				return allTimeout.get();
+				return allTimeout;
 			}
 		}, null);
 	}
@@ -4419,7 +4413,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @since 2.5
 	 */
-	public final <U, V> Stream<O> timeout(Supplier<? extends Publisher<U>> firstTimeout,
+	public final <U, V> Stream<O> timeout(Publisher<U> firstTimeout,
 			Function<? super O, ? extends Publisher<V>> followingTimeouts) {
 		return timeout(firstTimeout, followingTimeouts, null);
 	}
@@ -4437,7 +4431,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @since 2.5
 	 */
-	public final <U, V> Stream<O> timeout(Supplier<? extends Publisher<U>> firstTimeout,
+	public final <U, V> Stream<O> timeout(Publisher<U> firstTimeout,
 			Function<? super O, ? extends Publisher<V>> followingTimeouts, final Publisher<? extends O>
 			fallback) {
 		if(fallback == null) {

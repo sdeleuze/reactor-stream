@@ -16,12 +16,13 @@
 package reactor.rx.stream;
 
 import java.util.Objects;
-import reactor.fn.Predicate;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.Predicate;
 
 /**
  * Skips source values while a predicate returns
@@ -98,8 +99,8 @@ public final class StreamSkipWhile<T> extends StreamBarrier<T, T> {
 				b = predicate.test(t);
 			} catch (Throwable e) {
 				s.cancel();
-
-				onError(e);
+				Exceptions.throwIfFatal(e);
+				onError(Exceptions.unwrap(e));
 
 				return;
 			}

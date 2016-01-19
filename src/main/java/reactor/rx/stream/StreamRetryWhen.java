@@ -21,11 +21,13 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.error.Exceptions;
 import reactor.core.processor.EmitterProcessor;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 import reactor.core.subscription.DeferredSubscription;
 import reactor.core.subscription.EmptySubscription;
 import reactor.fn.Function;
+import reactor.rx.subscriber.SerializedSubscriber;
 
 /**
  * retries a source when a companion sequence signals
@@ -57,7 +59,7 @@ public final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 		StreamRetryWhenOtherSubscriber other = new StreamRetryWhenOtherSubscriber();
 		other.completionSignal.onSubscribe(EmptySubscription.INSTANCE);
 
-		reactor.rx.subscriber.SerializedSubscriber<T> serial = new reactor.rx.subscriber.SerializedSubscriber<>(s);
+		SerializedSubscriber<T> serial = new SerializedSubscriber<>(s);
 
 		StreamRetryWhenMainSubscriber<T> main = new StreamRetryWhenMainSubscriber<>(serial, other
 		  .completionSignal, source);
@@ -70,7 +72,8 @@ public final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 		try {
 			p = whenSourceFactory.apply(other);
 		} catch (Throwable e) {
-			s.onError(e);
+			Exceptions.throwIfFatal(e);
+			s.onError(Exceptions.unwrap(e));
 			return;
 		}
 

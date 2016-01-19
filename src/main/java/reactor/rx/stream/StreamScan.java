@@ -17,12 +17,13 @@ package reactor.rx.stream;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
-import reactor.fn.BiFunction;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
-import reactor.core.support.*;
+import reactor.core.support.BackpressureUtils;
+import reactor.fn.BiFunction;
 
 /**
  * Aggregates the source values with the help of an accumulator function
@@ -63,7 +64,8 @@ public final class StreamScan<T, R> extends StreamBarrier<T, R> {
 	}
 
 	static final class StreamScanSubscriber<T, R>
-			implements Subscriber<T>, Subscription, Downstream, DownstreamDemand, FeedbackLoop, Upstream, ActiveUpstream {
+			implements Subscriber<T>, Subscription, Downstream, DownstreamDemand, FeedbackLoop, Upstream,
+			           ActiveUpstream {
 
 		final Subscriber<? super R> actual;
 
@@ -125,8 +127,10 @@ public final class StreamScan<T, R> extends StreamBarrier<T, R> {
 				r = accumulator.apply(r, t);
 			} catch (Throwable e) {
 				s.cancel();
+				Exceptions.throwIfFatal(e);
+				onError(Exceptions.unwrap(e));
 
-				onError(e);
+				return;
 			}
 
 			if (r == null) {
@@ -181,7 +185,7 @@ public final class StreamScan<T, R> extends StreamBarrier<T, R> {
 
 					long r = requested;
 
-					// NO_REQUEST_HAS_VALUE
+					// NO_REQUEST_HAS_VALUE 
 					if (r == COMPLETED_MASK) {
 						// any positive request value will do here
 						// transition to HAS_REQUEST_HAS_VALUE

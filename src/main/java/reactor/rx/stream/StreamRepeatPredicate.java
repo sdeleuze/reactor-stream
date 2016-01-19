@@ -17,11 +17,12 @@ package reactor.rx.stream;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import reactor.fn.BooleanSupplier;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import reactor.core.error.Exceptions;
 import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.fn.BooleanSupplier;
 
 /**
  * Repeatedly subscribes to the source if the predicate returns true after
@@ -90,7 +91,8 @@ public final class StreamRepeatPredicate<T> extends StreamBarrier<T, T> {
 			try {
 				b = predicate.getAsBoolean();
 			} catch (Throwable e) {
-				subscriber.onError(e);
+				Exceptions.throwIfFatal(e);
+				subscriber.onError(Exceptions.unwrap(e));
 				return;
 			}
 			

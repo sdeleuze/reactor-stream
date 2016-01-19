@@ -16,12 +16,13 @@
 package reactor.rx.stream;
 
 import java.util.Objects;
-import reactor.fn.BiFunction;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.BiFunction;
 
 /**
  * Accumulates the source values with an accumulator function and
@@ -99,8 +100,8 @@ public final class StreamAccumulate<T> extends StreamBarrier<T, T> {
 					t = accumulator.apply(v, t);
 				} catch (Throwable e) {
 					s.cancel();
-
-					onError(e);
+					Exceptions.throwIfFatal(e);
+					onError(Exceptions.unwrap(e));
 					return;
 				}
 				if (t == null) {

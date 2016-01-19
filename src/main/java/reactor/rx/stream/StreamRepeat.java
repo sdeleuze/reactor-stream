@@ -17,8 +17,8 @@ package reactor.rx.stream;
 
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 import reactor.core.subscription.EmptySubscription;
 

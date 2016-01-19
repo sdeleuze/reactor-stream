@@ -15,15 +15,21 @@
  */
 package reactor.rx.stream;
 
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import reactor.fn.*;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
-import reactor.core.subscription.*;
-import reactor.core.support.*;
+import reactor.core.subscription.CancelledSubscription;
+import reactor.core.subscription.EmptySubscription;
+import reactor.core.support.BackpressureUtils;
+import reactor.fn.Function;
+import reactor.fn.Supplier;
 
 /**
  * Switches to a new Publisher generated via a function whenever the upstream produces an item.
@@ -171,7 +177,8 @@ public final class StreamSwitchMap<T, R> extends StreamBarrier<T, R> {
 				p = mapper.apply(t);
 			} catch (Throwable e) {
 				s.cancel();
-				onError(e);
+				Exceptions.throwIfFatal(e);
+				onError(Exceptions.unwrap(e));
 				return;
 			}
 			

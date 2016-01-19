@@ -17,11 +17,12 @@ package reactor.rx.stream;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import reactor.fn.Predicate;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import reactor.core.error.Exceptions;
 import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.fn.Predicate;
 
 /**
  * Repeatedly subscribes to the source if the predicate returns true after
@@ -90,8 +91,10 @@ public final class StreamRetryPredicate<T> extends StreamBarrier<T, T> {
 			try {
 				b = predicate.test(t);
 			} catch (Throwable e) {
-				e.addSuppressed(t);
-				subscriber.onError(e);
+				Exceptions.throwIfFatal(e);
+				Throwable _t = Exceptions.unwrap(e);
+				_t.addSuppressed(t);
+				subscriber.onError(_t);
 				return;
 			}
 			

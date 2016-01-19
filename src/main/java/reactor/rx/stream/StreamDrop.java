@@ -132,8 +132,8 @@ public final class StreamDrop<T> extends StreamBarrier<T, T> {
 					onDrop.accept(t);
 				} catch (Throwable e) {
 					cancel();
-
-					onError(e);
+					Exceptions.throwIfFatal(e);
+					onError(Exceptions.unwrap(e));
 				}
 			}
 		}

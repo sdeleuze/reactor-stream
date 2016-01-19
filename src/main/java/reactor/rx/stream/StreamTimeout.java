@@ -29,7 +29,7 @@ import reactor.core.subscription.CancelledSubscription;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
 import reactor.fn.Function;
-import reactor.fn.Supplier;
+import reactor.rx.subscriber.SerializedSubscriber;
 
 /**
  * Signals a timeout (or switches to another sequence) in case a per-item
@@ -47,13 +47,13 @@ import reactor.fn.Supplier;
  */
 public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 
-	final Supplier<? extends Publisher<U>> firstTimeout;
+	final Publisher<U> firstTimeout;
 
 	final Function<? super T, ? extends Publisher<V>> itemTimeout;
 
 	final Publisher<? extends T> other;
 
-	public StreamTimeout(Publisher<? extends T> source, Supplier<? extends Publisher<U>> firstTimeout,
+	public StreamTimeout(Publisher<? extends T> source, Publisher<U> firstTimeout,
 							Function<? super T, ? extends Publisher<V>> itemTimeout) {
 		super(source);
 		this.firstTimeout = Objects.requireNonNull(firstTimeout, "firstTimeout");
@@ -61,7 +61,7 @@ public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 		this.other = null;
 	}
 
-	public StreamTimeout(Publisher<? extends T> source, Supplier<? extends Publisher<U>> firstTimeout,
+	public StreamTimeout(Publisher<? extends T> source, Publisher<U> firstTimeout,
 							Function<? super T, ? extends Publisher<V>> itemTimeout, Publisher<? extends T> other) {
 		super(source);
 		this.firstTimeout = Objects.requireNonNull(firstTimeout, "firstTimeout");
@@ -72,31 +72,17 @@ public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
 
-		reactor.rx.subscriber.SerializedSubscriber<T> serial = new reactor.rx.subscriber.SerializedSubscriber<>(s);
+		SerializedSubscriber<T> serial = new SerializedSubscriber<>(s);
 
 		StreamTimeoutMainSubscriber<T, V> main = new StreamTimeoutMainSubscriber<>(serial, itemTimeout, other);
 
 		serial.onSubscribe(main);
 
-		Publisher<U> firstPublisher;
-
-		try {
-			firstPublisher = firstTimeout.get();
-		} catch (Throwable e) {
-			serial.onError(e);
-			return;
-		}
-
-		if (firstPublisher == null) {
-			serial.onError(new NullPointerException("The firstTimeout returned a null Publisher"));
-			return;
-		}
-
 		StreamTimeoutTimeoutSubscriber ts = new StreamTimeoutTimeoutSubscriber(main, 0L);
 
 		main.setTimeout(ts);
 
-		firstPublisher.subscribe(ts);
+		firstTimeout.subscribe(ts);
 
 		source.subscribe(main);
 	}
@@ -163,8 +149,8 @@ public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 				p = itemTimeout.apply(t);
 			} catch (Throwable e) {
 				cancel();
-
-				subscriber.onError(e);
+				Exceptions.throwIfFatal(e);
+				subscriber.onError(Exceptions.unwrap(e));
 				return;
 			}
 
@@ -362,7 +348,9 @@ public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 					BackpressureUtils.reportSubscriptionSet();
 				}
 			}
-			s.request(Long.MAX_VALUE);
+			else {
+				s.request(Long.MAX_VALUE);
+			}
 		}
 
 		@Override

@@ -15,14 +15,17 @@
  */
 package reactor.rx.stream;
 
-import java.util.*;
-import reactor.fn.*;
+import java.util.Collection;
+import java.util.Objects;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.Function;
+import reactor.fn.Supplier;
 
 /**
  * For each subscriber, tracks the source values that have been seen and
@@ -110,8 +113,8 @@ public final class StreamDistinct<T, K, C extends Collection<? super K>> extends
 				k = keyExtractor.apply(t);
 			} catch (Throwable e) {
 				s.cancel();
-
-				onError(e);
+				Exceptions.throwIfFatal(e);
+				onError(Exceptions.unwrap(e));
 				return;
 			}
 

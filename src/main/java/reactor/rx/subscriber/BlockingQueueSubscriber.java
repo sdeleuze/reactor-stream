@@ -29,7 +29,6 @@ import org.reactivestreams.Subscription;
 import reactor.core.error.CancelException;
 import reactor.core.error.Exceptions;
 import reactor.core.error.InsufficientCapacityException;
-import reactor.core.error.ReactorFatalException;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.support.Assert;
 import reactor.core.support.BackpressureUtils;
@@ -240,7 +239,7 @@ public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements R
 				if(endError instanceof RuntimeException){
 					throw ((RuntimeException)endError);
 				}
-				throw ReactorFatalException.create(endError);
+				Exceptions.fail(endError);
 			}
 			return true;
 		}

@@ -18,7 +18,7 @@ package reactor.rx
 import reactor.Mono
 import reactor.Processors
 import reactor.core.error.CancelException
-import reactor.core.error.ReactorFatalException
+import reactor.core.error.Exceptions
 import reactor.rx.broadcast.Broadcaster
 import spock.lang.Specification
 
@@ -356,7 +356,7 @@ class PromisesSpec extends Specification {
 	promise.onError new Exception()
 
 	then: "an IllegalStateException is thrown"
-	thrown(ReactorFatalException)
+	thrown(Exceptions.UpstreamException)
   }
 
   def "An IllegalStateException is thrown if an attempt is made to reject a fulfilled promise"() {
@@ -368,7 +368,7 @@ class PromisesSpec extends Specification {
 	promise.onError new Exception()
 
 	then: "an IllegalStateException is thrown"
-	thrown(ReactorFatalException)
+	thrown(Exceptions.UpstreamException)
   }
 
   def "Multiple promises can be combined"() {

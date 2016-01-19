@@ -140,8 +140,8 @@ public final class StreamThrottleFirst<T, U> extends StreamBarrier<T, T> {
 					p = throttler.apply(t);
 				} catch (Throwable e) {
 					BackpressureUtils.terminate(S, this);
-					
-					error(e);
+					Exceptions.throwIfFatal(e);
+					error(Exceptions.unwrap(e));
 					return;
 				}
 				

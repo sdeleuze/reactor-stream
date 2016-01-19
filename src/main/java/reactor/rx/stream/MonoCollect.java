@@ -119,8 +119,8 @@ public final class MonoCollect<T, R> extends reactor.Mono.MonoBarrier<T, R> {
 				action.accept(container, t);
 			} catch (Throwable e) {
 				cancel();
-
-				onError(e);
+				Exceptions.throwIfFatal(e);
+				onError(Exceptions.unwrap(e));
 			}
 		}
 

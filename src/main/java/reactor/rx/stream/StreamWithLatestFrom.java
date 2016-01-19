@@ -17,13 +17,16 @@ package reactor.rx.stream;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import reactor.fn.BiFunction;
 
-import org.reactivestreams.*;
-
-import reactor.rx.subscriber.SerializedSubscriber;
-import reactor.core.subscription.*;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+import reactor.core.error.Exceptions;
+import reactor.core.subscription.CancelledSubscription;
+import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.BiFunction;
+import reactor.rx.subscriber.SerializedSubscriber;
 
 /**
  * Combines values from a main Publisher with values from another
@@ -155,7 +158,8 @@ public final class StreamWithLatestFrom<T, U, R> extends StreamBarrier<T, R> {
 				try {
 					r = combiner.apply(t, u);
 				} catch (Throwable e) {
-					onError(e);
+					Exceptions.throwIfFatal(e);
+					onError(Exceptions.unwrap(e));
 					return;
 				}
 

@@ -15,11 +15,14 @@
  */
 package reactor.rx.stream;
 
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.reactivestreams.*;
-
-import reactor.core.support.*;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+import reactor.core.support.BackpressureUtils;
 
 /**
  * Runs the source in unbounded mode and emits only the latest value

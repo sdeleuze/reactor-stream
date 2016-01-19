@@ -24,7 +24,6 @@ import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.support.BackpressureUtils;
 import reactor.fn.BooleanSupplier;
-import reactor.rx.support.DrainUtils;
 
 /**
  * Emits the last N values the source emitted before its completion.
@@ -181,7 +180,7 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		@Override
 		public void request(long n) {
 			if (BackpressureUtils.validate(n)) {
-				DrainUtils.postCompleteRequest(n, actual, buffer, REQUESTED, this, this);
+				reactor.rx.support.DrainUtils.postCompleteRequest(n, actual, buffer, REQUESTED, this, this);
 			}
 		}
 
@@ -220,7 +219,7 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		@Override
 		public void onComplete() {
 
-			DrainUtils.postComplete(actual, buffer, REQUESTED, this, this);
+			reactor.rx.support.DrainUtils.postComplete(actual, buffer, REQUESTED, this, this);
 		}
 
 		@Override

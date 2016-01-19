@@ -958,8 +958,8 @@ public class StreamTests extends AbstractReactorTest {
 	public void testDiamond() throws InterruptedException, IOException {
 		ExecutorService pool = Executors.newCachedThreadPool(new NamedDaemonThreadFactory("tee", null, null, true));
 
-		Stream<Point> points = FluxFactory.<Double, Random>create(sub -> sub.onNext(sub.context()
-		                                                                               .nextDouble()),
+		Stream<Point> points = FluxFactory.<Double, Random>createForEach(sub -> sub.onNext(sub.context()
+		                                                                                      .nextDouble()),
 				sub -> new Random()).as(Stream::from)
 		                            .log("points")
 		                             //.requestWhen(requests -> requests.dispatchOn(Environment.cachedDispatcher()))

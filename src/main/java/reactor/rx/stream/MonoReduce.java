@@ -118,8 +118,8 @@ public final class MonoReduce<T, R> extends reactor.Mono.MonoBarrier<T, R> {
 				v = accumulator.apply(value, t);
 			} catch (Throwable e) {
 				cancel();
-
-				onError(e);
+				Exceptions.throwIfFatal(e);
+				onError(Exceptions.unwrap(e));
 				return;
 			}
 

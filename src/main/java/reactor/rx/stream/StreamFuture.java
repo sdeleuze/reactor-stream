@@ -15,88 +15,59 @@
  */
 package reactor.rx.stream;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import reactor.Flux;
-import reactor.core.subscriber.SubscriberWithContext;
-import reactor.fn.Consumer;
-import reactor.rx.Stream;
+import org.reactivestreams.Subscriber;
+import reactor.core.subscriber.SubscriberDeferredScalar;
 
 /**
- * A Stream that emits a result of a {@link Future} and then complete.
- * <p>
- * Since the stream retains the future reference in a final field, any
- * {@link org.reactivestreams.Subscriber}
- * will replay the {@link Future#get()}
- * <p>
- * Create such stream with the provided factory, E.g.:
- * <pre>
- * {@code
- * Streams.just(someFuture).consume(
- * log::info,
- * log::error,
- * (-> log.info("complete"))
- * )
- * }
- * </pre>
- * <pre>
- * Will log:
- * {@code
- * 1
- * 2
- * 3
- * 4
- * complete
- * }
- * </pre>
- *
- * @author Stephane Maldini
+ * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
+ * @since 2.5
  */
-public final class StreamFuture<T> {
+public final class StreamFuture<T> extends reactor.rx.Stream<T> {
 
-	private StreamFuture() {
+	final Future<? extends T> future;
+
+	final long timeout;
+
+	final TimeUnit unit;
+
+	public StreamFuture(Future<? extends T> future) {
+		this.future = future;
+		this.timeout = 0L;
+		this.unit = null;
 	}
 
-	/**
-	 *
-	 * @param future
-	 * @return
-	 */
-	public static <T> Stream<T> create(Future<? extends T> future){
-		return create(future, 0, null);
+	public StreamFuture(Future<? extends T> future, long timeout, TimeUnit unit) {
+		this.future = future;
+		this.timeout = timeout;
+		this.unit = unit;
 	}
 
-	/**
-	 *
-	 * @param future
-	 * @param time
-	 * @param unit
-	 * @return
-	 */
-	public static <T> Stream<T> create(final Future<? extends T> future,
-			final long time,
-			final TimeUnit unit){
+	@Override
+	public void subscribe(Subscriber<? super T> s) {
+		SubscriberDeferredScalar<T, T> sds = new SubscriberDeferredScalar<>(s);
 
-		if(time < 0 && unit != null){
-			throw new IllegalArgumentException("Given time is negative : "+time+" "+unit);
-		}
-		else if(future.isCancelled()) {
-			return Stream.empty();
-		}
+		s.onSubscribe(sds);
 
-		return Stream.from(Flux.create(new Consumer<SubscriberWithContext<T, Void>>() {
-			@Override
-			public void accept(SubscriberWithContext<T, Void> s) {
-				try {
-					T result = unit == null ? future.get() : future.get(time, unit);
-					s.onNext(result);
-					s.onComplete();
-				}
-				catch (Exception e) {
-					s.onError(e);
-				}
+		T v;
+		try {
+			if (unit != null) {
+				v = future.get(timeout, unit);
 			}
-		}));
+			else {
+				v = future.get();
+			}
+		}
+		catch (InterruptedException | ExecutionException | TimeoutException ex) {
+			s.onError(ex);
+			return;
+		}
+
+		sds.complete(v);
 	}
+
 }

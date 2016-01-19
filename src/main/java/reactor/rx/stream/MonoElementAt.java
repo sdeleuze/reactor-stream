@@ -153,7 +153,8 @@ public final class MonoElementAt<T> extends reactor.Mono.MonoBarrier<T, T> {
 				try {
 					t = ds.get();
 				} catch (Throwable e) {
-					subscriber.onError(e);
+					Exceptions.throwIfFatal(e);
+					subscriber.onError(Exceptions.unwrap(e));
 					return;
 				}
 

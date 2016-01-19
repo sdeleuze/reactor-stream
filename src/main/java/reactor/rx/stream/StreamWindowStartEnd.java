@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package reactor.rx.stream;
 
 import java.util.HashSet;
@@ -17,9 +32,10 @@ import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
 import reactor.fn.Function;
 import reactor.fn.Supplier;
+import reactor.rx.broadcast.UnicastProcessor;
 
 /**
- * Splits the source sequence into potentially overlapping windowEnds controlled by items of a
+ * Splits the source sequence into potentially overlapping windowEnds controlled by items of a 
  * start Publisher and end Publishers derived from the start values.
  *
  * @param <T> the source value type
@@ -118,7 +134,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 
 		Set<StreamWindowStartEndEnder<T, V>> windowEnds;
 
-		Set<reactor.rx.broadcast.UnicastProcessor<T>> windows;
+		Set<UnicastProcessor<T>> windows;
 
 		volatile boolean mainDone;
 
@@ -279,7 +295,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 				return;
 			}
 
-			final Subscriber<? super reactor.rx.broadcast.UnicastProcessor<T>> a = actual;
+			final Subscriber<? super UnicastProcessor<T>> a = actual;
 			final Queue<Object> q = queue;
 
 			int missed = 1;
@@ -295,7 +311,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 							starter.cancel();
 							removeAll();
 
-							for (reactor.rx.broadcast.UnicastProcessor<T> w : windows) {
+							for (UnicastProcessor<T> w : windows) {
 								w.onError(e);
 							}
 							windows = null;
@@ -311,7 +327,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 					if (mainDone || open == 0) {
 						removeAll();
 
-						for (reactor.rx.broadcast.UnicastProcessor<T> w : windows) {
+						for (UnicastProcessor<T> w : windows) {
 							w.onComplete();
 						}
 						windows = null;
@@ -350,7 +366,8 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 							try {
 								p = end.apply(newWindow.value);
 							} catch (Throwable ex) {
-								Exceptions.addThrowable(ERROR, this, ex);
+								Exceptions.throwIfFatal(ex);
+								Exceptions.addThrowable(ERROR, this, Exceptions.unwrap(ex));
 								continue;
 							}
 
@@ -361,8 +378,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 
 							OPEN.getAndIncrement(this);
 
-							reactor.rx.broadcast.UnicastProcessor<T> w =
-									new reactor.rx.broadcast.UnicastProcessor<>(pq, this);
+							UnicastProcessor<T> w = new UnicastProcessor<>(pq, this);
 
 							StreamWindowStartEndEnder<T, V> end = new StreamWindowStartEndEnder<>(this, w);
 
@@ -394,7 +410,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 						@SuppressWarnings("unchecked")
 						T v = (T)o;
 
-						for (reactor.rx.broadcast.UnicastProcessor<T> w : windows) {
+						for (UnicastProcessor<T> w : windows) {
 							w.onNext(v);
 						}
 					}
@@ -444,10 +460,9 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 
 		final StreamWindowStartEndMain<T, ?, V> main;
 
-		final reactor.rx.broadcast.UnicastProcessor<T> window;
+		final UnicastProcessor<T> window;
 
-		public StreamWindowStartEndEnder(StreamWindowStartEndMain<T, ?, V> main,
-				reactor.rx.broadcast.UnicastProcessor<T> window) {
+		public StreamWindowStartEndEnder(StreamWindowStartEndMain<T, ?, V> main, UnicastProcessor<T> window) {
 			this.main = main;
 			this.window = window;
 		}

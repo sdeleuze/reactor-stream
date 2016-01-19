@@ -15,16 +15,26 @@
  */
 package reactor.rx.stream;
 
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import reactor.fn.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.subscription.DeferredSubscription;
 import reactor.core.subscription.EmptySubscription;
-import reactor.core.support.*;
+import reactor.core.support.BackpressureUtils;
+import reactor.fn.Function;
+import reactor.fn.Supplier;
 
 /**
  * buffers elements into possibly overlapping buffers whose boundaries are determined
@@ -313,8 +323,8 @@ extends StreamBarrier<T, C> {
 				b = bufferSupplier.get();
 			} catch (Throwable e) {
 				cancelStart();
-				
-				anyError(e);
+				Exceptions.throwIfFatal(e);
+				anyError(Exceptions.unwrap(e));
 				return;
 			}
 			
@@ -340,8 +350,8 @@ extends StreamBarrier<T, C> {
 				p = end.apply(u);
 			} catch (Throwable e) {
 				cancelStart();
-				
-				anyError(e);
+				Exceptions.throwIfFatal(e);
+				anyError(Exceptions.unwrap(e));
 				return;
 			}
 			

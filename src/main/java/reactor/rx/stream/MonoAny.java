@@ -97,8 +97,8 @@ public final class MonoAny<T> extends reactor.Mono.MonoBarrier<T, Boolean> {
 			} catch (Throwable e) {
 				done = true;
 				s.cancel();
-
-				subscriber.onError(e);
+				Exceptions.throwIfFatal(e);
+				subscriber.onError(Exceptions.unwrap(e));
 				return;
 			}
 			if (b) {

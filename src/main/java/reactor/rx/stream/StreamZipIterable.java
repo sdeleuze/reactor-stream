@@ -15,14 +15,17 @@
  */
 package reactor.rx.stream;
 
-import java.util.*;
-import reactor.fn.BiFunction;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Objects;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.error.Exceptions;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.support.BackpressureUtils;
+import reactor.fn.BiFunction;
 
 /**
  * Pairwise combines elements of a publisher and an iterable sequence through a function.
@@ -161,8 +164,8 @@ public final class StreamZipIterable<T, U, R> extends StreamBarrier<T, R> {
 			} catch (Throwable e) {
 				done = true;
 				s.cancel();
-				
-				actual.onError(e);
+				Exceptions.throwIfFatal(e);
+				actual.onError(Exceptions.unwrap(e));
 				return;
 			}
 			
