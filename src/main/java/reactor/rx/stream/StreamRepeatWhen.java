@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.publisher.EmitterProcessor;
+import reactor.core.publisher.ProcessorEmitter;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 import reactor.core.subscription.DeferredSubscription;
 import reactor.core.subscription.EmptySubscription;
@@ -194,7 +194,7 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 			implements Subscriber<Object>, FeedbackLoop, Trace, Inner {
 		StreamRepeatWhenMainSubscriber<?> main;
 
-		final EmitterProcessor<Long> completionSignal = new EmitterProcessor<>();
+		final ProcessorEmitter<Long> completionSignal = new ProcessorEmitter<>();
 
 		@Override
 		public void onSubscribe(Subscription s) {
