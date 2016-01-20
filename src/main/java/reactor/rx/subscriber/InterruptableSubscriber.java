@@ -22,8 +22,8 @@ import reactor.core.subscriber.ConsumerSubscriber;
 import reactor.core.subscription.CancelledSubscription;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.util.Exceptions;
+import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveStateUtils;
-import reactor.core.util.internal.PlatformDependent;
 import reactor.fn.Consumer;
 
 /**

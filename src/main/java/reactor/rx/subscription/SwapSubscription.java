@@ -23,8 +23,8 @@ import org.reactivestreams.Subscription;
 import reactor.core.subscription.BackpressureUtils;
 import reactor.core.subscription.CancelledSubscription;
 import reactor.core.subscription.EmptySubscription;
+import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveState;
-import reactor.core.util.internal.PlatformDependent;
 
 /**
  * @author Stephane Maldini
