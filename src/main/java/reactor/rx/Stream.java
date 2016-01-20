@@ -45,9 +45,6 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.converter.DependencyUtils;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxFlatMap;
-import reactor.core.publisher.FluxLog;
-import reactor.core.publisher.FluxMapSignal;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.Processors;
@@ -1916,8 +1913,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 */
 	@SuppressWarnings("unchecked")
 	public final <V> Stream<V> after(Supplier<? extends Publisher<V>> sourceSupplier) {
-		return new StreamBarrier<>(new FluxFlatMap<>(
-				new FluxMapSignal<>(after(), null, null, sourceSupplier),
+		return new StreamBarrier<>(Flux.flatMap(
+				Flux.mapSignal(after(), null, null, sourceSupplier),
 				IDENTITY_FUNCTION,
 				ReactiveState.SMALL_BUFFER_SIZE, 32));
 	}
@@ -2260,7 +2257,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 
 			@Override
 			public void subscribe(Subscriber<? super V> s) {
-				new FluxFlatMap<>(Stream.this, fn, ReactiveState.SMALL_BUFFER_SIZE, 1)
+				Flux.flatMap(Stream.this, fn, ReactiveState.SMALL_BUFFER_SIZE, 1)
 				    .subscribe(s);
 			}
 		};
@@ -2701,7 +2698,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 
 			@Override
 			public void subscribe(Subscriber<? super V> s) {
-				new FluxFlatMap<>(Stream.this, fn, ReactiveState.SMALL_BUFFER_SIZE, ReactiveState.XS_BUFFER_SIZE)
+				Flux.flatMap(Stream.this, fn, ReactiveState.SMALL_BUFFER_SIZE, ReactiveState.XS_BUFFER_SIZE)
 				          .subscribe(s);
 			}
 		};
@@ -2722,8 +2719,8 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	public final <R> Stream<R> flatMap(Function<? super O, ? extends Publisher<? extends R>> mapperOnNext,
 			Function<Throwable, ? extends Publisher<? extends R>> mapperOnError,
 			Supplier<? extends Publisher<? extends R>> mapperOnComplete) {
-		return new StreamBarrier<>(new FluxFlatMap<>(
-				new FluxMapSignal<>(this, mapperOnNext, mapperOnError, mapperOnComplete),
+		return new StreamBarrier<>(Flux.flatMap(
+				Flux.mapSignal(this, mapperOnNext, mapperOnError, mapperOnComplete),
 				IDENTITY_FUNCTION,
 				ReactiveState.SMALL_BUFFER_SIZE, 32)
 		);
@@ -3172,7 +3169,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @since 2.0
 	 */
 	public final Stream<O> log(final String category, Level level, int options) {
-		return new StreamBarrier.Identity<>(new FluxLog<O>(this, category, level, options));
+		return new StreamBarrier.Identity<>(Flux.log(this, category, level, options));
 	}
 
 	/**
