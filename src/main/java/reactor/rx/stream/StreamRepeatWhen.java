@@ -25,7 +25,7 @@ import reactor.core.publisher.ProcessorEmitter;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 import reactor.core.subscription.DeferredSubscription;
 import reactor.core.subscription.EmptySubscription;
-import reactor.core.support.Exceptions;
+import reactor.core.util.Exceptions;
 import reactor.fn.Function;
 import reactor.rx.subscriber.SerializedSubscriber;
 

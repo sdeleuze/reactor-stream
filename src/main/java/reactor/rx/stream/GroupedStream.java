@@ -15,7 +15,7 @@
  */
 package reactor.rx.stream;
 
-import reactor.core.support.ReactiveState;
+import reactor.core.util.ReactiveState;
 import reactor.rx.Stream;
 
 /**

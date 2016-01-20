@@ -21,9 +21,9 @@ import org.reactivestreams.Subscription;
 import reactor.core.subscriber.ConsumerSubscriber;
 import reactor.core.subscription.CancelledSubscription;
 import reactor.core.subscription.EmptySubscription;
-import reactor.core.support.Exceptions;
-import reactor.core.support.ReactiveStateUtils;
-import reactor.core.support.internal.PlatformDependent;
+import reactor.core.util.Exceptions;
+import reactor.core.util.ReactiveStateUtils;
+import reactor.core.util.internal.PlatformDependent;
 import reactor.fn.Consumer;
 
 /**

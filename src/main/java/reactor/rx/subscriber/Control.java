@@ -16,7 +16,7 @@
 package reactor.rx.subscriber;
 
 import org.reactivestreams.Subscription;
-import reactor.core.support.ReactiveStateUtils;
+import reactor.core.util.ReactiveStateUtils;
 
 /**
  * An interface generally associated with a {@link reactor.rx.Stream} terminal action such as

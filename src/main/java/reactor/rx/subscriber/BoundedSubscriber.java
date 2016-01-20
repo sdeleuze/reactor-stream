@@ -17,7 +17,7 @@
 package reactor.rx.subscriber;
 
 import org.reactivestreams.Subscription;
-import reactor.core.support.ReactiveState;
+import reactor.core.util.ReactiveState;
 import reactor.fn.Consumer;
 
 /**

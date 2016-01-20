@@ -21,9 +21,9 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.subscription.EmptySubscription;
 import reactor.core.subscription.BackpressureUtils;
-import reactor.core.support.ReactiveState;
+import reactor.core.subscription.EmptySubscription;
+import reactor.core.util.ReactiveState;
 
 /**
  * Emits the contents of an Iterable source.

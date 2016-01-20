@@ -21,8 +21,8 @@ import reactor.core.publisher.ProcessorGroup
 import reactor.core.publisher.Processors
 import reactor.core.subscriber.SubscriberWithContext
 import reactor.core.subscriber.test.DataTestSubscriber
-import reactor.core.support.ReactiveStateUtils
 import reactor.core.timer.Timers
+import reactor.core.util.ReactiveStateUtils
 import reactor.fn.BiFunction
 import reactor.rx.broadcast.Broadcaster
 import reactor.rx.stream.Signal

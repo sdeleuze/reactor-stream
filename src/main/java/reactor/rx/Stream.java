@@ -55,14 +55,14 @@ import reactor.core.subscriber.SubscriberWithContext;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.subscription.EmptySubscription;
 import reactor.core.subscription.ReactiveSession;
-import reactor.core.support.Assert;
-import reactor.core.support.Exceptions;
-import reactor.core.support.Logger;
-import reactor.core.support.ReactiveState;
-import reactor.core.support.ReactiveStateUtils;
-import reactor.core.support.WaitStrategy;
 import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
+import reactor.core.util.Assert;
+import reactor.core.util.Exceptions;
+import reactor.core.util.Logger;
+import reactor.core.util.ReactiveState;
+import reactor.core.util.ReactiveStateUtils;
+import reactor.core.util.WaitStrategy;
 import reactor.fn.BiConsumer;
 import reactor.fn.BiFunction;
 import reactor.fn.BooleanSupplier;
@@ -3120,7 +3120,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
-	 * Attach a {@link reactor.core.support.Logger} to this {@code Stream} that will observe any signal emitted.
+	 * Attach a {@link reactor.core.util.Logger} to this {@code Stream} that will observe any signal emitted.
 	 *
 	 * @return {@literal new Stream}
 	 *
@@ -3131,7 +3131,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
-	 * Attach a {@link reactor.core.support.Logger} to this {@code Stream} that will observe any signal emitted.
+	 * Attach a {@link reactor.core.util.Logger} to this {@code Stream} that will observe any signal emitted.
 	 *
 	 * @param category The logger name
 	 *
@@ -3144,7 +3144,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
-	 * Attach a {@link reactor.core.support.Logger} to this {@code Stream} that will observe any signal emitted.
+	 * Attach a {@link reactor.core.util.Logger} to this {@code Stream} that will observe any signal emitted.
 	 *
 	 * @param category The logger name
 	 * @param options the bitwise checked flags for observed signals
@@ -3158,7 +3158,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	}
 
 	/**
-	 * Attach a {@link reactor.core.support.Logger} to this {@code Stream} that will observe any signal emitted.
+	 * Attach a {@link reactor.core.util.Logger} to this {@code Stream} that will observe any signal emitted.
 	 *
 	 * @param category The logger name
 	 * @param level The logger level

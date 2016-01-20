@@ -18,8 +18,8 @@ package reactor.rx.stream;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.support.Exceptions;
-import reactor.core.support.ReactiveState;
+import reactor.core.util.Exceptions;
+import reactor.core.util.ReactiveState;
 import reactor.fn.Supplier;
 import reactor.rx.Stream;
 

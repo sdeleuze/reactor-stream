@@ -21,7 +21,7 @@ import java.util.concurrent.CountDownLatch;
 
 import org.junit.Test;
 import reactor.AbstractReactorTest;
-import reactor.core.support.Logger;
+import reactor.core.util.Logger;
 import reactor.fn.tuple.Tuple;
 import reactor.rx.subscriber.Control;
 

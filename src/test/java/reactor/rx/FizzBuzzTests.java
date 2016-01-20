@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Test;
 import reactor.AbstractReactorTest;
 import reactor.core.publisher.ProcessorTopic;
-import reactor.core.support.Assert;
+import reactor.core.util.Assert;
 import reactor.rx.subscriber.Control;
 
 /**

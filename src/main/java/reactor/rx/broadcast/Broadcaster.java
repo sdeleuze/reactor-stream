@@ -22,9 +22,9 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.Processors;
-import reactor.core.support.Exceptions;
 import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
+import reactor.core.util.Exceptions;
 import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.rx.subscription.SwapSubscription;
 

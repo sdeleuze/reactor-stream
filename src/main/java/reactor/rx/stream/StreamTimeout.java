@@ -24,10 +24,10 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.core.subscription.BackpressureUtils;
 import reactor.core.subscription.CancelledSubscription;
 import reactor.core.subscription.EmptySubscription;
-import reactor.core.subscription.BackpressureUtils;
-import reactor.core.support.Exceptions;
+import reactor.core.util.Exceptions;
 import reactor.fn.Function;
 import reactor.rx.subscriber.SerializedSubscriber;
 

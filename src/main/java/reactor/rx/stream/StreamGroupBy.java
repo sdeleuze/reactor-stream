@@ -28,13 +28,13 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
-import reactor.core.queue.disruptor.RingBuffer;
+import reactor.core.queue.RingBuffer;
 import reactor.core.subscriber.SubscriberWithDemand;
 import reactor.core.subscription.BackpressureUtils;
-import reactor.core.support.Assert;
-import reactor.core.support.Exceptions;
-import reactor.core.support.ReactiveState;
 import reactor.core.timer.Timer;
+import reactor.core.util.Assert;
+import reactor.core.util.Exceptions;
+import reactor.core.util.ReactiveState;
 import reactor.fn.Function;
 
 /**
@@ -105,7 +105,7 @@ public final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K,
 		Queue<T> getBuffer() {
 		Queue<T> q = buffer;
 			if (q == null) {
-				q = RingBuffer.newSequencedQueue(RingBuffer.<T>createSingleProducer(ReactiveState
+				q = RingBuffer.createSequencedQueue(RingBuffer.<T>createSingleProducer(ReactiveState
 						.SMALL_BUFFER_SIZE));
 				buffer = q;
 			}

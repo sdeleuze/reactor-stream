@@ -20,11 +20,11 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Subscription;
+import reactor.core.subscription.BackpressureUtils;
 import reactor.core.subscription.CancelledSubscription;
 import reactor.core.subscription.EmptySubscription;
-import reactor.core.subscription.BackpressureUtils;
-import reactor.core.support.ReactiveState;
-import reactor.core.support.internal.PlatformDependent;
+import reactor.core.util.ReactiveState;
+import reactor.core.util.internal.PlatformDependent;
 
 /**
  * @author Stephane Maldini

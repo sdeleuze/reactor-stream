@@ -40,8 +40,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import reactor.core.publisher.Processors;
 import reactor.core.subscription.ReactiveSession;
-import reactor.core.support.Assert;
 import reactor.core.timer.Timers;
+import reactor.core.util.Assert;
 import reactor.rx.Stream;
 import reactor.rx.broadcast.Broadcaster;
 

@@ -18,11 +18,11 @@ package reactor.rx.stream;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.queue.disruptor.Sequence;
-import reactor.core.queue.disruptor.Sequencer;
+import reactor.core.queue.Sequencer;
 import reactor.core.subscription.BackpressureUtils;
-import reactor.core.support.Exceptions;
-import reactor.core.support.WaitStrategy;
+import reactor.core.util.Exceptions;
+import reactor.core.util.Sequence;
+import reactor.core.util.WaitStrategy;
 
 /**
  * Drops values if the subscriber doesn't request fast enough.

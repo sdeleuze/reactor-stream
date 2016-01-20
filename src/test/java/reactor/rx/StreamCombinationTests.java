@@ -32,7 +32,7 @@ import org.reactivestreams.Subscriber;
 import reactor.AbstractReactorTest;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Processors;
-import reactor.core.support.Logger;
+import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 import reactor.rx.subscriber.Control;
 

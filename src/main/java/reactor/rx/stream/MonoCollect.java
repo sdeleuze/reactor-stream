@@ -24,7 +24,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.subscription.BackpressureUtils;
 import reactor.core.subscription.EmptySubscription;
-import reactor.core.support.Exceptions;
+import reactor.core.util.Exceptions;
 import reactor.fn.BiConsumer;
 import reactor.fn.Supplier;
 
