@@ -57,8 +57,8 @@ import reactor.core.publisher.ProcessorTopic;
 import reactor.core.publisher.Processors;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.support.Exceptions;
+import reactor.core.support.ExecutorUtils;
 import reactor.core.support.Logger;
-import reactor.core.support.NamedDaemonThreadFactory;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
 import reactor.rx.broadcast.Broadcaster;
@@ -956,7 +956,7 @@ public class StreamTests extends AbstractReactorTest {
 	@Test
 	@Ignore
 	public void testDiamond() throws InterruptedException, IOException {
-		ExecutorService pool = Executors.newCachedThreadPool(new NamedDaemonThreadFactory("tee", null, null, true));
+		ExecutorService pool = Executors.newCachedThreadPool(ExecutorUtils.newNamedFactory("tee", null, null, true));
 
 		Stream<Point> points = Flux.<Double, Random>create(sub -> sub.onNext(sub.context()
 		                                                                               .nextDouble()),
