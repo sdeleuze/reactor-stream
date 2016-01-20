@@ -28,12 +28,12 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
+import reactor.core.queue.disruptor.RingBuffer;
 import reactor.core.subscriber.SubscriberWithDemand;
 import reactor.core.subscription.BackpressureUtils;
 import reactor.core.support.Assert;
 import reactor.core.support.Exceptions;
 import reactor.core.support.ReactiveState;
-import reactor.core.support.rb.disruptor.RingBuffer;
 import reactor.core.timer.Timer;
 import reactor.fn.Function;
 
