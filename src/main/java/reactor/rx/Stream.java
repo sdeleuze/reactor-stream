@@ -4182,7 +4182,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return {@literal new Stream}
 	 */
 	public final Stream<O> switchOnError(final Publisher<? extends O> fallback) {
-		return new StreamBarrier.Identity<>(new FluxResume<O>(this, new Function<Throwable, Publisher<? extends O>>() {
+		return new StreamBarrier.Identity<>(Flux.onErrorResumeWith(this, new Function<Throwable, Publisher<? extends O>>() {
 			@Override
 			public Publisher<? extends O> apply(Throwable throwable) {
 				return fallback;
