@@ -29,6 +29,7 @@ import reactor.core.util.Exceptions;
 import reactor.core.util.ReactiveState;
 import reactor.fn.BooleanSupplier;
 import reactor.fn.Supplier;
+import reactor.rx.util.DrainUtils;
 
 /**
  * Buffers a certain number of subsequent elements and emits the buffers.
@@ -458,7 +459,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 				return;
 			}
 
-			if (reactor.rx.support.DrainUtils.postCompleteRequest(n, actual, buffers, REQUESTED, this, this)) {
+			if (DrainUtils.postCompleteRequest(n, actual, buffers, REQUESTED, this, this)) {
 				return;
 			}
 
@@ -566,7 +567,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 
 			done = true;
 
-			reactor.rx.support.DrainUtils.postComplete(actual, buffers, REQUESTED, this, this);
+			DrainUtils.postComplete(actual, buffers, REQUESTED, this, this);
 		}
 
 		@Override
