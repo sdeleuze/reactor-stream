@@ -48,7 +48,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxFlatMap;
 import reactor.core.publisher.FluxLog;
 import reactor.core.publisher.FluxMapSignal;
-import reactor.core.publisher.FluxResume;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.Processors;
@@ -3465,7 +3464,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return {@literal new Stream}
 	 */
 	public final Stream<O> onErrorResumeWith(final Function<Throwable, ? extends Publisher<? extends O>> fallback) {
-		return new StreamBarrier.Identity<>(new FluxResume<>(this, fallback));
+		return new StreamBarrier.Identity<>(Flux.onErrorResumeWith(this, fallback));
 	}
 
 	/**
