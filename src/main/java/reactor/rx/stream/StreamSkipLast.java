@@ -20,7 +20,7 @@ import java.util.ArrayDeque;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.subscription.BackpressureUtils;
+import reactor.core.util.BackpressureUtils;
 
 /**
  * Skips the last N elements from the source stream.

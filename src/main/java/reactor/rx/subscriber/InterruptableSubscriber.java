@@ -19,8 +19,8 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.ConsumerSubscriber;
-import reactor.core.subscription.CancelledSubscription;
-import reactor.core.subscription.EmptySubscription;
+import reactor.core.util.CancelledSubscription;
+import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
 import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveStateUtils;

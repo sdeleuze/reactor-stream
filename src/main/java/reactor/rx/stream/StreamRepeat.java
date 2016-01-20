@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.subscriber.SubscriberMultiSubscription;
-import reactor.core.subscription.EmptySubscription;
+import reactor.core.util.EmptySubscription;
 
 /**
  * Repeatedly subscribes to the source and relays its values either
