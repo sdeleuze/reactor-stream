@@ -49,9 +49,7 @@ import reactor.core.publisher.FluxFlatMap;
 import reactor.core.publisher.FluxLog;
 import reactor.core.publisher.FluxMapSignal;
 import reactor.core.publisher.FluxResume;
-import reactor.core.publisher.ForEachSequencer;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoIgnoreElements;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.Processors;
 import reactor.core.subscriber.BaseSubscriber;
@@ -636,14 +634,27 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 			return fromIterable((Iterable<T>) source);
 		}
 		else if (source instanceof Iterator) {
-			Iterator<T> defaultValues = (Iterator<T>)source;
+			final Iterator<T> defaultValues = (Iterator<T>)source;
 			if (!defaultValues.hasNext()) {
 				return empty();
 			}
-			ForEachSequencer.IteratorSequencer<T> iteratorPublisher =
-					new ForEachSequencer.IteratorSequencer<>(defaultValues);
 
-			return create(iteratorPublisher, iteratorPublisher);
+			return create(new Consumer<SubscriberWithContext<T, Iterator<T>>>() {
+				@Override
+				public void accept(SubscriberWithContext<T, Iterator<T>> context) {
+					if(context.context().hasNext()){
+						context.onNext(context.context().next());
+					}
+					else{
+						context.onComplete();
+					}
+				}
+			}, new Function<Subscriber<? super T>, Iterator<T>>() {
+				@Override
+				public Iterator<T> apply(Subscriber<? super T> subscriber) {
+					return defaultValues;
+				}
+			});
 		}
 		else {
 			return (Stream<T>) from(DependencyUtils.convertToPublisher(source));
@@ -1890,11 +1901,10 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @return {@literal new Stream}
 	 *
-	 * @see Flux#after)
+	 * @see Mono#after(Publisher)
 	 */
-	@SuppressWarnings("unchecked")
 	public final Mono<Void> after() {
-		return (Mono<Void>)new MonoIgnoreElements<>(this);
+		return Mono.after(this);
 	}
 
 	/**
@@ -3042,10 +3052,10 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	/**
 	 * @return {@literal new Stream}
 	 *
-	 * @see Flux#after)
+	 * @see Mono#ignoreElements)
 	 */
 	public final Mono<O> ignoreElements() {
-		return new MonoIgnoreElements<>(this);
+		return Mono.ignoreElements(this);
 	}
 
 	/**
