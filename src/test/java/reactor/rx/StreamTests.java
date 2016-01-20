@@ -50,7 +50,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.AbstractReactorTest;
-import reactor.core.publisher.FluxFactory;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.ProcessorTopic;
@@ -958,8 +958,8 @@ public class StreamTests extends AbstractReactorTest {
 	public void testDiamond() throws InterruptedException, IOException {
 		ExecutorService pool = Executors.newCachedThreadPool(new NamedDaemonThreadFactory("tee", null, null, true));
 
-		Stream<Point> points = FluxFactory.<Double, Random>createForEach(sub -> sub.onNext(sub.context()
-		                                                                                      .nextDouble()),
+		Stream<Point> points = Flux.<Double, Random>create(sub -> sub.onNext(sub.context()
+		                                                                               .nextDouble()),
 				sub -> new Random()).as(Stream::from)
 		                            .log("points")
 		                             //.requestWhen(requests -> requests.dispatchOn(Environment.cachedDispatcher()))
