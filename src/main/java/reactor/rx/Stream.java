@@ -1897,10 +1897,10 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @return {@literal new Stream}
 	 *
-	 * @see Mono#whenever(Publisher)
+	 * @see Mono#empty(Publisher)
 	 */
 	public final Mono<Void> after() {
-		return Mono.whenever(this);
+		return Mono.empty(this);
 	}
 
 	/**
