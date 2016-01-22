@@ -20,6 +20,9 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Predicate;
@@ -54,11 +57,10 @@ public final class StreamSkipWhile<T> extends StreamBarrier<T, T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		source.subscribe(new StreamSkipWhileSubscriber<>(s, predicate));
+		source.subscribe(new SkipWhileSubscriber<>(s, predicate));
 	}
 
-	static final class StreamSkipWhileSubscriber<T> implements Subscriber<T>, Downstream, ActiveUpstream,
-																  FeedbackLoop, Upstream {
+	static final class SkipWhileSubscriber<T> implements Subscriber<T>, Publishable, Connectable, Completable {
 		final Subscriber<? super T> actual;
 
 		final Predicate<? super T> predicate;
@@ -69,7 +71,7 @@ public final class StreamSkipWhile<T> extends StreamBarrier<T, T> {
 
 		boolean skipped;
 
-		public StreamSkipWhileSubscriber(Subscriber<? super T> actual, Predicate<? super T> predicate) {
+		public SkipWhileSubscriber(Subscriber<? super T> actual, Predicate<? super T> predicate) {
 			this.actual = actual;
 			this.predicate = predicate;
 		}
@@ -152,12 +154,12 @@ public final class StreamSkipWhile<T> extends StreamBarrier<T, T> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return predicate;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return null;
 		}
 

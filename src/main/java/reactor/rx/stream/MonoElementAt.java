@@ -20,8 +20,8 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Supplier;
@@ -37,7 +37,7 @@ import reactor.fn.Supplier;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoElementAt<T> extends Mono.MonoBarrier<T, T> {
+public final class MonoElementAt<T> extends reactor.core.publisher.Mono.MonoBarrier<T, T> {
 
 	final long index;
 
@@ -63,12 +63,11 @@ public final class MonoElementAt<T> extends Mono.MonoBarrier<T, T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		source.subscribe(new MonoElementAtSubscriber<>(s, index, defaultSupplier));
+		source.subscribe(new ElementAtSubscriber<>(s, index, defaultSupplier));
 	}
 
-	static final class MonoElementAtSubscriber<T>
-			extends SubscriberDeferredScalar<T, T>
-	implements Upstream {
+	static final class ElementAtSubscriber<T>
+			extends SubscriberDeferredScalar<T, T> implements Subscribable {
 		final Supplier<? extends T> defaultSupplier;
 
 		long index;
@@ -77,7 +76,7 @@ public final class MonoElementAt<T> extends Mono.MonoBarrier<T, T> {
 
 		boolean done;
 
-		public MonoElementAtSubscriber(Subscriber<? super T> actual, long index,
+		public ElementAtSubscriber(Subscriber<? super T> actual, long index,
 											Supplier<? extends T> defaultSupplier) {
 			super(actual);
 			this.index = index;
@@ -180,7 +179,7 @@ public final class MonoElementAt<T> extends Mono.MonoBarrier<T, T> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return defaultSupplier;
 		}
 	}

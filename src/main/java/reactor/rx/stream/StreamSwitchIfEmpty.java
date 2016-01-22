@@ -20,6 +20,7 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.core.trait.Connectable;
 
 /**
  * Switches to another source if the first source turns out to be empty.
@@ -50,7 +51,7 @@ public final class StreamSwitchIfEmpty<T> extends StreamBarrier<T, T> {
     }
 
     static final class StreamSwitchIfEmptySubscriber<T> extends SubscriberMultiSubscription<T, T>
-            implements FeedbackLoop {
+            implements Connectable {
 
         final Publisher<? extends T> other;
 
@@ -83,12 +84,12 @@ public final class StreamSwitchIfEmpty<T> extends StreamBarrier<T, T> {
         }
 
         @Override
-        public Object delegateInput() {
+        public Object connectedInput() {
             return null;
         }
 
         @Override
-        public Object delegateOutput() {
+        public Object connectedOutput() {
             return other;
         }
     }

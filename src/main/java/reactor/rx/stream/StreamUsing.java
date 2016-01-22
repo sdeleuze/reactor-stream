@@ -22,10 +22,10 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
 
@@ -49,10 +49,7 @@ import reactor.fn.Function;
  * @since 2.5
  */
 public final class StreamUsing<T, S> 
-extends reactor.rx.Stream<T>
-implements 
-												   ReactiveState.Factory,
-												   ReactiveState.Upstream {
+extends reactor.rx.Stream<T> implements Subscribable {
 
 	final Callable<S> resourceSupplier;
 
@@ -122,10 +119,10 @@ implements
 			return;
 		}
 
-		p.subscribe(new StreamUsingSubscriber<>(s, resourceCleanup, resource, eager));
+		p.subscribe(new UsingSubscriber<>(s, resourceCleanup, resource, eager));
 	}
 
-	static final class StreamUsingSubscriber<T, S>
+	static final class UsingSubscriber<T, S>
 	  implements Subscriber<T>, Subscription {
 
 		final Subscriber<? super T> actual;
@@ -140,10 +137,10 @@ implements
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamUsingSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(StreamUsingSubscriber.class, "wip");
+		static final AtomicIntegerFieldUpdater<UsingSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(UsingSubscriber.class, "wip");
 
-		public StreamUsingSubscriber(Subscriber<? super T> actual, Consumer<? super S> resourceCleanup, S
+		public UsingSubscriber(Subscriber<? super T> actual, Consumer<? super S> resourceCleanup, S
 				resource, boolean eager) {
 			this.actual = actual;
 			this.resourceCleanup = resourceCleanup;

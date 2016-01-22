@@ -87,8 +87,8 @@ extends StreamBarrier<T, C> {
 			EmptySubscription.error(s, new NullPointerException("The queueSupplier returned a null queue"));
 			return;
 		}
-		
-		StreamBufferStartEndMain<T, U, V, C> parent = new StreamBufferStartEndMain<>(s, bufferSupplier, q, end);
+
+		BufferStartEndMainSubscriber<T, U, V, C> parent = new BufferStartEndMainSubscriber<>(s, bufferSupplier, q, end);
 		
 		s.onSubscribe(parent);
 		
@@ -96,8 +96,8 @@ extends StreamBarrier<T, C> {
 		
 		source.subscribe(parent);
 	}
-	
-	static final class StreamBufferStartEndMain<T, U, V, C extends Collection<? super T>>
+
+	static final class BufferStartEndMainSubscriber<T, U, V, C extends Collection<? super T>>
 	implements Subscriber<T>, Subscription {
 		
 		final Subscriber<? super C> actual;
@@ -109,32 +109,32 @@ extends StreamBarrier<T, C> {
 		final Function<? super U, ? extends Publisher<V>> end;
 		
 		Set<Subscription> endSubscriptions;
-		
-		final StreamBufferStartEndStarter<U> starter;
+
+		final BufferStartEndStarter<U> starter;
 
 		Map<Long, C> buffers;
 		
 		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamBufferStartEndMain, Subscription> S =
-				AtomicReferenceFieldUpdater.newUpdater(StreamBufferStartEndMain.class, Subscription.class, "s");
+		static final AtomicReferenceFieldUpdater<BufferStartEndMainSubscriber, Subscription> S =
+				AtomicReferenceFieldUpdater.newUpdater(BufferStartEndMainSubscriber.class, Subscription.class, "s");
 		
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamBufferStartEndMain> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(StreamBufferStartEndMain.class, "requested");
+		static final AtomicLongFieldUpdater<BufferStartEndMainSubscriber> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(BufferStartEndMainSubscriber.class, "requested");
 
 		long index;
 		
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamBufferStartEndMain> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(StreamBufferStartEndMain.class, "wip");
+		static final AtomicIntegerFieldUpdater<BufferStartEndMainSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(BufferStartEndMainSubscriber.class, "wip");
 		
 		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamBufferStartEndMain, Throwable> ERROR =
-				AtomicReferenceFieldUpdater.newUpdater(StreamBufferStartEndMain.class, Throwable.class, "error");
+		static final AtomicReferenceFieldUpdater<BufferStartEndMainSubscriber, Throwable> ERROR =
+				AtomicReferenceFieldUpdater.newUpdater(BufferStartEndMainSubscriber.class, Throwable.class, "error");
 		
 		volatile boolean done;
 		
@@ -142,10 +142,13 @@ extends StreamBarrier<T, C> {
 
 		volatile int open;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamBufferStartEndMain> OPEN =
-				AtomicIntegerFieldUpdater.newUpdater(StreamBufferStartEndMain.class, "open");
+		static final AtomicIntegerFieldUpdater<BufferStartEndMainSubscriber> OPEN =
+				AtomicIntegerFieldUpdater.newUpdater(BufferStartEndMainSubscriber.class, "open");
 
-		public StreamBufferStartEndMain(Subscriber<? super C> actual, Supplier<C> bufferSupplier, Queue<C> queue, Function<? super U, ? extends Publisher<V>> end) {
+		public BufferStartEndMainSubscriber(Subscriber<? super C> actual,
+				Supplier<C> bufferSupplier,
+				Queue<C> queue,
+				Function<? super U, ? extends Publisher<V>> end) {
 			this.actual = actual;
 			this.bufferSupplier = bufferSupplier;
 			this.buffers = new HashMap<>();
@@ -153,7 +156,7 @@ extends StreamBarrier<T, C> {
 			this.queue = queue;
 			this.end = end;
 			this.open = 1;
-			this.starter = new StreamBufferStartEndStarter<>(this);
+			this.starter = new BufferStartEndStarter<>(this);
 		}
 		
 		@Override
@@ -361,8 +364,8 @@ extends StreamBarrier<T, C> {
 				anyError(new NullPointerException("The end returned a null publisher"));
 				return;
 			}
-			
-			StreamBufferStartEndEnder<T, V, C> end = new StreamBufferStartEndEnder<>(this, b, idx);
+
+			BufferStartEndEnder<T, V, C> end = new BufferStartEndEnder<>(this, b, idx);
 			
 			if (addEndSubscription(end)) {
 				OPEN.getAndIncrement(this);
@@ -390,8 +393,8 @@ extends StreamBarrier<T, C> {
 			
 			cancelEnds();
 		}
-		
-		void endSignal(StreamBufferStartEndEnder<T, V, C> ender) {
+
+		void endSignal(BufferStartEndEnder<T, V, C> ender) {
 			synchronized (this) {
 				Map<Long, C> set = buffers;
 				
@@ -484,12 +487,13 @@ extends StreamBarrier<T, C> {
 			return false;
 		}
 	}
-	
-	static final class StreamBufferStartEndStarter<U> extends DeferredSubscription
+
+	static final class BufferStartEndStarter<U> extends DeferredSubscription
 	implements Subscriber<U> {
-		final StreamBufferStartEndMain<?, U, ?, ?> main;
-		
-		public StreamBufferStartEndStarter(StreamBufferStartEndMain<?, U, ?, ?> main) {
+
+		final BufferStartEndMainSubscriber<?, U, ?, ?> main;
+
+		public BufferStartEndStarter(BufferStartEndMainSubscriber<?, U, ?, ?> main) {
 			this.main = main;
 		}
 		
@@ -515,16 +519,17 @@ extends StreamBarrier<T, C> {
 			main.startComplete();
 		}
 	}
-	
-	static final class StreamBufferStartEndEnder<T, V, C extends Collection<? super T>> extends DeferredSubscription
+
+	static final class BufferStartEndEnder<T, V, C extends Collection<? super T>> extends DeferredSubscription
 	implements Subscriber<V> {
-		final StreamBufferStartEndMain<T, ?, V, C> main;
+
+		final BufferStartEndMainSubscriber<T, ?, V, C> main;
 
 		final C buffer;
 		
 		final long index;
-		
-		public StreamBufferStartEndEnder(StreamBufferStartEndMain<T, ?, V, C> main, C buffer, long index) {
+
+		public BufferStartEndEnder(BufferStartEndMainSubscriber<T, ?, V, C> main, C buffer, long index) {
 			this.main = main;
 			this.buffer = buffer;
 			this.index = index;

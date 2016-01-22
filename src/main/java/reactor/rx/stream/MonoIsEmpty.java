@@ -18,8 +18,8 @@ package reactor.rx.stream;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 
 
@@ -27,7 +27,7 @@ import reactor.core.util.BackpressureUtils;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoIsEmpty<T> extends Mono.MonoBarrier<T, Boolean> {
+public final class MonoIsEmpty<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Boolean> {
 
 	public MonoIsEmpty(Publisher<? extends T> source) {
 		super(source);
@@ -35,14 +35,13 @@ public final class MonoIsEmpty<T> extends Mono.MonoBarrier<T, Boolean> {
 
 	@Override
 	public void subscribe(Subscriber<? super Boolean> s) {
-		source.subscribe(new MonoIsEmptySubscriber<>(s));
+		source.subscribe(new IsEmptySubscriber<>(s));
 	}
 
-	static final class MonoIsEmptySubscriber<T> extends SubscriberDeferredScalar<T, Boolean>
-	implements Upstream {
+	static final class IsEmptySubscriber<T> extends SubscriberDeferredScalar<T, Boolean> implements Subscribable {
 		Subscription s;
 
-		public MonoIsEmptySubscriber(Subscriber<? super Boolean> actual) {
+		public IsEmptySubscriber(Subscriber<? super Boolean> actual) {
 			super(actual);
 		}
 

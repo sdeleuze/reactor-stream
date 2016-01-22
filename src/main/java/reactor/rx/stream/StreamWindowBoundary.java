@@ -91,7 +91,7 @@ public final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.r
 			return;
 		}
 
-		StreamWindowBoundaryMain<T, U> main = new StreamWindowBoundaryMain<>(s, processorQueueSupplier, q, dq);
+		WindowBoundaryMain<T, U> main = new WindowBoundaryMain<>(s, processorQueueSupplier, q, dq);
 		
 		s.onSubscribe(main);
 		
@@ -101,15 +101,15 @@ public final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.r
 			source.subscribe(main);
 		}
 	}
-	
-	static final class StreamWindowBoundaryMain<T, U>
+
+	static final class WindowBoundaryMain<T, U>
 	implements Subscriber<T>, Subscription, Runnable {
 		
 		final Subscriber<? super reactor.rx.Stream<T>> actual;
 
 		final Supplier<? extends Queue<T>> processorQueueSupplier;
-		
-		final StreamWindowBoundaryOther<U> boundary;
+
+		final WindowBoundaryOther<U> boundary;
 		
 		final Queue<Object> queue;
 		
@@ -117,46 +117,45 @@ public final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.r
 
 		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamWindowBoundaryMain, Subscription> S =
-				AtomicReferenceFieldUpdater.newUpdater(StreamWindowBoundaryMain.class, Subscription.class, "s");
+		static final AtomicReferenceFieldUpdater<WindowBoundaryMain, Subscription> S =
+				AtomicReferenceFieldUpdater.newUpdater(WindowBoundaryMain.class, Subscription.class, "s");
 		
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamWindowBoundaryMain> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(StreamWindowBoundaryMain.class, "requested");
+		static final AtomicLongFieldUpdater<WindowBoundaryMain> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(WindowBoundaryMain.class, "requested");
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowBoundaryMain> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowBoundaryMain.class, "wip");
+		static final AtomicIntegerFieldUpdater<WindowBoundaryMain> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(WindowBoundaryMain.class, "wip");
 
 		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamWindowBoundaryMain, Throwable> ERROR =
-				AtomicReferenceFieldUpdater.newUpdater(StreamWindowBoundaryMain.class, Throwable.class, "error");
+		static final AtomicReferenceFieldUpdater<WindowBoundaryMain, Throwable> ERROR =
+				AtomicReferenceFieldUpdater.newUpdater(WindowBoundaryMain.class, Throwable.class, "error");
 		
 		volatile boolean cancelled;
 
 		volatile int open;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowBoundaryMain> OPEN =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowBoundaryMain.class, "open");
+		static final AtomicIntegerFieldUpdater<WindowBoundaryMain> OPEN =
+				AtomicIntegerFieldUpdater.newUpdater(WindowBoundaryMain.class, "open");
 
 		volatile int once;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowBoundaryMain> ONCE =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowBoundaryMain.class, "once");
+		static final AtomicIntegerFieldUpdater<WindowBoundaryMain> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(WindowBoundaryMain.class, "once");
 
 		static final Object BOUNDARY_MARKER = new Object();
-		
-		public StreamWindowBoundaryMain(Subscriber<? super reactor.rx.Stream<T>> actual, 
-				Supplier<? extends Queue<T>> processorQueueSupplier, 
+
+		public WindowBoundaryMain(Subscriber<? super reactor.rx.Stream<T>> actual, Supplier<? extends Queue<T>> processorQueueSupplier,
 						Queue<T> processorQueue, Queue<Object> queue) {
 			this.actual = actual;
 			this.processorQueueSupplier = processorQueueSupplier;
 			this.window = new UnicastProcessor<>(processorQueue, this);
 			this.open = 2;
-			this.boundary = new StreamWindowBoundaryOther<>(this);
+			this.boundary = new WindowBoundaryOther<>(this);
 			this.queue = queue;
 		}
 		
@@ -389,14 +388,14 @@ public final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.r
 			}
 		}
 	}
-	
-	static final class StreamWindowBoundaryOther<U>
+
+	static final class WindowBoundaryOther<U>
 			extends DeferredSubscription
 	implements Subscriber<U> {
-		
-		final StreamWindowBoundaryMain<?, U> main;
 
-		public StreamWindowBoundaryOther(StreamWindowBoundaryMain<?, U> main) {
+		final WindowBoundaryMain<?, U> main;
+
+		public WindowBoundaryOther(WindowBoundaryMain<?, U> main) {
 			this.main = main;
 		}
 

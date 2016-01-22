@@ -21,9 +21,13 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Requestable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
-import reactor.core.util.ReactiveState;
 
 /**
  * Emits the contents of an Iterable source.
@@ -36,10 +40,7 @@ import reactor.core.util.ReactiveState;
  * @since 2.5
  */
 public final class StreamIterable<T> 
-extends reactor.rx.Stream<T>
-implements 
-												   ReactiveState.Factory,
-												   ReactiveState.Upstream {
+extends reactor.rx.Stream<T> implements Subscribable {
 
 	final Iterable<? extends T> iterable;
 
@@ -91,11 +92,11 @@ implements
 			return;
 		}
 
-		s.onSubscribe(new StreamIterableSubscription<>(s, it));
+		s.onSubscribe(new IterableSubscription<>(s, it));
 	}
 
-	static final class StreamIterableSubscription<T>
-	  implements Downstream, Upstream, DownstreamDemand, ActiveDownstream, ActiveUpstream, Subscription {
+	static final class IterableSubscription<T>
+			implements Publishable, Completable, Requestable, Cancellable, Subscription {
 
 		final Subscriber<? super T> actual;
 
@@ -105,10 +106,10 @@ implements
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamIterableSubscription> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(StreamIterableSubscription.class, "requested");
+		static final AtomicLongFieldUpdater<IterableSubscription> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(IterableSubscription.class, "requested");
 
-		public StreamIterableSubscription(Subscriber<? super T> actual, Iterator<? extends T> iterator) {
+		public IterableSubscription(Subscriber<? super T> actual, Iterator<? extends T> iterator) {
 			this.actual = actual;
 			this.iterator = iterator;
 		}

@@ -49,19 +49,20 @@ public final class StreamSkipUntil<T, U> extends StreamBarrier<T, T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		StreamSkipUntilMainSubscriber<T> mainSubscriber = new StreamSkipUntilMainSubscriber<>(s);
+		SkipUntilMainSubscriber<T> mainSubscriber = new SkipUntilMainSubscriber<>(s);
 
-		StreamSkipUntilOtherSubscriber<U> otherSubscriber = new StreamSkipUntilOtherSubscriber<>(mainSubscriber);
+		SkipUntilOtherSubscriber<U> otherSubscriber = new SkipUntilOtherSubscriber<>(mainSubscriber);
 
 		other.subscribe(otherSubscriber);
 
 		source.subscribe(mainSubscriber);
 	}
 
-	static final class StreamSkipUntilOtherSubscriber<U> implements Subscriber<U> {
-		final StreamSkipUntilMainSubscriber<?> main;
+	static final class SkipUntilOtherSubscriber<U> implements Subscriber<U> {
 
-		public StreamSkipUntilOtherSubscriber(StreamSkipUntilMainSubscriber<?> main) {
+		final SkipUntilMainSubscriber<?> main;
+
+		public SkipUntilOtherSubscriber(SkipUntilMainSubscriber<?> main) {
 			this.main = main;
 		}
 
@@ -77,7 +78,7 @@ public final class StreamSkipUntil<T, U> extends StreamBarrier<T, T> {
 			if (main.gate) {
 				return;
 			}
-			StreamSkipUntilMainSubscriber<?> m = main;
+			SkipUntilMainSubscriber<?> m = main;
 			m.other.cancel();
 			m.gate = true;
 			m.other = CancelledSubscription.INSTANCE;
@@ -85,7 +86,7 @@ public final class StreamSkipUntil<T, U> extends StreamBarrier<T, T> {
 
 		@Override
 		public void onError(Throwable t) {
-			StreamSkipUntilMainSubscriber<?> m = main;
+			SkipUntilMainSubscriber<?> m = main;
 			if (m.gate) {
 				return;
 			}
@@ -94,7 +95,7 @@ public final class StreamSkipUntil<T, U> extends StreamBarrier<T, T> {
 
 		@Override
 		public void onComplete() {
-			StreamSkipUntilMainSubscriber<?> m = main;
+			SkipUntilMainSubscriber<?> m = main;
 			if (m.gate) {
 				return;
 			}
@@ -105,24 +106,24 @@ public final class StreamSkipUntil<T, U> extends StreamBarrier<T, T> {
 
 	}
 
-	static final class StreamSkipUntilMainSubscriber<T>
+	static final class SkipUntilMainSubscriber<T>
 	  implements Subscriber<T>, Subscription {
 
 		final SerializedSubscriber<T> actual;
 
 		volatile Subscription main;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamSkipUntilMainSubscriber, Subscription> MAIN =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamSkipUntilMainSubscriber.class, Subscription.class, "main");
+		static final AtomicReferenceFieldUpdater<SkipUntilMainSubscriber, Subscription> MAIN =
+				AtomicReferenceFieldUpdater.newUpdater(SkipUntilMainSubscriber.class, Subscription.class, "main");
 
 		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamSkipUntilMainSubscriber, Subscription> OTHER =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamSkipUntilMainSubscriber.class, Subscription.class, "other");
+		static final AtomicReferenceFieldUpdater<SkipUntilMainSubscriber, Subscription> OTHER =
+				AtomicReferenceFieldUpdater.newUpdater(SkipUntilMainSubscriber.class, Subscription.class, "other");
 
 		volatile boolean gate;
 
-		public StreamSkipUntilMainSubscriber(Subscriber<? super T> actual) {
+		public SkipUntilMainSubscriber(Subscriber<? super T> actual) {
 			this.actual = new SerializedSubscriber<>(actual);
 		}
 

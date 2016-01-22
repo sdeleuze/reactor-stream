@@ -20,6 +20,10 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Backpressurable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Prefetchable;
+import reactor.core.trait.Publishable;
 
 /**
  * Skips the first N elements from a reactive stream.
@@ -55,12 +59,12 @@ public final class StreamSkip<T> extends StreamBarrier<T, T> {
 		if (n == 0) {
 			source.subscribe(s);
 		} else {
-			source.subscribe(new StreamSkipSubscriber<>(s, n));
+			source.subscribe(new SkipSubscriber<>(s, n));
 		}
 	}
 
-	static final class StreamSkipSubscriber<T> implements Subscriber<T>, Downstream, UpstreamDemand, Bounded,
-															 ActiveUpstream {
+	static final class SkipSubscriber<T>
+			implements Subscriber<T>, Publishable, Prefetchable, Backpressurable, Completable {
 
 		final Subscriber<? super T> actual;
 
@@ -68,7 +72,7 @@ public final class StreamSkip<T> extends StreamBarrier<T, T> {
 
 		long remaining;
 
-		public StreamSkipSubscriber(Subscriber<? super T> actual, long n) {
+		public SkipSubscriber(Subscriber<? super T> actual, long n) {
 			this.actual = actual;
 			this.n = n;
 			this.remaining = n;
@@ -124,6 +128,21 @@ public final class StreamSkip<T> extends StreamBarrier<T, T> {
 		@Override
 		public long expectedFromUpstream() {
 			return remaining;
+		}
+
+		@Override
+		public long getPending() {
+			return -1L;
+		}
+
+		@Override
+		public Object upstream() {
+			return null;
+		}
+
+		@Override
+		public long limit() {
+			return 0;
 		}
 	}
 }

@@ -23,8 +23,8 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.core.trait.PublishableMany;
 import reactor.core.util.EmptySubscription;
-import reactor.core.util.ReactiveState;
 
 /**
  * Concatenates a fixed array of Publishers' values.
@@ -37,10 +37,7 @@ import reactor.core.util.ReactiveState;
  * @since 2.5
  */
 public final class StreamConcatArray<T> 
-extends reactor.rx.Stream<T>
-implements 
-													  ReactiveState.Factory,
-													  ReactiveState.LinkedUpstreams {
+extends reactor.rx.Stream<T> implements PublishableMany {
 
 	final Publisher<? extends T>[] array;
 
@@ -79,7 +76,7 @@ implements
 			return;
 		}
 
-		StreamConcatArraySubscriber<T> parent = new StreamConcatArraySubscriber<>(s, a);
+		ConcatArraySubscriber<T> parent = new ConcatArraySubscriber<>(s, a);
 
 		s.onSubscribe(parent);
 
@@ -88,7 +85,7 @@ implements
 		}
 	}
 
-	static final class StreamConcatArraySubscriber<T>
+	static final class ConcatArraySubscriber<T>
 	  extends SubscriberMultiSubscription<T, T> {
 
 		final Publisher<? extends T>[] sources;
@@ -97,12 +94,12 @@ implements
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamConcatArraySubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(StreamConcatArraySubscriber.class, "wip");
+		static final AtomicIntegerFieldUpdater<ConcatArraySubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(ConcatArraySubscriber.class, "wip");
 
 		long produced;
 
-		public StreamConcatArraySubscriber(Subscriber<? super T> actual, Publisher<? extends T>[] sources) {
+		public ConcatArraySubscriber(Subscriber<? super T> actual, Publisher<? extends T>[] sources) {
 			super(actual);
 			this.sources = sources;
 		}

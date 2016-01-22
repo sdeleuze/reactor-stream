@@ -22,6 +22,9 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.PublishableMany;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -83,12 +86,11 @@ public final class StreamZipIterable<T, U, R> extends StreamBarrier<T, R> {
 			EmptySubscription.complete(s);
 			return;
 		}
-		
-		source.subscribe(new StreamZipSubscriber<>(s, it, zipper));
+
+		source.subscribe(new ZipSubscriber<>(s, it, zipper));
 	}
-	
-	static final class StreamZipSubscriber<T, U, R> implements Subscriber<T>, Downstream, LinkedUpstreams,
-																  ActiveUpstream {
+
+	static final class ZipSubscriber<T, U, R> implements Subscriber<T>, Publishable, PublishableMany, Completable {
 		
 		final Subscriber<? super R> actual;
 		
@@ -100,7 +102,7 @@ public final class StreamZipIterable<T, U, R> extends StreamBarrier<T, R> {
 		
 		boolean done;
 
-		public StreamZipSubscriber(Subscriber<? super R> actual, Iterator<? extends U> it,
+		public ZipSubscriber(Subscriber<? super R> actual, Iterator<? extends U> it,
 				BiFunction<? super T, ? super U, ? extends R> zipper) {
 			this.actual = actual;
 			this.it = it;
@@ -206,6 +208,11 @@ public final class StreamZipIterable<T, U, R> extends StreamBarrier<T, R> {
 		@Override
 		public Object downstream() {
 			return actual;
+		}
+
+		@Override
+		public Object upstream() {
+			return s;
 		}
 
 		@Override

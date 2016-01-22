@@ -47,7 +47,7 @@ public final class StreamRepeatPredicate<T> extends StreamBarrier<T, T> {
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
 
-		StreamRepeatPredicateSubscriber<T> parent = new StreamRepeatPredicateSubscriber<>(source, s, predicate);
+		RepeatPredicateSubscriber<T> parent = new RepeatPredicateSubscriber<>(source, s, predicate);
 
 		s.onSubscribe(parent);
 
@@ -56,7 +56,7 @@ public final class StreamRepeatPredicate<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class StreamRepeatPredicateSubscriber<T>
+	static final class RepeatPredicateSubscriber<T>
 	  extends SubscriberMultiSubscription<T, T> {
 
 		final Publisher<? extends T> source;
@@ -65,13 +65,12 @@ public final class StreamRepeatPredicate<T> extends StreamBarrier<T, T> {
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamRepeatPredicateSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(StreamRepeatPredicateSubscriber.class, "wip");
+		static final AtomicIntegerFieldUpdater<RepeatPredicateSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(RepeatPredicateSubscriber.class, "wip");
 
 		long produced;
 
-		public StreamRepeatPredicateSubscriber(Publisher<? extends T> source, 
-				Subscriber<? super T> actual, BooleanSupplier predicate) {
+		public RepeatPredicateSubscriber(Publisher<? extends T> source, Subscriber<? super T> actual, BooleanSupplier predicate) {
 			super(actual);
 			this.source = source;
 			this.predicate = predicate;

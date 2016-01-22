@@ -24,12 +24,16 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Backpressurable;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ReactiveState;
 import reactor.fn.BooleanSupplier;
 import reactor.fn.Supplier;
-import reactor.rx.util.DrainUtils;
 
 /**
  * Buffers a certain number of subsequent elements and emits the buffers.
@@ -43,7 +47,7 @@ import reactor.rx.util.DrainUtils;
  * @since 2.5
  */
 public final class StreamBuffer<T, C extends Collection<? super T>> extends StreamBarrier<T, C>
-		implements ReactiveState.Bounded {
+		implements Backpressurable {
 
 	final int size;
 
@@ -73,21 +77,25 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 	@Override
 	public void subscribe(Subscriber<? super C> s) {
 		if (size == skip) {
-			source.subscribe(new StreamBufferExactSubscriber<>(s, size, bufferSupplier));
+			source.subscribe(new BufferExactSubscriber<>(s, size, bufferSupplier));
 		} else if (skip > size) {
-			source.subscribe(new StreamBufferSkipSubscriber<>(s, size, skip, bufferSupplier));
+			source.subscribe(new BufferSkipSubscriber<>(s, size, skip, bufferSupplier));
 		} else {
-			source.subscribe(new StreamBufferOverlappingSubscriber<>(s, size, skip, bufferSupplier));
+			source.subscribe(new BufferOverlappingSubscriber<>(s, size, skip, bufferSupplier));
 		}
 	}
 
-	@Override
 	public long getCapacity() {
 		return size;
 	}
 
-	static final class StreamBufferExactSubscriber<T, C extends Collection<? super T>>
-	  implements Subscriber<T>, Subscription, Downstream, FeedbackLoop, Upstream, ActiveUpstream, Buffering {
+	@Override
+	public long getPending() {
+		return -1L;
+	}
+
+	static final class BufferExactSubscriber<T, C extends Collection<? super T>>
+			implements Subscriber<T>, Subscription, Publishable, Connectable, Completable, Backpressurable {
 
 		final Subscriber<? super C> actual;
 
@@ -101,7 +109,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 
 		boolean done;
 
-		public StreamBufferExactSubscriber(Subscriber<? super C> actual, int size, Supplier<C> bufferSupplier) {
+		public BufferExactSubscriber(Subscriber<? super C> actual, int size, Supplier<C> bufferSupplier) {
 			this.actual = actual;
 			this.size = size;
 			this.bufferSupplier = bufferSupplier;
@@ -205,12 +213,12 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return bufferSupplier;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return buffer;
 		}
 
@@ -220,7 +228,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 		}
 
 		@Override
-		public long pending() {
+		public long getPending() {
 			C b = buffer;
 			return b != null ? b.size() : 0L;
 		}
@@ -231,8 +239,8 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 		}
 	}
 
-	static final class StreamBufferSkipSubscriber<T, C extends Collection<? super T>>
-	  implements Subscriber<T>, Subscription, Downstream, FeedbackLoop, Upstream, ActiveUpstream, Buffering {
+	static final class BufferSkipSubscriber<T, C extends Collection<? super T>>
+			implements Subscriber<T>, Subscription, Publishable, Connectable, Completable, Backpressurable {
 
 		final Subscriber<? super C> actual;
 
@@ -252,10 +260,10 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamBufferSkipSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(StreamBufferSkipSubscriber.class, "wip");
+		static final AtomicIntegerFieldUpdater<BufferSkipSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(BufferSkipSubscriber.class, "wip");
 
-		public StreamBufferSkipSubscriber(Subscriber<? super C> actual, int size, int skip,
+		public BufferSkipSubscriber(Subscriber<? super C> actual, int size, int skip,
 											 Supplier<C> bufferSupplier) {
 			this.actual = actual;
 			this.size = size;
@@ -380,12 +388,12 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return bufferSupplier;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return buffer;
 		}
 
@@ -395,7 +403,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 		}
 
 		@Override
-		public long pending() {
+		public long getPending() {
 			C b = buffer;
 			return b != null ? b.size() : 0L;
 		}
@@ -406,10 +414,9 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 		}
 	}
 
-
-	static final class StreamBufferOverlappingSubscriber<T, C extends Collection<? super T>>
-	  implements Subscriber<T>, Subscription, BooleanSupplier, Downstream, Upstream, ActiveUpstream,
-				 ActiveDownstream, FeedbackLoop, Buffering, DownstreamDemand {
+	static final class BufferOverlappingSubscriber<T, C extends Collection<? super T>>
+			implements Subscriber<T>, Subscription, BooleanSupplier, Publishable, Completable, Cancellable,
+			           Connectable, Backpressurable, Requestable {
 		final Subscriber<? super C> actual;
 
 		final Supplier<C> bufferSupplier;
@@ -430,15 +437,15 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 
 		volatile int once;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamBufferOverlappingSubscriber> ONCE =
-		  AtomicIntegerFieldUpdater.newUpdater(StreamBufferOverlappingSubscriber.class, "once");
+		static final AtomicIntegerFieldUpdater<BufferOverlappingSubscriber> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(BufferOverlappingSubscriber.class, "once");
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamBufferOverlappingSubscriber> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(StreamBufferOverlappingSubscriber.class, "requested");
+		static final AtomicLongFieldUpdater<BufferOverlappingSubscriber> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(BufferOverlappingSubscriber.class, "requested");
 
-		public StreamBufferOverlappingSubscriber(Subscriber<? super C> actual, int size, int skip,
+		public BufferOverlappingSubscriber(Subscriber<? super C> actual, int size, int skip,
 													Supplier<C> bufferSupplier) {
 			this.actual = actual;
 			this.size = size;
@@ -459,7 +466,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 				return;
 			}
 
-			if (DrainUtils.postCompleteRequest(n, actual, buffers, REQUESTED, this, this)) {
+			if (reactor.rx.util.DrainUtils.postCompleteRequest(n, actual, buffers, REQUESTED, this, this)) {
 				return;
 			}
 
@@ -567,7 +574,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 
 			done = true;
 
-			DrainUtils.postComplete(actual, buffers, REQUESTED, this, this);
+			reactor.rx.util.DrainUtils.postComplete(actual, buffers, REQUESTED, this, this);
 		}
 
 		@Override
@@ -586,7 +593,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 		}
 
 		@Override
-		public long pending() {
+		public long getPending() {
 			return buffers.size()*size; //rounded max
 		}
 
@@ -606,12 +613,12 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return bufferSupplier;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return buffers;
 		}
 

@@ -21,6 +21,10 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.BiFunction;
@@ -60,12 +64,11 @@ public final class StreamScan<T, R> extends StreamBarrier<T, R> {
 
 	@Override
 	public void subscribe(Subscriber<? super R> s) {
-		source.subscribe(new StreamScanSubscriber<>(s, accumulator, initialValue));
+		source.subscribe(new ScanSubscriber<>(s, accumulator, initialValue));
 	}
 
-	static final class StreamScanSubscriber<T, R>
-			implements Subscriber<T>, Subscription, Downstream, DownstreamDemand, FeedbackLoop, Upstream,
-			           ActiveUpstream {
+	static final class ScanSubscriber<T, R>
+			implements Subscriber<T>, Subscription, Publishable, Requestable, Connectable, Completable {
 
 		final Subscriber<? super R> actual;
 
@@ -89,11 +92,10 @@ public final class StreamScan<T, R> extends StreamBarrier<T, R> {
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamScanSubscriber> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(StreamScanSubscriber.class, "requested");
+		static final AtomicLongFieldUpdater<ScanSubscriber> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(ScanSubscriber.class, "requested");
 
-		public StreamScanSubscriber(Subscriber<? super R> actual, BiFunction<R, ? super T, R> accumulator,
-				R initialValue) {
+		public ScanSubscriber(Subscriber<? super R> actual, BiFunction<R, ? super T, R> accumulator, R initialValue) {
 			this.actual = actual;
 			this.accumulator = accumulator;
 			this.value = initialValue;
@@ -237,12 +239,12 @@ public final class StreamScan<T, R> extends StreamBarrier<T, R> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return accumulator;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return null;
 		}
 

@@ -21,6 +21,9 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -69,11 +72,11 @@ public final class StreamDistinct<T, K, C extends Collection<? super K>> extends
 			return;
 		}
 
-		source.subscribe(new StreamDistinctSubscriber<>(s, collection, keyExtractor));
+		source.subscribe(new DistinctSubscriber<>(s, collection, keyExtractor));
 	}
 
-	static final class StreamDistinctSubscriber<T, K, C extends Collection<? super K>>
-			implements Subscriber<T>, Downstream, FeedbackLoop, Upstream, ActiveUpstream {
+	static final class DistinctSubscriber<T, K, C extends Collection<? super K>>
+			implements Subscriber<T>, Publishable, Connectable, Completable {
 		final Subscriber<? super T> actual;
 
 		final C collection;
@@ -84,7 +87,7 @@ public final class StreamDistinct<T, K, C extends Collection<? super K>> extends
 
 		boolean done;
 
-		public StreamDistinctSubscriber(Subscriber<? super T> actual, C collection,
+		public DistinctSubscriber(Subscriber<? super T> actual, C collection,
 										   Function<? super T, ? extends K> keyExtractor) {
 			this.actual = actual;
 			this.collection = collection;
@@ -174,12 +177,12 @@ public final class StreamDistinct<T, K, C extends Collection<? super K>> extends
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return keyExtractor;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return null;
 		}
 

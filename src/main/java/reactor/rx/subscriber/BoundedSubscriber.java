@@ -17,16 +17,15 @@
 package reactor.rx.subscriber;
 
 import org.reactivestreams.Subscription;
-import reactor.core.util.ReactiveState;
+import reactor.core.trait.Backpressurable;
+import reactor.core.trait.Prefetchable;
 import reactor.fn.Consumer;
 
 /**
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class BoundedSubscriber<T> extends InterruptableSubscriber<T> implements ReactiveState.Bounded,
-                                                                                      ReactiveState.UpstreamPrefetch,
-                                                                                      ReactiveState.UpstreamDemand {
+public final class BoundedSubscriber<T> extends InterruptableSubscriber<T> implements Backpressurable, Prefetchable {
 
 	final int capacity;
 	final int limit;

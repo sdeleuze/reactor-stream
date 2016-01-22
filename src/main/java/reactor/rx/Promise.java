@@ -27,11 +27,15 @@ import org.reactivestreams.Subscription;
 import reactor.core.publisher.Mono;
 import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Failurable;
+import reactor.core.trait.Introspectable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
 import reactor.core.util.PlatformDependent;
-import reactor.core.util.ReactiveState;
 import reactor.core.util.ScalarSubscription;
 import reactor.fn.BiConsumer;
 import reactor.fn.Consumer;
@@ -53,9 +57,7 @@ import reactor.rx.broadcast.Broadcaster;
  * @see <a href="https://github.com/promises-aplus/promises-spec">Promises/A+ specification</a>
  */
 public class Promise<O> extends Mono<O>
-		implements Processor<O, O>, Consumer<O>, ReactiveState.Bounded, Subscription, ReactiveState.FailState,
-		           ReactiveState.Upstream, ReactiveState.ActiveDownstream, ReactiveState.Downstream,
-		           ReactiveState.ActiveUpstream {
+		implements Processor<O, O>, Consumer<O>, Subscription, Failurable, Completable, Cancellable, Publishable {
 
 	final static AtomicIntegerFieldUpdater<Promise>              STATE     =
 			AtomicIntegerFieldUpdater.newUpdater(Promise.class, "state");
@@ -281,7 +283,7 @@ public class Promise<O> extends Mono<O>
 
 	/**
 	 * Block the calling thread, waiting for the completion of this {@code Promise}. A default timeout as specified in
-	 * {@link System#getProperties()} using the key {@link #DEFAULT_TIMEOUT} is used. The default is 30 seconds. If the
+	 * {@link System#getProperties()} using the key {@link PlatformDependent#DEFAULT_TIMEOUT} is used. The default is 30 seconds. If the
 	 * promise is completed with an error a RuntimeException that wraps the error is thrown.
 	 *
 	 * @return the value of this {@code Promise} or {@code null} if the timeout is reached and the {@code Promise} has
@@ -291,7 +293,7 @@ public class Promise<O> extends Mono<O>
 	 * @throws RuntimeException     if the promise is completed with an error
 	 */
 	public final O await() throws InterruptedException {
-		return await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+		return await(PlatformDependent.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -344,7 +346,7 @@ public class Promise<O> extends Mono<O>
 	 * @throws RuntimeException     if the promise is completed with an error
 	 */
 	public final boolean awaitSuccess() throws InterruptedException {
-		return awaitSuccess(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+		return awaitSuccess(PlatformDependent.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -740,6 +742,11 @@ public class Promise<O> extends Mono<O>
 	}
 
 	@Override
+	public int getMode() {
+		return 0;
+	}
+
+	@Override
 	public final Object upstream() {
 		return subscription;
 	}
@@ -781,7 +788,7 @@ public class Promise<O> extends Mono<O>
 
 	final static NoopProcessor NOOP_PROCESSOR = new NoopProcessor();
 
-	final static class NoopProcessor implements Processor, Trace {
+	final static class NoopProcessor implements Processor, Introspectable {
 
 		@Override
 		public void subscribe(Subscriber s) {
@@ -806,6 +813,16 @@ public class Promise<O> extends Mono<O>
 		@Override
 		public void onComplete() {
 
+		}
+
+		@Override
+		public int getMode() {
+			return TRACE_ONLY;
+		}
+
+		@Override
+		public String getName() {
+			return NoopProcessor.class.getSimpleName();
 		}
 	}
 }

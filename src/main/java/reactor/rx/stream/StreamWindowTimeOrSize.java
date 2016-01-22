@@ -24,7 +24,9 @@ import org.reactivestreams.Subscription;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
 import reactor.core.timer.Timer;
-import reactor.core.util.ReactiveState;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Publishable;
+import reactor.core.util.PlatformDependent;
 import reactor.rx.Stream;
 
 /**
@@ -52,7 +54,7 @@ public class StreamWindowTimeOrSize<T> extends StreamBatch<T, Stream<T>> {
 		return new WindowAction<>(prepareSub(subscriber), batchSize, timespan, unit, timer);
 	}
 
-	final static class Window<T> extends Stream<T> implements Subscriber<T>, Subscription, Downstream, Inner{
+	final static class Window<T> extends Stream<T> implements Subscriber<T>, Subscription, Publishable {
 
 		final protected FluxProcessor<T, T> processor;
 		final protected Timer               timer;
@@ -60,7 +62,7 @@ public class StreamWindowTimeOrSize<T> extends StreamBatch<T, Stream<T>> {
 		protected int count = 0;
 
 		public Window(Timer timer) {
-			this(timer, ReactiveState.SMALL_BUFFER_SIZE);
+			this(timer, PlatformDependent.SMALL_BUFFER_SIZE);
 		}
 
 		public Window(Timer timer, int size) {
@@ -121,12 +123,12 @@ public class StreamWindowTimeOrSize<T> extends StreamBatch<T, Stream<T>> {
 		}
 
 		@Override
-		public String toString() {
-			return super.toString();
+		public int getMode() {
+			return INNER;
 		}
 	}
 
-	final static class WindowAction<T> extends BatchAction<T, Stream<T>> implements FeedbackLoop{
+	final static class WindowAction<T> extends BatchAction<T, Stream<T>> implements Connectable {
 
 		private final Timer timer;
 
@@ -202,12 +204,12 @@ public class StreamWindowTimeOrSize<T> extends StreamBatch<T, Stream<T>> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return currentWindow;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return null;
 		}
 	}

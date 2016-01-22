@@ -26,11 +26,17 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Introspectable;
+import reactor.core.trait.Prefetchable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.PublishableMany;
+import reactor.core.trait.Requestable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ReactiveState;
 import reactor.fn.Function;
 import reactor.fn.Supplier;
 
@@ -45,8 +51,7 @@ import reactor.fn.Supplier;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
-		implements ReactiveState.Factory, ReactiveState.LinkedUpstreams {
+public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements PublishableMany {
 
 	final Publisher<? extends T>[] array;
 
@@ -191,21 +196,20 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
 			return;
 		}
 
-		StreamCombineLatestCoordinator<T, R> coordinator =
-				new StreamCombineLatestCoordinator<>(s, combiner, n, queue, bufferSize);
+		CombineLatestCoordinator<T, R> coordinator = new CombineLatestCoordinator<>(s, combiner, n, queue, bufferSize);
 
 		s.onSubscribe(coordinator);
 
 		coordinator.subscribe(a, n);
 	}
 
-	static final class StreamCombineLatestCoordinator<T, R> implements Subscription, LinkedUpstreams, ActiveDownstream {
+	static final class CombineLatestCoordinator<T, R> implements Subscription, PublishableMany, Cancellable {
 
 		final Subscriber<? super R> actual;
 
 		final Function<Object[], R> combiner;
 
-		final StreamCombineLatestInner<T>[] subscribers;
+		final CombineLatestInner<T>[] subscribers;
 
 		final Queue<SourceAndArray> queue;
 
@@ -219,32 +223,34 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamCombineLatestCoordinator> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(StreamCombineLatestCoordinator.class, "requested");
+		static final AtomicLongFieldUpdater<CombineLatestCoordinator> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(CombineLatestCoordinator.class, "requested");
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamCombineLatestCoordinator> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(StreamCombineLatestCoordinator.class, "wip");
+		static final AtomicIntegerFieldUpdater<CombineLatestCoordinator> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(CombineLatestCoordinator.class, "wip");
 
 		volatile boolean done;
 
 		volatile Throwable error;
 
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamCombineLatestCoordinator, Throwable> ERROR =
-				AtomicReferenceFieldUpdater.newUpdater(StreamCombineLatestCoordinator.class, Throwable.class, "error");
+		static final AtomicReferenceFieldUpdater<CombineLatestCoordinator, Throwable> ERROR =
+				AtomicReferenceFieldUpdater.newUpdater(CombineLatestCoordinator.class, Throwable.class, "error");
 
 		static final Throwable TERMINAL_ERROR = new Throwable();
 
-		public StreamCombineLatestCoordinator(Subscriber<? super R> actual, Function<Object[], R> combiner, int n, Queue<SourceAndArray> queue,
+		public CombineLatestCoordinator(Subscriber<? super R> actual,
+				Function<Object[], R> combiner,
+				int n,
+				Queue<SourceAndArray> queue,
 				int bufferSize) {
 			this.actual = actual;
 			this.combiner = combiner;
-			@SuppressWarnings("unchecked")
-			StreamCombineLatestInner<T>[] a = new StreamCombineLatestInner[n];
+			@SuppressWarnings("unchecked") CombineLatestInner<T>[] a = new CombineLatestInner[n];
 			for (int i = 0; i < n; i++) {
-				a[i] = new StreamCombineLatestInner<>(this, i, bufferSize);
+				a[i] = new CombineLatestInner<>(this, i, bufferSize);
 			}
 			this.subscribers = a;
 			this.latest = new Object[n];
@@ -280,7 +286,7 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
 		}
 
 		void subscribe(Publisher<? extends T>[] sources, int n) {
-			StreamCombineLatestInner<T>[] a = subscribers;
+			CombineLatestInner<T>[] a = subscribers;
 
 			for (int i = 0; i < n; i++) {
 				if (done || cancelled) {
@@ -469,16 +475,16 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
 		}
 
 		void cancelAll() {
-			for (StreamCombineLatestInner<T> inner : subscribers) {
+			for (CombineLatestInner<T> inner : subscribers) {
 				inner.cancel();
 			}
 		}
 	}
 
-	static final class StreamCombineLatestInner<T>
-			implements Subscriber<T>, Inner, UpstreamDemand, DownstreamDemand, UpstreamPrefetch, Upstream, Downstream {
+	static final class CombineLatestInner<T>
+			implements Subscriber<T>, Introspectable, Prefetchable, Requestable, Subscribable, Publishable {
 
-		final StreamCombineLatestCoordinator<T, ?> parent;
+		final CombineLatestCoordinator<T, ?> parent;
 
 		final int index;
 
@@ -486,17 +492,17 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
 
 		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamCombineLatestInner, Subscription> S =
-				AtomicReferenceFieldUpdater.newUpdater(StreamCombineLatestInner.class, Subscription.class, "s");
+		static final AtomicReferenceFieldUpdater<CombineLatestInner, Subscription> S =
+				AtomicReferenceFieldUpdater.newUpdater(CombineLatestInner.class, Subscription.class, "s");
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamCombineLatestInner> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(StreamCombineLatestInner.class, "requested");
+		static final AtomicLongFieldUpdater<CombineLatestInner> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(CombineLatestInner.class, "requested");
 
 		int produced;
 
-		public StreamCombineLatestInner(StreamCombineLatestCoordinator<T, ?> parent, int index, int bufferSize) {
+		public CombineLatestInner(CombineLatestCoordinator<T, ?> parent, int index, int bufferSize) {
 			this.parent = parent;
 			this.index = index;
 			this.requested = bufferSize;
@@ -613,16 +619,27 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R>
 		public long expectedFromUpstream() {
 			return limit - produced;
 		}
+
+		@Override
+		public int getMode() {
+			return INNER;
+		}
+
+		@Override
+		public String getName() {
+			return getClass().getSimpleName();
+		}
 	}
 
 	/**
 	 * The queue element type for internal use with StreamCombineLatest.
 	 */
 	public static final class SourceAndArray {
-		final StreamCombineLatestInner<?> source;
-		final Object[] array;
 
-		SourceAndArray(StreamCombineLatestInner<?> source, Object[] array) {
+		final CombineLatestInner<?> source;
+		final Object[]              array;
+
+		SourceAndArray(CombineLatestInner<?> source, Object[] array) {
 			this.source = source;
 			this.array = array;
 		}

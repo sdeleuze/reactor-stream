@@ -23,6 +23,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.ProcessorEmitter;
 import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.core.trait.Connectable;
 import reactor.core.util.DeferredSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -56,12 +57,12 @@ public final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
 
-		StreamRetryWhenOtherSubscriber other = new StreamRetryWhenOtherSubscriber();
+		RetryWhenOtherSubscriber other = new RetryWhenOtherSubscriber();
 		other.completionSignal.onSubscribe(EmptySubscription.INSTANCE);
 
 		SerializedSubscriber<T> serial = new SerializedSubscriber<>(s);
 
-		StreamRetryWhenMainSubscriber<T> main = new StreamRetryWhenMainSubscriber<>(serial, other
+		RetryWhenMainSubscriber<T> main = new RetryWhenMainSubscriber<>(serial, other
 		  .completionSignal, source);
 		other.main = main;
 
@@ -89,7 +90,7 @@ public final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class StreamRetryWhenMainSubscriber<T> extends SubscriberMultiSubscription<T, T> {
+	static final class RetryWhenMainSubscriber<T> extends SubscriberMultiSubscription<T, T> {
 
 		final DeferredSubscription otherArbiter;
 
@@ -99,12 +100,12 @@ public final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamRetryWhenMainSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(StreamRetryWhenMainSubscriber.class, "wip");
+		static final AtomicIntegerFieldUpdater<RetryWhenMainSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(RetryWhenMainSubscriber.class, "wip");
 
 		volatile boolean cancelled;
 
-		public StreamRetryWhenMainSubscriber(Subscriber<? super T> actual, Subscriber<Throwable> signaller,
+		public RetryWhenMainSubscriber(Subscriber<? super T> actual, Subscriber<Throwable> signaller,
 												Publisher<? extends T> source) {
 			super(actual);
 			this.signaller = signaller;
@@ -181,10 +182,10 @@ public final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class StreamRetryWhenOtherSubscriber
-	extends reactor.rx.Stream<Throwable>
-	implements Subscriber<Object>, FeedbackLoop, Trace, Inner {
-		StreamRetryWhenMainSubscriber<?> main;
+	static final class RetryWhenOtherSubscriber
+	extends reactor.rx.Stream<Throwable> implements Subscriber<Object>, Connectable {
+
+		RetryWhenMainSubscriber<?> main;
 
 		final ProcessorEmitter<Throwable> completionSignal = new ProcessorEmitter<>();
 
@@ -214,13 +215,18 @@ public final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return main;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return completionSignal;
+		}
+
+		@Override
+		public int getMode() {
+			return INNER | TRACE_ONLY;
 		}
 	}
 }

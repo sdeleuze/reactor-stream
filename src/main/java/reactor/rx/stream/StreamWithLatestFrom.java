@@ -63,16 +63,16 @@ public final class StreamWithLatestFrom<T, U, R> extends StreamBarrier<T, R> {
 	public void subscribe(Subscriber<? super R> s) {
 		SerializedSubscriber<R> serial = new SerializedSubscriber<>(s);
 
-		StreamWithLatestFromSubscriber<T, U, R> main = new StreamWithLatestFromSubscriber<>(serial, combiner);
+		WithLatestFromSubscriber<T, U, R> main = new WithLatestFromSubscriber<>(serial, combiner);
 
-		StreamWithLatestFromOtherSubscriber<U> secondary = new StreamWithLatestFromOtherSubscriber<>(main);
+		WithLatestFromOtherSubscriber<U> secondary = new WithLatestFromOtherSubscriber<>(main);
 
 		other.subscribe(secondary);
 
 		source.subscribe(main);
 	}
 
-	static final class StreamWithLatestFromSubscriber<T, U, R>
+	static final class WithLatestFromSubscriber<T, U, R>
 	  implements Subscriber<T>, Subscription {
 		final Subscriber<? super R> actual;
 
@@ -80,17 +80,17 @@ public final class StreamWithLatestFrom<T, U, R> extends StreamBarrier<T, R> {
 
 		volatile Subscription main;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamWithLatestFromSubscriber, Subscription> MAIN =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamWithLatestFromSubscriber.class, Subscription.class, "main");
+		static final AtomicReferenceFieldUpdater<WithLatestFromSubscriber, Subscription> MAIN =
+				AtomicReferenceFieldUpdater.newUpdater(WithLatestFromSubscriber.class, Subscription.class, "main");
 
 		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamWithLatestFromSubscriber, Subscription> OTHER =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamWithLatestFromSubscriber.class, Subscription.class, "other");
+		static final AtomicReferenceFieldUpdater<WithLatestFromSubscriber, Subscription> OTHER =
+				AtomicReferenceFieldUpdater.newUpdater(WithLatestFromSubscriber.class, Subscription.class, "other");
 
 		volatile U otherValue;
 
-		public StreamWithLatestFromSubscriber(Subscriber<? super R> actual,
+		public WithLatestFromSubscriber(Subscriber<? super R> actual,
 												 BiFunction<? super T, ? super U, ? extends R> combiner) {
 			this.actual = actual;
 			this.combiner = combiner;
@@ -198,10 +198,11 @@ public final class StreamWithLatestFrom<T, U, R> extends StreamBarrier<T, R> {
 
 	}
 
-	static final class StreamWithLatestFromOtherSubscriber<U> implements Subscriber<U> {
-		final StreamWithLatestFromSubscriber<?, U, ?> main;
+	static final class WithLatestFromOtherSubscriber<U> implements Subscriber<U> {
 
-		public StreamWithLatestFromOtherSubscriber(StreamWithLatestFromSubscriber<?, U, ?> main) {
+		final WithLatestFromSubscriber<?, U, ?> main;
+
+		public WithLatestFromOtherSubscriber(WithLatestFromSubscriber<?, U, ?> main) {
 			this.main = main;
 		}
 
@@ -224,7 +225,7 @@ public final class StreamWithLatestFrom<T, U, R> extends StreamBarrier<T, R> {
 
 		@Override
 		public void onComplete() {
-			StreamWithLatestFromSubscriber<?, U, ?> m = main;
+			WithLatestFromSubscriber<?, U, ?> m = main;
 			if (m.otherValue == null) {
 				m.cancelMain();
 

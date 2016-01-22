@@ -84,7 +84,8 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 			return;
 		}
 
-		StreamWindowStartEndMain<T, U, V> main = new StreamWindowStartEndMain<>(s, q, end, processorQueueSupplier);
+		WindowStartEndMainSubscriber<T, U, V> main =
+				new WindowStartEndMainSubscriber<>(s, q, end, processorQueueSupplier);
 
 		s.onSubscribe(main);
 
@@ -93,13 +94,13 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 		source.subscribe(main);
 	}
 
-	static final class StreamWindowStartEndMain<T, U, V> implements Subscriber<T>, Subscription, Runnable {
+	static final class WindowStartEndMainSubscriber<T, U, V> implements Subscriber<T>, Subscription, Runnable {
 
 		final Subscriber<? super reactor.rx.Stream<T>> actual;
 
 		final Queue<Object> queue;
 
-		final StreamWindowStartEndStarter<T, U, V> starter;
+		final WindowStartEndStarter<T, U, V> starter;
 
 		final Function<? super U, ? extends Publisher<V>> end;
 
@@ -107,32 +108,32 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamWindowStartEndMain> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(StreamWindowStartEndMain.class, "requested");
+		static final AtomicLongFieldUpdater<WindowStartEndMainSubscriber> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(WindowStartEndMainSubscriber.class, "requested");
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowStartEndMain> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowStartEndMain.class, "wip");
+		static final AtomicIntegerFieldUpdater<WindowStartEndMainSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(WindowStartEndMainSubscriber.class, "wip");
 
 		volatile boolean cancelled;
 
 		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamWindowStartEndMain, Subscription> S =
-				AtomicReferenceFieldUpdater.newUpdater(StreamWindowStartEndMain.class, Subscription.class,  "s");
+		static final AtomicReferenceFieldUpdater<WindowStartEndMainSubscriber, Subscription> S =
+				AtomicReferenceFieldUpdater.newUpdater(WindowStartEndMainSubscriber.class, Subscription.class, "s");
 
 		volatile int once;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowStartEndMain> ONCE =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowStartEndMain.class, "once");
+		static final AtomicIntegerFieldUpdater<WindowStartEndMainSubscriber> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(WindowStartEndMainSubscriber.class, "once");
 
 		volatile int open;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowStartEndMain> OPEN =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowStartEndMain.class, "open");
+		static final AtomicIntegerFieldUpdater<WindowStartEndMainSubscriber> OPEN =
+				AtomicIntegerFieldUpdater.newUpdater(WindowStartEndMainSubscriber.class, "open");
 
-		Set<StreamWindowStartEndEnder<T, V>> windowEnds;
+		Set<WindowStartEndEnder<T, V>> windowEnds;
 
 		Set<UnicastProcessor<T>> windows;
 
@@ -140,15 +141,15 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 
 		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamWindowStartEndMain, Throwable> ERROR =
-				AtomicReferenceFieldUpdater.newUpdater(StreamWindowStartEndMain.class, Throwable.class,  "error");
+		static final AtomicReferenceFieldUpdater<WindowStartEndMainSubscriber, Throwable> ERROR =
+				AtomicReferenceFieldUpdater.newUpdater(WindowStartEndMainSubscriber.class, Throwable.class, "error");
 
-		public StreamWindowStartEndMain(Subscriber<? super reactor.rx.Stream<T>> actual, Queue<Object> queue,
+		public WindowStartEndMainSubscriber(Subscriber<? super reactor.rx.Stream<T>> actual, Queue<Object> queue,
 				Function<? super U, ? extends Publisher<V>> end,
 				Supplier<? extends Queue<T>> processorQueueSupplier) {
 			this.actual = actual;
 			this.queue = queue;
-			this.starter = new StreamWindowStartEndStarter<>(this);
+			this.starter = new WindowStartEndStarter<>(this);
 			this.end = end;
 			this.windowEnds = new HashSet<>();
 			this.windows = new HashSet<>();
@@ -225,7 +226,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 			drain();
 		}
 
-		void endSignal(StreamWindowStartEndEnder<T, V> end) {
+		void endSignal(WindowStartEndEnder<T, V> end) {
 			remove(end);
 			synchronized (this) {
 				queue.offer(end);
@@ -254,9 +255,9 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 			}
 		}
 
-		boolean add(StreamWindowStartEndEnder<T, V> ender) {
+		boolean add(WindowStartEndEnder<T, V> ender) {
 			synchronized (starter) {
-				Set<StreamWindowStartEndEnder<T, V>> set = windowEnds;
+				Set<WindowStartEndEnder<T, V>> set = windowEnds;
 				if (set != null) {
 					set.add(ender);
 					return true;
@@ -266,9 +267,9 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 			return false;
 		}
 
-		void remove(StreamWindowStartEndEnder<T, V> ender) {
+		void remove(WindowStartEndEnder<T, V> ender) {
 			synchronized (starter) {
-				Set<StreamWindowStartEndEnder<T, V>> set = windowEnds;
+				Set<WindowStartEndEnder<T, V>> set = windowEnds;
 				if (set != null) {
 					set.remove(ender);
 				}
@@ -276,7 +277,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 		}
 
 		void removeAll() {
-			Set<StreamWindowStartEndEnder<T, V>> set;
+			Set<WindowStartEndEnder<T, V>> set;
 			synchronized (starter) {
 				set = windowEnds;
 				if (set == null) {
@@ -380,7 +381,7 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 
 							UnicastProcessor<T> w = new UnicastProcessor<>(pq, this);
 
-							StreamWindowStartEndEnder<T, V> end = new StreamWindowStartEndEnder<>(this, w);
+							WindowStartEndEnder<T, V> end = new WindowStartEndEnder<>(this, w);
 
 							windows.add(w);
 
@@ -400,10 +401,8 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 								p.subscribe(end);
 							}
 						}
-					} else
-					if (o instanceof StreamWindowStartEndEnder) {
-						@SuppressWarnings("unchecked")
-						StreamWindowStartEndEnder<T, V> end = (StreamWindowStartEndEnder<T, V>) o;
+					} else if (o instanceof WindowStartEndEnder) {
+						@SuppressWarnings("unchecked") WindowStartEndEnder<T, V> end = (WindowStartEndEnder<T, V>) o;
 
 						end.window.onComplete();
 					} else {
@@ -424,11 +423,11 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 		}
 	}
 
-	static final class StreamWindowStartEndStarter<T, U, V> extends DeferredSubscription implements Subscriber<U> {
+	static final class WindowStartEndStarter<T, U, V> extends DeferredSubscription implements Subscriber<U> {
 
-		final StreamWindowStartEndMain<T, U, V> main;
+		final WindowStartEndMainSubscriber<T, U, V> main;
 
-		public StreamWindowStartEndStarter(StreamWindowStartEndMain<T, U, V> main) {
+		public WindowStartEndStarter(WindowStartEndMainSubscriber<T, U, V> main) {
 			this.main = main;
 		}
 
@@ -456,13 +455,13 @@ public final class StreamWindowStartEnd<T, U, V> extends StreamBarrier<T, reacto
 
 	}
 
-	static final class StreamWindowStartEndEnder<T, V> extends DeferredSubscription implements Subscriber<V> {
+	static final class WindowStartEndEnder<T, V> extends DeferredSubscription implements Subscriber<V> {
 
-		final StreamWindowStartEndMain<T, ?, V> main;
+		final WindowStartEndMainSubscriber<T, ?, V> main;
 
 		final UnicastProcessor<T> window;
 
-		public StreamWindowStartEndEnder(StreamWindowStartEndMain<T, ?, V> main, UnicastProcessor<T> window) {
+		public WindowStartEndEnder(WindowStartEndMainSubscriber<T, ?, V> main, UnicastProcessor<T> window) {
 			this.main = main;
 			this.window = window;
 		}

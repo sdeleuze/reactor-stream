@@ -18,8 +18,8 @@ package reactor.rx.stream;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -32,7 +32,7 @@ import reactor.core.util.BackpressureUtils;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoCount<T> extends Mono.MonoBarrier<T, Long> {
+public final class MonoCount<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Long> {
 
 	public MonoCount(Publisher<? extends T> source) {
 		super(source);
@@ -40,17 +40,16 @@ public final class MonoCount<T> extends Mono.MonoBarrier<T, Long> {
 
 	@Override
 	public void subscribe(Subscriber<? super Long> s) {
-		source.subscribe(new MonoCountSubscriber<>(s));
+		source.subscribe(new CountSubscriber<>(s));
 	}
 
-	static final class MonoCountSubscriber<T> extends SubscriberDeferredScalar<T, Long>
-	implements Upstream {
+	static final class CountSubscriber<T> extends SubscriberDeferredScalar<T, Long> implements Subscribable {
 
 		long counter;
 
 		Subscription s;
 
-		public MonoCountSubscriber(Subscriber<? super Long> actual) {
+		public CountSubscriber(Subscriber<? super Long> actual) {
 			super(actual);
 		}
 

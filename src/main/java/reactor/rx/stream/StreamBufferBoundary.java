@@ -71,10 +71,10 @@ extends StreamBarrier<T, C> {
 			EmptySubscription.error(s, new NullPointerException("The bufferSupplier returned a null buffer"));
 			return;
 		}
-		
-		StreamBufferBoundaryMain<T, U, C> parent = new StreamBufferBoundaryMain<>(s, buffer, bufferSupplier);
-		
-		StreamBufferBoundaryOther<U> boundary = new StreamBufferBoundaryOther<>(parent);
+
+		BufferBoundaryMain<T, U, C> parent = new BufferBoundaryMain<>(s, buffer, bufferSupplier);
+
+		BufferBoundaryOther<U> boundary = new BufferBoundaryOther<>(parent);
 		parent.other = boundary;
 		
 		s.onSubscribe(parent);
@@ -83,29 +83,29 @@ extends StreamBarrier<T, C> {
 		
 		source.subscribe(parent);
 	}
-	
-	static final class StreamBufferBoundaryMain<T, U, C extends Collection<? super T>>
+
+	static final class BufferBoundaryMain<T, U, C extends Collection<? super T>>
 	implements Subscriber<T>, Subscription {
 
 		final Subscriber<? super C> actual;
 		
 		final Supplier<C> bufferSupplier;
-		
-		StreamBufferBoundaryOther<U> other;
+
+		BufferBoundaryOther<U> other;
 		
 		C buffer;
 		
 		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamBufferBoundaryMain, Subscription> S =
-				AtomicReferenceFieldUpdater.newUpdater(StreamBufferBoundaryMain.class, Subscription.class, "s");
+		static final AtomicReferenceFieldUpdater<BufferBoundaryMain, Subscription> S =
+				AtomicReferenceFieldUpdater.newUpdater(BufferBoundaryMain.class, Subscription.class, "s");
 		
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamBufferBoundaryMain> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(StreamBufferBoundaryMain.class, "requested");
-		
-		public StreamBufferBoundaryMain(Subscriber<? super C> actual, C buffer, Supplier<C> bufferSupplier) {
+		static final AtomicLongFieldUpdater<BufferBoundaryMain> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(BufferBoundaryMain.class, "requested");
+
+		public BufferBoundaryMain(Subscriber<? super C> actual, C buffer, Supplier<C> bufferSupplier) {
 			this.actual = actual;
 			this.buffer = buffer;
 			this.bufferSupplier = bufferSupplier;
@@ -244,13 +244,13 @@ extends StreamBarrier<T, C> {
 			}
 		}
 	}
-	
-	static final class StreamBufferBoundaryOther<U> extends DeferredSubscription
+
+	static final class BufferBoundaryOther<U> extends DeferredSubscription
 	implements Subscriber<U> {
-		
-		final StreamBufferBoundaryMain<?, U, ?> main;
-		
-		public StreamBufferBoundaryOther(StreamBufferBoundaryMain<?, U, ?> main) {
+
+		final BufferBoundaryMain<?, U, ?> main;
+
+		public BufferBoundaryOther(BufferBoundaryMain<?, U, ?> main) {
 			this.main = main;
 		}
 		

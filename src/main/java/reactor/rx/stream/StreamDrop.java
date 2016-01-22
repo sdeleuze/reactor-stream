@@ -21,6 +21,10 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Consumer;
@@ -59,12 +63,11 @@ public final class StreamDrop<T> extends StreamBarrier<T, T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		source.subscribe(new StreamDropSubscriber<>(s, onDrop));
+		source.subscribe(new DropSubscriber<>(s, onDrop));
 	}
 
-	static final class StreamDropSubscriber<T>
-			implements Subscriber<T>, Subscription, Downstream, Upstream, ActiveUpstream,
-					   DownstreamDemand, FeedbackLoop {
+	static final class DropSubscriber<T>
+			implements Subscriber<T>, Subscription, Publishable, Completable, Requestable, Connectable {
 
 		final Subscriber<? super T> actual;
 
@@ -74,12 +77,12 @@ public final class StreamDrop<T> extends StreamBarrier<T, T> {
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamDropSubscriber> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(StreamDropSubscriber.class, "requested");
+		static final AtomicLongFieldUpdater<DropSubscriber> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(DropSubscriber.class, "requested");
 
 		boolean done;
 
-		public StreamDropSubscriber(Subscriber<? super T> actual, Consumer<? super T> onDrop) {
+		public DropSubscriber(Subscriber<? super T> actual, Consumer<? super T> onDrop) {
 			this.actual = actual;
 			this.onDrop = onDrop;
 		}
@@ -180,12 +183,12 @@ public final class StreamDrop<T> extends StreamBarrier<T, T> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return onDrop;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return null;
 		}
 

@@ -18,8 +18,9 @@ package reactor.rx.stream;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ReactiveState;
 import reactor.fn.Supplier;
 import reactor.rx.Stream;
 
@@ -49,7 +50,7 @@ import reactor.rx.Stream;
  *
  * @author Stephane Maldini
  */
-public final class StreamJust<T> extends Stream<T> implements Supplier<T>, ReactiveState.FeedbackLoop {
+public final class StreamJust<T> extends Stream<T> implements Supplier<T>, Connectable {
 
 	final public static StreamJust<?> EMPTY = new StreamJust<>(null);
 
@@ -77,12 +78,12 @@ public final class StreamJust<T> extends Stream<T> implements Supplier<T>, React
 	}
 
 	@Override
-	public Object delegateInput() {
+	public Object connectedInput() {
 		return null;
 	}
 
 	@Override
-	public Object delegateOutput() {
+	public Object connectedOutput() {
 		return value;
 	}
 
@@ -91,7 +92,7 @@ public final class StreamJust<T> extends Stream<T> implements Supplier<T>, React
 		return "singleValue=" + value;
 	}
 
-	private static final class SingleSubscription<T> implements Subscription, Upstream, ActiveUpstream {
+	private static final class SingleSubscription<T> implements Subscription, Completable {
 
 		boolean terminado;
 		final T                     value;

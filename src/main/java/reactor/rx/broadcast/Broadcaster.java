@@ -297,9 +297,9 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * INTERNAL
 	 */
 
-	private final Timer               timer;
-	private final boolean             ignoreDropped;
-	private final SwapSubscription<O> subscription;
+	private final Timer            timer;
+	private final boolean          ignoreDropped;
+	private final SwapSubscription subscription;
 
 	protected Broadcaster(Processor<O, O> processor, Timer timer, boolean ignoreDropped) {
 		this(processor, processor, timer, ignoreDropped);

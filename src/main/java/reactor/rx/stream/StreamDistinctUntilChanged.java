@@ -20,6 +20,9 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Function;
@@ -46,11 +49,11 @@ public final class StreamDistinctUntilChanged<T, K> extends StreamBarrier<T, T> 
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		source.subscribe(new StreamDistinctUntilChangedSubscriber<>(s, keyExtractor));
+		source.subscribe(new DistinctUntilChangedSubscriber<>(s, keyExtractor));
 	}
 
-	static final class StreamDistinctUntilChangedSubscriber<T, K>
-			implements Subscriber<T>, Downstream, FeedbackLoop, Upstream, ActiveUpstream {
+	static final class DistinctUntilChangedSubscriber<T, K>
+			implements Subscriber<T>, Publishable, Connectable, Completable {
 		final Subscriber<? super T> actual;
 
 		final Function<? super T, K> keyExtractor;
@@ -61,7 +64,7 @@ public final class StreamDistinctUntilChanged<T, K> extends StreamBarrier<T, T> 
 
 		K lastKey;
 
-		public StreamDistinctUntilChangedSubscriber(Subscriber<? super T> actual,
+		public DistinctUntilChangedSubscriber(Subscriber<? super T> actual,
 													   Function<? super T, K> keyExtractor) {
 			this.actual = actual;
 			this.keyExtractor = keyExtractor;
@@ -141,12 +144,12 @@ public final class StreamDistinctUntilChanged<T, K> extends StreamBarrier<T, T> 
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return keyExtractor;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return lastKey;
 		}
 

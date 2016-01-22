@@ -21,8 +21,8 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Supplier;
@@ -39,7 +39,7 @@ import reactor.fn.Supplier;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoSingle<T> extends Mono.MonoBarrier<T, T> {
+public final class MonoSingle<T> extends reactor.core.publisher.Mono.MonoBarrier<T, T> {
 
 	private static final Supplier<Object> COMPLETE_ON_EMPTY_SEQUENCE = new Supplier<Object>() {
 		@Override
@@ -71,11 +71,10 @@ public final class MonoSingle<T> extends Mono.MonoBarrier<T, T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		source.subscribe(new MonoSingleSubscriber<>(s, defaultSupplier));
+		source.subscribe(new SingleSubscriber<>(s, defaultSupplier));
 	}
 
-	static final class MonoSingleSubscriber<T> extends SubscriberDeferredScalar<T, T>
-	implements Upstream {
+	static final class SingleSubscriber<T> extends SubscriberDeferredScalar<T, T> implements Subscribable {
 
 		final Supplier<? extends T> defaultSupplier;
 
@@ -85,7 +84,7 @@ public final class MonoSingle<T> extends Mono.MonoBarrier<T, T> {
 
 		boolean done;
 
-		public MonoSingleSubscriber(Subscriber<? super T> actual, Supplier<? extends T> defaultSupplier) {
+		public SingleSubscriber(Subscriber<? super T> actual, Supplier<? extends T> defaultSupplier) {
 			super(actual);
 			this.defaultSupplier = defaultSupplier;
 		}
@@ -202,7 +201,7 @@ public final class MonoSingle<T> extends Mono.MonoBarrier<T, T> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return defaultSupplier != COMPLETE_ON_EMPTY_SEQUENCE ? defaultSupplier : null;
 		}
 

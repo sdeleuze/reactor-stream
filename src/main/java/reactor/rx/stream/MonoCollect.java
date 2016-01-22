@@ -20,8 +20,8 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -41,7 +41,7 @@ import reactor.fn.Supplier;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoCollect<T, R> extends Mono.MonoBarrier<T, R> {
+public final class MonoCollect<T, R> extends reactor.core.publisher.Mono.MonoBarrier<T, R> {
 
 	final Supplier<R> supplier;
 
@@ -70,12 +70,11 @@ public final class MonoCollect<T, R> extends Mono.MonoBarrier<T, R> {
 			return;
 		}
 
-		source.subscribe(new MonoCollectSubscriber<>(s, action, container));
+		source.subscribe(new CollectSubscriber<>(s, action, container));
 	}
 
-	static final class MonoCollectSubscriber<T, R>
-			extends SubscriberDeferredScalar<T, R>
-	implements Upstream {
+	static final class CollectSubscriber<T, R>
+			extends SubscriberDeferredScalar<T, R> implements Subscribable {
 
 		final BiConsumer<? super R, ? super T> action;
 
@@ -85,7 +84,7 @@ public final class MonoCollect<T, R> extends Mono.MonoBarrier<T, R> {
 
 		boolean done;
 
-		public MonoCollectSubscriber(Subscriber<? super R> actual, BiConsumer<? super R, ? super T> action,
+		public CollectSubscriber(Subscriber<? super R> actual, BiConsumer<? super R, ? super T> action,
 										  R container) {
 			super(actual);
 			this.action = action;
@@ -167,12 +166,12 @@ public final class MonoCollect<T, R> extends Mono.MonoBarrier<T, R> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return action;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return container;
 		}
 	}

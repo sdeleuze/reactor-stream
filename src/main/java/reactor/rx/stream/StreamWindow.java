@@ -83,10 +83,10 @@ public final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>
 	@Override
 	public void subscribe(Subscriber<? super reactor.rx.Stream<T>> s) {
 		if (skip == size) {
-			source.subscribe(new StreamWindowExact<>(s, size, processorQueueSupplier));
+			source.subscribe(new WindowExactSubscriber<>(s, size, processorQueueSupplier));
 		} else
 		if (skip > size) {
-			source.subscribe(new StreamWindowSkip<>(s, size, skip, processorQueueSupplier));
+			source.subscribe(new WindowSkipSubscriber<>(s, size, skip, processorQueueSupplier));
 		} else {
 			Queue<UnicastProcessor<T>> overflowQueue;
 			
@@ -101,12 +101,12 @@ public final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>
 				EmptySubscription.error(s, new NullPointerException("The overflowQueueSupplier returned a null queue"));
 				return;
 			}
-			
-			source.subscribe(new StreamWindowOverlap<>(s, size, skip, processorQueueSupplier, overflowQueue));
+
+			source.subscribe(new WindowOverlapSubscriber<>(s, size, skip, processorQueueSupplier, overflowQueue));
 		}
 	}
-	
-	static final class StreamWindowExact<T> implements Subscriber<T>, Subscription, Runnable {
+
+	static final class WindowExactSubscriber<T> implements Subscriber<T>, Subscription, Runnable {
 		
 		final Subscriber<? super reactor.rx.Stream<T>> actual;
 
@@ -116,13 +116,13 @@ public final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowExact> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowExact.class, "wip");
+		static final AtomicIntegerFieldUpdater<WindowExactSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(WindowExactSubscriber.class, "wip");
 
 		volatile int once;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowExact> ONCE =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowExact.class, "once");
+		static final AtomicIntegerFieldUpdater<WindowExactSubscriber> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(WindowExactSubscriber.class, "once");
 
 		int index;
 		
@@ -131,8 +131,8 @@ public final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>
 		UnicastProcessor<T> window;
 		
 		boolean done;
-		
-		public StreamWindowExact(Subscriber<? super reactor.rx.Stream<T>> actual, int size,
+
+		public WindowExactSubscriber(Subscriber<? super reactor.rx.Stream<T>> actual, int size,
 				Supplier<? extends Queue<T>> processorQueueSupplier) {
 			this.actual = actual;
 			this.size = size;
@@ -253,8 +253,8 @@ public final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>
 			}
 		}
 	}
-	
-	static final class StreamWindowSkip<T> implements Subscriber<T>, Subscription, Runnable {
+
+	static final class WindowSkipSubscriber<T> implements Subscriber<T>, Subscription, Runnable {
 		
 		final Subscriber<? super reactor.rx.Stream<T>> actual;
 
@@ -266,18 +266,18 @@ public final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowSkip> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowSkip.class, "wip");
+		static final AtomicIntegerFieldUpdater<WindowSkipSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(WindowSkipSubscriber.class, "wip");
 
 		volatile int once;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowSkip> ONCE =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowSkip.class, "once");
+		static final AtomicIntegerFieldUpdater<WindowSkipSubscriber> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(WindowSkipSubscriber.class, "once");
 
 		volatile int firstRequest;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowSkip> FIRST_REQUEST =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowSkip.class, "firstRequest");
+		static final AtomicIntegerFieldUpdater<WindowSkipSubscriber> FIRST_REQUEST =
+				AtomicIntegerFieldUpdater.newUpdater(WindowSkipSubscriber.class, "firstRequest");
 
 		int index;
 		
@@ -286,8 +286,8 @@ public final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>
 		UnicastProcessor<T> window;
 		
 		boolean done;
-		
-		public StreamWindowSkip(Subscriber<? super reactor.rx.Stream<T>> actual, int size, int skip,
+
+		public WindowSkipSubscriber(Subscriber<? super reactor.rx.Stream<T>> actual, int size, int skip,
 				Supplier<? extends Queue<T>> processorQueueSupplier) {
 			this.actual = actual;
 			this.size = size;
@@ -422,7 +422,7 @@ public final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>
 		}
 	}
 
-	static final class StreamWindowOverlap<T> implements Subscriber<T>, Subscription, Runnable {
+	static final class WindowOverlapSubscriber<T> implements Subscriber<T>, Subscription, Runnable {
 		
 		final Subscriber<? super reactor.rx.Stream<T>> actual;
 
@@ -438,28 +438,28 @@ public final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowOverlap> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowOverlap.class, "wip");
+		static final AtomicIntegerFieldUpdater<WindowOverlapSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(WindowOverlapSubscriber.class, "wip");
 
 		volatile int once;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowOverlap> ONCE =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowOverlap.class, "once");
+		static final AtomicIntegerFieldUpdater<WindowOverlapSubscriber> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(WindowOverlapSubscriber.class, "once");
 
 		volatile int firstRequest;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowOverlap> FIRST_REQUEST =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowOverlap.class, "firstRequest");
+		static final AtomicIntegerFieldUpdater<WindowOverlapSubscriber> FIRST_REQUEST =
+				AtomicIntegerFieldUpdater.newUpdater(WindowOverlapSubscriber.class, "firstRequest");
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamWindowOverlap> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(StreamWindowOverlap.class, "requested");
+		static final AtomicLongFieldUpdater<WindowOverlapSubscriber> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(WindowOverlapSubscriber.class, "requested");
 
 		volatile int dw;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamWindowOverlap> DW =
-				AtomicIntegerFieldUpdater.newUpdater(StreamWindowOverlap.class, "dw");
+		static final AtomicIntegerFieldUpdater<WindowOverlapSubscriber> DW =
+				AtomicIntegerFieldUpdater.newUpdater(WindowOverlapSubscriber.class, "dw");
 
 		int index;
 		
@@ -471,8 +471,8 @@ public final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>
 		Throwable error;
 		
 		volatile boolean cancelled;
-		
-		public StreamWindowOverlap(Subscriber<? super reactor.rx.Stream<T>> actual, int size, int skip,
+
+		public WindowOverlapSubscriber(Subscriber<? super reactor.rx.Stream<T>> actual, int size, int skip,
 				Supplier<? extends Queue<T>> processorQueueSupplier,
 				Queue<UnicastProcessor<T>> overflowQueue) {
 			this.actual = actual;

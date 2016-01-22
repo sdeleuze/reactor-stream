@@ -20,6 +20,9 @@ import java.util.ArrayDeque;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Backpressurable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -49,12 +52,11 @@ public final class StreamSkipLast<T> extends StreamBarrier<T, T> {
 		if (n == 0) {
 			source.subscribe(s);
 		} else {
-			source.subscribe(new StreamSkipLastSubscriber<>(s, n));
+			source.subscribe(new SkipLastSubscriber<>(s, n));
 		}
 	}
 
-	static final class StreamSkipLastSubscriber<T> implements Subscriber<T>, Upstream, Downstream,
-																 Buffering {
+	static final class SkipLastSubscriber<T> implements Subscriber<T>, Subscribable, Publishable, Backpressurable {
 		final Subscriber<? super T> actual;
 
 		final int n;
@@ -63,7 +65,7 @@ public final class StreamSkipLast<T> extends StreamBarrier<T, T> {
 
 		Subscription s;
 
-		public StreamSkipLastSubscriber(Subscriber<? super T> actual, int n) {
+		public SkipLastSubscriber(Subscriber<? super T> actual, int n) {
 			this.actual = actual;
 			this.n = n;
 			this.buffer = new ArrayDeque<>();
@@ -105,7 +107,7 @@ public final class StreamSkipLast<T> extends StreamBarrier<T, T> {
 		}
 
 		@Override
-		public long pending() {
+		public long getPending() {
 			return buffer.size();
 		}
 

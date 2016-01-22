@@ -31,10 +31,15 @@ import reactor.core.publisher.Processors;
 import reactor.core.queue.RingBuffer;
 import reactor.core.subscriber.SubscriberWithDemand;
 import reactor.core.timer.Timer;
+import reactor.core.trait.Backpressurable;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.SubscribableMany;
 import reactor.core.util.Assert;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ReactiveState;
+import reactor.core.util.PlatformDependent;
 import reactor.fn.Function;
 
 /**
@@ -59,13 +64,7 @@ public final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K,
 	}
 
 	static final class GroupedEmitter<T, K> extends GroupedStream<K, T>
-			implements Subscription, Subscriber<T>,
-			           ReactiveState.Upstream,
-			           ReactiveState.Downstream,
-			           ReactiveState.Buffering,
-			           ReactiveState.ActiveUpstream,
-			           ReactiveState.ActiveDownstream,
-			           ReactiveState.Inner {
+			implements Subscription, Subscriber<T>, Completable, Publishable, Cancellable {
 
 		private final GroupByAction<T, K> parent;
 		private final FluxProcessor<T, T> processor;
@@ -98,15 +97,15 @@ public final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K,
 		public GroupedEmitter(K key, GroupByAction<T, K> parent) {
 			super(key);
 			this.parent = parent;
-			this.processor = Processors.replay(ReactiveState.SMALL_BUFFER_SIZE, Integer.MAX_VALUE, true);
+			this.processor = Processors.replay(PlatformDependent.SMALL_BUFFER_SIZE, Integer.MAX_VALUE, true);
 		}
 
 
 		Queue<T> getBuffer() {
 		Queue<T> q = buffer;
 			if (q == null) {
-				q = RingBuffer.createSequencedQueue(RingBuffer.<T>createSingleProducer(ReactiveState
-						.SMALL_BUFFER_SIZE));
+				q =
+						RingBuffer.createSequencedQueue(RingBuffer.<T>createSingleProducer(PlatformDependent.SMALL_BUFFER_SIZE));
 				buffer = q;
 			}
 			return q;
@@ -126,6 +125,11 @@ public final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K,
 				cancelled = true;
 				removeGroup();
 			}
+		}
+
+		@Override
+		public int getMode() {
+			return INNER;
 		}
 
 		void start() {
@@ -183,7 +187,7 @@ public final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K,
 
 		@Override
 		public long getCapacity() {
-			return ReactiveState.SMALL_BUFFER_SIZE;
+			return PlatformDependent.SMALL_BUFFER_SIZE;
 		}
 
 		@Override
@@ -202,7 +206,7 @@ public final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K,
 		}
 
 		@Override
-		public long pending() {
+		public long getPending() {
 			return buffer != null ? buffer.size() : -1L;
 		}
 
@@ -313,7 +317,7 @@ public final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K,
 	}
 
 	static final class GroupByAction<T, K> extends SubscriberWithDemand<T, GroupedStream<K, T>>
-			implements ReactiveState.LinkedDownstreams, ReactiveState.Buffering{
+			implements SubscribableMany, Backpressurable {
 
 		private final Function<? super T, ? extends K> fn;
 
@@ -344,7 +348,7 @@ public final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K,
 			Assert.notNull(fn, "Key mapping function cannot be null.");
 			this.fn = fn;
 			this.timer = timer;
-			this.limit = ReactiveState.SMALL_BUFFER_SIZE / 2;
+			this.limit = PlatformDependent.SMALL_BUFFER_SIZE / 2;
 		}
 
 		public Map<K, GroupedEmitter<T, K>> groupByMap() {
@@ -390,7 +394,7 @@ public final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K,
 			long remaining = REQUESTED.addAndGet(this, -n);
 			long buffered = BUFFERED.get(this);
 			if (remaining < limit) {
-				long toRequest = ReactiveState.SMALL_BUFFER_SIZE - buffered;
+				long toRequest = PlatformDependent.SMALL_BUFFER_SIZE - buffered;
 				if (toRequest > 0 && REQUESTED.compareAndSet(this, remaining, remaining + toRequest)) {
 					requestMore(toRequest);
 				}
@@ -453,7 +457,7 @@ public final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K,
 		}
 
 		@Override
-		public long pending() {
+		public long getPending() {
 			return BUFFERED.get(this);
 		}
 

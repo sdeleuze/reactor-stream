@@ -27,17 +27,17 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.BaseSubscriber;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.Assert;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ReactiveState;
 
 /**
  * @author Stephane Maldini
  * @since 2.5
  */
-public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements ReactiveState.Upstream,
-                                                                               ReactiveState.Downstream,
+public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements Subscribable, Publishable,
                                                                                Subscription,
                                                                                BlockingQueue<IN> {
 

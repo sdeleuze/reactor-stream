@@ -60,42 +60,42 @@ public final class StreamSample<T, U> extends StreamBarrier<T, T> {
 
 		Subscriber<T> serial = new SerializedSubscriber<>(s);
 
-		StreamSampleMainSubscriber<T> main = new StreamSampleMainSubscriber<>(serial);
+		SampleMainSubscriber<T> main = new SampleMainSubscriber<>(serial);
 
 		s.onSubscribe(main);
 
-		other.subscribe(new StreamSampleOtherSubscriber<>(main));
+		other.subscribe(new SampleOtherSubscriber<>(main));
 
 		source.subscribe(main);
 	}
 
-	static final class StreamSampleMainSubscriber<T>
+	static final class SampleMainSubscriber<T>
 	  implements Subscriber<T>, Subscription {
 
 		final Subscriber<? super T> actual;
 
 		volatile T value;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamSampleMainSubscriber, Object> VALUE =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamSampleMainSubscriber.class, Object.class, "value");
+		static final AtomicReferenceFieldUpdater<SampleMainSubscriber, Object> VALUE =
+				AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Object.class, "value");
 
 		volatile Subscription main;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamSampleMainSubscriber, Subscription> MAIN =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamSampleMainSubscriber.class, Subscription.class, "main");
+		static final AtomicReferenceFieldUpdater<SampleMainSubscriber, Subscription> MAIN =
+				AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Subscription.class, "main");
 
 
 		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamSampleMainSubscriber, Subscription> OTHER =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamSampleMainSubscriber.class, Subscription.class, "other");
+		static final AtomicReferenceFieldUpdater<SampleMainSubscriber, Subscription> OTHER =
+				AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Subscription.class, "other");
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamSampleMainSubscriber> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(StreamSampleMainSubscriber.class, "requested");
+		static final AtomicLongFieldUpdater<SampleMainSubscriber> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(SampleMainSubscriber.class, "requested");
 
-		public StreamSampleMainSubscriber(Subscriber<? super T> actual) {
+		public SampleMainSubscriber(Subscriber<? super T> actual) {
 			this.actual = actual;
 		}
 
@@ -184,10 +184,11 @@ public final class StreamSample<T, U> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class StreamSampleOtherSubscriber<T, U> implements Subscriber<U> {
-		final StreamSampleMainSubscriber<T> main;
+	static final class SampleOtherSubscriber<T, U> implements Subscriber<U> {
 
-		public StreamSampleOtherSubscriber(StreamSampleMainSubscriber<T> main) {
+		final SampleMainSubscriber<T> main;
+
+		public SampleOtherSubscriber(SampleMainSubscriber<T> main) {
 			this.main = main;
 		}
 
@@ -198,7 +199,7 @@ public final class StreamSample<T, U> extends StreamBarrier<T, T> {
 
 		@Override
 		public void onNext(U t) {
-			StreamSampleMainSubscriber<T> m = main;
+			SampleMainSubscriber<T> m = main;
 
 			T v = m.getAndNullValue();
 
@@ -220,7 +221,7 @@ public final class StreamSample<T, U> extends StreamBarrier<T, T> {
 
 		@Override
 		public void onError(Throwable t) {
-			StreamSampleMainSubscriber<T> m = main;
+			SampleMainSubscriber<T> m = main;
 
 			m.cancelMain();
 
@@ -229,7 +230,7 @@ public final class StreamSample<T, U> extends StreamBarrier<T, T> {
 
 		@Override
 		public void onComplete() {
-			StreamSampleMainSubscriber<T> m = main;
+			SampleMainSubscriber<T> m = main;
 
 			m.cancelMain();
 

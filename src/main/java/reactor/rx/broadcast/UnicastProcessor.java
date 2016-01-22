@@ -248,7 +248,12 @@ implements Processor<T, T> {
 			queue.clear();
 		}
 	}
-	
+
+	@Override
+	public int getMode() {
+		return 0;
+	}
+
 	final class UnicastSubscription implements Subscription {
 		@Override
 		public void request(long n) {

@@ -48,21 +48,22 @@ public final class StreamTakeUntil<T, U> extends StreamBarrier<T, T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		StreamTakeUntilMainSubscriber<T> mainSubscriber = new StreamTakeUntilMainSubscriber<>(s);
+		TakeUntilMainSubscriber<T> mainSubscriber = new TakeUntilMainSubscriber<>(s);
 
-		StreamTakeUntilOtherSubscriber<U> otherSubscriber = new StreamTakeUntilOtherSubscriber<>(mainSubscriber);
+		TakeUntilOtherSubscriber<U> otherSubscriber = new TakeUntilOtherSubscriber<>(mainSubscriber);
 
 		other.subscribe(otherSubscriber);
 
 		source.subscribe(mainSubscriber);
 	}
 
-	static final class StreamTakeUntilOtherSubscriber<U> implements Subscriber<U> {
-		final StreamTakeUntilMainSubscriber<?> main;
+	static final class TakeUntilOtherSubscriber<U> implements Subscriber<U> {
+
+		final TakeUntilMainSubscriber<?> main;
 
 		boolean once;
 
-		public StreamTakeUntilOtherSubscriber(StreamTakeUntilMainSubscriber<?> main) {
+		public TakeUntilOtherSubscriber(TakeUntilMainSubscriber<?> main) {
 			this.main = main;
 		}
 
@@ -99,20 +100,20 @@ public final class StreamTakeUntil<T, U> extends StreamBarrier<T, T> {
 
 	}
 
-	static final class StreamTakeUntilMainSubscriber<T> implements Subscriber<T>, Subscription {
+	static final class TakeUntilMainSubscriber<T> implements Subscriber<T>, Subscription {
 		final SerializedSubscriber<T> actual;
 
 		volatile Subscription main;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamTakeUntilMainSubscriber, Subscription> MAIN =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamTakeUntilMainSubscriber.class, Subscription.class, "main");
+		static final AtomicReferenceFieldUpdater<TakeUntilMainSubscriber, Subscription> MAIN =
+				AtomicReferenceFieldUpdater.newUpdater(TakeUntilMainSubscriber.class, Subscription.class, "main");
 
 		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamTakeUntilMainSubscriber, Subscription> OTHER =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamTakeUntilMainSubscriber.class, Subscription.class, "other");
+		static final AtomicReferenceFieldUpdater<TakeUntilMainSubscriber, Subscription> OTHER =
+				AtomicReferenceFieldUpdater.newUpdater(TakeUntilMainSubscriber.class, Subscription.class, "other");
 
-		public StreamTakeUntilMainSubscriber(Subscriber<? super T> actual) {
+		public TakeUntilMainSubscriber(Subscriber<? super T> actual) {
 			this.actual = new SerializedSubscriber<>(actual);
 		}
 

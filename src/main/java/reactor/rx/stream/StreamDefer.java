@@ -19,8 +19,8 @@ import java.util.Objects;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.EmptySubscription;
-import reactor.core.util.ReactiveState;
 import reactor.fn.Supplier;
 
 /**
@@ -34,10 +34,7 @@ import reactor.fn.Supplier;
  * @since 2.5
  */
 public final class StreamDefer<T> 
-extends reactor.rx.Stream<T>
-implements 
-												ReactiveState.Factory,
-												ReactiveState.Upstream {
+extends reactor.rx.Stream<T> implements Subscribable {
 
 	final Supplier<? extends Publisher<? extends T>> supplier;
 

@@ -22,9 +22,12 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.trait.Backpressurable;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.fn.BooleanSupplier;
-import reactor.rx.util.DrainUtils;
 
 /**
  * Emits the last N values the source emitted before its completion.
@@ -51,20 +54,19 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
 		if (n == 0) {
-			source.subscribe(new StreamTakeLastZeroSubscriber<>(s));
+			source.subscribe(new TakeLastZeroSubscriber<>(s));
 		} else if (n == 1) {
-			source.subscribe(new StreamTakeLastOneSubscriber<>(s));
+			source.subscribe(new TakeLastOneSubscriber<>(s));
 		} else {
-			source.subscribe(new StreamTakeLastManySubscriber<>(s, n));
+			source.subscribe(new TakeLastManySubscriber<>(s, n));
 		}
 	}
 
-	static final class StreamTakeLastZeroSubscriber<T> implements Subscriber<T>,
-																	 Downstream {
+	static final class TakeLastZeroSubscriber<T> implements Subscriber<T>, Publishable {
 
 		final Subscriber<? super T> actual;
 
-		public StreamTakeLastZeroSubscriber(Subscriber<? super T> actual) {
+		public TakeLastZeroSubscriber(Subscriber<? super T> actual) {
 			this.actual = actual;
 		}
 
@@ -96,13 +98,12 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class StreamTakeLastOneSubscriber<T>
-			extends SubscriberDeferredScalar<T, T>
-	implements Upstream {
+	static final class TakeLastOneSubscriber<T>
+			extends SubscriberDeferredScalar<T, T> implements Subscribable {
 
 		Subscription s;
 
-		public StreamTakeLastOneSubscriber(Subscriber<? super T> actual) {
+		public TakeLastOneSubscriber(Subscriber<? super T> actual) {
 			super(actual);
 		}
 
@@ -149,8 +150,9 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class StreamTakeLastManySubscriber<T>
-	  implements Subscriber<T>, Subscription, BooleanSupplier, Downstream, ActiveDownstream, Upstream, Buffering {
+	static final class TakeLastManySubscriber<T>
+			implements Subscriber<T>, Subscription, BooleanSupplier, Publishable, Cancellable, Subscribable,
+			           Backpressurable {
 
 		final Subscriber<? super T> actual;
 
@@ -164,10 +166,10 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamTakeLastManySubscriber> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(StreamTakeLastManySubscriber.class, "requested");
+		static final AtomicLongFieldUpdater<TakeLastManySubscriber> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(TakeLastManySubscriber.class, "requested");
 
-		public StreamTakeLastManySubscriber(Subscriber<? super T> actual, int n) {
+		public TakeLastManySubscriber(Subscriber<? super T> actual, int n) {
 			this.actual = actual;
 			this.n = n;
 			this.buffer = new ArrayDeque<>();
@@ -181,7 +183,7 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		@Override
 		public void request(long n) {
 			if (BackpressureUtils.validate(n)) {
-				DrainUtils.postCompleteRequest(n, actual, buffer, REQUESTED, this, this);
+				reactor.rx.util.DrainUtils.postCompleteRequest(n, actual, buffer, REQUESTED, this, this);
 			}
 		}
 
@@ -220,7 +222,7 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		@Override
 		public void onComplete() {
 
-			DrainUtils.postComplete(actual, buffer, REQUESTED, this, this);
+			reactor.rx.util.DrainUtils.postComplete(actual, buffer, REQUESTED, this, this);
 		}
 
 		@Override
@@ -234,7 +236,7 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		}
 
 		@Override
-		public long pending() {
+		public long getPending() {
 			return buffer.size();
 		}
 

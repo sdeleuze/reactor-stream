@@ -22,6 +22,11 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Failurable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Requestable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -43,24 +48,23 @@ public final class StreamLatest<T> extends StreamBarrier<T, T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		source.subscribe(new StreamLatestSubscriber<>(s));
+		source.subscribe(new LatestSubscriber<>(s));
 	}
 
-	static final class StreamLatestSubscriber<T>
-			implements Subscriber<T>, Subscription, ActiveUpstream, ActiveDownstream, FailState, Upstream,
-					   Downstream, DownstreamDemand {
+	static final class LatestSubscriber<T>
+			implements Subscriber<T>, Subscription, Cancellable, Failurable, Completable, Publishable, Requestable {
 
 		final Subscriber<? super T> actual;
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamLatestSubscriber> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(StreamLatestSubscriber.class, "requested");
+		static final AtomicLongFieldUpdater<LatestSubscriber> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(LatestSubscriber.class, "requested");
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamLatestSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(StreamLatestSubscriber.class, "wip");
+		static final AtomicIntegerFieldUpdater<LatestSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(LatestSubscriber.class, "wip");
 
 		Subscription s;
 
@@ -71,10 +75,10 @@ public final class StreamLatest<T> extends StreamBarrier<T, T> {
 
 		volatile T value;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamLatestSubscriber, Object> VALUE =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamLatestSubscriber.class, Object.class, "value");
+		static final AtomicReferenceFieldUpdater<LatestSubscriber, Object> VALUE =
+				AtomicReferenceFieldUpdater.newUpdater(LatestSubscriber.class, Object.class, "value");
 
-		public StreamLatestSubscriber(Subscriber<? super T> actual) {
+		public LatestSubscriber(Subscriber<? super T> actual) {
 			this.actual = actual;
 		}
 

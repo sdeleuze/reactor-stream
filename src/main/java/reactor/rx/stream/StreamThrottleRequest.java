@@ -22,6 +22,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.subscriber.SubscriberWithDemand;
 import reactor.core.timer.Timer;
+import reactor.core.trait.Pausable;
 import reactor.core.util.Assert;
 import reactor.core.util.BackpressureUtils;
 import reactor.fn.Consumer;

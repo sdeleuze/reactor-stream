@@ -22,9 +22,9 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.timer.Timer;
+import reactor.core.trait.Backpressurable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ReactiveState;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
 import reactor.rx.Stream;
@@ -34,7 +34,7 @@ import reactor.rx.broadcast.Broadcaster;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class AdaptiveSubscriber<T> extends InterruptableSubscriber<T> implements ReactiveState.Bounded {
+public final class AdaptiveSubscriber<T> extends InterruptableSubscriber<T> implements Backpressurable {
 
 	private final Broadcaster<Long>                                           requestMapperStream;
 	private final Function<Stream<Long>, ? extends Publisher<? extends Long>> requestMapper;

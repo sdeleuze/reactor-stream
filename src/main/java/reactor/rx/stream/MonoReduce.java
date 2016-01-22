@@ -20,8 +20,8 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -40,7 +40,7 @@ import reactor.fn.Supplier;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoReduce<T, R> extends Mono.MonoBarrier<T, R> {
+public final class MonoReduce<T, R> extends reactor.core.publisher.Mono.MonoBarrier<T, R> {
 
 	final Supplier<R> initialSupplier;
 
@@ -69,12 +69,11 @@ public final class MonoReduce<T, R> extends Mono.MonoBarrier<T, R> {
 			return;
 		}
 
-		source.subscribe(new MonoReduceSubscriber<>(s, accumulator, initialValue));
+		source.subscribe(new ReduceSubscriber<>(s, accumulator, initialValue));
 	}
 
-	static final class MonoReduceSubscriber<T, R>
-			extends SubscriberDeferredScalar<T, R>
-	implements Upstream {
+	static final class ReduceSubscriber<T, R>
+			extends SubscriberDeferredScalar<T, R> implements Subscribable {
 
 		final BiFunction<R, ? super T, R> accumulator;
 
@@ -82,7 +81,7 @@ public final class MonoReduce<T, R> extends Mono.MonoBarrier<T, R> {
 
 		boolean done;
 
-		public MonoReduceSubscriber(Subscriber<? super R> actual, BiFunction<R, ? super T, R> accumulator,
+		public ReduceSubscriber(Subscriber<? super R> actual, BiFunction<R, ? super T, R> accumulator,
 										 R value) {
 			super(actual);
 			this.accumulator = accumulator;
@@ -166,7 +165,7 @@ public final class MonoReduce<T, R> extends Mono.MonoBarrier<T, R> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return accumulator;
 		}
 	}

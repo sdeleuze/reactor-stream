@@ -20,8 +20,8 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.publisher.Mono;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Predicate;
@@ -40,7 +40,7 @@ import reactor.fn.Predicate;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-public final class MonoAll<T> extends Mono.MonoBarrier<T, Boolean> {
+public final class MonoAll<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Boolean> {
 
 	final Predicate<? super T> predicate;
 
@@ -51,18 +51,17 @@ public final class MonoAll<T> extends Mono.MonoBarrier<T, Boolean> {
 
 	@Override
 	public void subscribe(Subscriber<? super Boolean> s) {
-		source.subscribe(new MonoAllSubscriber<T>(s, predicate));
+		source.subscribe(new AllSubscriber<T>(s, predicate));
 	}
 
-	static final class MonoAllSubscriber<T> extends SubscriberDeferredScalar<T, Boolean>
-	implements Upstream {
+	static final class AllSubscriber<T> extends SubscriberDeferredScalar<T, Boolean> implements Subscribable {
 		final Predicate<? super T> predicate;
 
 		Subscription s;
 
 		boolean done;
 
-		public MonoAllSubscriber(Subscriber<? super Boolean> actual, Predicate<? super T> predicate) {
+		public AllSubscriber(Subscriber<? super Boolean> actual, Predicate<? super T> predicate) {
 			super(actual);
 			this.predicate = predicate;
 		}
@@ -136,7 +135,7 @@ public final class MonoAll<T> extends Mono.MonoBarrier<T, Boolean> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return predicate;
 		}
 

@@ -52,15 +52,14 @@ public final class StreamThrottleFirst<T, U> extends StreamBarrier<T, T> {
 	
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		StreamThrottleFirstMain<T, U> main = new StreamThrottleFirstMain<>(s, throttler);
+		ThrottleFirstMain<T, U> main = new ThrottleFirstMain<>(s, throttler);
 		
 		s.onSubscribe(main);
 		
 		source.subscribe(main);
 	}
-	
-	static final class StreamThrottleFirstMain<T, U> 
-	implements Subscriber<T>, Subscription {
+
+	static final class ThrottleFirstMain<T, U> implements Subscriber<T>, Subscription {
 
 		final Subscriber<? super T> actual;
 		
@@ -70,30 +69,30 @@ public final class StreamThrottleFirst<T, U> extends StreamBarrier<T, T> {
 		
 		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamThrottleFirstMain, Subscription> S =
-			AtomicReferenceFieldUpdater.newUpdater(StreamThrottleFirstMain.class, Subscription.class, "s");
+		static final AtomicReferenceFieldUpdater<ThrottleFirstMain, Subscription> S =
+				AtomicReferenceFieldUpdater.newUpdater(ThrottleFirstMain.class, Subscription.class, "s");
 
 		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamThrottleFirstMain, Subscription> OTHER =
-			AtomicReferenceFieldUpdater.newUpdater(StreamThrottleFirstMain.class, Subscription.class, "other");
+		static final AtomicReferenceFieldUpdater<ThrottleFirstMain, Subscription> OTHER =
+				AtomicReferenceFieldUpdater.newUpdater(ThrottleFirstMain.class, Subscription.class, "other");
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamThrottleFirstMain> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(StreamThrottleFirstMain.class, "requested");
+		static final AtomicLongFieldUpdater<ThrottleFirstMain> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(ThrottleFirstMain.class, "requested");
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamThrottleFirstMain> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(StreamThrottleFirstMain.class, "wip");
+		static final AtomicIntegerFieldUpdater<ThrottleFirstMain> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(ThrottleFirstMain.class, "wip");
 
 		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamThrottleFirstMain, Throwable> ERROR =
-			AtomicReferenceFieldUpdater.newUpdater(StreamThrottleFirstMain.class, Throwable.class, "error");
+		static final AtomicReferenceFieldUpdater<ThrottleFirstMain, Throwable> ERROR =
+				AtomicReferenceFieldUpdater.newUpdater(ThrottleFirstMain.class, Throwable.class, "error");
 
-		public StreamThrottleFirstMain(Subscriber<? super T> actual,
+		public ThrottleFirstMain(Subscriber<? super T> actual,
 				Function<? super T, ? extends Publisher<U>> throttler) {
 			this.actual = actual;
 			this.throttler = throttler;
@@ -151,8 +150,8 @@ public final class StreamThrottleFirst<T, U> extends StreamBarrier<T, T> {
 					error(new NullPointerException("The throttler returned a null publisher"));
 					return;
 				}
-				
-				StreamThrottleFirstOther<U> other = new StreamThrottleFirstOther<>(this);
+
+				ThrottleFirstOther<U> other = new ThrottleFirstOther<>(this);
 				
 				if (BackpressureUtils.replace(OTHER, this, other)) {
 					p.subscribe(other);
@@ -205,14 +204,14 @@ public final class StreamThrottleFirst<T, U> extends StreamBarrier<T, T> {
 			error(e);
 		}
 	}
-	
-	static final class StreamThrottleFirstOther<U>
+
+	static final class ThrottleFirstOther<U>
 	extends DeferredSubscription
 	implements Subscriber<U> {
 
-		final StreamThrottleFirstMain<?, U> main;
-		
-		public StreamThrottleFirstOther(StreamThrottleFirstMain<?, U> main) {
+		final ThrottleFirstMain<?, U> main;
+
+		public ThrottleFirstOther(ThrottleFirstMain<?, U> main) {
 			this.main = main;
 		}
 		

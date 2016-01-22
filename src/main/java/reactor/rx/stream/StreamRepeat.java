@@ -58,7 +58,7 @@ public final class StreamRepeat<T> extends StreamBarrier<T, T> {
 			return;
 		}
 
-		StreamRepeatSubscriber<T> parent = new StreamRepeatSubscriber<>(source, s, times);
+		RepeatSubscriber<T> parent = new RepeatSubscriber<>(source, s, times);
 
 		s.onSubscribe(parent);
 
@@ -67,7 +67,7 @@ public final class StreamRepeat<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class StreamRepeatSubscriber<T>
+	static final class RepeatSubscriber<T>
 	  extends SubscriberMultiSubscription<T, T> {
 
 		final Publisher<? extends T> source;
@@ -76,12 +76,12 @@ public final class StreamRepeat<T> extends StreamBarrier<T, T> {
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamRepeatSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(StreamRepeatSubscriber.class, "wip");
+		static final AtomicIntegerFieldUpdater<RepeatSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(RepeatSubscriber.class, "wip");
 
 		long produced;
 
-		public StreamRepeatSubscriber(Publisher<? extends T> source, Subscriber<? super T> actual, long remaining) {
+		public RepeatSubscriber(Publisher<? extends T> source, Subscriber<? super T> actual, long remaining) {
 			super(actual);
 			this.source = source;
 			this.remaining = remaining;

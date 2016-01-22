@@ -21,6 +21,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -44,12 +45,11 @@ public final class StreamDefaultIfEmpty<T> extends StreamBarrier<T, T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		source.subscribe(new StreamDefaultIfEmptySubscriber<>(s, value));
+		source.subscribe(new DefaultIfEmptySubscriber<>(s, value));
 	}
 
-	static final class StreamDefaultIfEmptySubscriber<T>
-			extends SubscriberDeferredScalar<T, T>
-	implements Upstream{
+	static final class DefaultIfEmptySubscriber<T>
+			extends SubscriberDeferredScalar<T, T> implements Subscribable {
 
 		final T value;
 
@@ -57,7 +57,7 @@ public final class StreamDefaultIfEmpty<T> extends StreamBarrier<T, T> {
 
 		boolean hasValue;
 
-		public StreamDefaultIfEmptySubscriber(Subscriber<? super T> actual, T value) {
+		public DefaultIfEmptySubscriber(Subscriber<? super T> actual, T value) {
 			super(actual);
 			this.value = value;
 		}
@@ -117,7 +117,7 @@ public final class StreamDefaultIfEmpty<T> extends StreamBarrier<T, T> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return value;
 		}
 	}

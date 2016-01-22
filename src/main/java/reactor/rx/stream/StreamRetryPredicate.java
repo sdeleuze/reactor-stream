@@ -47,7 +47,7 @@ public final class StreamRetryPredicate<T> extends StreamBarrier<T, T> {
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
 
-		StreamRetryPredicateSubscriber<T> parent = new StreamRetryPredicateSubscriber<>(source, s, predicate);
+		RetryPredicateSubscriber<T> parent = new RetryPredicateSubscriber<>(source, s, predicate);
 
 		s.onSubscribe(parent);
 
@@ -56,7 +56,7 @@ public final class StreamRetryPredicate<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class StreamRetryPredicateSubscriber<T>
+	static final class RetryPredicateSubscriber<T>
 	  extends SubscriberMultiSubscription<T, T> {
 
 		final Publisher<? extends T> source;
@@ -65,13 +65,12 @@ public final class StreamRetryPredicate<T> extends StreamBarrier<T, T> {
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamRetryPredicateSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(StreamRetryPredicateSubscriber.class, "wip");
+		static final AtomicIntegerFieldUpdater<RetryPredicateSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(RetryPredicateSubscriber.class, "wip");
 
 		long produced;
 
-		public StreamRetryPredicateSubscriber(Publisher<? extends T> source, 
-				Subscriber<? super T> actual, Predicate<Throwable> predicate) {
+		public RetryPredicateSubscriber(Publisher<? extends T> source, Subscriber<? super T> actual, Predicate<Throwable> predicate) {
 			super(actual);
 			this.source = source;
 			this.predicate = predicate;

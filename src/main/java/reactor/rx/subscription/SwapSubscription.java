@@ -20,17 +20,18 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Introspectable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.PlatformDependent;
-import reactor.core.util.ReactiveState;
 
 /**
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class SwapSubscription<T> implements Subscription, ReactiveState.Upstream, ReactiveState.Trace {
+public final class SwapSubscription implements Subscription, Completable, Introspectable {
 
 	@SuppressWarnings("unused")
 	private volatile Subscription subscription;
@@ -43,8 +44,8 @@ public final class SwapSubscription<T> implements Subscription, ReactiveState.Up
 	protected static final AtomicLongFieldUpdater<SwapSubscription> REQUESTED =
 			AtomicLongFieldUpdater.newUpdater(SwapSubscription.class, "requested");
 
-	public static <T> SwapSubscription<T> create(){
-		return new SwapSubscription<>();
+	public static SwapSubscription create() {
+		return new SwapSubscription();
 	}
 
 	SwapSubscription() {
@@ -126,6 +127,26 @@ public final class SwapSubscription<T> implements Subscription, ReactiveState.Up
 	@Override
 	public Object upstream() {
 		return subscription;
+	}
+
+	@Override
+	public boolean isStarted() {
+		return !isUnsubscribed();
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return isUnsubscribed();
+	}
+
+	@Override
+	public int getMode() {
+		return 0;
+	}
+
+	@Override
+	public String getName() {
+		return null;
 	}
 
 	@Override

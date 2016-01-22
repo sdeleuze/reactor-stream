@@ -20,8 +20,9 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.timer.Timer;
+import reactor.core.trait.Backpressurable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ReactiveState;
 import reactor.core.util.ReactiveStateUtils;
 import reactor.fn.Function;
 import reactor.rx.Stream;
@@ -30,8 +31,7 @@ import reactor.rx.Stream;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class StreamBarrier<I, O> extends Stream<O>
-		implements ReactiveState.Named, ReactiveState.Upstream, Flux.Operator<I, O> {
+public class StreamBarrier<I, O> extends Stream<O> implements Subscribable, Flux.Operator<I, O> {
 
 	final protected Publisher<? extends I> source;
 
@@ -49,8 +49,14 @@ public class StreamBarrier<I, O> extends Stream<O>
 
 	@Override
 	public long getCapacity() {
-		return ReactiveState.Bounded.class.isAssignableFrom(source.getClass()) ?
-				((ReactiveState.Bounded) source).getCapacity() : Long.MAX_VALUE;
+		return Backpressurable.class.isAssignableFrom(source.getClass()) ? ((Backpressurable) source).getCapacity() :
+				Long.MAX_VALUE;
+	}
+
+	@Override
+	public long getPending() {
+		return Backpressurable.class.isAssignableFrom(source.getClass()) ? ((Backpressurable) source).getPending() :
+				Long.MAX_VALUE;
 	}
 
 	@Override
@@ -62,12 +68,6 @@ public class StreamBarrier<I, O> extends Stream<O>
 	@SuppressWarnings("unchecked")
 	public Subscriber<? super I> apply(Subscriber<? super O> subscriber) {
 		return (Subscriber<I>)subscriber;
-	}
-
-	@Override
-	public String getName() {
-		return getClass().getSimpleName()
-		                 .replaceAll("Stream|Publisher|Operator", "");
 	}
 
 	@Override

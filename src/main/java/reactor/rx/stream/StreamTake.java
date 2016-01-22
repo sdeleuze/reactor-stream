@@ -20,6 +20,10 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Backpressurable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Prefetchable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 
@@ -58,12 +62,11 @@ public final class StreamTake<T> extends StreamBarrier<T, T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		source.subscribe(new StreamTakeSubscriber<>(s, n));
+		source.subscribe(new TakeSubscriber<>(s, n));
 	}
 
-	static final class StreamTakeSubscriber<T>
-	  implements Subscriber<T>, Subscription, Upstream, ActiveUpstream,
-				 UpstreamDemand, Bounded, Downstream {
+	static final class TakeSubscriber<T>
+			implements Subscriber<T>, Subscription, Completable, Prefetchable, Backpressurable, Publishable {
 
 		final Subscriber<? super T> actual;
 
@@ -77,10 +80,10 @@ public final class StreamTake<T> extends StreamBarrier<T, T> {
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		static final AtomicIntegerFieldUpdater<StreamTakeSubscriber> WIP =
-		  AtomicIntegerFieldUpdater.newUpdater(StreamTakeSubscriber.class, "wip");
+		static final AtomicIntegerFieldUpdater<TakeSubscriber> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(TakeSubscriber.class, "wip");
 
-		public StreamTakeSubscriber(Subscriber<? super T> actual, long n) {
+		public TakeSubscriber(Subscriber<? super T> actual, long n) {
 			this.actual = actual;
 			this.n = n;
 			this.remaining = n;
@@ -187,6 +190,16 @@ public final class StreamTake<T> extends StreamBarrier<T, T> {
 		@Override
 		public Object downstream() {
 			return actual;
+		}
+
+		@Override
+		public long getPending() {
+			return -1L;
+		}
+
+		@Override
+		public long limit() {
+			return 0;
 		}
 	}
 }

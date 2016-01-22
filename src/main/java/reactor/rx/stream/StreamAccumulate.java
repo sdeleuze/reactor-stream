@@ -20,6 +20,9 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.BiFunction;
@@ -57,11 +60,10 @@ public final class StreamAccumulate<T> extends StreamBarrier<T, T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		source.subscribe(new StreamAccumulateSubscriber<>(s, accumulator));
+		source.subscribe(new AccumulateSubscriber<>(s, accumulator));
 	}
 
-	static final class StreamAccumulateSubscriber<T> implements Subscriber<T>, Downstream, Upstream, FeedbackLoop,
-																   ActiveUpstream {
+	static final class AccumulateSubscriber<T> implements Subscriber<T>, Publishable, Completable, Connectable {
 		final Subscriber<? super T> actual;
 
 		final BiFunction<T, ? super T, T> accumulator;
@@ -72,7 +74,7 @@ public final class StreamAccumulate<T> extends StreamBarrier<T, T> {
 
 		boolean done;
 
-		public StreamAccumulateSubscriber(Subscriber<? super T> actual, BiFunction<T, ? super T, T> accumulator) {
+		public AccumulateSubscriber(Subscriber<? super T> actual, BiFunction<T, ? super T, T> accumulator) {
 			this.actual = actual;
 			this.accumulator = accumulator;
 		}
@@ -150,12 +152,12 @@ public final class StreamAccumulate<T> extends StreamBarrier<T, T> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return accumulator;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return value;
 		}
 

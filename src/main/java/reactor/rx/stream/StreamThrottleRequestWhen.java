@@ -21,7 +21,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberWithDemand;
 import reactor.core.timer.Timer;
-import reactor.core.util.ReactiveState;
+import reactor.core.trait.Backpressurable;
 import reactor.fn.Function;
 import reactor.rx.Stream;
 import reactor.rx.broadcast.Broadcaster;
@@ -71,7 +71,7 @@ public final class StreamThrottleRequestWhen<T> extends StreamBarrier<T, T> {
 			throttleStream.onComplete();
 		}
 
-		private class ThrottleSubscriber implements Subscriber<Long>, ReactiveState.Bounded {
+		private class ThrottleSubscriber implements Subscriber<Long>, Backpressurable {
 
 			Subscription s;
 
@@ -79,6 +79,11 @@ public final class StreamThrottleRequestWhen<T> extends StreamBarrier<T, T> {
 			public long getCapacity() {
 				return ThrottleRequestWhenAction.this
 						.getCapacity();
+			}
+
+			@Override
+			public long getPending() {
+				return ThrottleRequestWhenAction.this.getPending();
 			}
 
 			@Override

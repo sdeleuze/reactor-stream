@@ -18,8 +18,13 @@ package reactor.rx.subscriber;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Backpressurable;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Failurable;
+import reactor.core.trait.Introspectable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
-import reactor.core.util.ReactiveState;
 
 /**
  * Subscriber that makes sure signals are delivered sequentially in case the onNext, onError or onComplete methods are
@@ -34,9 +39,8 @@ import reactor.core.util.ReactiveState;
  * @param <T> the value type
  */
 public final class SerializedSubscriber<T>
-		implements Subscriber<T>, Subscription, ReactiveState.ActiveUpstream, ReactiveState.Downstream,
-		           ReactiveState.ActiveDownstream, ReactiveState.Upstream, ReactiveState.Trace, ReactiveState.Buffering,
-		           ReactiveState.FailState {
+		implements Subscriber<T>, Subscription, Completable, Publishable, Cancellable, Introspectable, Backpressurable,
+		           Failurable {
 
 	final Subscriber<? super T> actual;
 
@@ -337,12 +341,22 @@ public final class SerializedSubscriber<T>
 	}
 
 	@Override
-	public long pending() {
+	public long getPending() {
 		LinkedArrayNode<T> node = serGetTail();
 		if (node != null) {
 			return node.count;
 		}
 		return 0;
+	}
+
+	@Override
+	public int getMode() {
+		return 0;
+	}
+
+	@Override
+	public String getName() {
+		return SerializedSubscriber.class.getSimpleName();
 	}
 
 	@Override

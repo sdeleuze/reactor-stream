@@ -20,6 +20,9 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Connectable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Function;
@@ -57,11 +60,10 @@ public final class StreamMap<T, R> extends StreamBarrier<T, R> {
 
 	@Override
 	public void subscribe(Subscriber<? super R> s) {
-		source.subscribe(new StreamMapSubscriber<>(s, mapper));
+		source.subscribe(new MapSubscriber<>(s, mapper));
 	}
 
-	static final class StreamMapSubscriber<T, R> implements Subscriber<T>,
-															   Upstream, Downstream, FeedbackLoop, ActiveUpstream{
+	static final class MapSubscriber<T, R> implements Subscriber<T>, Completable, Publishable, Connectable {
 		final Subscriber<? super R>			actual;
 		final Function<? super T, ? extends R> mapper;
 
@@ -69,7 +71,7 @@ public final class StreamMap<T, R> extends StreamBarrier<T, R> {
 
 		Subscription s;
 
-		public StreamMapSubscriber(Subscriber<? super R> actual, Function<? super T, ? extends R> mapper) {
+		public MapSubscriber(Subscriber<? super R> actual, Function<? super T, ? extends R> mapper) {
 			this.actual = actual;
 			this.mapper = mapper;
 		}
@@ -149,12 +151,12 @@ public final class StreamMap<T, R> extends StreamBarrier<T, R> {
 		}
 
 		@Override
-		public Object delegateInput() {
+		public Object connectedInput() {
 			return mapper;
 		}
 
 		@Override
-		public Object delegateOutput() {
+		public Object connectedOutput() {
 			return null;
 		}
 

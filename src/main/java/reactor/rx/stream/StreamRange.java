@@ -19,8 +19,11 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Requestable;
 import reactor.core.util.BackpressureUtils;
-import reactor.core.util.ReactiveState;
 
 /**
  * Emits a range of integer values.
@@ -30,10 +33,7 @@ import reactor.core.util.ReactiveState;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-public final class StreamRange 
-extends reactor.rx.Stream<Integer>
-implements 
-											 ReactiveState.Factory {
+public final class StreamRange extends reactor.rx.Stream<Integer> {
 
 	final long start;
 
@@ -54,11 +54,11 @@ implements
 
 	@Override
 	public void subscribe(Subscriber<? super Integer> s) {
-		s.onSubscribe(new StreamRangeSubscription<>(s, start, end));
+		s.onSubscribe(new RangeSubscription<>(s, start, end));
 	}
 
-	static final class StreamRangeSubscription<T>
-	  implements Subscription, ActiveDownstream, DownstreamDemand, ActiveUpstream, Downstream {
+	static final class RangeSubscription<T>
+			implements Subscription, Cancellable, Requestable, Completable, Publishable {
 
 		final Subscriber<? super Integer> actual;
 
@@ -70,10 +70,10 @@ implements
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamRangeSubscription> REQUESTED =
-		  AtomicLongFieldUpdater.newUpdater(StreamRangeSubscription.class, "requested");
+		static final AtomicLongFieldUpdater<RangeSubscription> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(RangeSubscription.class, "requested");
 
-		public StreamRangeSubscription(Subscriber<? super Integer> actual, long start, long end) {
+		public RangeSubscription(Subscriber<? super Integer> actual, long start, long end) {
 			this.actual = actual;
 			this.index = start;
 			this.end = end;
@@ -180,6 +180,11 @@ implements
 		@Override
 		public Object downstream() {
 			return actual;
+		}
+
+		@Override
+		public Object upstream() {
+			return index;
 		}
 
 		@Override

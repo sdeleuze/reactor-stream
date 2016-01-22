@@ -19,6 +19,11 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.queue.Sequencer;
+import reactor.core.trait.Cancellable;
+import reactor.core.trait.Completable;
+import reactor.core.trait.Publishable;
+import reactor.core.trait.Requestable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.core.util.Sequence;
@@ -49,8 +54,8 @@ public final class StreamBlock<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class StreamBlockSubscriber<T>
-			implements Subscriber<T>, Subscription, Downstream, Upstream, ActiveUpstream,
-					   DownstreamDemand, ActiveDownstream, Runnable {
+			implements Subscriber<T>, Subscription, Publishable, Subscribable, Completable, Requestable, Cancellable,
+			           Runnable {
 
 		final Subscriber<? super T> actual;
 

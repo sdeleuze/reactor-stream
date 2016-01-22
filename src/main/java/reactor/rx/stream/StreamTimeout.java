@@ -74,11 +74,11 @@ public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 
 		SerializedSubscriber<T> serial = new SerializedSubscriber<>(s);
 
-		StreamTimeoutMainSubscriber<T, V> main = new StreamTimeoutMainSubscriber<>(serial, itemTimeout, other);
+		TimeoutMainSubscriber<T, V> main = new TimeoutMainSubscriber<>(serial, itemTimeout, other);
 
 		serial.onSubscribe(main);
 
-		StreamTimeoutTimeoutSubscriber ts = new StreamTimeoutTimeoutSubscriber(main, 0L);
+		TimeoutTimeoutSubscriber ts = new TimeoutTimeoutSubscriber(main, 0L);
 
 		main.setTimeout(ts);
 
@@ -87,7 +87,7 @@ public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 		source.subscribe(main);
 	}
 
-	static final class StreamTimeoutMainSubscriber<T, V> extends SubscriberMultiSubscription<T, T> {
+	static final class TimeoutMainSubscriber<T, V> extends SubscriberMultiSubscription<T, T> {
 
 		final Function<? super T, ? extends Publisher<V>> itemTimeout;
 
@@ -97,16 +97,16 @@ public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 
 		volatile IndexedCancellable timeout;
 		@SuppressWarnings("rawtypes")
-		static final AtomicReferenceFieldUpdater<StreamTimeoutMainSubscriber, IndexedCancellable> TIMEOUT =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamTimeoutMainSubscriber.class, IndexedCancellable.class,
+		static final AtomicReferenceFieldUpdater<TimeoutMainSubscriber, IndexedCancellable> TIMEOUT =
+				AtomicReferenceFieldUpdater.newUpdater(TimeoutMainSubscriber.class, IndexedCancellable.class,
 			"timeout");
 
 		volatile long index;
 		@SuppressWarnings("rawtypes")
-		static final AtomicLongFieldUpdater<StreamTimeoutMainSubscriber> INDEX =
-		  AtomicLongFieldUpdater.newUpdater(StreamTimeoutMainSubscriber.class, "index");
+		static final AtomicLongFieldUpdater<TimeoutMainSubscriber> INDEX =
+				AtomicLongFieldUpdater.newUpdater(TimeoutMainSubscriber.class, "index");
 
-		public StreamTimeoutMainSubscriber(Subscriber<? super T> actual,
+		public TimeoutMainSubscriber(Subscriber<? super T> actual,
 											  Function<? super T, ? extends Publisher<V>> itemTimeout,
 											  Publisher<? extends T> other) {
 			super(actual);
@@ -161,7 +161,7 @@ public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 				return;
 			}
 
-			StreamTimeoutTimeoutSubscriber ts = new StreamTimeoutTimeoutSubscriber(this, idx + 1);
+			TimeoutTimeoutSubscriber ts = new TimeoutTimeoutSubscriber(this, idx + 1);
 
 			if (!setTimeout(ts)) {
 				return;
@@ -265,18 +265,18 @@ public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 			} else {
 				set(EmptySubscription.INSTANCE);
 
-				other.subscribe(new StreamTimeoutOtherSubscriber<>(subscriber, this));
+				other.subscribe(new TimeoutOtherSubscriber<>(subscriber, this));
 			}
 		}
 	}
 
-	static final class StreamTimeoutOtherSubscriber<T> implements Subscriber<T> {
+	static final class TimeoutOtherSubscriber<T> implements Subscriber<T> {
 
 		final Subscriber<? super T> actual;
 
 		final SubscriberMultiSubscription<T, T> arbiter;
 
-		public StreamTimeoutOtherSubscriber(Subscriber<? super T> actual, SubscriberMultiSubscription<T, T>
+		public TimeoutOtherSubscriber(Subscriber<? super T> actual, SubscriberMultiSubscription<T, T>
 		  arbiter) {
 			this.actual = actual;
 			this.arbiter = arbiter;
@@ -324,18 +324,18 @@ public final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 
 	}
 
-	static final class StreamTimeoutTimeoutSubscriber implements Subscriber<Object>, IndexedCancellable {
+	static final class TimeoutTimeoutSubscriber implements Subscriber<Object>, IndexedCancellable {
 
-		final StreamTimeoutMainSubscriber<?, ?> main;
+		final TimeoutMainSubscriber<?, ?> main;
 
 		final long index;
 
 		volatile Subscription s;
 
-		static final AtomicReferenceFieldUpdater<StreamTimeoutTimeoutSubscriber, Subscription> S =
-		  AtomicReferenceFieldUpdater.newUpdater(StreamTimeoutTimeoutSubscriber.class, Subscription.class, "s");
+		static final AtomicReferenceFieldUpdater<TimeoutTimeoutSubscriber, Subscription> S =
+				AtomicReferenceFieldUpdater.newUpdater(TimeoutTimeoutSubscriber.class, Subscription.class, "s");
 
-		public StreamTimeoutTimeoutSubscriber(StreamTimeoutMainSubscriber<?, ?> main, long index) {
+		public TimeoutTimeoutSubscriber(TimeoutMainSubscriber<?, ?> main, long index) {
 			this.main = main;
 			this.index = index;
 		}

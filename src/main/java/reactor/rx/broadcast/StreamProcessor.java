@@ -19,7 +19,8 @@ import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.util.ReactiveState;
+import reactor.core.trait.Backpressurable;
+import reactor.core.trait.Connectable;
 import reactor.fn.Consumer;
 import reactor.rx.Stream;
 
@@ -29,7 +30,7 @@ import reactor.rx.Stream;
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-public class StreamProcessor<E, O> extends Stream<O> implements Processor<E, O>, ReactiveState.FeedbackLoop{
+public class StreamProcessor<E, O> extends Stream<O> implements Processor<E, O>, Connectable {
 
 	protected final Subscriber<E> receiver;
 	protected final Publisher<O> publisher;
@@ -110,12 +111,12 @@ public class StreamProcessor<E, O> extends Stream<O> implements Processor<E, O>,
 	}
 
 	@Override
-	public Object delegateInput() {
+	public Object connectedInput() {
 		return receiver;
 	}
 
 	@Override
-	public Object delegateOutput() {
+	public Object connectedOutput() {
 		return publisher;
 	}
 
@@ -146,7 +147,13 @@ public class StreamProcessor<E, O> extends Stream<O> implements Processor<E, O>,
 
 	@Override
 	public long getCapacity() {
-		return ReactiveState.Bounded.class.isAssignableFrom(publisher.getClass()) ? ((ReactiveState.Bounded) publisher).getCapacity() : Long.MAX_VALUE;
+		return Backpressurable.class.isAssignableFrom(publisher.getClass()) ?
+				((Backpressurable) publisher).getCapacity() : Long.MAX_VALUE;
+	}
+
+	@Override
+	public int getMode() {
+		return 0;
 	}
 
 	@Override
