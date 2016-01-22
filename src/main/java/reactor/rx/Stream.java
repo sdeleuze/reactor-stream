@@ -1912,9 +1912,14 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public final <V> Stream<V> after(Supplier<? extends Publisher<V>> sourceSupplier) {
+	public final <V> Stream<V> after(final Supplier<? extends Publisher<V>> sourceSupplier) {
 		return new StreamBarrier<>(Flux.flatMap(
-				Flux.mapSignal(after(), null, null, sourceSupplier),
+				Flux.mapSignal(after(), null, new Function<Throwable, Publisher<V>>() {
+					@Override
+					public Publisher<V> apply(Throwable throwable) {
+						return concat(sourceSupplier.get(), fail(throwable));
+					}
+				}, sourceSupplier),
 				IDENTITY_FUNCTION,
 				ReactiveState.SMALL_BUFFER_SIZE, 32));
 	}
