@@ -811,7 +811,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @return a new {@link Stream}
 	 */
-	public static <O, T extends Throwable> Stream<O> fail(T throwable) {
+	public static <O> Stream<O> fail(Throwable throwable) {
 		return from(Mono.<O>error(throwable));
 	}
 
@@ -1897,7 +1897,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 	 *
 	 * @return {@literal new Stream}
 	 *
-	 * @see Mono#after(Publisher)
+	 * @see Mono#whenever(Publisher)
 	 */
 	public final Mono<Void> after() {
 		return Mono.whenever(this);
