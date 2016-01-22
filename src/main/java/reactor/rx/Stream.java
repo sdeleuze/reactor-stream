@@ -1917,7 +1917,7 @@ public abstract class Stream<O> implements Publisher<O>, ReactiveState.Bounded {
 				Flux.mapSignal(after(), null, new Function<Throwable, Publisher<V>>() {
 					@Override
 					public Publisher<V> apply(Throwable throwable) {
-						return concat(sourceSupplier.get(), fail(throwable));
+						return concat(sourceSupplier.get(), Stream.<V>fail(throwable));
 					}
 				}, sourceSupplier),
 				IDENTITY_FUNCTION,
