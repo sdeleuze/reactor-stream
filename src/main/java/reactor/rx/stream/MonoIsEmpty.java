@@ -19,7 +19,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Subscribable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 
 
@@ -38,7 +38,7 @@ public final class MonoIsEmpty<T> extends reactor.core.publisher.Mono.MonoBarrie
 		source.subscribe(new IsEmptySubscriber<>(s));
 	}
 
-	static final class IsEmptySubscriber<T> extends SubscriberDeferredScalar<T, Boolean> implements Subscribable {
+	static final class IsEmptySubscriber<T> extends SubscriberDeferredScalar<T, Boolean> implements Publishable {
 		Subscription s;
 
 		public IsEmptySubscriber(Subscriber<? super Boolean> actual) {

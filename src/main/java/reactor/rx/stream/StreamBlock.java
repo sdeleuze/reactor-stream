@@ -54,7 +54,7 @@ public final class StreamBlock<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class StreamBlockSubscriber<T>
-			implements Subscriber<T>, Subscription, Publishable, Subscribable, Completable, Requestable, Cancellable,
+			implements Subscriber<T>, Subscription, Subscribable, Publishable, Completable, Requestable, Cancellable,
 			           Runnable {
 
 		final Subscriber<? super T> actual;

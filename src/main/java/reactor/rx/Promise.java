@@ -31,7 +31,7 @@ import reactor.core.trait.Cancellable;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Failurable;
 import reactor.core.trait.Introspectable;
-import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -57,7 +57,7 @@ import reactor.rx.broadcast.Broadcaster;
  * @see <a href="https://github.com/promises-aplus/promises-spec">Promises/A+ specification</a>
  */
 public class Promise<O> extends Mono<O>
-		implements Processor<O, O>, Consumer<O>, Subscription, Failurable, Completable, Cancellable, Publishable {
+		implements Processor<O, O>, Consumer<O>, Subscription, Failurable, Completable, Cancellable, Subscribable {
 
 	final static AtomicIntegerFieldUpdater<Promise>              STATE     =
 			AtomicIntegerFieldUpdater.newUpdater(Promise.class, "state");

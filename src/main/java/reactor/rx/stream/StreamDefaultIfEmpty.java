@@ -21,7 +21,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Subscribable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -49,7 +49,7 @@ public final class StreamDefaultIfEmpty<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class DefaultIfEmptySubscriber<T>
-			extends SubscriberDeferredScalar<T, T> implements Subscribable {
+			extends SubscriberDeferredScalar<T, T> implements Publishable {
 
 		final T value;
 

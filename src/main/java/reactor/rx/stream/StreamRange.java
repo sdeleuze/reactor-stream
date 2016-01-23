@@ -21,8 +21,8 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.trait.Cancellable;
 import reactor.core.trait.Completable;
-import reactor.core.trait.Publishable;
 import reactor.core.trait.Requestable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -58,7 +58,7 @@ public final class StreamRange extends reactor.rx.Stream<Integer> {
 	}
 
 	static final class RangeSubscription<T>
-			implements Subscription, Cancellable, Requestable, Completable, Publishable {
+			implements Subscription, Cancellable, Requestable, Completable, Subscribable {
 
 		final Subscriber<? super Integer> actual;
 

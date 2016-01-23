@@ -21,7 +21,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Subscribable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Supplier;
@@ -67,7 +67,7 @@ public final class MonoElementAt<T> extends reactor.core.publisher.Mono.MonoBarr
 	}
 
 	static final class ElementAtSubscriber<T>
-			extends SubscriberDeferredScalar<T, T> implements Subscribable {
+			extends SubscriberDeferredScalar<T, T> implements Publishable {
 		final Supplier<? extends T> defaultSupplier;
 
 		long index;

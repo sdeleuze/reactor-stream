@@ -21,7 +21,7 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.timer.Timer;
 import reactor.core.trait.Backpressurable;
-import reactor.core.trait.Subscribable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ReactiveStateUtils;
 import reactor.fn.Function;
@@ -31,7 +31,7 @@ import reactor.rx.Stream;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class StreamBarrier<I, O> extends Stream<O> implements Subscribable, Flux.Operator<I, O> {
+public class StreamBarrier<I, O> extends Stream<O> implements Publishable, Flux.Operator<I, O> {
 
 	final protected Publisher<? extends I> source;
 

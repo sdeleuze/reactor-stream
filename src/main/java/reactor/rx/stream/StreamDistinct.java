@@ -23,7 +23,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Connectable;
-import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -76,7 +76,7 @@ public final class StreamDistinct<T, K, C extends Collection<? super K>> extends
 	}
 
 	static final class DistinctSubscriber<T, K, C extends Collection<? super K>>
-			implements Subscriber<T>, Publishable, Connectable, Completable {
+			implements Subscriber<T>, Subscribable, Connectable, Completable {
 		final Subscriber<? super T> actual;
 
 		final C collection;

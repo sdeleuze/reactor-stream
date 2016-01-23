@@ -21,7 +21,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Subscribable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Predicate;
@@ -54,7 +54,7 @@ public final class MonoAll<T> extends reactor.core.publisher.Mono.MonoBarrier<T,
 		source.subscribe(new AllSubscriber<T>(s, predicate));
 	}
 
-	static final class AllSubscriber<T> extends SubscriberDeferredScalar<T, Boolean> implements Subscribable {
+	static final class AllSubscriber<T> extends SubscriberDeferredScalar<T, Boolean> implements Publishable {
 		final Predicate<? super T> predicate;
 
 		Subscription s;

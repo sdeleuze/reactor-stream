@@ -37,7 +37,7 @@ import reactor.core.util.Exceptions;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements Subscribable, Publishable,
+public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements Publishable, Subscribable,
                                                                                Subscription,
                                                                                BlockingQueue<IN> {
 

@@ -22,7 +22,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Subscribable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Supplier;
@@ -74,7 +74,7 @@ public final class MonoSingle<T> extends reactor.core.publisher.Mono.MonoBarrier
 		source.subscribe(new SingleSubscriber<>(s, defaultSupplier));
 	}
 
-	static final class SingleSubscriber<T> extends SubscriberDeferredScalar<T, T> implements Subscribable {
+	static final class SingleSubscriber<T> extends SubscriberDeferredScalar<T, T> implements Publishable {
 
 		final Supplier<? extends T> defaultSupplier;
 

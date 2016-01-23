@@ -23,7 +23,7 @@ import reactor.core.trait.Cancellable;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Failurable;
 import reactor.core.trait.Introspectable;
-import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -39,7 +39,7 @@ import reactor.core.util.BackpressureUtils;
  * @param <T> the value type
  */
 public final class SerializedSubscriber<T>
-		implements Subscriber<T>, Subscription, Completable, Publishable, Cancellable, Introspectable, Backpressurable,
+		implements Subscriber<T>, Subscription, Completable, Subscribable, Cancellable, Introspectable, Backpressurable,
 		           Failurable {
 
 	final Subscriber<? super T> actual;

@@ -25,7 +25,7 @@ import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
 import reactor.core.timer.Timer;
 import reactor.core.trait.Connectable;
-import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.PlatformDependent;
 import reactor.rx.Stream;
 
@@ -54,7 +54,7 @@ public class StreamWindowTimeOrSize<T> extends StreamBatch<T, Stream<T>> {
 		return new WindowAction<>(prepareSub(subscriber), batchSize, timespan, unit, timer);
 	}
 
-	final static class Window<T> extends Stream<T> implements Subscriber<T>, Subscription, Publishable {
+	final static class Window<T> extends Stream<T> implements Subscriber<T>, Subscription, Subscribable {
 
 		final protected FluxProcessor<T, T> processor;
 		final protected Timer               timer;

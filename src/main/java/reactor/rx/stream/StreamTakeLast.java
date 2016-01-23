@@ -62,7 +62,7 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class TakeLastZeroSubscriber<T> implements Subscriber<T>, Publishable {
+	static final class TakeLastZeroSubscriber<T> implements Subscriber<T>, Subscribable {
 
 		final Subscriber<? super T> actual;
 
@@ -99,7 +99,7 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class TakeLastOneSubscriber<T>
-			extends SubscriberDeferredScalar<T, T> implements Subscribable {
+			extends SubscriberDeferredScalar<T, T> implements Publishable {
 
 		Subscription s;
 
@@ -151,7 +151,7 @@ public final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class TakeLastManySubscriber<T>
-			implements Subscriber<T>, Subscription, BooleanSupplier, Publishable, Cancellable, Subscribable,
+			implements Subscriber<T>, Subscription, BooleanSupplier, Subscribable, Cancellable, Publishable,
 			           Backpressurable {
 
 		final Subscriber<? super T> actual;

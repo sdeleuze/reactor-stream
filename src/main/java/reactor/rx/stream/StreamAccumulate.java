@@ -22,7 +22,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Connectable;
-import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.BiFunction;
@@ -63,7 +63,7 @@ public final class StreamAccumulate<T> extends StreamBarrier<T, T> {
 		source.subscribe(new AccumulateSubscriber<>(s, accumulator));
 	}
 
-	static final class AccumulateSubscriber<T> implements Subscriber<T>, Publishable, Completable, Connectable {
+	static final class AccumulateSubscriber<T> implements Subscriber<T>, Subscribable, Completable, Connectable {
 		final Subscriber<? super T> actual;
 
 		final BiFunction<T, ? super T, T> accumulator;

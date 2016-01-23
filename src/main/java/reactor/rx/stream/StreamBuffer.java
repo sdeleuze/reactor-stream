@@ -28,8 +28,8 @@ import reactor.core.trait.Backpressurable;
 import reactor.core.trait.Cancellable;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Connectable;
-import reactor.core.trait.Publishable;
 import reactor.core.trait.Requestable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.BooleanSupplier;
@@ -95,7 +95,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 	}
 
 	static final class BufferExactSubscriber<T, C extends Collection<? super T>>
-			implements Subscriber<T>, Subscription, Publishable, Connectable, Completable, Backpressurable {
+			implements Subscriber<T>, Subscription, Subscribable, Connectable, Completable, Backpressurable {
 
 		final Subscriber<? super C> actual;
 
@@ -240,7 +240,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 	}
 
 	static final class BufferSkipSubscriber<T, C extends Collection<? super T>>
-			implements Subscriber<T>, Subscription, Publishable, Connectable, Completable, Backpressurable {
+			implements Subscriber<T>, Subscription, Subscribable, Connectable, Completable, Backpressurable {
 
 		final Subscriber<? super C> actual;
 
@@ -415,7 +415,7 @@ public final class StreamBuffer<T, C extends Collection<? super T>> extends Stre
 	}
 
 	static final class BufferOverlappingSubscriber<T, C extends Collection<? super T>>
-			implements Subscriber<T>, Subscription, BooleanSupplier, Publishable, Completable, Cancellable,
+			implements Subscriber<T>, Subscription, BooleanSupplier, Subscribable, Completable, Cancellable,
 			           Connectable, Backpressurable, Requestable {
 		final Subscriber<? super C> actual;
 

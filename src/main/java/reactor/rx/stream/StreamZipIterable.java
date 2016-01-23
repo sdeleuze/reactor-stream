@@ -23,8 +23,8 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.trait.Completable;
-import reactor.core.trait.Publishable;
 import reactor.core.trait.PublishableMany;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -90,7 +90,7 @@ public final class StreamZipIterable<T, U, R> extends StreamBarrier<T, R> {
 		source.subscribe(new ZipSubscriber<>(s, it, zipper));
 	}
 
-	static final class ZipSubscriber<T, U, R> implements Subscriber<T>, Publishable, PublishableMany, Completable {
+	static final class ZipSubscriber<T, U, R> implements Subscriber<T>, Subscribable, PublishableMany, Completable {
 		
 		final Subscriber<? super R> actual;
 		

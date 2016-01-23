@@ -34,7 +34,7 @@ import reactor.core.timer.Timer;
 import reactor.core.trait.Backpressurable;
 import reactor.core.trait.Cancellable;
 import reactor.core.trait.Completable;
-import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.trait.SubscribableMany;
 import reactor.core.util.Assert;
 import reactor.core.util.BackpressureUtils;
@@ -64,7 +64,7 @@ public final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K,
 	}
 
 	static final class GroupedEmitter<T, K> extends GroupedStream<K, T>
-			implements Subscription, Subscriber<T>, Completable, Publishable, Cancellable {
+			implements Subscription, Subscriber<T>, Completable, Subscribable, Cancellable {
 
 		private final GroupByAction<T, K> parent;
 		private final FluxProcessor<T, T> processor;

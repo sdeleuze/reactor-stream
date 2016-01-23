@@ -23,8 +23,8 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Connectable;
-import reactor.core.trait.Publishable;
 import reactor.core.trait.Requestable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Consumer;
@@ -67,7 +67,7 @@ public final class StreamDrop<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class DropSubscriber<T>
-			implements Subscriber<T>, Subscription, Publishable, Completable, Requestable, Connectable {
+			implements Subscriber<T>, Subscription, Subscribable, Completable, Requestable, Connectable {
 
 		final Subscriber<? super T> actual;
 

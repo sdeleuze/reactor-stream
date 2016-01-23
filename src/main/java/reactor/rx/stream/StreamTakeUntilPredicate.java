@@ -22,7 +22,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Connectable;
-import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Predicate;
@@ -58,7 +58,7 @@ public final class StreamTakeUntilPredicate<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class TakeUntilPredicateSubscriber<T>
-			implements Subscriber<T>, Publishable, Completable, Connectable {
+			implements Subscriber<T>, Subscribable, Completable, Connectable {
 		final Subscriber<? super T> actual;
 
 		final Predicate<? super T> predicate;

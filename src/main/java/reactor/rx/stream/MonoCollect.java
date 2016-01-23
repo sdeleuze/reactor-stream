@@ -21,7 +21,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Subscribable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -74,7 +74,7 @@ public final class MonoCollect<T, R> extends reactor.core.publisher.Mono.MonoBar
 	}
 
 	static final class CollectSubscriber<T, R>
-			extends SubscriberDeferredScalar<T, R> implements Subscribable {
+			extends SubscriberDeferredScalar<T, R> implements Publishable {
 
 		final BiConsumer<? super R, ? super T> action;
 

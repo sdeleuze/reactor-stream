@@ -56,7 +56,7 @@ public final class StreamSkipLast<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class SkipLastSubscriber<T> implements Subscriber<T>, Subscribable, Publishable, Backpressurable {
+	static final class SkipLastSubscriber<T> implements Subscriber<T>, Publishable, Subscribable, Backpressurable {
 		final Subscriber<? super T> actual;
 
 		final int n;

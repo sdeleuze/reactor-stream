@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Subscribable;
+import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -49,7 +49,7 @@ import reactor.fn.Function;
  * @since 2.5
  */
 public final class StreamUsing<T, S> 
-extends reactor.rx.Stream<T> implements Subscribable {
+extends reactor.rx.Stream<T> implements Publishable {
 
 	final Callable<S> resourceSupplier;
 

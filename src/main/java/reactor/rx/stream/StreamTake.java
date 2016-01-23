@@ -23,7 +23,7 @@ import org.reactivestreams.Subscription;
 import reactor.core.trait.Backpressurable;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Prefetchable;
-import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 
@@ -66,7 +66,7 @@ public final class StreamTake<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class TakeSubscriber<T>
-			implements Subscriber<T>, Subscription, Completable, Prefetchable, Backpressurable, Publishable {
+			implements Subscriber<T>, Subscription, Completable, Prefetchable, Backpressurable, Subscribable {
 
 		final Subscriber<? super T> actual;
 

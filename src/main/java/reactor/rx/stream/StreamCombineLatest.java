@@ -482,7 +482,7 @@ public final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implem
 	}
 
 	static final class CombineLatestInner<T>
-			implements Subscriber<T>, Introspectable, Prefetchable, Requestable, Subscribable, Publishable {
+			implements Subscriber<T>, Introspectable, Prefetchable, Requestable, Publishable, Subscribable {
 
 		final CombineLatestCoordinator<T, ?> parent;
 

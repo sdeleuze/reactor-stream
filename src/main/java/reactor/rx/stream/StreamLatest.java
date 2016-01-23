@@ -25,8 +25,8 @@ import org.reactivestreams.Subscription;
 import reactor.core.trait.Cancellable;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Failurable;
-import reactor.core.trait.Publishable;
 import reactor.core.trait.Requestable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -52,7 +52,7 @@ public final class StreamLatest<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class LatestSubscriber<T>
-			implements Subscriber<T>, Subscription, Cancellable, Failurable, Completable, Publishable, Requestable {
+			implements Subscriber<T>, Subscription, Cancellable, Failurable, Completable, Subscribable, Requestable {
 
 		final Subscriber<? super T> actual;
 

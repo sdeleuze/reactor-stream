@@ -40,7 +40,7 @@ import reactor.core.util.EmptySubscription;
  * @since 2.5
  */
 public final class StreamIterable<T> 
-extends reactor.rx.Stream<T> implements Subscribable {
+extends reactor.rx.Stream<T> implements Publishable {
 
 	final Iterable<? extends T> iterable;
 
@@ -96,7 +96,7 @@ extends reactor.rx.Stream<T> implements Subscribable {
 	}
 
 	static final class IterableSubscription<T>
-			implements Publishable, Completable, Requestable, Cancellable, Subscription {
+			implements Subscribable, Completable, Requestable, Cancellable, Subscription {
 
 		final Subscriber<? super T> actual;
 

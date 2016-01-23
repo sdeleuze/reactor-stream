@@ -23,7 +23,7 @@ import org.reactivestreams.Subscription;
 import reactor.core.trait.Backpressurable;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Prefetchable;
-import reactor.core.trait.Publishable;
+import reactor.core.trait.Subscribable;
 
 /**
  * Skips the first N elements from a reactive stream.
@@ -64,7 +64,7 @@ public final class StreamSkip<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class SkipSubscriber<T>
-			implements Subscriber<T>, Publishable, Prefetchable, Backpressurable, Completable {
+			implements Subscriber<T>, Subscribable, Prefetchable, Backpressurable, Completable {
 
 		final Subscriber<? super T> actual;
 

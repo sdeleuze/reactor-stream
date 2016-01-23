@@ -23,8 +23,8 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Connectable;
-import reactor.core.trait.Publishable;
 import reactor.core.trait.Requestable;
+import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.BiFunction;
@@ -68,7 +68,7 @@ public final class StreamScan<T, R> extends StreamBarrier<T, R> {
 	}
 
 	static final class ScanSubscriber<T, R>
-			implements Subscriber<T>, Subscription, Publishable, Requestable, Connectable, Completable {
+			implements Subscriber<T>, Subscription, Subscribable, Requestable, Connectable, Completable {
 
 		final Subscriber<? super R> actual;
 
