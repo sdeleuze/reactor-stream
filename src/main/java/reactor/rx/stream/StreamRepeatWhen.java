@@ -49,7 +49,7 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 	final Function<? super reactor.rx.Stream<Long>, ? extends Publisher<? extends Object>> whenSourceFactory;
 
 	public StreamRepeatWhen(Publisher<? extends T> source,
-			Function<? super reactor.rx.Stream<Long>, ? extends Publisher<? extends Object>> whenSourceFactory) {
+							   Function<? super reactor.rx.Stream<Long>, ? extends Publisher<? extends Object>> whenSourceFactory) {
 		super(source);
 		this.whenSourceFactory = Objects.requireNonNull(whenSourceFactory, "whenSourceFactory");
 	}
@@ -58,11 +58,13 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 	public void subscribe(Subscriber<? super T> s) {
 
 		RepeatWhenOtherSubscriber other = new RepeatWhenOtherSubscriber();
-		other.completionSignal.onSubscribe(EmptySubscription.INSTANCE);
+		Subscriber<Long> signaller = new SerializedSubscriber<>(other.completionSignal);
+		
+		signaller.onSubscribe(EmptySubscription.INSTANCE);
 
 		SerializedSubscriber<T> serial = new SerializedSubscriber<>(s);
 
-		RepeatWhenMainSubscriber<T> main = new RepeatWhenMainSubscriber<>(serial, other.completionSignal, source);
+		RepeatWhenMainSubscriber<T> main = new RepeatWhenMainSubscriber<>(serial, signaller, source);
 		other.main = main;
 
 		serial.onSubscribe(main);
@@ -100,15 +102,14 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<RepeatWhenMainSubscriber> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(RepeatWhenMainSubscriber.class, "wip");
+		  AtomicIntegerFieldUpdater.newUpdater(RepeatWhenMainSubscriber.class, "wip");
 
 		volatile boolean cancelled;
 
 		long produced;
 
-		public RepeatWhenMainSubscriber(Subscriber<? super T> actual,
-				Subscriber<Long> signaller,
-				Publisher<? extends T> source) {
+		public RepeatWhenMainSubscriber(Subscriber<? super T> actual, Subscriber<Long> signaller,
+												 Publisher<? extends T> source) {
 			super(actual);
 			this.signaller = signaller;
 			this.source = source;
@@ -149,8 +150,11 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 		@Override
 		public void onComplete() {
 			long p = produced;
-			produced = 0;
-			produced(p);
+			if (p != 0L) {
+				produced = 0;
+				produced(p);
+			}
+
 			otherArbiter.request(1);
 			signaller.onNext(p);
 		}
@@ -191,9 +195,9 @@ public final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class RepeatWhenOtherSubscriber extends reactor.rx.Stream<Long>
-			implements Subscriber<Object>, Connectable {
-
+	static final class RepeatWhenOtherSubscriber 
+	extends reactor.rx.Stream<Long>
+	implements Subscriber<Object>, Connectable {
 		RepeatWhenMainSubscriber<?> main;
 
 		final ProcessorEmitter<Long> completionSignal = new ProcessorEmitter<>();

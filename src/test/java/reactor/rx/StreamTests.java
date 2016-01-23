@@ -612,8 +612,8 @@ public class StreamTests extends AbstractReactorTest {
 		for (String i : data) {
 			deferred.onNext(i);
 		}
-		if (!latch.await(30, TimeUnit.SECONDS)) {
-			throw new RuntimeException(deferred.debug()
+		if (!latch.await(10, TimeUnit.SECONDS)) {
+			throw new RuntimeException(latch.getCount()+ " "+deferred.debug()
 			                                   .toString());
 		}
 

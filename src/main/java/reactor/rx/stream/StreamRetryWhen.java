@@ -58,12 +58,13 @@ public final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 	public void subscribe(Subscriber<? super T> s) {
 
 		RetryWhenOtherSubscriber other = new RetryWhenOtherSubscriber();
-		other.completionSignal.onSubscribe(EmptySubscription.INSTANCE);
+		Subscriber<Throwable> signaller = new SerializedSubscriber<>(other.completionSignal);
+		
+		signaller.onSubscribe(EmptySubscription.INSTANCE);
 
 		SerializedSubscriber<T> serial = new SerializedSubscriber<>(s);
 
-		RetryWhenMainSubscriber<T> main = new RetryWhenMainSubscriber<>(serial, other
-		  .completionSignal, source);
+		RetryWhenMainSubscriber<T> main = new RetryWhenMainSubscriber<>(serial, signaller, source);
 		other.main = main;
 
 		serial.onSubscribe(main);
@@ -101,10 +102,12 @@ public final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<RetryWhenMainSubscriber> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(RetryWhenMainSubscriber.class, "wip");
+		  AtomicIntegerFieldUpdater.newUpdater(RetryWhenMainSubscriber.class, "wip");
 
 		volatile boolean cancelled;
 
+		long produced;
+		
 		public RetryWhenMainSubscriber(Subscriber<? super T> actual, Subscriber<Throwable> signaller,
 												Publisher<? extends T> source) {
 			super(actual);
@@ -137,11 +140,17 @@ public final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 		public void onNext(T t) {
 			subscriber.onNext(t);
 
-			producedOne();
+			produced++;
 		}
 
 		@Override
 		public void onError(Throwable t) {
+			long p = produced;
+			if (p != 0L) {
+				produced = 0;
+				produced(p);
+			}
+
 			otherArbiter.request(1);
 
 			signaller.onNext(t);
@@ -183,8 +192,8 @@ public final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class RetryWhenOtherSubscriber
-	extends reactor.rx.Stream<Throwable> implements Subscriber<Object>, Connectable {
-
+	extends reactor.rx.Stream<Throwable>
+	implements Subscriber<Object>, Connectable {
 		RetryWhenMainSubscriber<?> main;
 
 		final ProcessorEmitter<Throwable> completionSignal = new ProcessorEmitter<>();
