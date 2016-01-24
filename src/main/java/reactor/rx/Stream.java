@@ -175,6 +175,7 @@ import reactor.rx.subscriber.Tap;
  * A public factory to build {@link Stream}, Streams provide for common transformations from a few structures such as
  * Iterable or Future to a Stream, in addition to provide for combinatory operations (merge, switchOnNext...).
  * <p>
+ * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" alt="">
  * <p>
  * Examples of use (In Java8 but would also work with Anonymous classes or Groovy Closures for instance):
  * <pre>
