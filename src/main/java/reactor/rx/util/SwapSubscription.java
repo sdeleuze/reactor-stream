@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.rx.subscription;
+package reactor.rx.util;
 
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;

@@ -26,7 +26,7 @@ import reactor.core.timer.Timer;
 import reactor.core.timer.Timers;
 import reactor.core.util.Exceptions;
 import reactor.rx.subscriber.SerializedSubscriber;
-import reactor.rx.subscription.SwapSubscription;
+import reactor.rx.util.SwapSubscription;
 
 /**
  * Broadcasters are akin to Reactive Extensions Subject. Extending Stream, they fulfil the
