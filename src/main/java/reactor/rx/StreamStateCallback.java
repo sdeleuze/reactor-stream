@@ -26,7 +26,7 @@ import reactor.fn.Consumer;
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-public class StreamStateCallback<T> extends StreamBarrier<T, T> {
+final class StreamStateCallback<T> extends StreamBarrier<T, T> {
 
 	private final Runnable                          cancelConsumer;
 	private final Consumer<? super Subscription>          onSubscribeConsumer;
