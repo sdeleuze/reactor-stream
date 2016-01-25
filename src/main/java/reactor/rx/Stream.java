@@ -2357,7 +2357,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		AdaptiveSubscriber<O, Broadcaster<Long>> consumerAction =
 				new AdaptiveSubscriber<>(consumer,
 						(Function<? super Publisher<Long>, ? extends Publisher<? extends Long>>)requestMapper,
-				Broadcaster.create(getTimer()));
+				Broadcaster.<Long>create(getTimer()));
 
 		subscribe(consumerAction);
 		return consumerAction;
