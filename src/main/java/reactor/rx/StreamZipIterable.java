@@ -86,11 +86,12 @@ final class StreamZipIterable<T, U, R> extends StreamBarrier<T, R> {
 			EmptySubscription.complete(s);
 			return;
 		}
-
+		
 		source.subscribe(new ZipSubscriber<>(s, it, zipper));
 	}
-
-	static final class ZipSubscriber<T, U, R> implements Subscriber<T>, Subscribable, PublishableMany, Completable {
+	
+	static final class ZipSubscriber<T, U, R> implements Subscriber<T>, Subscribable, PublishableMany,
+																  Completable, Subscription {
 		
 		final Subscriber<? super R> actual;
 		
@@ -113,7 +114,7 @@ final class StreamZipIterable<T, U, R> extends StreamBarrier<T, R> {
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.validate(this.s, s)) {
 				this.s = s;
-				actual.onSubscribe(s);
+				actual.onSubscribe(this);
 			}
 		}
 		
@@ -223,6 +224,16 @@ final class StreamZipIterable<T, U, R> extends StreamBarrier<T, R> {
 		@Override
 		public long upstreamsCount() {
 			return isStarted() ? 2 : 1;
+		}
+		
+		@Override
+		public void request(long n) {
+			s.request(n);
+		}
+		
+		@Override
+		public void cancel() {
+			s.cancel();
 		}
 	}
 }

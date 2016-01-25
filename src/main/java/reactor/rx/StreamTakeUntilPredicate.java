@@ -58,7 +58,7 @@ final class StreamTakeUntilPredicate<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class TakeUntilPredicateSubscriber<T>
-			implements Subscriber<T>, Subscribable, Completable, Connectable {
+			implements Subscriber<T>, Subscribable, Completable, Connectable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final Predicate<? super T> predicate;
@@ -76,7 +76,7 @@ final class StreamTakeUntilPredicate<T> extends StreamBarrier<T, T> {
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.validate(this.s, s)) {
 				this.s = s;
-				actual.onSubscribe(s);
+				actual.onSubscribe(this);
 			}
 		}
 
@@ -159,6 +159,16 @@ final class StreamTakeUntilPredicate<T> extends StreamBarrier<T, T> {
 		@Override
 		public Object upstream() {
 			return s;
+		}
+		
+		@Override
+		public void request(long n) {
+			s.request(n);
+		}
+		
+		@Override
+		public void cancel() {
+			s.cancel();
 		}
 	}
 }

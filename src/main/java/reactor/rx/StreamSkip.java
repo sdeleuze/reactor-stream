@@ -24,6 +24,7 @@ import reactor.core.trait.Backpressurable;
 import reactor.core.trait.Completable;
 import reactor.core.trait.Prefetchable;
 import reactor.core.trait.Subscribable;
+import reactor.core.util.BackpressureUtils;
 
 /**
  * Skips the first N elements from a reactive stream.
@@ -63,14 +64,16 @@ final class StreamSkip<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class SkipSubscriber<T>
-			implements Subscriber<T>, Subscribable, Prefetchable, Backpressurable, Completable {
+	static final class SkipSubscriber<T> implements Subscriber<T>, Subscribable, Prefetchable,
+															 Backpressurable, Completable, Subscription {
 
 		final Subscriber<? super T> actual;
 
 		final long n;
 
 		long remaining;
+		
+		Subscription s;
 
 		public SkipSubscriber(Subscriber<? super T> actual, long n) {
 			this.actual = actual;
@@ -80,9 +83,13 @@ final class StreamSkip<T> extends StreamBarrier<T, T> {
 
 		@Override
 		public void onSubscribe(Subscription s) {
-			actual.onSubscribe(s);
-
-			s.request(n);
+			if (BackpressureUtils.validate(this.s, s)) {
+				this.s = s;
+				
+				actual.onSubscribe(this);
+	
+				s.request(n);
+			}
 		}
 
 		@Override
@@ -137,12 +144,22 @@ final class StreamSkip<T> extends StreamBarrier<T, T> {
 
 		@Override
 		public Object upstream() {
-			return null;
+			return s;
 		}
 
 		@Override
 		public long limit() {
 			return 0;
+		}
+		
+		@Override
+		public void request(long n) {
+			s.request(n);
+		}
+		
+		@Override
+		public void cancel() {
+			s.cancel();
 		}
 	}
 }

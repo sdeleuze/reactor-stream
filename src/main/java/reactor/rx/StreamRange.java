@@ -24,6 +24,9 @@ import reactor.core.trait.Completable;
 import reactor.core.trait.Requestable;
 import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
+import reactor.core.util.EmptySubscription;
+import reactor.core.util.ScalarSubscription;
+import reactor.core.util.SynchronousSource;
 
 /**
  * Emits a range of integer values.
@@ -33,7 +36,8 @@ import reactor.core.util.BackpressureUtils;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamRange extends reactor.rx.Stream<Integer> {
+final class StreamRange 
+extends Stream<Integer> {
 
 	final long start;
 
@@ -54,11 +58,23 @@ final class StreamRange extends reactor.rx.Stream<Integer> {
 
 	@Override
 	public void subscribe(Subscriber<? super Integer> s) {
-		s.onSubscribe(new RangeSubscription<>(s, start, end));
+		long st = start;
+		long en = end;
+		if (st == en) {
+			EmptySubscription.complete(s);
+			return;
+		} else
+		if (st + 1 == en) {
+			s.onSubscribe(new ScalarSubscription<>(s, (int)st));
+			return;
+		}
+		
+		s.onSubscribe(new RangeSubscription(s, st, en));
 	}
 
-	static final class RangeSubscription<T>
-			implements Subscription, Cancellable, Requestable, Completable, Subscribable {
+	static final class RangeSubscription
+	extends SynchronousSource<Integer>
+	  implements Subscription, Cancellable, Requestable, Completable, Subscribable {
 
 		final Subscriber<? super Integer> actual;
 
@@ -69,9 +85,8 @@ final class StreamRange extends reactor.rx.Stream<Integer> {
 		long index;
 
 		volatile long requested;
-		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<RangeSubscription> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(RangeSubscription.class, "requested");
+		  AtomicLongFieldUpdater.newUpdater(RangeSubscription.class, "requested");
 
 		public RangeSubscription(Subscriber<? super Integer> actual, long start, long end) {
 			this.actual = actual;
@@ -191,5 +206,35 @@ final class StreamRange extends reactor.rx.Stream<Integer> {
 		public long requestedFromDownstream() {
 			return requested;
 		}
+
+		@Override
+		public Integer poll() {
+			long i = index++;
+			if (i == end) {
+				return null;
+			}
+			return (int)i;
+		}
+
+		@Override
+		public Integer peek() {
+			long i = index;
+			if (i == end) {
+				return null;
+			}
+			return (int)i;
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return index == end;
+		}
+
+		@Override
+		public void clear() {
+			index = end;
+		}
+		
+		
 	}
 }

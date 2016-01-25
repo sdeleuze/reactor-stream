@@ -60,7 +60,8 @@ final class StreamSkipWhile<T> extends StreamBarrier<T, T> {
 		source.subscribe(new SkipWhileSubscriber<>(s, predicate));
 	}
 
-	static final class SkipWhileSubscriber<T> implements Subscriber<T>, Subscribable, Connectable, Completable {
+	static final class SkipWhileSubscriber<T> implements Subscriber<T>, Subscribable, Connectable,
+																  Completable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final Predicate<? super T> predicate;
@@ -80,7 +81,7 @@ final class StreamSkipWhile<T> extends StreamBarrier<T, T> {
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.validate(this.s, s)) {
 				this.s = s;
-				actual.onSubscribe(s);
+				actual.onSubscribe(this);
 			}
 		}
 
@@ -166,6 +167,16 @@ final class StreamSkipWhile<T> extends StreamBarrier<T, T> {
 		@Override
 		public Object upstream() {
 			return s;
+		}
+		
+		@Override
+		public void request(long n) {
+			s.request(n);
+		}
+		
+		@Override
+		public void cancel() {
+			s.cancel();
 		}
 	}
 }

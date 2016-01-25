@@ -76,7 +76,7 @@ final class StreamDistinct<T, K, C extends Collection<? super K>> extends Stream
 	}
 
 	static final class DistinctSubscriber<T, K, C extends Collection<? super K>>
-			implements Subscriber<T>, Subscribable, Connectable, Completable {
+			implements Subscriber<T>, Subscribable, Connectable, Completable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final C collection;
@@ -99,7 +99,7 @@ final class StreamDistinct<T, K, C extends Collection<? super K>> extends Stream
 			if (BackpressureUtils.validate(this.s, s)) {
 				this.s = s;
 
-				actual.onSubscribe(s);
+				actual.onSubscribe(this);
 			}
 		}
 
@@ -189,6 +189,16 @@ final class StreamDistinct<T, K, C extends Collection<? super K>> extends Stream
 		@Override
 		public Object upstream() {
 			return s;
+		}
+		
+		@Override
+		public void request(long n) {
+			s.request(n);
+		}
+		
+		@Override
+		public void cancel() {
+			s.cancel();
 		}
 	}
 }

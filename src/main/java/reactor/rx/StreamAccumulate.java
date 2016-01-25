@@ -63,7 +63,8 @@ final class StreamAccumulate<T> extends StreamBarrier<T, T> {
 		source.subscribe(new AccumulateSubscriber<>(s, accumulator));
 	}
 
-	static final class AccumulateSubscriber<T> implements Subscriber<T>, Subscribable, Completable, Connectable {
+	static final class AccumulateSubscriber<T> implements Subscriber<T>, Subscribable, Completable,
+																   Connectable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final BiFunction<T, ? super T, T> accumulator;
@@ -84,7 +85,7 @@ final class StreamAccumulate<T> extends StreamBarrier<T, T> {
 			if (BackpressureUtils.validate(this.s, s)) {
 				this.s = s;
 
-				actual.onSubscribe(s);
+				actual.onSubscribe(this);
 			}
 		}
 
@@ -164,6 +165,16 @@ final class StreamAccumulate<T> extends StreamBarrier<T, T> {
 		@Override
 		public Object upstream() {
 			return s;
+		}
+		
+		@Override
+		public void request(long n) {
+			s.request(n);
+		}
+		
+		@Override
+		public void cancel() {
+			s.cancel();
 		}
 	}
 }

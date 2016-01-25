@@ -85,6 +85,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamBarri
 		}
 	}
 
+	@Override
 	public long getCapacity() {
 		return size;
 	}
@@ -95,7 +96,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamBarri
 	}
 
 	static final class BufferExactSubscriber<T, C extends Collection<? super T>>
-			implements Subscriber<T>, Subscription, Subscribable, Connectable, Completable, Backpressurable {
+	  implements Subscriber<T>, Subscription, Subscribable, Connectable, Completable, Backpressurable {
 
 		final Subscriber<? super C> actual;
 
@@ -240,7 +241,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamBarri
 	}
 
 	static final class BufferSkipSubscriber<T, C extends Collection<? super T>>
-			implements Subscriber<T>, Subscription, Subscribable, Connectable, Completable, Backpressurable {
+	  implements Subscriber<T>, Subscription, Subscribable, Connectable, Completable, Backpressurable {
 
 		final Subscriber<? super C> actual;
 
@@ -261,7 +262,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamBarri
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<BufferSkipSubscriber> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(BufferSkipSubscriber.class, "wip");
+		  AtomicIntegerFieldUpdater.newUpdater(BufferSkipSubscriber.class, "wip");
 
 		public BufferSkipSubscriber(Subscriber<? super C> actual, int size, int skip,
 											 Supplier<C> bufferSupplier) {
@@ -414,9 +415,11 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamBarri
 		}
 	}
 
+
 	static final class BufferOverlappingSubscriber<T, C extends Collection<? super T>>
-			implements Subscriber<T>, Subscription, BooleanSupplier, Subscribable, Completable, Cancellable,
-			           Connectable, Backpressurable, Requestable {
+	  implements Subscriber<T>, Subscription, BooleanSupplier, Subscribable, Completable, Cancellable,
+				 Connectable,
+				 Backpressurable, Requestable {
 		final Subscriber<? super C> actual;
 
 		final Supplier<C> bufferSupplier;
@@ -438,12 +441,12 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamBarri
 		volatile int once;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<BufferOverlappingSubscriber> ONCE =
-				AtomicIntegerFieldUpdater.newUpdater(BufferOverlappingSubscriber.class, "once");
+		  AtomicIntegerFieldUpdater.newUpdater(BufferOverlappingSubscriber.class, "once");
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<BufferOverlappingSubscriber> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(BufferOverlappingSubscriber.class, "requested");
+		  AtomicLongFieldUpdater.newUpdater(BufferOverlappingSubscriber.class, "requested");
 
 		public BufferOverlappingSubscriber(Subscriber<? super C> actual, int size, int skip,
 													Supplier<C> bufferSupplier) {

@@ -53,7 +53,7 @@ final class StreamDistinctUntilChanged<T, K> extends StreamBarrier<T, T> {
 	}
 
 	static final class DistinctUntilChangedSubscriber<T, K>
-			implements Subscriber<T>, Subscribable, Connectable, Completable {
+			implements Subscriber<T>, Subscribable, Connectable, Completable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final Function<? super T, K> keyExtractor;
@@ -75,7 +75,7 @@ final class StreamDistinctUntilChanged<T, K> extends StreamBarrier<T, T> {
 			if (BackpressureUtils.validate(this.s, s)) {
 				this.s = s;
 
-				actual.onSubscribe(s);
+				actual.onSubscribe(this);
 			}
 		}
 
@@ -155,7 +155,17 @@ final class StreamDistinctUntilChanged<T, K> extends StreamBarrier<T, T> {
 
 		@Override
 		public Object upstream() {
-			return null;
+			return s;
+		}
+		
+		@Override
+		public void request(long n) {
+			s.request(n);
+		}
+		
+		@Override
+		public void cancel() {
+			s.cancel();
 		}
 	}
 }

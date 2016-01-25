@@ -62,9 +62,11 @@ final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class TakeLastZeroSubscriber<T> implements Subscriber<T>, Subscribable {
+	static final class TakeLastZeroSubscriber<T> implements Subscriber<T>, Subscribable, Subscription, Publishable {
 
 		final Subscriber<? super T> actual;
+		
+		Subscription s;
 
 		public TakeLastZeroSubscriber(Subscriber<? super T> actual) {
 			this.actual = actual;
@@ -72,9 +74,13 @@ final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 
 		@Override
 		public void onSubscribe(Subscription s) {
-			actual.onSubscribe(s);
+			if (BackpressureUtils.validate(this.s, s)) {
+				this.s = s;
+				
+				actual.onSubscribe(this);
 
-			s.request(Long.MAX_VALUE);
+				s.request(Long.MAX_VALUE);
+			}
 		}
 
 		@Override
@@ -96,10 +102,26 @@ final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		public Object downstream() {
 			return actual;
 		}
+		
+		@Override
+		public void request(long n) {
+			s.request(n);
+		}
+		
+		@Override
+		public void cancel() {
+			s.cancel();
+		}
+		
+		@Override
+		public Object upstream() {
+			return s;
+		}
 	}
 
 	static final class TakeLastOneSubscriber<T>
-			extends SubscriberDeferredScalar<T, T> implements Publishable {
+			extends SubscriberDeferredScalar<T, T>
+			implements Publishable {
 
 		Subscription s;
 
@@ -151,8 +173,7 @@ final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class TakeLastManySubscriber<T>
-			implements Subscriber<T>, Subscription, BooleanSupplier, Subscribable, Cancellable, Publishable,
-			           Backpressurable {
+	  implements Subscriber<T>, Subscription, BooleanSupplier, Subscribable, Cancellable, Publishable, Backpressurable {
 
 		final Subscriber<? super T> actual;
 
@@ -167,7 +188,7 @@ final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<TakeLastManySubscriber> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(TakeLastManySubscriber.class, "requested");
+		  AtomicLongFieldUpdater.newUpdater(TakeLastManySubscriber.class, "requested");
 
 		public TakeLastManySubscriber(Subscriber<? super T> actual, int n) {
 			this.actual = actual;
