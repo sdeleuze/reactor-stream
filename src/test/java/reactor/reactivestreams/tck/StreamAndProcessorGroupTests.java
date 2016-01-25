@@ -25,8 +25,8 @@ import org.testng.annotations.BeforeClass;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.Processors;
 import reactor.fn.BiFunction;
+import reactor.rx.Broadcaster;
 import reactor.rx.Stream;
-import reactor.rx.broadcast.Broadcaster;
 
 /**
  * @author Stephane Maldini

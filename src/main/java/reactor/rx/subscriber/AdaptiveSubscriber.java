@@ -18,26 +18,25 @@ package reactor.rx.subscriber;
 
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
+import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.timer.Timer;
 import reactor.core.trait.Backpressurable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
-import reactor.rx.Stream;
-import reactor.rx.broadcast.Broadcaster;
 
 /**
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class AdaptiveSubscriber<T> extends InterruptableSubscriber<T> implements Backpressurable {
+public final class AdaptiveSubscriber<T, E extends Processor<Long, Long>> extends InterruptableSubscriber<T>
+		implements Backpressurable {
 
-	private final Broadcaster<Long>                                           requestMapperStream;
-	private final Function<Stream<Long>, ? extends Publisher<? extends Long>> requestMapper;
+	private final E                                                           requestMapperStream;
+	private final Function<? super Publisher<Long>, ? extends Publisher<? extends Long>> requestMapper;
 	private final RequestSubscriber inner = new RequestSubscriber();
 
 	@SuppressWarnings("unused")
@@ -50,12 +49,12 @@ public final class AdaptiveSubscriber<T> extends InterruptableSubscriber<T> impl
 	private final AtomicLongFieldUpdater<AdaptiveSubscriber> OUTSTANDING =
 			AtomicLongFieldUpdater.newUpdater(AdaptiveSubscriber.class, "outstanding");
 
-	public AdaptiveSubscriber(Timer timer,
+	public AdaptiveSubscriber(
 			Consumer<? super T> consumer,
-			Function<Stream<Long>, ? extends Publisher<? extends Long>> requestMapper) {
+			Function<? super Publisher<Long>, ? extends Publisher<? extends Long>> requestMapper, E broadcaster) {
 		super(consumer, null, null);
 		this.requestMapper = requestMapper;
-		this.requestMapperStream = Broadcaster.create(timer);
+		this.requestMapperStream = broadcaster;
 		this.requestMapperStream.onSubscribe(new Subscription() {
 			@Override
 			public void request(long n) {

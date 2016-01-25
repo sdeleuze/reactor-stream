@@ -81,88 +81,6 @@ import reactor.fn.tuple.Tuple5;
 import reactor.fn.tuple.Tuple6;
 import reactor.fn.tuple.Tuple7;
 import reactor.fn.tuple.Tuple8;
-import reactor.rx.broadcast.Broadcaster;
-import reactor.rx.broadcast.StreamProcessor;
-import reactor.rx.broadcast.UnicastProcessor;
-import reactor.rx.stream.GroupedStream;
-import reactor.rx.stream.MonoAll;
-import reactor.rx.stream.MonoAny;
-import reactor.rx.stream.MonoCollect;
-import reactor.rx.stream.MonoCount;
-import reactor.rx.stream.MonoElementAt;
-import reactor.rx.stream.MonoIsEmpty;
-import reactor.rx.stream.MonoReduce;
-import reactor.rx.stream.MonoSingle;
-import reactor.rx.stream.Signal;
-import reactor.rx.stream.StreamAccumulate;
-import reactor.rx.stream.StreamBarrier;
-import reactor.rx.stream.StreamBatch;
-import reactor.rx.stream.StreamBlock;
-import reactor.rx.stream.StreamBuffer;
-import reactor.rx.stream.StreamBufferBoundary;
-import reactor.rx.stream.StreamBufferStartEnd;
-import reactor.rx.stream.StreamBufferTimeOrSize;
-import reactor.rx.stream.StreamCallback;
-import reactor.rx.stream.StreamCombineLatest;
-import reactor.rx.stream.StreamConcatArray;
-import reactor.rx.stream.StreamConcatIterable;
-import reactor.rx.stream.StreamDebounce;
-import reactor.rx.stream.StreamDefaultIfEmpty;
-import reactor.rx.stream.StreamDefer;
-import reactor.rx.stream.StreamDelaySubscription;
-import reactor.rx.stream.StreamDematerialize;
-import reactor.rx.stream.StreamDistinct;
-import reactor.rx.stream.StreamDistinctUntilChanged;
-import reactor.rx.stream.StreamDrop;
-import reactor.rx.stream.StreamElapsed;
-import reactor.rx.stream.StreamError;
-import reactor.rx.stream.StreamErrorWithValue;
-import reactor.rx.stream.StreamFilter;
-import reactor.rx.stream.StreamFinally;
-import reactor.rx.stream.StreamFuture;
-import reactor.rx.stream.StreamGroupBy;
-import reactor.rx.stream.StreamInterval;
-import reactor.rx.stream.StreamIterable;
-import reactor.rx.stream.StreamJust;
-import reactor.rx.stream.StreamKv;
-import reactor.rx.stream.StreamLatest;
-import reactor.rx.stream.StreamMap;
-import reactor.rx.stream.StreamMaterialize;
-import reactor.rx.stream.StreamRange;
-import reactor.rx.stream.StreamReduceByKey;
-import reactor.rx.stream.StreamRepeat;
-import reactor.rx.stream.StreamRepeatPredicate;
-import reactor.rx.stream.StreamRepeatWhen;
-import reactor.rx.stream.StreamRetry;
-import reactor.rx.stream.StreamRetryPredicate;
-import reactor.rx.stream.StreamRetryWhen;
-import reactor.rx.stream.StreamSample;
-import reactor.rx.stream.StreamScan;
-import reactor.rx.stream.StreamScanByKey;
-import reactor.rx.stream.StreamSkip;
-import reactor.rx.stream.StreamSkipLast;
-import reactor.rx.stream.StreamSkipUntil;
-import reactor.rx.stream.StreamSkipWhile;
-import reactor.rx.stream.StreamStateCallback;
-import reactor.rx.stream.StreamSwitchIfEmpty;
-import reactor.rx.stream.StreamSwitchMap;
-import reactor.rx.stream.StreamTake;
-import reactor.rx.stream.StreamTakeLast;
-import reactor.rx.stream.StreamTakeUntil;
-import reactor.rx.stream.StreamTakeUntilPredicate;
-import reactor.rx.stream.StreamTakeWhile;
-import reactor.rx.stream.StreamThrottleFirst;
-import reactor.rx.stream.StreamThrottleRequest;
-import reactor.rx.stream.StreamThrottleRequestWhen;
-import reactor.rx.stream.StreamThrottleTimeout;
-import reactor.rx.stream.StreamTimeout;
-import reactor.rx.stream.StreamUsing;
-import reactor.rx.stream.StreamWindow;
-import reactor.rx.stream.StreamWindowBoundary;
-import reactor.rx.stream.StreamWindowStartEnd;
-import reactor.rx.stream.StreamWindowTimeOrSize;
-import reactor.rx.stream.StreamWithLatestFrom;
-import reactor.rx.stream.StreamZipIterable;
 import reactor.rx.subscriber.AdaptiveSubscriber;
 import reactor.rx.subscriber.BlockingQueueSubscriber;
 import reactor.rx.subscriber.BoundedSubscriber;
@@ -2433,9 +2351,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @return a new {@link Control} interface to operate on the materialized upstream
 	 */
+	@SuppressWarnings("unchecked")
 	public final Control consumeWhen(final Consumer<? super O> consumer,
-			final Function<Stream<Long>, ? extends Publisher<? extends Long>> requestMapper) {
-		AdaptiveSubscriber<O> consumerAction = new AdaptiveSubscriber<O>(getTimer(), consumer, requestMapper);
+			final Function<? super Stream<Long>, ? extends Publisher<? extends Long>> requestMapper) {
+		AdaptiveSubscriber<O, Broadcaster<Long>> consumerAction =
+				new AdaptiveSubscriber<>(consumer,
+						(Function<? super Publisher<Long>, ? extends Publisher<? extends Long>>)requestMapper,
+				Broadcaster.create(getTimer()));
 
 		subscribe(consumerAction);
 		return consumerAction;
@@ -2542,7 +2464,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Transform the incoming onSubscribe, onNext, onError and onComplete signals into {@link reactor.rx.stream
+	 * Transform the incoming onSubscribe, onNext, onError and onComplete signals into {@link reactor.rx
 	 * .Signal}. Since the error is materialized as a {@code Signal}, the propagation will be stopped. Complete signal
 	 * will first emit a {@code Signal.complete()} and then effectively complete the stream.
 	 *
@@ -3212,7 +3134,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Transform the incoming onSubscribe, onNext, onError and onComplete signals into {@link reactor.rx.stream
+	 * Transform the incoming onSubscribe, onNext, onError and onComplete signals into {@link reactor.rx
 	 * .Signal}. Since the error is materialized as a {@code Signal}, the propagation will be stopped. Complete signal
 	 * will first emit a {@code Signal.complete()} and then effectively complete the stream.
 	 *

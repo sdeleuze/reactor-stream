@@ -61,8 +61,6 @@ import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
-import reactor.rx.broadcast.Broadcaster;
-import reactor.rx.broadcast.StreamProcessor;
 import reactor.rx.subscriber.Control;
 
 import static org.hamcrest.CoreMatchers.equalTo;

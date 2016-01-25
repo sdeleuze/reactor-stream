@@ -40,7 +40,6 @@ import reactor.core.util.ScalarSubscription;
 import reactor.fn.BiConsumer;
 import reactor.fn.Consumer;
 import reactor.fn.Supplier;
-import reactor.rx.broadcast.Broadcaster;
 
 /**
  * A {@code Promise} is a stateful event container that accepts a single value or error. In addition to {@link #peek()

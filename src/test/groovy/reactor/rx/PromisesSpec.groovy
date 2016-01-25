@@ -18,7 +18,6 @@ package reactor.rx
 import reactor.core.publisher.Mono
 import reactor.core.publisher.Processors
 import reactor.core.util.Exceptions
-import reactor.rx.broadcast.Broadcaster
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
