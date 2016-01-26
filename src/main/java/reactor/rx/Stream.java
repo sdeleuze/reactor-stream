@@ -136,12 +136,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p> <p>
 	 *
 	 * @param sources The competing source publishers
-	 * @param <I> The source type of the data sequence
+	 * @param <T> The source type of the data sequence
 	 *
 	 * @return a new {@link Stream} eventually subscribed to one of the sources or empty
 	 */
-	public static <T> Stream<T> amb(Iterable<? extends Publisher<? extends T>> mergedPublishers) {
-		return from(Flux.amb(mergedPublishers));
+	public static <T> Stream<T> amb(Iterable<? extends Publisher<? extends T>> sources) {
+		return from(Flux.amb(sources));
 	}
 
 	/**
@@ -488,12 +488,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/concat.png" alt="">
 	 * <p>
 	 * @param sources The {@link Publisher} of {@link Publisher} to concat
-	 * @param <I> The source type of the data sequence
+	 * @param <T> The source type of the data sequence
 	 *
 	 * @return a new {@link Stream} concatenating all source sequences
 	 */
-	public static <T> Stream<T> concat(Iterable<? extends Publisher<? extends T>> mergedPublishers) {
-		return new StreamConcatIterable<>(mergedPublishers);
+	public static <T> Stream<T> concat(Iterable<? extends Publisher<? extends T>> sources) {
+		return new StreamConcatIterable<>(sources);
 	}
 
 	/**
@@ -520,7 +520,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/concat.png" alt="">
 	 * <p>
 	 * @param sources The {@link Publisher} of {@link Publisher} to concat
-	 * @param <I> The source type of the data sequence
+	 * @param <T> The source type of the data sequence
 	 *
 	 * @return a new {@link Stream} concatenating all source sequences
 	 */
@@ -793,7 +793,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static <T> Stream<T> fromFuture(Future<? extends T> future, long time, TimeUnit unit) {
-		return new StreamFuture<T>(future, time, unit);
+		return new StreamFuture<>(future, time, unit);
 	}
 
 	/**
@@ -1737,11 +1737,11 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public static <TUPLE extends Tuple, V> Stream<V> zip(Iterable<? extends Publisher<?>> sources,
 			final Function<? super TUPLE, ? extends V> combinator) {
-		return from(Flux.zip(sources, new Function<Tuple, V>() {
+		return from(Flux.zip(sources, new Function<Object[], V>() {
 			@Override
 			@SuppressWarnings("unchecked")
-			public V apply(Tuple tuple) {
-				return combinator.apply((TUPLE)tuple);
+			public V apply(Object[] tuple) {
+				return combinator.apply((TUPLE)Tuple.of(tuple));
 			}
 		}));
 	}
@@ -1780,7 +1780,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			@Override
 			@SuppressWarnings("unchecked")
 			public Publisher<V> apply(List<? extends Publisher<?>> publishers) {
-				return Flux.zip((Function<Tuple, V>)combinator, publishers.toArray(new Publisher[publishers
+				return Flux.zip(Tuple.fnAny((Function<Tuple, V>)combinator), publishers.toArray(new Publisher[publishers
 						.size()]));
 			}
 		});
@@ -5159,20 +5159,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 *
 	 */
-	public static final Function JOIN_FUNCTION = new Function<Tuple, List>() {
-		@Override
-		public List<?> apply(Tuple ts) {
-			return Arrays.asList(ts.toArray());
-		}
-	};
-
-	/**
-	 *
-	 */
 	public static final BiFunction JOIN_BIFUNCTION = new BiFunction<Object, Object, List>() {
 		@Override
 		public List<?> apply(Object t1, Object t2) {
 			return Arrays.asList(t1, t2);
+		}
+	};
+
+	private static final Function JOIN_FUNCTION = new Function<Object[], Object>() {
+		@Override
+		public Object apply(Object[] objects) {
+			return Arrays.asList(objects);
 		}
 	};
 

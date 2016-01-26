@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 Pivotal Software Inc., Inc. All Rights Reserved.
+ * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -482,11 +482,9 @@ class PromisesSpec extends Specification {
 	def promise2 = Promise.error(new Exception())
 
 	when: "a combined promise is first created"
-	def combined = Promise.ready()
-	Mono.when(promise1, promise2).subscribe(combined)
+	Mono.when(promise1, promise2).get()
 	println promise1.debug()
 	println promise2.debug()
-	println combined.debug()
 
 	then: "it is rejected"
 	thrown Exception
@@ -494,11 +492,11 @@ class PromisesSpec extends Specification {
 
   def "A single promise can be 'combined'"() {
 	given: "one unfulfilled promise"
-	def promise1 = Promise.ready()
+	Promise<Integer> promise1 = Promise.ready()
 
 	when: "a combined promise is first created"
 	def combined = Promise.ready()
-	Mono.when([promise1]).subscribe(combined)
+	Mono.when(promise1).log().subscribe(combined)
 
 	then: "it is pending"
 	combined.pending
