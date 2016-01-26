@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 Pivotal Software Inc., Inc. All Rights Reserved.
+ * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import org.reactivestreams.Subscription
 import reactor.core.publisher.ProcessorGroup
 import reactor.core.publisher.Processors
 import reactor.core.subscriber.SubscriberWithContext
-import reactor.core.subscriber.test.DataTestSubscriber
+import reactor.core.test.TestSubscriber
 import reactor.core.timer.Timers
 import reactor.core.util.ReactiveStateUtils
 import reactor.fn.BiFunction
@@ -2296,18 +2296,17 @@ class StreamsSpec extends Specification {
 	def source = Broadcaster.<Integer> create()
 
 	def value = null
-	def tail = DataTestSubscriber.createWithTimeoutSecs(3)
+	def tail = new TestSubscriber<>(5)
 
 	source
 			.log("block")
 			.dispatchOn(asyncGroup)
 			.onBackpressureBlock()
 			.doOnNext { value = it }
-			.log('overflow-drop-test')
+			.log('overflow-block-test')
 			.throttleRequest(100)
 			.subscribe(tail)
 
-	tail.sendRequest(5)
 	println tail.debug()
 
 	when:
@@ -2321,18 +2320,19 @@ class StreamsSpec extends Specification {
 	println tail.debug()
 
 	then:
-	tail.assertNumNextSignalsReceived(5)
+	tail.awaitAndAssertValues(1,2,3,4,5)
 
 	when:
 	'we try to consume the tail to check if 6 has been buffered'
 	source.onNext(6)
-	tail.sendRequest(1)
+	tail.request(1)
 	source.onComplete()
 
 	then:
 	'last value known is 5'
-	tail.assertNumNextSignalsReceived(6)
-		.assertCompleteReceived()
+	tail.await()
+		.assertValueCount(6)
+		.assertComplete()
   }
 
 	def 'A Stream can be throttled'() {
@@ -2633,13 +2633,12 @@ class StreamsSpec extends Specification {
 				  println attempts.debug()
 					Stream.delay(i)
 				}
-			}.subscribeWith(DataTestSubscriber.createWithTimeoutSecs(10))
-		println value.debug()
-		value.sendUnboundedRequest()
+			}.subscribeWith(new TestSubscriber<>())
+			println value.debug()
 
 		then:
 			'Promise completed after 3 tries'
-		value.assertCompleteReceived()
+			value.await().assertComplete()
 			counter == 4
 
 	}
