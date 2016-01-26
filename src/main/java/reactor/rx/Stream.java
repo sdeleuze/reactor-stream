@@ -4765,8 +4765,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamWindow<>(this,
 				maxSize,
 				skip,
-				QueueSupplier.<O>get(PlatformDependent.XS_BUFFER_SIZE),
-				QueueSupplier.<UnicastProcessor<O>>get(PlatformDependent.XS_BUFFER_SIZE));
+				QueueSupplier.<O>xs(),
+				QueueSupplier.<UnicastProcessor<O>>xs());
 	}
 
 	/**
@@ -4780,8 +4780,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<Stream<O>> window(final Publisher<?> boundarySupplier) {
 		return new StreamWindowBoundary<>(this,
 				boundarySupplier,
-				QueueSupplier.<O>get(PlatformDependent.XS_BUFFER_SIZE),
-				QueueSupplier.get(PlatformDependent.XS_BUFFER_SIZE));
+				QueueSupplier.<O>xs(),
+				QueueSupplier.xs());
 	}
 
 	/**
@@ -4809,7 +4809,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamWindowStartEnd<>(this,
 				bucketOpening,
 				boundarySupplier,
-				QueueSupplier.get(c), QueueSupplier.<O>get(PlatformDependent.XS_BUFFER_SIZE));
+				QueueSupplier.get(c), QueueSupplier.<O>xs());
 	}
 
 	/**
@@ -5153,7 +5153,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			return o;
 		}
 	};
-	static final Supplier XS_QUEUE_SUPPLIER = QueueSupplier.get(PlatformDependent.XS_BUFFER_SIZE);
+	static final Supplier XS_QUEUE_SUPPLIER = QueueSupplier.xs();
 
 
 	/**
