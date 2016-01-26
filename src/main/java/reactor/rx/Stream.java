@@ -140,7 +140,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @return a new {@link Stream} eventually subscribed to one of the sources or empty
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T> Stream<T> amb(Iterable<? extends Publisher<? extends T>> mergedPublishers) {
 		return from(Flux.amb(mergedPublishers));
 	}
@@ -158,6 +157,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @return a new {@link Stream} eventually subscribed to one of the sources or empty
 	 */
+	@SuppressWarnings("varargs")
+	@SafeVarargs
 	public static <T> Stream<T> amb(Publisher<? extends T>... sources) {
 		return from(Flux.amb(sources));
 	}
@@ -688,18 +689,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Mono<Long> delay(long delay) {
-		return delay(Timers.globalOrNew(), delay, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param timer the timer to run on
-	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
-	 * @return a new {@link Stream}
-	 */
-	public static Mono<Long> delay(Timer timer, long delay) {
-		return delay(timer, delay, TimeUnit.SECONDS);
+		return Mono.delay(delay, TimeUnit.SECONDS, Timers.globalOrNew());
 	}
 
 	/**
@@ -710,7 +700,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Mono<Long> delay(long delay, TimeUnit unit) {
-		return delay(Timers.globalOrNew(), delay, unit);
+		return Mono.delay(delay, unit, Timers.globalOrNew());
 	}
 
 	/**
@@ -2044,7 +2034,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return buffer(interval(timer, 0L, timeshift, unit), new Function<Long, Publisher<Long>>() {
 			@Override
 			public Publisher<Long> apply(Long aLong) {
-				return delay(timer, timespan, unit);
+				return Mono.delay(timespan, unit, timer);
 			}
 		});
 	}
@@ -2456,7 +2446,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public final Stream<O> delaySubscription(long delay, TimeUnit unit, Timer timer) {
-		return delaySubscription(delay(timer, delay, unit));
+		return delaySubscription(Mono.delay(delay, unit, timer));
 	}
 
 	/**
@@ -3803,7 +3793,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return sampleFirst(new Function<O, Publisher<Long>>() {
 			@Override
 			public Publisher<Long> apply(O o) {
-				return delay(timespan, unit);
+				return Mono.delay(timespan, unit);
 			}
 		});
 	}
@@ -3961,7 +3951,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<O> skip(final long time, final TimeUnit unit, final Timer timer) {
 		if (time > 0) {
 			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the stream");
-			return skipUntil(delay(timer, time, unit));
+			return skipUntil(Mono.delay(time, unit, timer));
 		}
 		else {
 			return this;
@@ -4183,7 +4173,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<O> take(final long time, final TimeUnit unit, final Timer timer) {
 		if (time > 0) {
 			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the stream");
-			return takeUntil(delay(timer, time, unit));
+			return takeUntil(Mono.delay(time, unit, timer));
 		}
 		else {
 			return empty();
@@ -4353,7 +4343,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		final Timer timer = getTimer();
 		Assert.state(timer != null, "Cannot use default timer as no environment has been provided to this " + "Stream");
 
-		final Mono<Long> _timer = delay(timer, timeout, unit == null ? TimeUnit.MILLISECONDS : unit)
+		final Mono<Long> _timer = Mono.delay(timeout, unit == null ? TimeUnit.MILLISECONDS : unit, timer)
 				.otherwiseJust(0L);
 		final Function<O, Publisher<Long>> rest = new Function<O, Publisher<Long>>() {
 			@Override
@@ -4878,7 +4868,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return window(interval(timer, 0L, timeshift, unit), new Function<Long, Publisher<Long>>() {
 			@Override
 			public Publisher<Long> apply(Long aLong) {
-				return delay(timer, timespan, unit);
+				return Mono.delay(timespan, unit, timer);
 			}
 		});
 	}
