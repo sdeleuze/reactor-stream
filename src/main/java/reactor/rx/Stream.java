@@ -246,7 +246,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 		return new StreamCombineLatest<>(sources,
 				combinator,
-				(Supplier<? extends Queue<StreamCombineLatest.SourceAndArray>>) XS_QUEUE_SUPPLIER,
+				(Supplier<? extends Queue<StreamCombineLatest.SourceAndArray>>) QueueSupplier.xs(),
 				PlatformDependent.XS_BUFFER_SIZE);
 	}
 
@@ -447,7 +447,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 		return new StreamCombineLatest<>(sources,
 				combinator,
-				(Supplier<? extends Queue<StreamCombineLatest.SourceAndArray>>) XS_QUEUE_SUPPLIER,
+				(Supplier<? extends Queue<StreamCombineLatest.SourceAndArray>>) QueueSupplier.xs(),
 				PlatformDependent.XS_BUFFER_SIZE
 		);
 	}
@@ -472,7 +472,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 					public Publisher<V> apply(List<? extends Publisher<?>> publishers) {
 						return new StreamCombineLatest<>(publishers,
 								combinator,
-								(Supplier<? extends Queue<StreamCombineLatest.SourceAndArray>>) XS_QUEUE_SUPPLIER,
+								(Supplier<? extends Queue<StreamCombineLatest.SourceAndArray>>) QueueSupplier.xs(),
 								PlatformDependent.XS_BUFFER_SIZE);
 					}
 		                    }
@@ -1265,7 +1265,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	  Publisher<Publisher<? extends T>> mergedPublishers) {
 		return new StreamSwitchMap<>(mergedPublishers,
 				IDENTITY_FUNCTION,
-				XS_QUEUE_SUPPLIER,
+				QueueSupplier.xs(),
 				PlatformDependent.XS_BUFFER_SIZE);
 	}
 	/**
@@ -1943,7 +1943,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final <U, V> Stream<List<O>> buffer(final Publisher<U> bucketOpening,
 			final Function<? super U, ? extends Publisher<V>> boundarySupplier) {
 
-		return new StreamBufferStartEnd<>(this, bucketOpening, boundarySupplier, LIST_SUPPLIER, XS_QUEUE_SUPPLIER);
+		return new StreamBufferStartEnd<>(this, bucketOpening, boundarySupplier, LIST_SUPPLIER, QueueSupplier.xs());
 	}
 
 	/**
@@ -3848,7 +3848,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	@SuppressWarnings("unchecked")
 	public final <U> Stream<O> sampleTimeout(Function<? super O, ? extends Publisher<U>> throttler) {
-		return new StreamThrottleTimeout<>(this, throttler, (Supplier<Queue<Object>>)XS_QUEUE_SUPPLIER);
+		return new StreamThrottleTimeout<>(this, throttler, (Supplier<Queue<Object>>)QueueSupplier.xs());
 	}
 
 	/**
@@ -4113,7 +4113,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	@SuppressWarnings("unchecked")
 	public final <V> Stream<V> switchMap(final Function<? super O, Publisher<? extends V>> fn) {
-		return new StreamSwitchMap<>(this, fn, XS_QUEUE_SUPPLIER, PlatformDependent.XS_BUFFER_SIZE);
+		return new StreamSwitchMap<>(this, fn, QueueSupplier.xs(), PlatformDependent.XS_BUFFER_SIZE);
 	}
 
 	/**
@@ -5153,8 +5153,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			return o;
 		}
 	};
-	static final Supplier XS_QUEUE_SUPPLIER = QueueSupplier.xs();
-
 
 	/**
 	 *
