@@ -98,13 +98,13 @@ final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 		volatile IndexedCancellable timeout;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<TimeoutMainSubscriber, IndexedCancellable> TIMEOUT =
-				AtomicReferenceFieldUpdater.newUpdater(TimeoutMainSubscriber.class, IndexedCancellable.class,
+		  AtomicReferenceFieldUpdater.newUpdater(TimeoutMainSubscriber.class, IndexedCancellable.class,
 			"timeout");
 
 		volatile long index;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<TimeoutMainSubscriber> INDEX =
-				AtomicLongFieldUpdater.newUpdater(TimeoutMainSubscriber.class, "index");
+		  AtomicLongFieldUpdater.newUpdater(TimeoutMainSubscriber.class, "index");
 
 		public TimeoutMainSubscriber(Subscriber<? super T> actual,
 											  Function<? super T, ? extends Publisher<V>> itemTimeout,
@@ -333,7 +333,7 @@ final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 		volatile Subscription s;
 
 		static final AtomicReferenceFieldUpdater<TimeoutTimeoutSubscriber, Subscription> S =
-				AtomicReferenceFieldUpdater.newUpdater(TimeoutTimeoutSubscriber.class, Subscription.class, "s");
+		  AtomicReferenceFieldUpdater.newUpdater(TimeoutTimeoutSubscriber.class, Subscription.class, "s");
 
 		public TimeoutTimeoutSubscriber(TimeoutMainSubscriber<?, ?> main, long index) {
 			this.main = main;
@@ -347,8 +347,7 @@ final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
 				if (this.s != CancelledSubscription.INSTANCE) {
 					BackpressureUtils.reportSubscriptionSet();
 				}
-			}
-			else {
+			} else {
 				s.request(Long.MAX_VALUE);
 			}
 		}

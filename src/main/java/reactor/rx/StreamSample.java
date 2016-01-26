@@ -77,23 +77,23 @@ final class StreamSample<T, U> extends StreamBarrier<T, T> {
 		volatile T value;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleMainSubscriber, Object> VALUE =
-				AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Object.class, "value");
+		  AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Object.class, "value");
 
 		volatile Subscription main;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleMainSubscriber, Subscription> MAIN =
-				AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Subscription.class, "main");
+		  AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Subscription.class, "main");
 
 
 		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SampleMainSubscriber, Subscription> OTHER =
-				AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Subscription.class, "other");
+		  AtomicReferenceFieldUpdater.newUpdater(SampleMainSubscriber.class, Subscription.class, "other");
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<SampleMainSubscriber> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(SampleMainSubscriber.class, "requested");
+		  AtomicLongFieldUpdater.newUpdater(SampleMainSubscriber.class, "requested");
 
 		public SampleMainSubscriber(Subscriber<? super T> actual) {
 			this.actual = actual;
@@ -185,7 +185,6 @@ final class StreamSample<T, U> extends StreamBarrier<T, T> {
 	}
 
 	static final class SampleOtherSubscriber<T, U> implements Subscriber<U> {
-
 		final SampleMainSubscriber<T> main;
 
 		public SampleOtherSubscriber(SampleMainSubscriber<T> main) {

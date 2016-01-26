@@ -22,11 +22,11 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Cancellable;
-import reactor.core.trait.Completable;
-import reactor.core.trait.Failurable;
-import reactor.core.trait.Requestable;
-import reactor.core.trait.Subscribable;
+import reactor.core.graph.Subscribable;
+import reactor.core.state.Cancellable;
+import reactor.core.state.Completable;
+import reactor.core.state.Failurable;
+import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -52,19 +52,20 @@ final class StreamLatest<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class LatestSubscriber<T>
-			implements Subscriber<T>, Subscription, Cancellable, Failurable, Completable, Subscribable, Requestable {
+			implements Subscriber<T>, Subscription, Cancellable, Failurable, Completable, Subscribable,
+					   Requestable {
 
 		final Subscriber<? super T> actual;
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<LatestSubscriber> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(LatestSubscriber.class, "requested");
+		  AtomicLongFieldUpdater.newUpdater(LatestSubscriber.class, "requested");
 
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<LatestSubscriber> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(LatestSubscriber.class, "wip");
+		  AtomicIntegerFieldUpdater.newUpdater(LatestSubscriber.class, "wip");
 
 		Subscription s;
 
@@ -76,7 +77,7 @@ final class StreamLatest<T> extends StreamBarrier<T, T> {
 		volatile T value;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<LatestSubscriber, Object> VALUE =
-				AtomicReferenceFieldUpdater.newUpdater(LatestSubscriber.class, Object.class, "value");
+		  AtomicReferenceFieldUpdater.newUpdater(LatestSubscriber.class, Object.class, "value");
 
 		public LatestSubscriber(Subscriber<? super T> actual) {
 			this.actual = actual;

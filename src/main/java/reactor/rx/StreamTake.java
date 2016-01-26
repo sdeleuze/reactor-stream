@@ -20,10 +20,10 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Backpressurable;
-import reactor.core.trait.Completable;
-import reactor.core.trait.Prefetchable;
-import reactor.core.trait.Subscribable;
+import reactor.core.graph.Subscribable;
+import reactor.core.state.Backpressurable;
+import reactor.core.state.Completable;
+import reactor.core.state.Prefetchable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 
@@ -66,7 +66,7 @@ final class StreamTake<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class TakeSubscriber<T>
-			implements Subscriber<T>, Subscription, Completable, Prefetchable, Backpressurable, Subscribable {
+	  implements Subscriber<T>, Subscription, Completable, Prefetchable, Backpressurable, Subscribable {
 
 		final Subscriber<? super T> actual;
 
@@ -81,7 +81,7 @@ final class StreamTake<T> extends StreamBarrier<T, T> {
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<TakeSubscriber> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(TakeSubscriber.class, "wip");
+		  AtomicIntegerFieldUpdater.newUpdater(TakeSubscriber.class, "wip");
 
 		public TakeSubscriber(Subscriber<? super T> actual, long n) {
 			this.actual = actual;

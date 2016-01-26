@@ -21,11 +21,11 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Cancellable;
-import reactor.core.trait.Completable;
-import reactor.core.trait.Publishable;
-import reactor.core.trait.Requestable;
-import reactor.core.trait.Subscribable;
+import reactor.core.graph.Publishable;
+import reactor.core.graph.Subscribable;
+import reactor.core.state.Cancellable;
+import reactor.core.state.Completable;
+import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 
@@ -39,8 +39,9 @@ import reactor.core.util.EmptySubscription;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamIterable<T>
-extends reactor.rx.Stream<T> implements Publishable {
+final class StreamIterable<T> 
+extends Stream<T>
+		implements Publishable {
 
 	final Iterable<? extends T> iterable;
 
@@ -107,7 +108,7 @@ extends reactor.rx.Stream<T> implements Publishable {
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<IterableSubscription> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(IterableSubscription.class, "requested");
+		  AtomicLongFieldUpdater.newUpdater(IterableSubscription.class, "requested");
 
 		public IterableSubscription(Subscriber<? super T> actual, Iterator<? extends T> iterator) {
 			this.actual = actual;

@@ -20,9 +20,9 @@ import java.util.ArrayDeque;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Backpressurable;
-import reactor.core.trait.Publishable;
-import reactor.core.trait.Subscribable;
+import reactor.core.graph.Publishable;
+import reactor.core.graph.Subscribable;
+import reactor.core.state.Backpressurable;
 import reactor.core.util.BackpressureUtils;
 
 /**

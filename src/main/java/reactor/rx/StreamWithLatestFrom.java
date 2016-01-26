@@ -81,12 +81,12 @@ final class StreamWithLatestFrom<T, U, R> extends StreamBarrier<T, R> {
 		volatile Subscription main;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<WithLatestFromSubscriber, Subscription> MAIN =
-				AtomicReferenceFieldUpdater.newUpdater(WithLatestFromSubscriber.class, Subscription.class, "main");
+		  AtomicReferenceFieldUpdater.newUpdater(WithLatestFromSubscriber.class, Subscription.class, "main");
 
 		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<WithLatestFromSubscriber, Subscription> OTHER =
-				AtomicReferenceFieldUpdater.newUpdater(WithLatestFromSubscriber.class, Subscription.class, "other");
+		  AtomicReferenceFieldUpdater.newUpdater(WithLatestFromSubscriber.class, Subscription.class, "other");
 
 		volatile U otherValue;
 
@@ -199,7 +199,6 @@ final class StreamWithLatestFrom<T, U, R> extends StreamBarrier<T, R> {
 	}
 
 	static final class WithLatestFromOtherSubscriber<U> implements Subscriber<U> {
-
 		final WithLatestFromSubscriber<?, U, ?> main;
 
 		public WithLatestFromOtherSubscriber(WithLatestFromSubscriber<?, U, ?> main) {

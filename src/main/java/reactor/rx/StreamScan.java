@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Completable;
-import reactor.core.trait.Connectable;
-import reactor.core.trait.Requestable;
-import reactor.core.trait.Subscribable;
+import reactor.core.graph.Connectable;
+import reactor.core.graph.Subscribable;
+import reactor.core.state.Completable;
+import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.BiFunction;
@@ -68,7 +68,7 @@ final class StreamScan<T, R> extends StreamBarrier<T, R> {
 	}
 
 	static final class ScanSubscriber<T, R>
-			implements Subscriber<T>, Subscription, Subscribable, Requestable, Connectable, Completable {
+	  implements Subscriber<T>, Subscription, Subscribable, Requestable, Connectable, Completable {
 
 		final Subscriber<? super R> actual;
 
@@ -93,9 +93,10 @@ final class StreamScan<T, R> extends StreamBarrier<T, R> {
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<ScanSubscriber> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(ScanSubscriber.class, "requested");
+		  AtomicLongFieldUpdater.newUpdater(ScanSubscriber.class, "requested");
 
-		public ScanSubscriber(Subscriber<? super R> actual, BiFunction<R, ? super T, R> accumulator, R initialValue) {
+		public ScanSubscriber(Subscriber<? super R> actual, BiFunction<R, ? super T, R> accumulator,
+									   R initialValue) {
 			this.actual = actual;
 			this.accumulator = accumulator;
 			this.value = initialValue;

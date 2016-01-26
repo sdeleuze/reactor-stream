@@ -21,9 +21,9 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.graph.Connectable;
 import reactor.core.publisher.ProcessorEmitter;
 import reactor.core.subscriber.SubscriberMultiSubscription;
-import reactor.core.trait.Connectable;
 import reactor.core.util.DeferredSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -46,10 +46,10 @@ import reactor.rx.subscriber.SerializedSubscriber;
  */
 final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 
-	final Function<? super reactor.rx.Stream<Long>, ? extends Publisher<? extends Object>> whenSourceFactory;
+	final Function<? super Stream<Long>, ? extends Publisher<? extends Object>> whenSourceFactory;
 
 	public StreamRepeatWhen(Publisher<? extends T> source,
-							   Function<? super reactor.rx.Stream<Long>, ? extends Publisher<? extends Object>> whenSourceFactory) {
+							   Function<? super Stream<Long>, ? extends Publisher<? extends Object>> whenSourceFactory) {
 		super(source);
 		this.whenSourceFactory = Objects.requireNonNull(whenSourceFactory, "whenSourceFactory");
 	}
@@ -196,7 +196,7 @@ final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class RepeatWhenOtherSubscriber 
-	extends reactor.rx.Stream<Long>
+	extends Stream<Long>
 	implements Subscriber<Object>, Connectable {
 		RepeatWhenMainSubscriber<?> main;
 

@@ -87,7 +87,7 @@ extends StreamBarrier<T, C> {
 			EmptySubscription.error(s, new NullPointerException("The queueSupplier returned a null queue"));
 			return;
 		}
-
+		
 		BufferStartEndMainSubscriber<T, U, V, C> parent = new BufferStartEndMainSubscriber<>(s, bufferSupplier, q, end);
 		
 		s.onSubscribe(parent);
@@ -96,7 +96,7 @@ extends StreamBarrier<T, C> {
 		
 		source.subscribe(parent);
 	}
-
+	
 	static final class BufferStartEndMainSubscriber<T, U, V, C extends Collection<? super T>>
 	implements Subscriber<T>, Subscription {
 		
@@ -109,7 +109,7 @@ extends StreamBarrier<T, C> {
 		final Function<? super U, ? extends Publisher<V>> end;
 		
 		Set<Subscription> endSubscriptions;
-
+		
 		final BufferStartEndStarter<U> starter;
 
 		Map<Long, C> buffers;
@@ -145,10 +145,7 @@ extends StreamBarrier<T, C> {
 		static final AtomicIntegerFieldUpdater<BufferStartEndMainSubscriber> OPEN =
 				AtomicIntegerFieldUpdater.newUpdater(BufferStartEndMainSubscriber.class, "open");
 
-		public BufferStartEndMainSubscriber(Subscriber<? super C> actual,
-				Supplier<C> bufferSupplier,
-				Queue<C> queue,
-				Function<? super U, ? extends Publisher<V>> end) {
+		public BufferStartEndMainSubscriber(Subscriber<? super C> actual, Supplier<C> bufferSupplier, Queue<C> queue, Function<? super U, ? extends Publisher<V>> end) {
 			this.actual = actual;
 			this.bufferSupplier = bufferSupplier;
 			this.buffers = new HashMap<>();
@@ -364,7 +361,7 @@ extends StreamBarrier<T, C> {
 				anyError(new NullPointerException("The end returned a null publisher"));
 				return;
 			}
-
+			
 			BufferStartEndEnder<T, V, C> end = new BufferStartEndEnder<>(this, b, idx);
 			
 			if (addEndSubscription(end)) {
@@ -393,7 +390,7 @@ extends StreamBarrier<T, C> {
 			
 			cancelEnds();
 		}
-
+		
 		void endSignal(BufferStartEndEnder<T, V, C> ender) {
 			synchronized (this) {
 				Map<Long, C> set = buffers;
@@ -487,12 +484,11 @@ extends StreamBarrier<T, C> {
 			return false;
 		}
 	}
-
+	
 	static final class BufferStartEndStarter<U> extends DeferredSubscription
 	implements Subscriber<U> {
-
 		final BufferStartEndMainSubscriber<?, U, ?, ?> main;
-
+		
 		public BufferStartEndStarter(BufferStartEndMainSubscriber<?, U, ?, ?> main) {
 			this.main = main;
 		}
@@ -519,16 +515,15 @@ extends StreamBarrier<T, C> {
 			main.startComplete();
 		}
 	}
-
+	
 	static final class BufferStartEndEnder<T, V, C extends Collection<? super T>> extends DeferredSubscription
 	implements Subscriber<V> {
-
 		final BufferStartEndMainSubscriber<T, ?, V, C> main;
 
 		final C buffer;
 		
 		final long index;
-
+		
 		public BufferStartEndEnder(BufferStartEndMainSubscriber<T, ?, V, C> main, C buffer, long index) {
 			this.main = main;
 			this.buffer = buffer;

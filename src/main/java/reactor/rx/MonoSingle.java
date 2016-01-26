@@ -21,8 +21,8 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.graph.Publishable;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Supplier;
@@ -74,7 +74,8 @@ final class MonoSingle<T> extends reactor.core.publisher.Mono.MonoBarrier<T, T> 
 		source.subscribe(new SingleSubscriber<>(s, defaultSupplier));
 	}
 
-	static final class SingleSubscriber<T> extends SubscriberDeferredScalar<T, T> implements Publishable {
+	static final class SingleSubscriber<T> extends SubscriberDeferredScalar<T, T>
+			implements Publishable {
 
 		final Supplier<? extends T> defaultSupplier;
 
@@ -101,11 +102,6 @@ final class MonoSingle<T> extends reactor.core.publisher.Mono.MonoBarrier<T, T> 
 		public void cancel() {
 			super.cancel();
 			s.cancel();
-		}
-
-		@Override
-		public T get() {
-			return value;
 		}
 
 		@Override

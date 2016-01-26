@@ -18,10 +18,10 @@ package reactor.rx;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.graph.Publishable;
 import reactor.core.publisher.Flux;
+import reactor.core.state.Backpressurable;
 import reactor.core.timer.Timer;
-import reactor.core.trait.Backpressurable;
-import reactor.core.trait.Publishable;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ReactiveStateUtils;
 import reactor.fn.Function;

@@ -42,7 +42,7 @@ import reactor.fn.Supplier;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamBufferBoundary<T, U, C extends Collection<? super T>>
+final class StreamBufferBoundary<T, U, C extends Collection<? super T>> 
 extends StreamBarrier<T, C> {
 
 	final Publisher<U> other;
@@ -71,9 +71,9 @@ extends StreamBarrier<T, C> {
 			EmptySubscription.error(s, new NullPointerException("The bufferSupplier returned a null buffer"));
 			return;
 		}
-
+		
 		BufferBoundaryMain<T, U, C> parent = new BufferBoundaryMain<>(s, buffer, bufferSupplier);
-
+		
 		BufferBoundaryOther<U> boundary = new BufferBoundaryOther<>(parent);
 		parent.other = boundary;
 		
@@ -83,14 +83,14 @@ extends StreamBarrier<T, C> {
 		
 		source.subscribe(parent);
 	}
-
+	
 	static final class BufferBoundaryMain<T, U, C extends Collection<? super T>>
 	implements Subscriber<T>, Subscription {
 
 		final Subscriber<? super C> actual;
 		
 		final Supplier<C> bufferSupplier;
-
+		
 		BufferBoundaryOther<U> other;
 		
 		C buffer;
@@ -104,7 +104,7 @@ extends StreamBarrier<T, C> {
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<BufferBoundaryMain> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(BufferBoundaryMain.class, "requested");
-
+		
 		public BufferBoundaryMain(Subscriber<? super C> actual, C buffer, Supplier<C> bufferSupplier) {
 			this.actual = actual;
 			this.buffer = buffer;
@@ -244,12 +244,12 @@ extends StreamBarrier<T, C> {
 			}
 		}
 	}
-
+	
 	static final class BufferBoundaryOther<U> extends DeferredSubscription
 	implements Subscriber<U> {
-
+		
 		final BufferBoundaryMain<?, U, ?> main;
-
+		
 		public BufferBoundaryOther(BufferBoundaryMain<?, U, ?> main) {
 			this.main = main;
 		}

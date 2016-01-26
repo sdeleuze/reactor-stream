@@ -40,7 +40,7 @@ import reactor.fn.Supplier;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>> {
+final class StreamWindow<T> extends StreamBarrier<T, Stream<T>> {
 
 	final int size;
 	
@@ -80,7 +80,7 @@ final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>> {
 	}
 	
 	@Override
-	public void subscribe(Subscriber<? super reactor.rx.Stream<T>> s) {
+	public void subscribe(Subscriber<? super Stream<T>> s) {
 		if (skip == size) {
 			source.subscribe(new WindowExactSubscriber<>(s, size, processorQueueSupplier));
 		} else
@@ -100,14 +100,14 @@ final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>> {
 				EmptySubscription.error(s, new NullPointerException("The overflowQueueSupplier returned a null queue"));
 				return;
 			}
-
+			
 			source.subscribe(new WindowOverlapSubscriber<>(s, size, skip, processorQueueSupplier, overflowQueue));
 		}
 	}
-
+	
 	static final class WindowExactSubscriber<T> implements Subscriber<T>, Subscription, Runnable {
 		
-		final Subscriber<? super reactor.rx.Stream<T>> actual;
+		final Subscriber<? super Stream<T>> actual;
 
 		final Supplier<? extends Queue<T>> processorQueueSupplier;
 		
@@ -130,8 +130,8 @@ final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>> {
 		UnicastProcessor<T> window;
 		
 		boolean done;
-
-		public WindowExactSubscriber(Subscriber<? super reactor.rx.Stream<T>> actual, int size,
+		
+		public WindowExactSubscriber(Subscriber<? super Stream<T>> actual, int size,
 				Supplier<? extends Queue<T>> processorQueueSupplier) {
 			this.actual = actual;
 			this.size = size;
@@ -252,10 +252,10 @@ final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>> {
 			}
 		}
 	}
-
+	
 	static final class WindowSkipSubscriber<T> implements Subscriber<T>, Subscription, Runnable {
 		
-		final Subscriber<? super reactor.rx.Stream<T>> actual;
+		final Subscriber<? super Stream<T>> actual;
 
 		final Supplier<? extends Queue<T>> processorQueueSupplier;
 		
@@ -285,8 +285,8 @@ final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>> {
 		UnicastProcessor<T> window;
 		
 		boolean done;
-
-		public WindowSkipSubscriber(Subscriber<? super reactor.rx.Stream<T>> actual, int size, int skip,
+		
+		public WindowSkipSubscriber(Subscriber<? super Stream<T>> actual, int size, int skip,
 				Supplier<? extends Queue<T>> processorQueueSupplier) {
 			this.actual = actual;
 			this.size = size;
@@ -423,7 +423,7 @@ final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>> {
 
 	static final class WindowOverlapSubscriber<T> implements Subscriber<T>, Subscription, Runnable {
 		
-		final Subscriber<? super reactor.rx.Stream<T>> actual;
+		final Subscriber<? super Stream<T>> actual;
 
 		final Supplier<? extends Queue<T>> processorQueueSupplier;
 
@@ -470,8 +470,8 @@ final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>> {
 		Throwable error;
 		
 		volatile boolean cancelled;
-
-		public WindowOverlapSubscriber(Subscriber<? super reactor.rx.Stream<T>> actual, int size, int skip,
+		
+		public WindowOverlapSubscriber(Subscriber<? super Stream<T>> actual, int size, int skip,
 				Supplier<? extends Queue<T>> processorQueueSupplier,
 				Queue<UnicastProcessor<T>> overflowQueue) {
 			this.actual = actual;
@@ -596,7 +596,7 @@ final class StreamWindow<T> extends StreamBarrier<T, reactor.rx.Stream<T>> {
 				return;
 			}
 			
-			final Subscriber<? super reactor.rx.Stream<T>> a = actual;
+			final Subscriber<? super Stream<T>> a = actual;
 			final Queue<UnicastProcessor<T>> q = queue;
 			int missed = 1;
 			

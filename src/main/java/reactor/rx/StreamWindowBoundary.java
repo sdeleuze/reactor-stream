@@ -42,7 +42,7 @@ import reactor.fn.Supplier;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.rx.Stream<T>> {
+final class StreamWindowBoundary<T, U> extends StreamBarrier<T, Stream<T>> {
 
 	final Publisher<U> other;
 	
@@ -60,7 +60,7 @@ final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.rx.Strea
 	}
 
 	@Override
-	public void subscribe(Subscriber<? super reactor.rx.Stream<T>> s) {
+	public void subscribe(Subscriber<? super Stream<T>> s) {
 
 		Queue<T> q;
 		
@@ -100,14 +100,14 @@ final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.rx.Strea
 			source.subscribe(main);
 		}
 	}
-
+	
 	static final class WindowBoundaryMain<T, U>
 	implements Subscriber<T>, Subscription, Runnable {
 		
-		final Subscriber<? super reactor.rx.Stream<T>> actual;
+		final Subscriber<? super Stream<T>> actual;
 
 		final Supplier<? extends Queue<T>> processorQueueSupplier;
-
+		
 		final WindowBoundaryOther<U> boundary;
 		
 		final Queue<Object> queue;
@@ -147,8 +147,9 @@ final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.rx.Strea
 				AtomicIntegerFieldUpdater.newUpdater(WindowBoundaryMain.class, "once");
 
 		static final Object BOUNDARY_MARKER = new Object();
-
-		public WindowBoundaryMain(Subscriber<? super reactor.rx.Stream<T>> actual, Supplier<? extends Queue<T>> processorQueueSupplier,
+		
+		public WindowBoundaryMain(Subscriber<? super Stream<T>> actual,
+				Supplier<? extends Queue<T>> processorQueueSupplier, 
 						Queue<T> processorQueue, Queue<Object> queue) {
 			this.actual = actual;
 			this.processorQueueSupplier = processorQueueSupplier;
@@ -227,7 +228,7 @@ final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.rx.Strea
 			synchronized (this) {
 				queue.offer(BOUNDARY_MARKER);
 			}
-
+			
 			if (cancelled) {
 				boundary.cancel();
 			}
@@ -257,7 +258,7 @@ final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.rx.Strea
 				return;
 			}
 			
-			final Subscriber<? super reactor.rx.Stream<T>> a = actual;
+			final Subscriber<? super Stream<T>> a = actual;
 			final Queue<Object> q = queue;
 			UnicastProcessor<T> w = window;
 			
@@ -387,11 +388,11 @@ final class StreamWindowBoundary<T, U> extends StreamBarrier<T, reactor.rx.Strea
 			}
 		}
 	}
-
+	
 	static final class WindowBoundaryOther<U>
 			extends DeferredSubscription
 	implements Subscriber<U> {
-
+		
 		final WindowBoundaryMain<?, U> main;
 
 		public WindowBoundaryOther(WindowBoundaryMain<?, U> main) {

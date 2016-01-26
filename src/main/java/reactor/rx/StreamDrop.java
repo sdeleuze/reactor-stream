@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Completable;
-import reactor.core.trait.Connectable;
-import reactor.core.trait.Requestable;
-import reactor.core.trait.Subscribable;
+import reactor.core.graph.Connectable;
+import reactor.core.graph.Subscribable;
+import reactor.core.state.Completable;
+import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Consumer;
@@ -67,7 +67,8 @@ final class StreamDrop<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class DropSubscriber<T>
-			implements Subscriber<T>, Subscription, Subscribable, Completable, Requestable, Connectable {
+			implements Subscriber<T>, Subscription, Subscribable, Completable, Requestable,
+					   Connectable {
 
 		final Subscriber<? super T> actual;
 
@@ -78,7 +79,7 @@ final class StreamDrop<T> extends StreamBarrier<T, T> {
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<DropSubscriber> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(DropSubscriber.class, "requested");
+		  AtomicLongFieldUpdater.newUpdater(DropSubscriber.class, "requested");
 
 		boolean done;
 

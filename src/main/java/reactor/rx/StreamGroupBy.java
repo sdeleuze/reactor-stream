@@ -26,21 +26,21 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.graph.Subscribable;
+import reactor.core.graph.SubscribableMany;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
 import reactor.core.queue.RingBuffer;
-import reactor.core.subscriber.SubscriberWithDemand;
+import reactor.core.state.Backpressurable;
+import reactor.core.state.Cancellable;
+import reactor.core.state.Completable;
 import reactor.core.timer.Timer;
-import reactor.core.trait.Backpressurable;
-import reactor.core.trait.Cancellable;
-import reactor.core.trait.Completable;
-import reactor.core.trait.Subscribable;
-import reactor.core.trait.SubscribableMany;
 import reactor.core.util.Assert;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.core.util.PlatformDependent;
 import reactor.fn.Function;
+import reactor.rx.subscriber.SubscriberWithDemand;
 
 /**
  * Manage a dynamic registry of substreams for a given key extracted from the incoming data. Each non-existing key will

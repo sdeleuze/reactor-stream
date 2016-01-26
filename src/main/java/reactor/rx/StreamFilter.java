@@ -20,9 +20,9 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Completable;
-import reactor.core.trait.Connectable;
-import reactor.core.trait.Subscribable;
+import reactor.core.graph.Connectable;
+import reactor.core.graph.Subscribable;
+import reactor.core.state.Completable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Predicate;
@@ -55,7 +55,7 @@ final class StreamFilter<T> extends StreamBarrier<T, T> {
 		source.subscribe(new FilterSubscriber<>(s, predicate));
 	}
 
-	static final class FilterSubscriber<T> implements Subscriber<T>, Subscribable, Connectable, Completable {
+	static final class FilterSubscriber<T> implements Subscriber<T>, Subscribable, Connectable, Completable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final Predicate<? super T> predicate;
@@ -73,7 +73,7 @@ final class StreamFilter<T> extends StreamBarrier<T, T> {
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.validate(this.s, s)) {
 				this.s = s;
-				actual.onSubscribe(s);
+				actual.onSubscribe(this);
 			}
 		}
 
@@ -149,6 +149,16 @@ final class StreamFilter<T> extends StreamBarrier<T, T> {
 		@Override
 		public Object upstream() {
 			return s;
+		}
+		
+		@Override
+		public void request(long n) {
+			s.request(n);
+		}
+		
+		@Override
+		public void cancel() {
+			s.cancel();
 		}
 	}
 }

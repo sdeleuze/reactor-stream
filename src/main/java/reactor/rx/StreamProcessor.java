@@ -19,8 +19,8 @@ import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Backpressurable;
-import reactor.core.trait.Connectable;
+import reactor.core.graph.Connectable;
+import reactor.core.state.Backpressurable;
 import reactor.fn.Consumer;
 
 /**

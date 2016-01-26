@@ -21,11 +21,11 @@ import java.util.concurrent.TimeUnit;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.graph.Connectable;
+import reactor.core.graph.Subscribable;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
 import reactor.core.timer.Timer;
-import reactor.core.trait.Connectable;
-import reactor.core.trait.Subscribable;
 import reactor.core.util.PlatformDependent;
 
 /**

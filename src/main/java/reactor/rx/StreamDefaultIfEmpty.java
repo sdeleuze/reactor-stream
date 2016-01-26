@@ -20,8 +20,8 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.graph.Publishable;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -49,9 +49,8 @@ final class StreamDefaultIfEmpty<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class DefaultIfEmptySubscriber<T>
-			extends SubscriberDeferredScalar<T, T> implements Publishable {
-
-		final T value;
+			extends SubscriberDeferredScalar<T, T>
+			implements Publishable {
 
 		Subscription s;
 
@@ -99,11 +98,6 @@ final class StreamDefaultIfEmpty<T> extends StreamBarrier<T, T> {
 			} else {
 				complete(value);
 			}
-		}
-
-		@Override
-		public T get() {
-			return value;
 		}
 
 		@Override

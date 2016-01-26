@@ -20,8 +20,8 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.graph.Publishable;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Supplier;
@@ -67,7 +67,8 @@ final class MonoElementAt<T> extends reactor.core.publisher.Mono.MonoBarrier<T, 
 	}
 
 	static final class ElementAtSubscriber<T>
-			extends SubscriberDeferredScalar<T, T> implements Publishable {
+			extends SubscriberDeferredScalar<T, T>
+			implements Publishable {
 		final Supplier<? extends T> defaultSupplier;
 
 		long index;

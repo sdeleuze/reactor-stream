@@ -60,7 +60,7 @@ final class StreamThrottleTimeout<T, U> extends StreamBarrier<T, T> {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-
+		
 		Queue<ThrottleTimeoutOther<T, U>> q;
 		
 		try {
@@ -74,32 +74,32 @@ final class StreamThrottleTimeout<T, U> extends StreamBarrier<T, T> {
 			EmptySubscription.error(s, new NullPointerException("The queueSupplier returned a null queue"));
 			return;
 		}
-
+		
 		ThrottleTimeoutMain<T, U> main = new ThrottleTimeoutMain<>(s, throttler, q);
 		
 		s.onSubscribe(main);
 		
 		source.subscribe(main);
 	}
-
+	
 	static final class ThrottleTimeoutMain<T, U>
 	implements Subscriber<T>, Subscription {
 		
 		final Subscriber<? super T> actual;
 		
 		final Function<? super T, ? extends Publisher<U>> throttler;
-
+		
 		final Queue<ThrottleTimeoutOther<T, U>> queue;
 
 		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ThrottleTimeoutMain, Subscription> S =
-				AtomicReferenceFieldUpdater.newUpdater(ThrottleTimeoutMain.class, Subscription.class, "s");
+			AtomicReferenceFieldUpdater.newUpdater(ThrottleTimeoutMain.class, Subscription.class, "s");
 
 		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ThrottleTimeoutMain, Subscription> OTHER =
-				AtomicReferenceFieldUpdater.newUpdater(ThrottleTimeoutMain.class, Subscription.class, "other");
+			AtomicReferenceFieldUpdater.newUpdater(ThrottleTimeoutMain.class, Subscription.class, "other");
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
@@ -114,7 +114,7 @@ final class StreamThrottleTimeout<T, U> extends StreamBarrier<T, T> {
 		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ThrottleTimeoutMain, Throwable> ERROR =
-				AtomicReferenceFieldUpdater.newUpdater(ThrottleTimeoutMain.class, Throwable.class, "error");
+			AtomicReferenceFieldUpdater.newUpdater(ThrottleTimeoutMain.class, Throwable.class, "error");
 
 		volatile boolean done;
 		
@@ -126,7 +126,8 @@ final class StreamThrottleTimeout<T, U> extends StreamBarrier<T, T> {
 				AtomicLongFieldUpdater.newUpdater(ThrottleTimeoutMain.class, "index");
 
 		public ThrottleTimeoutMain(Subscriber<? super T> actual,
-				Function<? super T, ? extends Publisher<U>> throttler, Queue<ThrottleTimeoutOther<T, U>> queue) {
+				Function<? super T, ? extends Publisher<U>> throttler,
+						Queue<ThrottleTimeoutOther<T, U>> queue) {
 			this.actual = actual;
 			this.throttler = throttler;
 			this.queue = queue;
@@ -177,7 +178,7 @@ final class StreamThrottleTimeout<T, U> extends StreamBarrier<T, T> {
 				onError(new NullPointerException("The throttler returned a null publisher"));
 				return;
 			}
-
+			
 			ThrottleTimeoutOther<T, U> os = new ThrottleTimeoutOther<>(this, t, idx);
 			
 			if (BackpressureUtils.replace(OTHER, this, os)) {
@@ -212,7 +213,7 @@ final class StreamThrottleTimeout<T, U> extends StreamBarrier<T, T> {
 			done = true;
 			drain();
 		}
-
+		
 		void otherNext(ThrottleTimeoutOther<T, U> other) {
 			queue.offer(other);
 			drain();
@@ -242,7 +243,7 @@ final class StreamThrottleTimeout<T, U> extends StreamBarrier<T, T> {
 				
 				for (;;) {
 					boolean d = done;
-
+					
 					ThrottleTimeoutOther<T, U> o = q.poll();
 					
 					boolean empty = o == null;
@@ -308,11 +309,10 @@ final class StreamThrottleTimeout<T, U> extends StreamBarrier<T, T> {
 			return false;
 		}
 	}
-
+	
 	static final class ThrottleTimeoutOther<T, U>
 	extends DeferredSubscription
 	implements Subscriber<U> {
-
 		final ThrottleTimeoutMain<T, U> main;
 		
 		final T value;
@@ -323,6 +323,7 @@ final class StreamThrottleTimeout<T, U> extends StreamBarrier<T, T> {
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ThrottleTimeoutOther> ONCE =
 				AtomicIntegerFieldUpdater.newUpdater(ThrottleTimeoutOther.class, "once");
+		
 
 		public ThrottleTimeoutOther(ThrottleTimeoutMain<T, U> main, T value, long index) {
 			this.main = main;

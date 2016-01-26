@@ -21,8 +21,8 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.graph.PublishableMany;
 import reactor.core.subscriber.SubscriberMultiSubscription;
-import reactor.core.trait.PublishableMany;
 import reactor.core.util.EmptySubscription;
 
 /**
@@ -35,8 +35,9 @@ import reactor.core.util.EmptySubscription;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamConcatIterable<T>
-extends reactor.rx.Stream<T> implements PublishableMany {
+final class StreamConcatIterable<T> 
+extends Stream<T>
+		implements PublishableMany {
 
 	final Iterable<? extends Publisher<? extends T>> iterable;
 
@@ -88,7 +89,7 @@ extends reactor.rx.Stream<T> implements PublishableMany {
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<ConcatIterableSubscriber> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(ConcatIterableSubscriber.class, "wip");
+		  AtomicIntegerFieldUpdater.newUpdater(ConcatIterableSubscriber.class, "wip");
 
 		long produced;
 

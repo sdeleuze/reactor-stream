@@ -28,12 +28,12 @@ import reactor.core.subscriber.SubscriberDeferredScalar;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamFuture<T> extends reactor.rx.Stream<T> {
-
+final class StreamFuture<T> extends Stream<T> {
+	
 	final Future<? extends T> future;
-
+	
 	final long timeout;
-
+	
 	final TimeUnit unit;
 
 	public StreamFuture(Future<? extends T> future) {
@@ -51,24 +51,22 @@ final class StreamFuture<T> extends reactor.rx.Stream<T> {
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
 		SubscriberDeferredScalar<T, T> sds = new SubscriberDeferredScalar<>(s);
-
+		
 		s.onSubscribe(sds);
-
+		
 		T v;
 		try {
 			if (unit != null) {
 				v = future.get(timeout, unit);
-			}
-			else {
+			} else {
 				v = future.get();
 			}
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException ex) {
+		} catch (InterruptedException | ExecutionException | TimeoutException ex) {
 			s.onError(ex);
 			return;
 		}
-
+		
 		sds.complete(v);
 	}
-
+	
 }

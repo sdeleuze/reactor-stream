@@ -26,13 +26,13 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Cancellable;
-import reactor.core.trait.Introspectable;
-import reactor.core.trait.Prefetchable;
-import reactor.core.trait.Publishable;
-import reactor.core.trait.PublishableMany;
-import reactor.core.trait.Requestable;
-import reactor.core.trait.Subscribable;
+import reactor.core.graph.Publishable;
+import reactor.core.graph.PublishableMany;
+import reactor.core.graph.Subscribable;
+import reactor.core.state.Cancellable;
+import reactor.core.state.Introspectable;
+import reactor.core.state.Prefetchable;
+import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
@@ -51,22 +51,23 @@ import reactor.fn.Supplier;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements PublishableMany {
+final class StreamCombineLatest<T, R> 
+extends Stream<R>
+		implements PublishableMany {
 
 	final Publisher<? extends T>[] array;
 
 	final Iterable<? extends Publisher<? extends T>> iterable;
 
 	final Function<Object[], R> combiner;
-
+	
 	final Supplier<? extends Queue<SourceAndArray>> queueSupplier;
-
+	
 	final int bufferSize;
 
 	public StreamCombineLatest(Publisher<? extends T>[] array,
-			Function<Object[], R> combiner,
-			Supplier<? extends Queue<SourceAndArray>> queueSupplier,
-			int bufferSize) {
+			Function<Object[], R> combiner, Supplier<? extends Queue<SourceAndArray>> queueSupplier,
+					int bufferSize) {
 		if (bufferSize <= 0) {
 			throw new IllegalArgumentException("BUFFER_SIZE > 0 required but it was " + bufferSize);
 		}
@@ -77,15 +78,14 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 		this.queueSupplier = Objects.requireNonNull(queueSupplier, "queueSupplier");
 		this.bufferSize = bufferSize;
 	}
-
+	
 	public StreamCombineLatest(Iterable<? extends Publisher<? extends T>> iterable,
-			Function<Object[], R> combiner,
-			Supplier<? extends Queue<SourceAndArray>> queueSupplier,
-			int bufferSize) {
+			Function<Object[], R> combiner, Supplier<? extends Queue<SourceAndArray>> queueSupplier,
+					int bufferSize) {
 		if (bufferSize <= 0) {
 			throw new IllegalArgumentException("BUFFER_SIZE > 0 required but it was " + bufferSize);
 		}
-
+		
 		this.array = null;
 		this.iterable = Objects.requireNonNull(iterable, "iterable");
 		this.combiner = Objects.requireNonNull(combiner, "combiner");
@@ -151,8 +151,8 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 				}
 
 				if (p == null) {
-					EmptySubscription.error(s,
-							new NullPointerException("The Publisher returned by the iterator is " + "null"));
+					EmptySubscription.error(s, new NullPointerException("The Publisher returned by the iterator is " +
+					  "null"));
 					return;
 				}
 
@@ -181,74 +181,74 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 			}).subscribe(s);
 			return;
 		}
-
+		
 		Queue<SourceAndArray> queue;
-
+		
 		try {
 			queue = queueSupplier.get();
 		} catch (Throwable e) {
 			EmptySubscription.error(s, e);
 			return;
 		}
-
+		
 		if (queue == null) {
 			EmptySubscription.error(s, new NullPointerException("The queueSupplier returned a null queue"));
 			return;
 		}
-
-		CombineLatestCoordinator<T, R> coordinator = new CombineLatestCoordinator<>(s, combiner, n, queue, bufferSize);
-
+		
+		CombineLatestCoordinator<T, R> coordinator = 
+				new CombineLatestCoordinator<>(s, combiner, n, queue, bufferSize);
+		
 		s.onSubscribe(coordinator);
-
+		
 		coordinator.subscribe(a, n);
 	}
-
+	
 	static final class CombineLatestCoordinator<T, R> implements Subscription, PublishableMany, Cancellable {
 
 		final Subscriber<? super R> actual;
-
+		
 		final Function<Object[], R> combiner;
-
+		
 		final CombineLatestInner<T>[] subscribers;
-
+		
 		final Queue<SourceAndArray> queue;
-
+		
 		final Object[] latest;
 
 		int nonEmptySources;
-
+		
 		int completedSources;
-
+		
 		volatile boolean cancelled;
-
+		
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<CombineLatestCoordinator> REQUESTED =
 				AtomicLongFieldUpdater.newUpdater(CombineLatestCoordinator.class, "requested");
-
+		
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<CombineLatestCoordinator> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(CombineLatestCoordinator.class, "wip");
-
+		
 		volatile boolean done;
-
+		
 		volatile Throwable error;
-
+		
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<CombineLatestCoordinator, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(CombineLatestCoordinator.class, Throwable.class, "error");
-
+		
 		static final Throwable TERMINAL_ERROR = new Throwable();
-
-		public CombineLatestCoordinator(Subscriber<? super R> actual,
-				Function<Object[], R> combiner,
-				int n,
-				Queue<SourceAndArray> queue,
+		
+		public CombineLatestCoordinator(Subscriber<? super R> actual, 
+				Function<Object[], R> combiner, int n, Queue<SourceAndArray> queue,
 				int bufferSize) {
 			this.actual = actual;
 			this.combiner = combiner;
-			@SuppressWarnings("unchecked") CombineLatestInner<T>[] a = new CombineLatestInner[n];
+			@SuppressWarnings("unchecked")
+			CombineLatestInner<T>[] a = new CombineLatestInner[n];
 			for (int i = 0; i < n; i++) {
 				a[i] = new CombineLatestInner<>(this, i, bufferSize);
 			}
@@ -287,7 +287,7 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 
 		void subscribe(Publisher<? extends T>[] sources, int n) {
 			CombineLatestInner<T>[] a = subscribers;
-
+			
 			for (int i = 0; i < n; i++) {
 				if (done || cancelled) {
 					return;
@@ -295,49 +295,48 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 				sources[i].subscribe(a[i]);
 			}
 		}
-
+		
 		void innerValue(int index, T value) {
-
+			
 			boolean replenishInsteadOfDrain;
-
+			
 			synchronized (this) {
 				Object[] os = latest;
 
 				int localNonEmptySources = nonEmptySources;
-
+				
 				if (os[index] == null) {
 					localNonEmptySources++;
 					nonEmptySources = localNonEmptySources;
 				}
-
+				
 				os[index] = value;
 
 				if (os.length == localNonEmptySources) {
 					SourceAndArray sa = new SourceAndArray(subscribers[index], os.clone());
-
+					
 					queue.offer(sa);
-
+					
 					replenishInsteadOfDrain = false;
 				} else {
 					replenishInsteadOfDrain = true;
 				}
 			}
-
+			
 			if (replenishInsteadOfDrain) {
 				subscribers[index].requestOne();
-			}
-			else {
+			} else {
 				drain();
 			}
 		}
-
+		
 		void innerComplete(int index) {
 			synchronized (this) {
 				Object[] os = latest;
-
+				
 				if (os[index] != null) {
 					int localCompletedSources = completedSources + 1;
-
+					
 					if (localCompletedSources == os.length) {
 						done = true;
 					} else {
@@ -350,17 +349,17 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 			}
 			drain();
 		}
-
+		
 		void innerError(Throwable e) {
-
+			
 			for (;;) {
 				Throwable ex = error;
-
+				
 				if (ex == TERMINAL_ERROR) {
 					Exceptions.onErrorDropped(ex);
 					return;
 				}
-
+				
 				Throwable u;
 				if (ex == null) {
 					u = e;
@@ -369,48 +368,48 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 					u.addSuppressed(ex);
 					u.addSuppressed(e);
 				}
-
+				
 				if (ERROR.compareAndSet(this, ex, u)) {
 					done = true;
 					break;
 				}
 			}
-
+			
 			drain();
 		}
-
+		
 		void drain() {
 			if (WIP.getAndIncrement(this) != 0) {
 				return;
 			}
-
+			
 			final Subscriber<? super R> a = actual;
 			final Queue<SourceAndArray> q = queue;
-
+			
 			int missed = 1;
-
+			
 			for (;;) {
-
+				
 				long r = requested;
 				long e = 0L;
-
+				
 				while (e != r) {
 					boolean d = done;
-
+					
 					SourceAndArray v = q.poll();
-
+					
 					boolean empty = v == null;
-
+					
 					if (checkTerminated(d, empty, a, q)) {
 						return;
 					}
-
+					
 					if (empty) {
 						break;
 					}
-
+					
 					R w;
-
+					
 					try {
 						w = combiner.apply(v.array);
 					} catch (Throwable ex) {
@@ -418,46 +417,46 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 						Exceptions.throwIfFatal(ex);
 						continue;
 					}
-
+					
 					if (w == null) {
 						innerError(new NullPointerException("The combiner returned a null value"));
 						continue;
 					}
-
+					
 					a.onNext(w);
-
+					
 					v.source.requestOne();
-
+					
 					e++;
 				}
-
+				
 				if (e == r) {
 					if (checkTerminated(done, q.isEmpty(), a, q)) {
 						return;
 					}
 				}
-
+				
 				if (e != 0L && r != Long.MAX_VALUE) {
 					REQUESTED.addAndGet(this, -e);
 				}
-
+				
 				missed = WIP.addAndGet(this, -missed);
 				if (missed == 0) {
 					break;
 				}
 			}
 		}
-
+		
 		boolean checkTerminated(boolean d, boolean empty, Subscriber<?> a, Queue<?> q) {
 			if (cancelled) {
 				cancelAll();
 				q.clear();
 				return true;
 			}
-
+			
 			if (d) {
 				Throwable e = ERROR.getAndSet(this, TERMINAL_ERROR);
-
+				
 				if (e != null) {
 					cancelAll();
 					q.clear();
@@ -473,35 +472,37 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 			}
 			return false;
 		}
-
+		
 		void cancelAll() {
 			for (CombineLatestInner<T> inner : subscribers) {
 				inner.cancel();
 			}
 		}
 	}
-
+	
 	static final class CombineLatestInner<T>
-			implements Subscriber<T>, Introspectable, Prefetchable, Requestable, Publishable, Subscribable {
+			implements Subscriber<T>, Introspectable, Prefetchable, Requestable, Publishable,
+					   Subscribable {
 
 		final CombineLatestCoordinator<T, ?> parent;
 
 		final int index;
-
+		
 		final int limit;
-
+		
 		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<CombineLatestInner, Subscription> S =
-				AtomicReferenceFieldUpdater.newUpdater(CombineLatestInner.class, Subscription.class, "s");
+		  AtomicReferenceFieldUpdater.newUpdater(CombineLatestInner.class, Subscription.class, "s");
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
 		static final AtomicLongFieldUpdater<CombineLatestInner> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(CombineLatestInner.class, "requested");
+		  AtomicLongFieldUpdater.newUpdater(CombineLatestInner.class, "requested");
 
 		int produced;
-
+		
+		
 		public CombineLatestInner(CombineLatestCoordinator<T, ?> parent, int index, int bufferSize) {
 			this.parent = parent;
 			this.index = index;
@@ -557,7 +558,7 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 		public void onComplete() {
 			parent.innerComplete(index);
 		}
-
+		
 		public void cancel() {
 			Subscription a = s;
 			if (a != CancelledSubscription.INSTANCE) {
@@ -567,9 +568,9 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 				}
 			}
 		}
-
+		
 		public void requestOne() {
-
+			
 			int p = produced + 1;
 			if (p == limit) {
 				produced = 0;
@@ -592,7 +593,7 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 			} else {
 				produced = p;
 			}
-
+			
 		}
 
 		@Override
@@ -630,15 +631,14 @@ final class StreamCombineLatest<T, R> extends reactor.rx.Stream<R> implements Pu
 			return getClass().getSimpleName();
 		}
 	}
-
+	
 	/**
 	 * The queue element type for internal use with StreamCombineLatest.
 	 */
 	public static final class SourceAndArray {
-
 		final CombineLatestInner<?> source;
-		final Object[]              array;
-
+		final Object[] array;
+		
 		SourceAndArray(CombineLatestInner<?> source, Object[] array) {
 			this.source = source;
 			this.array = array;

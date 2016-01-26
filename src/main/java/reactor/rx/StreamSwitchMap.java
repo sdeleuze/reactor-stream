@@ -49,7 +49,7 @@ final class StreamSwitchMap<T, R> extends StreamBarrier<T, R> {
 	final Supplier<? extends Queue<Object>> queueSupplier;
 	
 	final int bufferSize;
-
+	
 	static final SwitchMapInner<Object> CANCELLED_INNER = new SwitchMapInner<>(null, 0, Long.MAX_VALUE);
 	
 	public StreamSwitchMap(Publisher<? extends T> source, 
@@ -79,10 +79,10 @@ final class StreamSwitchMap<T, R> extends StreamBarrier<T, R> {
 			EmptySubscription.error(s, new NullPointerException("The queueSupplier returned a null queue"));
 			return;
 		}
-
+		
 		source.subscribe(new SwitchMapMain<>(s, mapper, q, bufferSize));
 	}
-
+	
 	static final class SwitchMapMain<T, R> implements Subscriber<T>, Subscription {
 		
 		final Subscriber<? super R> actual;
@@ -118,7 +118,7 @@ final class StreamSwitchMap<T, R> extends StreamBarrier<T, R> {
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<SwitchMapMain> WIP =
 				AtomicIntegerFieldUpdater.newUpdater(SwitchMapMain.class, "wip");
-
+		
 		volatile SwitchMapInner<R> inner;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SwitchMapMain, SwitchMapInner> INNER =
@@ -134,6 +134,7 @@ final class StreamSwitchMap<T, R> extends StreamBarrier<T, R> {
 		static final AtomicIntegerFieldUpdater<SwitchMapMain> ACTIVE =
 				AtomicIntegerFieldUpdater.newUpdater(SwitchMapMain.class, "active");
 
+		
 		public SwitchMapMain(Subscriber<? super R> actual,
 				Function<? super T, ? extends Publisher<? extends R>> mapper, Queue<Object> queue, int bufferSize) {
 			this.actual = actual;
@@ -163,7 +164,7 @@ final class StreamSwitchMap<T, R> extends StreamBarrier<T, R> {
 			}
 			
 			long idx = INDEX.incrementAndGet(this);
-
+			
 			SwitchMapInner<R> si = inner;
 			if (si != null) {
 				si.deactivate();
@@ -186,7 +187,7 @@ final class StreamSwitchMap<T, R> extends StreamBarrier<T, R> {
 				onError(new NullPointerException("The mapper returned a null publisher"));
 				return;
 			}
-
+			
 			SwitchMapInner<R> innerSubscriber = new SwitchMapInner<>(this, bufferSize, idx);
 			
 			if (INNER.compareAndSet(this, si, innerSubscriber)) {
@@ -287,7 +288,8 @@ final class StreamSwitchMap<T, R> extends StreamBarrier<T, R> {
 				while (r != e) {
 					boolean d = active == 0;
 					
-					@SuppressWarnings("unchecked") SwitchMapInner<R> si = (SwitchMapInner<R>) q.poll();
+					@SuppressWarnings("unchecked")
+					SwitchMapInner<R> si = (SwitchMapInner<R>)q.poll();
 					
 					boolean empty = si == null;
 					
@@ -355,13 +357,13 @@ final class StreamSwitchMap<T, R> extends StreamBarrier<T, R> {
 			}
 			return false;
 		}
-
+		
 		void innerNext(SwitchMapInner<R> inner, R value) {
 			queue.offer(inner);
 			queue.offer(value);
 			drain();
 		}
-
+		
 		void innerError(SwitchMapInner<R> inner, Throwable e) {
 			if (Exceptions.addThrowable(ERROR, this, e)) {
 				s.cancel();
@@ -375,15 +377,15 @@ final class StreamSwitchMap<T, R> extends StreamBarrier<T, R> {
 				Exceptions.onErrorDropped(e);
 			}
 		}
-
+		
 		void innerComplete(SwitchMapInner<R> inner) {
 			inner.deactivate();
 			drain();
 		}
 	}
-
+	
 	static final class SwitchMapInner<R> implements Subscriber<R>, Subscription {
-
+		
 		final SwitchMapMain<?, R> parent;
 		
 		final int bufferSize;
@@ -403,7 +405,7 @@ final class StreamSwitchMap<T, R> extends StreamBarrier<T, R> {
 				AtomicReferenceFieldUpdater.newUpdater(SwitchMapInner.class, Subscription.class, "s");
 		
 		int produced;
-
+		
 		public SwitchMapInner(SwitchMapMain<?, R> parent, int bufferSize, long index) {
 			this.parent = parent;
 			this.bufferSize = bufferSize;

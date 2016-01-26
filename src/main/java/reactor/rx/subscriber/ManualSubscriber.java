@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Backpressurable;
+import reactor.core.state.Backpressurable;
 import reactor.core.util.BackpressureUtils;
 import reactor.fn.Consumer;
 

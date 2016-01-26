@@ -15,7 +15,7 @@
  */
 package reactor.rx;
 
-import reactor.core.trait.Groupable;
+import reactor.core.state.Groupable;
 
 /**
  * The Stream will complete or fail whever the parent groupBy action terminates itself.

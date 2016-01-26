@@ -19,8 +19,8 @@ import java.util.Objects;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.graph.Connectable;
 import reactor.core.subscriber.SubscriberMultiSubscription;
-import reactor.core.trait.Connectable;
 
 /**
  * Switches to another source if the first source turns out to be empty.

@@ -21,11 +21,11 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.graph.Publishable;
+import reactor.core.graph.Subscribable;
+import reactor.core.state.Backpressurable;
+import reactor.core.state.Cancellable;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Backpressurable;
-import reactor.core.trait.Cancellable;
-import reactor.core.trait.Publishable;
-import reactor.core.trait.Subscribable;
 import reactor.core.util.BackpressureUtils;
 import reactor.fn.BooleanSupplier;
 

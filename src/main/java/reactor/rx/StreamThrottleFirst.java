@@ -58,8 +58,9 @@ final class StreamThrottleFirst<T, U> extends StreamBarrier<T, T> {
 		
 		source.subscribe(main);
 	}
-
-	static final class ThrottleFirstMain<T, U> implements Subscriber<T>, Subscription {
+	
+	static final class ThrottleFirstMain<T, U> 
+	implements Subscriber<T>, Subscription {
 
 		final Subscriber<? super T> actual;
 		
@@ -70,12 +71,12 @@ final class StreamThrottleFirst<T, U> extends StreamBarrier<T, T> {
 		volatile Subscription s;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ThrottleFirstMain, Subscription> S =
-				AtomicReferenceFieldUpdater.newUpdater(ThrottleFirstMain.class, Subscription.class, "s");
+			AtomicReferenceFieldUpdater.newUpdater(ThrottleFirstMain.class, Subscription.class, "s");
 
 		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ThrottleFirstMain, Subscription> OTHER =
-				AtomicReferenceFieldUpdater.newUpdater(ThrottleFirstMain.class, Subscription.class, "other");
+			AtomicReferenceFieldUpdater.newUpdater(ThrottleFirstMain.class, Subscription.class, "other");
 
 		volatile long requested;
 		@SuppressWarnings("rawtypes")
@@ -90,7 +91,7 @@ final class StreamThrottleFirst<T, U> extends StreamBarrier<T, T> {
 		volatile Throwable error;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<ThrottleFirstMain, Throwable> ERROR =
-				AtomicReferenceFieldUpdater.newUpdater(ThrottleFirstMain.class, Throwable.class, "error");
+			AtomicReferenceFieldUpdater.newUpdater(ThrottleFirstMain.class, Throwable.class, "error");
 
 		public ThrottleFirstMain(Subscriber<? super T> actual,
 				Function<? super T, ? extends Publisher<U>> throttler) {
@@ -150,7 +151,7 @@ final class StreamThrottleFirst<T, U> extends StreamBarrier<T, T> {
 					error(new NullPointerException("The throttler returned a null publisher"));
 					return;
 				}
-
+				
 				ThrottleFirstOther<U> other = new ThrottleFirstOther<>(this);
 				
 				if (BackpressureUtils.replace(OTHER, this, other)) {
@@ -204,13 +205,13 @@ final class StreamThrottleFirst<T, U> extends StreamBarrier<T, T> {
 			error(e);
 		}
 	}
-
+	
 	static final class ThrottleFirstOther<U>
 	extends DeferredSubscription
 	implements Subscriber<U> {
 
 		final ThrottleFirstMain<?, U> main;
-
+		
 		public ThrottleFirstOther(ThrottleFirstMain<?, U> main) {
 			this.main = main;
 		}

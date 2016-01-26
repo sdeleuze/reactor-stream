@@ -20,8 +20,8 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.graph.Publishable;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -74,11 +74,10 @@ final class MonoCollect<T, R> extends reactor.core.publisher.Mono.MonoBarrier<T,
 	}
 
 	static final class CollectSubscriber<T, R>
-			extends SubscriberDeferredScalar<T, R> implements Publishable {
+			extends SubscriberDeferredScalar<T, R>
+			implements Publishable {
 
 		final BiConsumer<? super R, ? super T> action;
-
-		final R container;
 
 		Subscription s;
 
@@ -88,7 +87,7 @@ final class MonoCollect<T, R> extends reactor.core.publisher.Mono.MonoBarrier<T,
 										  R container) {
 			super(actual);
 			this.action = action;
-			this.container = container;
+			this.value = container;
 		}
 
 		@Override
@@ -116,7 +115,7 @@ final class MonoCollect<T, R> extends reactor.core.publisher.Mono.MonoBarrier<T,
 			}
 
 			try {
-				action.accept(container, t);
+				action.accept(value, t);
 			} catch (Throwable e) {
 				cancel();
 				Exceptions.throwIfFatal(e);
@@ -140,20 +139,13 @@ final class MonoCollect<T, R> extends reactor.core.publisher.Mono.MonoBarrier<T,
 				return;
 			}
 			done = true;
-			complete(container);
-		}
-
-		@Override
-		public R get() {
-			return container;
+			complete(value);
 		}
 
 		@Override
 		public void setValue(R value) {
 			// value is constant
 		}
-
-
 
 		@Override
 		public boolean isTerminated() {
@@ -172,7 +164,7 @@ final class MonoCollect<T, R> extends reactor.core.publisher.Mono.MonoBarrier<T,
 
 		@Override
 		public Object connectedOutput() {
-			return container;
+			return value;
 		}
 	}
 }

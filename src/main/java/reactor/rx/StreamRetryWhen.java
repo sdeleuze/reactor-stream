@@ -21,9 +21,9 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.graph.Connectable;
 import reactor.core.publisher.ProcessorEmitter;
 import reactor.core.subscriber.SubscriberMultiSubscription;
-import reactor.core.trait.Connectable;
 import reactor.core.util.DeferredSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -46,10 +46,10 @@ import reactor.rx.subscriber.SerializedSubscriber;
  */
 final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 
-	final Function<? super reactor.rx.Stream<Throwable>, ? extends Publisher<? extends Object>> whenSourceFactory;
+	final Function<? super Stream<Throwable>, ? extends Publisher<? extends Object>> whenSourceFactory;
 
 	public StreamRetryWhen(Publisher<? extends T> source,
-							  Function<? super reactor.rx.Stream<Throwable>, ? extends Publisher<? extends Object>> whenSourceFactory) {
+							  Function<? super Stream<Throwable>, ? extends Publisher<? extends Object>> whenSourceFactory) {
 		super(source);
 		this.whenSourceFactory = Objects.requireNonNull(whenSourceFactory, "whenSourceFactory");
 	}
@@ -192,7 +192,7 @@ final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class RetryWhenOtherSubscriber
-	extends reactor.rx.Stream<Throwable>
+	extends Stream<Throwable>
 	implements Subscriber<Object>, Connectable {
 		RetryWhenMainSubscriber<?> main;
 

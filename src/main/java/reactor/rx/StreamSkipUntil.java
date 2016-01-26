@@ -59,7 +59,6 @@ final class StreamSkipUntil<T, U> extends StreamBarrier<T, T> {
 	}
 
 	static final class SkipUntilOtherSubscriber<U> implements Subscriber<U> {
-
 		final SkipUntilMainSubscriber<?> main;
 
 		public SkipUntilOtherSubscriber(SkipUntilMainSubscriber<?> main) {
@@ -114,12 +113,12 @@ final class StreamSkipUntil<T, U> extends StreamBarrier<T, T> {
 		volatile Subscription main;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SkipUntilMainSubscriber, Subscription> MAIN =
-				AtomicReferenceFieldUpdater.newUpdater(SkipUntilMainSubscriber.class, Subscription.class, "main");
+		  AtomicReferenceFieldUpdater.newUpdater(SkipUntilMainSubscriber.class, Subscription.class, "main");
 
 		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<SkipUntilMainSubscriber, Subscription> OTHER =
-				AtomicReferenceFieldUpdater.newUpdater(SkipUntilMainSubscriber.class, Subscription.class, "other");
+		  AtomicReferenceFieldUpdater.newUpdater(SkipUntilMainSubscriber.class, Subscription.class, "other");
 
 		volatile boolean gate;
 

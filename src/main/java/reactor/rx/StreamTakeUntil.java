@@ -58,7 +58,6 @@ final class StreamTakeUntil<T, U> extends StreamBarrier<T, T> {
 	}
 
 	static final class TakeUntilOtherSubscriber<U> implements Subscriber<U> {
-
 		final TakeUntilMainSubscriber<?> main;
 
 		boolean once;
@@ -106,12 +105,12 @@ final class StreamTakeUntil<T, U> extends StreamBarrier<T, T> {
 		volatile Subscription main;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<TakeUntilMainSubscriber, Subscription> MAIN =
-				AtomicReferenceFieldUpdater.newUpdater(TakeUntilMainSubscriber.class, Subscription.class, "main");
+		  AtomicReferenceFieldUpdater.newUpdater(TakeUntilMainSubscriber.class, Subscription.class, "main");
 
 		volatile Subscription other;
 		@SuppressWarnings("rawtypes")
 		static final AtomicReferenceFieldUpdater<TakeUntilMainSubscriber, Subscription> OTHER =
-				AtomicReferenceFieldUpdater.newUpdater(TakeUntilMainSubscriber.class, Subscription.class, "other");
+		  AtomicReferenceFieldUpdater.newUpdater(TakeUntilMainSubscriber.class, Subscription.class, "other");
 
 		public TakeUntilMainSubscriber(Subscriber<? super T> actual) {
 			this.actual = new SerializedSubscriber<>(actual);

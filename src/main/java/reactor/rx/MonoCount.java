@@ -18,8 +18,8 @@ package reactor.rx;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.graph.Publishable;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -43,7 +43,8 @@ final class MonoCount<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Long
 		source.subscribe(new CountSubscriber<>(s));
 	}
 
-	static final class CountSubscriber<T> extends SubscriberDeferredScalar<T, Long> implements Publishable {
+	static final class CountSubscriber<T> extends SubscriberDeferredScalar<T, Long>
+			implements Publishable {
 
 		long counter;
 

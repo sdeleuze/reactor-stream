@@ -17,8 +17,8 @@
 package reactor.rx.subscriber;
 
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Backpressurable;
-import reactor.core.trait.Prefetchable;
+import reactor.core.state.Backpressurable;
+import reactor.core.state.Prefetchable;
 import reactor.fn.Consumer;
 
 /**

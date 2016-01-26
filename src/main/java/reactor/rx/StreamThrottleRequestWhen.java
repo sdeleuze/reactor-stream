@@ -19,10 +19,10 @@ package reactor.rx;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.subscriber.SubscriberWithDemand;
+import reactor.core.state.Backpressurable;
 import reactor.core.timer.Timer;
-import reactor.core.trait.Backpressurable;
 import reactor.fn.Function;
+import reactor.rx.subscriber.SubscriberWithDemand;
 
 /**
  * @author Stephane Maldini

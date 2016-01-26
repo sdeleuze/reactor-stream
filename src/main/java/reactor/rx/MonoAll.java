@@ -20,8 +20,8 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.graph.Publishable;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.trait.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Predicate;
@@ -54,7 +54,8 @@ final class MonoAll<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Boolea
 		source.subscribe(new AllSubscriber<T>(s, predicate));
 	}
 
-	static final class AllSubscriber<T> extends SubscriberDeferredScalar<T, Boolean> implements Publishable {
+	static final class AllSubscriber<T> extends SubscriberDeferredScalar<T, Boolean>
+			implements Publishable {
 		final Predicate<? super T> predicate;
 
 		Subscription s;
@@ -97,8 +98,7 @@ final class MonoAll<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Boolea
 				done = true;
 				s.cancel();
 				Exceptions.throwIfFatal(e);
-				onError(Exceptions.unwrap(e));
-				subscriber.onError(e);
+				subscriber.onError(Exceptions.unwrap(e));
 				return;
 			}
 			if (!b) {

@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Completable;
-import reactor.core.trait.Introspectable;
+import reactor.core.state.Completable;
+import reactor.core.state.Introspectable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;

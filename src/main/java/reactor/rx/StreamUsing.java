@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Publishable;
+import reactor.core.graph.Publishable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -48,8 +48,9 @@ import reactor.fn.Function;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamUsing<T, S>
-extends reactor.rx.Stream<T> implements Publishable {
+final class StreamUsing<T, S> 
+extends Stream<T>
+		implements Publishable {
 
 	final Callable<S> resourceSupplier;
 
@@ -138,7 +139,7 @@ extends reactor.rx.Stream<T> implements Publishable {
 		volatile int wip;
 		@SuppressWarnings("rawtypes")
 		static final AtomicIntegerFieldUpdater<UsingSubscriber> WIP =
-				AtomicIntegerFieldUpdater.newUpdater(UsingSubscriber.class, "wip");
+		  AtomicIntegerFieldUpdater.newUpdater(UsingSubscriber.class, "wip");
 
 		public UsingSubscriber(Subscriber<? super T> actual, Consumer<? super S> resourceCleanup, S
 				resource, boolean eager) {

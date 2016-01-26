@@ -18,8 +18,8 @@ package reactor.rx;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.trait.Completable;
-import reactor.core.trait.Connectable;
+import reactor.core.graph.Connectable;
+import reactor.core.state.Completable;
 import reactor.core.util.Exceptions;
 import reactor.fn.Supplier;
 
