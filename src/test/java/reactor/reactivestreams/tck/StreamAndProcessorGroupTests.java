@@ -74,6 +74,11 @@ public class StreamAndProcessorGroupTests extends AbstractStreamVerification {
 	}
 
 	@Override
+	public void required_mustRequestFromUpstreamForElementsThatHaveBeenRequestedLongAgo() throws Throwable {
+		super.required_mustRequestFromUpstreamForElementsThatHaveBeenRequestedLongAgo();
+	}
+
+	@Override
 	public void stochastic_spec103_mustSignalOnMethodsSequentially() throws Throwable {
 		//for(int i = 0; i < 1000; i++)
 		super.stochastic_spec103_mustSignalOnMethodsSequentially();
