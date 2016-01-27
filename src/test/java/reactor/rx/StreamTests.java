@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 Pivotal Software Inc., Inc. All Rights Reserved.
+ * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -454,7 +454,7 @@ public class StreamTests extends AbstractReactorTest {
 		                          .nest()
 		                          .flatMap(self -> Stream.reduceByKey(self, (acc, next) -> acc + next))
 		                          .log("elapsed")
-		                          .sort((a, b) -> a.t1.compareTo(b.t1))
+		                          .bufferSort((a, b) -> a.t1.compareTo(b.t1))
 		                          .reduce(-1L, (acc, next) -> acc > 0l ? ((next.t1 + acc) / 2) : next.t1)
 		                          .log("reduced-elapsed")
 		                          .subscribeWith(Promise.prepare());

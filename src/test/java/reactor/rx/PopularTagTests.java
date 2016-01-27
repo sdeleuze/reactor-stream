@@ -63,7 +63,7 @@ public class PopularTagTests extends AbstractReactorTest {
 		        .window(2, SECONDS)
 		        .flatMap(s ->
 				Stream.reduceByKey(s, (acc, next) -> acc + next)
-				      .sort((a, b) -> -a.t2.compareTo(b.t2))
+				      .bufferSort((a, b) -> -a.t2.compareTo(b.t2))
 				      .take(10)
 				      .finallyDo(_s -> LOG.info("------------------------ window " + _s.getType()+"! " +
 						      "----------------------"))

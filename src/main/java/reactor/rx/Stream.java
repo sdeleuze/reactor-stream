@@ -2071,6 +2071,51 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Stage incoming values into a {@link java.util.PriorityQueue<O>} that will be re-ordered and signaled to the
+	 * returned fresh {@link Mono}. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
+	 *
+	 * @return a new {@link Mono} whose values re-ordered using a PriorityQueue.
+	 *
+	 * @since 2.0, 2.5
+	 */
+	public final Stream<O> bufferSort() {
+		return bufferSort(null);
+	}
+
+	/**
+	 * Stage incoming values into a {@link java.util.PriorityQueue<O>} that will be re-ordered and signaled to the
+	 * returned fresh {@link Mono}. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
+	 *
+	 * @param comparator A {@link Comparator<O>} to evaluate incoming data
+	 *
+	 * @return a new {@link Mono} whose values re-ordered using a PriorityQueue.
+	 *
+	 * @since 2.0, 2.5
+	 */
+	public final Stream<O> bufferSort(final Comparator<? super O> comparator) {
+		return new StreamBarrier<>(collect(new Supplier<PriorityQueue<O>>() {
+			@Override
+			public PriorityQueue<O> get() {
+				if (comparator == null) {
+					return new PriorityQueue<>();
+				}
+				else {
+					return new PriorityQueue<>(PlatformDependent.MEDIUM_BUFFER_SIZE, comparator);
+				}
+			}
+		}, new BiConsumer<PriorityQueue<O>, O>() {
+			@Override
+			public void accept(PriorityQueue<O> e, O o) {
+				e.add(o);
+			}
+		}).flatMap(new Function<PriorityQueue<O>, Publisher<? extends O>>() {
+			@Override
+			public Publisher<? extends O> apply(PriorityQueue<O> os) {
+				return fromQueue(os);
+			}
+		}));
+	}
+	/**
 	 * Cache last {@link PlatformDependent#SMALL_BUFFER_SIZE} signal to this {@code Stream} and release them on request that
 	 * will observe any values accepted by this {@code Stream}.
 	 *
@@ -3999,51 +4044,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamSkipWhile<>(this, limitMatcher);
 	}
 
-	/**
-	 * Stage incoming values into a {@link java.util.PriorityQueue<O>} that will be re-ordered and signaled to the
-	 * returned fresh {@link Mono}. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
-	 *
-	 * @return a new {@link Mono} whose values re-ordered using a PriorityQueue.
-	 *
-	 * @since 2.0, 2.5
-	 */
-	public final Stream<O> sort() {
-		return sort(null);
-	}
 
-	/**
-	 * Stage incoming values into a {@link java.util.PriorityQueue<O>} that will be re-ordered and signaled to the
-	 * returned fresh {@link Mono}. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
-	 *
-	 * @param comparator A {@link Comparator<O>} to evaluate incoming data
-	 *
-	 * @return a new {@link Mono} whose values re-ordered using a PriorityQueue.
-	 *
-	 * @since 2.0, 2.5
-	 */
-	public final Stream<O> sort(final Comparator<? super O> comparator) {
-		return new StreamBarrier<>(collect(new Supplier<PriorityQueue<O>>() {
-			@Override
-			public PriorityQueue<O> get() {
-				if (comparator == null) {
-					return new PriorityQueue<>();
-				}
-				else {
-					return new PriorityQueue<>(PlatformDependent.MEDIUM_BUFFER_SIZE, comparator);
-				}
-			}
-		}, new BiConsumer<PriorityQueue<O>, O>() {
-			@Override
-			public void accept(PriorityQueue<O> e, O o) {
-				e.add(o);
-			}
-		}).flatMap(new Function<PriorityQueue<O>, Publisher<? extends O>>() {
-			@Override
-			public Publisher<? extends O> apply(PriorityQueue<O> os) {
-				return fromQueue(os);
-			}
-		}));
-	}
 
 	/**
 	 * Start emitting all items from the passed publisher then emits from the current stream.

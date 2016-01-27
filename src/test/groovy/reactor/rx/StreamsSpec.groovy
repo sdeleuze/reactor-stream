@@ -2771,7 +2771,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'sorted operation is added and the stream is retrieved'
-			def value = stream.sort().buffer().tap()
+			def value = stream.bufferSort().buffer().tap()
 
 		then:
 			'it is available'
@@ -2783,7 +2783,7 @@ class StreamsSpec extends Specification {
 
 		and:
 			'sorted operation is added for up to 3 elements ordered at once and the stream is retrieved'
-			value = stream.window(3).flatMap{ it.sort() }.buffer(6).tap()
+			value = stream.window(3).flatMap{ it.bufferSort() }.buffer(6).tap()
 			println value.debug()
 
 		then:
@@ -2797,7 +2797,7 @@ class StreamsSpec extends Specification {
 		and:
 			'revese sorted operation is added and the stream is retrieved'
 			value = stream
-					.sort({ a, b -> b <=> a } as Comparator<Integer>)
+					.bufferSort({ a, b -> b <=> a } as Comparator<Integer>)
 					.buffer()
 					.tap()
 
