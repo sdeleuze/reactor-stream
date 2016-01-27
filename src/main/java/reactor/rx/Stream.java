@@ -246,7 +246,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 		return new StreamCombineLatest<>(sources,
 				combinator,
-				QueueSupplier.xs(),
+				QueueSupplier.<StreamCombineLatest.SourceAndArray>xs(),
 				PlatformDependent.XS_BUFFER_SIZE);
 	}
 
@@ -446,7 +446,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		}
 
 		return new StreamCombineLatest<>(sources,
-				combinator, QueueSupplier.xs(),
+				combinator, QueueSupplier.<StreamCombineLatest.SourceAndArray>xs(),
 				PlatformDependent.XS_BUFFER_SIZE
 		);
 	}
@@ -470,7 +470,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 					public Publisher<V> apply(List<? extends Publisher<?>> publishers) {
 						return new StreamCombineLatest<>(publishers,
 								combinator,
-								QueueSupplier.xs(),
+								QueueSupplier.<StreamCombineLatest.SourceAndArray>xs(),
 								PlatformDependent.XS_BUFFER_SIZE);
 					}
 		                    }
