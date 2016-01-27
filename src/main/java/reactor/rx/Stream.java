@@ -246,7 +246,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 		return new StreamCombineLatest<>(sources,
 				combinator,
-				(Supplier<? extends Queue<StreamCombineLatest.SourceAndArray>>) QueueSupplier.xs(),
+				QueueSupplier.xs(),
 				PlatformDependent.XS_BUFFER_SIZE);
 	}
 
@@ -446,8 +446,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		}
 
 		return new StreamCombineLatest<>(sources,
-				combinator,
-				(Supplier<? extends Queue<StreamCombineLatest.SourceAndArray>>) QueueSupplier.xs(),
+				combinator, QueueSupplier.xs(),
 				PlatformDependent.XS_BUFFER_SIZE
 		);
 	}
@@ -463,7 +462,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a {@link Stream} based on the produced value
 	 * @since 2.0, 2.5
 	 */
-	@SuppressWarnings("unchecked")
 	public static <V> Stream<V> combineLatest(Publisher<? extends Publisher<?>> sources,
 			final Function<Object[], V> combinator) {
 		return from(sources).buffer()
@@ -472,7 +470,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 					public Publisher<V> apply(List<? extends Publisher<?>> publishers) {
 						return new StreamCombineLatest<>(publishers,
 								combinator,
-								(Supplier<? extends Queue<StreamCombineLatest.SourceAndArray>>) QueueSupplier.xs(),
+								QueueSupplier.xs(),
 								PlatformDependent.XS_BUFFER_SIZE);
 					}
 		                    }
@@ -1843,7 +1841,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 						return concat(sourceSupplier.get(), Stream.<V>fail(throwable));
 					}
 				}, sourceSupplier),
-				IDENTITY_FUNCTION, PlatformDependent.SMALL_BUFFER_SIZE, 32));
+				IDENTITY_FUNCTION, PlatformDependent.SMALL_BUFFER_SIZE, 32, false));
 	}
 
 	/**
@@ -1943,7 +1941,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final <U, V> Stream<List<O>> buffer(final Publisher<U> bucketOpening,
 			final Function<? super U, ? extends Publisher<V>> boundarySupplier) {
 
-		return new StreamBufferStartEnd<>(this, bucketOpening, boundarySupplier, LIST_SUPPLIER, QueueSupplier.xs());
+		return new StreamBufferStartEnd<>(this, bucketOpening, boundarySupplier, LIST_SUPPLIER,
+				QueueSupplier.<List<O>>xs());
 	}
 
 	/**
@@ -2184,7 +2183,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 			@Override
 			public void subscribe(Subscriber<? super V> s) {
-				Flux.flatMap(Stream.this, fn, PlatformDependent.SMALL_BUFFER_SIZE, 1)
+				Flux.flatMap(Stream.this, fn, PlatformDependent.SMALL_BUFFER_SIZE, 1, false)
 				    .subscribe(s);
 			}
 		};
@@ -2629,7 +2628,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 			@Override
 			public void subscribe(Subscriber<? super V> s) {
-				Flux.flatMap(Stream.this, fn, PlatformDependent.SMALL_BUFFER_SIZE, PlatformDependent.XS_BUFFER_SIZE)
+				Flux.flatMap(Stream.this, fn, PlatformDependent.SMALL_BUFFER_SIZE, PlatformDependent.XS_BUFFER_SIZE,
+						false)
 				    .subscribe(s);
 			}
 		};
@@ -2652,7 +2652,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			Supplier<? extends Publisher<? extends R>> mapperOnComplete) {
 		return new StreamBarrier<>(Flux.flatMap(
 				Flux.mapSignal(this, mapperOnNext, mapperOnError, mapperOnComplete),
-				IDENTITY_FUNCTION, PlatformDependent.SMALL_BUFFER_SIZE, 32)
+				IDENTITY_FUNCTION, PlatformDependent.SMALL_BUFFER_SIZE, 32, false)
 		);
 	}
 
@@ -3848,7 +3848,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	@SuppressWarnings("unchecked")
 	public final <U> Stream<O> sampleTimeout(Function<? super O, ? extends Publisher<U>> throttler) {
-		return new StreamThrottleTimeout<>(this, throttler, (Supplier<Queue<Object>>)QueueSupplier.xs());
+		return new StreamThrottleTimeout<>(this, throttler, QueueSupplier.xs());
 	}
 
 	/**
