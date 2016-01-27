@@ -18,7 +18,7 @@ package reactor.rx;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
+import reactor.core.flow.Receiver;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.util.BackpressureUtils;
 
@@ -39,7 +39,7 @@ final class MonoIsEmpty<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Bo
 	}
 
 	static final class IsEmptySubscriber<T> extends SubscriberDeferredScalar<T, Boolean>
-			implements Publishable {
+			implements Receiver {
 		Subscription s;
 
 		public IsEmptySubscriber(Subscriber<? super Boolean> actual) {

@@ -17,17 +17,19 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import reactor.fn.BiFunction;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.BiFunction;
+import reactor.core.util.BackpressureUtils;
+import reactor.core.util.Exceptions;
 
 /**
  * Aggregates the source values with the help of an accumulator function
@@ -68,7 +70,7 @@ final class StreamScan<T, R> extends StreamBarrier<T, R> {
 	}
 
 	static final class ScanSubscriber<T, R>
-	  implements Subscriber<T>, Subscription, Subscribable, Requestable, Connectable, Completable {
+	  implements Subscriber<T>, Subscription, Producer, Requestable, Loopback, Completable {
 
 		final Subscriber<? super R> actual;
 

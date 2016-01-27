@@ -16,16 +16,17 @@
 package reactor.rx;
 
 import java.util.Objects;
+import reactor.fn.Predicate;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.state.Completable;
+import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Predicate;
 
 /**
  * Filters out values that make a filter function return false.
@@ -55,7 +56,7 @@ final class StreamFilter<T> extends StreamBarrier<T, T> {
 		source.subscribe(new FilterSubscriber<>(s, predicate));
 	}
 
-	static final class FilterSubscriber<T> implements Subscriber<T>, Subscribable, Connectable, Completable, Subscription {
+	static final class FilterSubscriber<T> implements Subscriber<T>, Producer, Loopback, Completable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final Predicate<? super T> predicate;

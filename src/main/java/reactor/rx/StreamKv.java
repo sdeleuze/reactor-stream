@@ -23,7 +23,7 @@ import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
 
 /**
- * A SubscribableMap is an event-driven Map that signals logged operations to its subscribers. Useful for IO bound
+ * A ProducerMap is an event-driven Map that signals logged operations to its subscribers. Useful for IO bound
  * map storage where acknowledgement is decoupled from writing operation (asynchronous). In that case, read operations
  * will often operate as local proxy cache read in a usual implementation, but it doesn't have to be enforced.
  * E.g. a Pivotal Gemfire™ implementation will delegate map operations to a region and will create listeners on
@@ -74,7 +74,7 @@ public abstract class StreamKv<K, V> extends Stream<StreamKv.Signal<K, V>> {
 
 		@Override
 		public String toString() {
-			return "SubscribableMap.Signal{" +
+			return "ProducerMap.Signal{" +
 			  "op=" + op +
 			  (key != null ? ", key=" + key : "") +
 			  (previous != null ? ", previous=" + previous : "") +

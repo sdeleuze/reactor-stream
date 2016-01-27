@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.graph.PublishableMany;
+import reactor.core.flow.MultiReceiver;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 import reactor.core.util.EmptySubscription;
 
@@ -37,7 +37,7 @@ import reactor.core.util.EmptySubscription;
  */
 final class StreamConcatIterable<T> 
 extends Stream<T>
-		implements PublishableMany {
+		implements MultiReceiver {
 
 	final Iterable<? extends Publisher<? extends T>> iterable;
 

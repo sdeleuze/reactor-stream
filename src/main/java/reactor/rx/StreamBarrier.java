@@ -18,7 +18,7 @@ package reactor.rx;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.graph.Publishable;
+import reactor.core.flow.Receiver;
 import reactor.core.publisher.Flux;
 import reactor.core.state.Backpressurable;
 import reactor.core.timer.Timer;
@@ -30,7 +30,7 @@ import reactor.fn.Function;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class StreamBarrier<I, O> extends Stream<O> implements Publishable, Flux.Operator<I, O> {
+public class StreamBarrier<I, O> extends Stream<O> implements Receiver, Flux.Operator<I, O> {
 
 	final protected Publisher<? extends I> source;
 

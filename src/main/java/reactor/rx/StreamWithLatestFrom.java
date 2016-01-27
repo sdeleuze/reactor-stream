@@ -17,16 +17,16 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import reactor.fn.BiFunction;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.util.BackpressureUtils;
+import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.BiFunction;
-import reactor.rx.subscriber.SerializedSubscriber;
+import reactor.core.util.BackpressureUtils;
 
 /**
  * Combines values from a main Publisher with values from another

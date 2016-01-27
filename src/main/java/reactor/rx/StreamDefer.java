@@ -16,12 +16,12 @@
 package reactor.rx;
 
 import java.util.Objects;
+import reactor.fn.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.graph.Publishable;
+import reactor.core.flow.Receiver;
 import reactor.core.util.EmptySubscription;
-import reactor.fn.Supplier;
 
 /**
  * Defers the creation of the actual Publisher the Subscriber will be subscribed to.
@@ -35,7 +35,7 @@ import reactor.fn.Supplier;
  */
 final class StreamDefer<T> 
 extends Stream<T>
-		implements Publishable {
+		implements Receiver {
 
 	final Supplier<? extends Publisher<? extends T>> supplier;
 

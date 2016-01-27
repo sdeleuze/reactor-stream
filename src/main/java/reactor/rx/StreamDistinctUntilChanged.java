@@ -16,16 +16,17 @@
 package reactor.rx;
 
 import java.util.Objects;
+import reactor.fn.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.state.Completable;
+import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
 
 /**
  * Filters out subsequent and repeated elements.
@@ -53,7 +54,7 @@ final class StreamDistinctUntilChanged<T, K> extends StreamBarrier<T, T> {
 	}
 
 	static final class DistinctUntilChangedSubscriber<T, K>
-			implements Subscriber<T>, Subscribable, Connectable, Completable, Subscription {
+			implements Subscriber<T>, Producer, Loopback, Completable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final Function<? super T, K> keyExtractor;

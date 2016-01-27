@@ -22,9 +22,10 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
-import reactor.rx.subscriber.SerializedSubscriber;
+import reactor.core.util.BackpressureUtils;
 
 /**
  * Samples the main source and emits its latest value whenever the other Publisher

@@ -17,18 +17,19 @@ package reactor.rx;
 
 import java.util.Collection;
 import java.util.Objects;
+import reactor.fn.Function;
+import reactor.fn.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.state.Completable;
-import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
-import reactor.fn.Supplier;
+import reactor.core.util.BackpressureUtils;
+import reactor.core.util.Exceptions;
 
 /**
  * For each subscriber, tracks the source values that have been seen and
@@ -76,7 +77,7 @@ final class StreamDistinct<T, K, C extends Collection<? super K>> extends Stream
 	}
 
 	static final class DistinctSubscriber<T, K, C extends Collection<? super K>>
-			implements Subscriber<T>, Subscribable, Connectable, Completable, Subscription {
+			implements Subscriber<T>, Producer, Loopback, Completable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final C collection;

@@ -16,15 +16,16 @@
 package reactor.rx;
 
 import java.util.Objects;
+import reactor.fn.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
+import reactor.core.flow.Receiver;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Supplier;
 
 /**
  * Emits only the element at the given index position or signals a
@@ -68,7 +69,7 @@ final class MonoElementAt<T> extends reactor.core.publisher.Mono.MonoBarrier<T, 
 
 	static final class ElementAtSubscriber<T>
 			extends SubscriberDeferredScalar<T, T>
-			implements Publishable {
+			implements Receiver {
 		final Supplier<? extends T> defaultSupplier;
 
 		long index;

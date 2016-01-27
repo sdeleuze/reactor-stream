@@ -17,15 +17,16 @@ package reactor.rx;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import reactor.fn.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
+import reactor.core.flow.Receiver;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Supplier;
 
 /**
  * Expects and emits a single item from the source or signals
@@ -75,7 +76,7 @@ final class MonoSingle<T> extends reactor.core.publisher.Mono.MonoBarrier<T, T> 
 	}
 
 	static final class SingleSubscriber<T> extends SubscriberDeferredScalar<T, T>
-			implements Publishable {
+			implements Receiver {
 
 		final Supplier<? extends T> defaultSupplier;
 

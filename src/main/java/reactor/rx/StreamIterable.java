@@ -21,13 +21,14 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
+import reactor.core.util.BackpressureUtils;
 
 /**
  * Emits the contents of an Iterable source.
@@ -41,7 +42,7 @@ import reactor.core.util.EmptySubscription;
  */
 final class StreamIterable<T> 
 extends Stream<T>
-		implements Publishable {
+		implements Receiver {
 
 	final Iterable<? extends T> iterable;
 
@@ -97,7 +98,7 @@ extends Stream<T>
 	}
 
 	static final class IterableSubscription<T>
-			implements Subscribable, Completable, Requestable, Cancellable, Subscription {
+			implements Producer, Completable, Requestable, Cancellable, Subscription {
 
 		final Subscriber<? super T> actual;
 

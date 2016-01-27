@@ -18,7 +18,7 @@ package reactor.rx.subscriber;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Producer;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
@@ -39,7 +39,7 @@ import reactor.core.util.BackpressureUtils;
  * @param <T> the value type
  */
 public final class SerializedSubscriber<T>
-		implements Subscriber<T>, Subscription, Completable, Subscribable, Cancellable, Introspectable, Backpressurable,
+		implements Subscriber<T>, Subscription, Completable, Producer, Cancellable, Introspectable, Backpressurable,
 		           Failurable {
 
 	final Subscriber<? super T> actual;

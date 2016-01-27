@@ -17,17 +17,19 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import reactor.fn.Consumer;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Consumer;
+import reactor.core.util.BackpressureUtils;
+import reactor.core.util.Exceptions;
 
 /**
  * Drops values if the subscriber doesn't request fast enough.
@@ -67,8 +69,7 @@ final class StreamDrop<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class DropSubscriber<T>
-			implements Subscriber<T>, Subscription, Subscribable, Completable, Requestable,
-					   Connectable {
+			implements Subscriber<T>, Subscription, Producer, Completable, Requestable, Loopback {
 
 		final Subscriber<? super T> actual;
 

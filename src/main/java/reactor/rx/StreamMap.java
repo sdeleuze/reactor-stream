@@ -16,16 +16,16 @@
 package reactor.rx;
 
 import java.util.Objects;
+import reactor.fn.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.state.Completable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
 
 /**
  * Maps the values of the source publisher one-on-one via a mapper function.
@@ -63,7 +63,7 @@ final class StreamMap<T, R> extends StreamBarrier<T, R> {
 		source.subscribe(new MapSubscriber<>(s, mapper));
 	}
 
-	static final class MapSubscriber<T, R> implements Subscriber<T>, Completable, Subscribable, Connectable, Subscription {
+	static final class MapSubscriber<T, R> implements Subscriber<T>, Completable, Producer, Loopback, Subscription {
 		final Subscriber<? super R>			actual;
 		final Function<? super T, ? extends R> mapper;
 

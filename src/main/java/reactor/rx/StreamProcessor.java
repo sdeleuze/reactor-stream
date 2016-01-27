@@ -19,7 +19,7 @@ import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
+import reactor.core.flow.Loopback;
 import reactor.core.state.Backpressurable;
 import reactor.fn.Consumer;
 
@@ -29,7 +29,7 @@ import reactor.fn.Consumer;
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-public class StreamProcessor<E, O> extends Stream<O> implements Processor<E, O>, Connectable {
+public class StreamProcessor<E, O> extends Stream<O> implements Processor<E, O>, Loopback {
 
 	protected final Subscriber<E> receiver;
 	protected final Publisher<O> publisher;

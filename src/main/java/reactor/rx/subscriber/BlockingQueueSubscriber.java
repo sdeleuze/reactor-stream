@@ -26,8 +26,8 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Receiver;
+import reactor.core.flow.Producer;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.util.Assert;
 import reactor.core.util.BackpressureUtils;
@@ -37,7 +37,7 @@ import reactor.core.util.Exceptions;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements Publishable, Subscribable,
+public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements Receiver, Producer,
                                                                                Subscription,
                                                                                BlockingQueue<IN> {
 

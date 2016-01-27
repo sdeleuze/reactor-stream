@@ -17,18 +17,18 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import reactor.fn.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
+import reactor.core.flow.Loopback;
 import reactor.core.publisher.ProcessorEmitter;
+import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 import reactor.core.util.DeferredSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
-import reactor.rx.subscriber.SerializedSubscriber;
 
 /**
  * retries a source when a companion sequence signals
@@ -193,7 +193,7 @@ final class StreamRetryWhen<T> extends StreamBarrier<T, T> {
 
 	static final class RetryWhenOtherSubscriber
 	extends Stream<Throwable>
-	implements Subscriber<Object>, Connectable {
+	implements Subscriber<Object>, Loopback {
 		RetryWhenMainSubscriber<?> main;
 
 		final ProcessorEmitter<Throwable> completionSignal = new ProcessorEmitter<>();

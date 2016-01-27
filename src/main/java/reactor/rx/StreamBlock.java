@@ -18,8 +18,8 @@ package reactor.rx;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Receiver;
+import reactor.core.flow.Producer;
 import reactor.core.queue.Sequencer;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
@@ -54,7 +54,7 @@ final class StreamBlock<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class StreamBlockSubscriber<T>
-			implements Subscriber<T>, Subscription, Subscribable, Publishable, Completable, Requestable, Cancellable,
+			implements Subscriber<T>, Subscription, Producer, Receiver, Completable, Requestable, Cancellable,
 			           Runnable {
 
 		final Subscriber<? super T> actual;

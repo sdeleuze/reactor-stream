@@ -20,20 +20,22 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import reactor.fn.BooleanSupplier;
+import reactor.fn.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.BooleanSupplier;
-import reactor.fn.Supplier;
+import reactor.core.util.BackpressureUtils;
+import reactor.core.util.Exceptions;
 
 /**
  * Buffers a certain number of subsequent elements and emits the buffers.
@@ -96,7 +98,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamBarri
 	}
 
 	static final class BufferExactSubscriber<T, C extends Collection<? super T>>
-	  implements Subscriber<T>, Subscription, Subscribable, Connectable, Completable, Backpressurable {
+	  implements Subscriber<T>, Subscription, Producer, Loopback, Completable, Backpressurable {
 
 		final Subscriber<? super C> actual;
 
@@ -241,7 +243,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamBarri
 	}
 
 	static final class BufferSkipSubscriber<T, C extends Collection<? super T>>
-	  implements Subscriber<T>, Subscription, Subscribable, Connectable, Completable, Backpressurable {
+	  implements Subscriber<T>, Subscription, Producer, Loopback, Completable, Backpressurable {
 
 		final Subscriber<? super C> actual;
 
@@ -417,8 +419,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamBarri
 
 
 	static final class BufferOverlappingSubscriber<T, C extends Collection<? super T>>
-	  implements Subscriber<T>, Subscription, BooleanSupplier, Subscribable, Completable, Cancellable,
-				 Connectable,
+	  implements Subscriber<T>, Subscription, BooleanSupplier, Producer, Completable, Cancellable, Loopback,
 				 Backpressurable, Requestable {
 		final Subscriber<? super C> actual;
 

@@ -20,8 +20,8 @@ import java.util.ArrayDeque;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Backpressurable;
 import reactor.core.util.BackpressureUtils;
 
@@ -56,7 +56,7 @@ final class StreamSkipLast<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class SkipLastSubscriber<T> implements Subscriber<T>, Publishable, Subscribable, Backpressurable, Subscription {
+	static final class SkipLastSubscriber<T> implements Subscriber<T>, Receiver, Producer, Backpressurable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final int n;

@@ -18,7 +18,7 @@ package reactor.rx;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
+import reactor.core.flow.Loopback;
 import reactor.core.state.Completable;
 import reactor.core.util.Exceptions;
 import reactor.fn.Supplier;
@@ -49,7 +49,7 @@ import reactor.fn.Supplier;
  *
  * @author Stephane Maldini
  */
-final class StreamJust<T> extends Stream<T> implements Supplier<T>, Connectable {
+final class StreamJust<T> extends Stream<T> implements Supplier<T>, Loopback {
 
 	final public static StreamJust<?> EMPTY = new StreamJust<>(null);
 

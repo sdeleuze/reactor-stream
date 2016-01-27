@@ -22,13 +22,15 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import reactor.fn.Function;
+import reactor.fn.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
-import reactor.core.graph.PublishableMany;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.MultiReceiver;
+import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Introspectable;
 import reactor.core.state.Prefetchable;
@@ -37,8 +39,8 @@ import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
-import reactor.fn.Supplier;
+import reactor.core.util.BackpressureUtils;
+import reactor.core.util.Exceptions;
 
 /**
  * Combines the latest values from multiple sources through a function.
@@ -53,7 +55,7 @@ import reactor.fn.Supplier;
  */
 final class StreamCombineLatest<T, R> 
 extends Stream<R>
-		implements PublishableMany {
+		implements MultiReceiver {
 
 	final Publisher<? extends T>[] array;
 
@@ -204,7 +206,7 @@ extends Stream<R>
 		coordinator.subscribe(a, n);
 	}
 	
-	static final class CombineLatestCoordinator<T, R> implements Subscription, PublishableMany, Cancellable {
+	static final class CombineLatestCoordinator<T, R> implements Subscription, MultiReceiver, Cancellable {
 
 		final Subscriber<? super R> actual;
 		
@@ -481,8 +483,7 @@ extends Stream<R>
 	}
 	
 	static final class CombineLatestInner<T>
-			implements Subscriber<T>, Introspectable, Prefetchable, Requestable, Publishable,
-					   Subscribable {
+			implements Subscriber<T>, Introspectable, Prefetchable, Requestable, Receiver, Producer {
 
 		final CombineLatestCoordinator<T, ?> parent;
 

@@ -19,7 +19,7 @@ import java.util.Objects;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.graph.Connectable;
+import reactor.core.flow.Loopback;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 
 /**
@@ -51,7 +51,7 @@ final class StreamSwitchIfEmpty<T> extends StreamBarrier<T, T> {
     }
 
     static final class StreamSwitchIfEmptySubscriber<T> extends SubscriberMultiSubscription<T, T>
-            implements Connectable {
+            implements Loopback {
 
         final Publisher<? extends T> other;
 

@@ -20,7 +20,7 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
+import reactor.core.flow.Receiver;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.util.BackpressureUtils;
 
@@ -50,7 +50,7 @@ final class StreamDefaultIfEmpty<T> extends StreamBarrier<T, T> {
 
 	static final class DefaultIfEmptySubscriber<T>
 			extends SubscriberDeferredScalar<T, T>
-			implements Publishable {
+			implements Receiver {
 
 		Subscription s;
 

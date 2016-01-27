@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.util.BackpressureUtils;
+import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
-import reactor.rx.subscriber.SerializedSubscriber;
+import reactor.core.util.BackpressureUtils;
 
 /**
  * Relays values from the main Publisher until another Publisher signals an event.

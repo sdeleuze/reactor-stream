@@ -15,12 +15,10 @@
  */
 package reactor.rx;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import org.reactivestreams.Subscriber;
+
 import reactor.core.subscriber.SubscriberDeferredScalar;
 
 

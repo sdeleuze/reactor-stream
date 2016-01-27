@@ -26,8 +26,8 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Subscribable;
-import reactor.core.graph.SubscribableMany;
+import reactor.core.flow.Producer;
+import reactor.core.flow.MultiProducer;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
 import reactor.core.queue.RingBuffer;
@@ -64,7 +64,7 @@ final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K, T>> {
 	}
 
 	static final class GroupedEmitter<T, K> extends GroupedStream<K, T>
-			implements Subscription, Subscriber<T>, Completable, Subscribable, Cancellable {
+			implements Subscription, Subscriber<T>, Completable, Producer, Cancellable {
 
 		private final GroupByAction<T, K> parent;
 		private final FluxProcessor<T, T> processor;
@@ -317,7 +317,7 @@ final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K, T>> {
 	}
 
 	static final class GroupByAction<T, K> extends SubscriberWithDemand<T, GroupedStream<K, T>>
-			implements SubscribableMany, Backpressurable {
+			implements MultiProducer, Backpressurable {
 
 		private final Function<? super T, ? extends K> fn;
 

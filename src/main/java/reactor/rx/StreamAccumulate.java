@@ -16,16 +16,17 @@
 package reactor.rx;
 
 import java.util.Objects;
+import reactor.fn.BiFunction;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.state.Completable;
+import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.BiFunction;
 
 /**
  * Accumulates the source values with an accumulator function and
@@ -63,8 +64,7 @@ final class StreamAccumulate<T> extends StreamBarrier<T, T> {
 		source.subscribe(new AccumulateSubscriber<>(s, accumulator));
 	}
 
-	static final class AccumulateSubscriber<T> implements Subscriber<T>, Subscribable, Completable,
-																   Connectable, Subscription {
+	static final class AccumulateSubscriber<T> implements Subscriber<T>, Producer, Completable, Loopback, Subscription {
 		final Subscriber<? super T> actual;
 
 		final BiFunction<T, ? super T, T> accumulator;

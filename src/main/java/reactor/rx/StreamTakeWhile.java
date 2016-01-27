@@ -16,16 +16,17 @@
 package reactor.rx;
 
 import java.util.Objects;
+import reactor.fn.Predicate;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.state.Completable;
+import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Predicate;
 
 /**
  * Relays values while a predicate returns
@@ -56,8 +57,7 @@ final class StreamTakeWhile<T> extends StreamBarrier<T, T> {
 		source.subscribe(new TakeWhileSubscriber<>(s, predicate));
 	}
 
-	static final class TakeWhileSubscriber<T> implements Subscriber<T>, Subscribable, Completable,
-																  Connectable, Subscription {
+	static final class TakeWhileSubscriber<T> implements Subscriber<T>, Producer, Completable, Loopback, Subscription {
 		final Subscriber<? super T> actual;
 
 		final Predicate<? super T> predicate;

@@ -17,17 +17,17 @@ package reactor.rx;
 
 import java.util.ArrayDeque;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import reactor.fn.BooleanSupplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.util.BackpressureUtils;
-import reactor.fn.BooleanSupplier;
 
 /**
  * Emits the last N values the source emitted before its completion.
@@ -62,7 +62,8 @@ final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 		}
 	}
 
-	static final class TakeLastZeroSubscriber<T> implements Subscriber<T>, Subscribable, Subscription, Publishable {
+	static final class TakeLastZeroSubscriber<T> implements Subscriber<T>, Producer, Subscription,
+																	 Receiver {
 
 		final Subscriber<? super T> actual;
 		
@@ -121,7 +122,7 @@ final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 
 	static final class TakeLastOneSubscriber<T>
 			extends SubscriberDeferredScalar<T, T>
-			implements Publishable {
+			implements Receiver {
 
 		Subscription s;
 
@@ -173,7 +174,7 @@ final class StreamTakeLast<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class TakeLastManySubscriber<T>
-	  implements Subscriber<T>, Subscription, BooleanSupplier, Subscribable, Cancellable, Publishable, Backpressurable {
+	  implements Subscriber<T>, Subscription, BooleanSupplier, Producer, Cancellable, Receiver, Backpressurable {
 
 		final Subscriber<? super T> actual;
 

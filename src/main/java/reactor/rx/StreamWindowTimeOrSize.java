@@ -21,8 +21,8 @@ import java.util.concurrent.TimeUnit;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
 import reactor.core.timer.Timer;
@@ -53,7 +53,7 @@ final class StreamWindowTimeOrSize<T> extends StreamBatch<T, Stream<T>> {
 		return new WindowAction<>(prepareSub(subscriber), batchSize, timespan, unit, timer);
 	}
 
-	final static class Window<T> extends Stream<T> implements Subscriber<T>, Subscription, Subscribable {
+	final static class Window<T> extends Stream<T> implements Subscriber<T>, Subscription, Producer {
 
 		final protected FluxProcessor<T, T> processor;
 		final protected Timer               timer;
@@ -127,7 +127,7 @@ final class StreamWindowTimeOrSize<T> extends StreamBatch<T, Stream<T>> {
 		}
 	}
 
-	final static class WindowAction<T> extends BatchAction<T, Stream<T>> implements Connectable {
+	final static class WindowAction<T> extends BatchAction<T, Stream<T>> implements Loopback {
 
 		private final Timer timer;
 

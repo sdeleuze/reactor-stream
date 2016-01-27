@@ -44,7 +44,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.converter.DependencyUtils;
-import reactor.core.graph.Connectable;
+import reactor.core.flow.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.ProcessorGroup;
@@ -2992,6 +2992,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * @return
+	 */
+	public final Mono<Boolean> hasElements() {
+		return new MonoIsEmpty<>(this);
+	}
+
+	/**
 	 * @return {@literal new Stream}
 	 *
 	 * @see Mono#ignoreElements)
@@ -3000,12 +3007,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return Mono.ignoreElements(this);
 	}
 
-	/**
-	 * @return
-	 */
-	public final Mono<Boolean> isEmpty() {
-		return new MonoIsEmpty<>(this);
-	}
 
 	/**
 	 * Pass all the nested {@link Publisher} values to a new {@link Stream} until one of them complete. The result will
@@ -4985,7 +4986,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamZipIterable<>(this, iterable, (BiFunction<O, T2, Tuple2<O, T2>>)TUPLE2_BIFUNCTION);
 	}
 
-	private static final class DispatchOn<O> extends StreamBarrier<O, O> implements Connectable {
+	private static final class DispatchOn<O> extends StreamBarrier<O, O> implements Loopback {
 
 		private final ProcessorGroup processorProvider;
 
@@ -5023,7 +5024,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		}
 	}
 
-	private static final class PublishOn<O> extends StreamBarrier<O, O> implements Connectable {
+	private static final class PublishOn<O> extends StreamBarrier<O, O> implements Loopback {
 
 		final ProcessorGroup processorProvider;
 

@@ -16,15 +16,16 @@
 package reactor.rx;
 
 import java.util.Objects;
+import reactor.fn.Predicate;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
+import reactor.core.flow.Receiver;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Predicate;
 
 /**
  * Emits a single boolean true if any of the values of the source sequence match
@@ -55,7 +56,7 @@ final class MonoAny<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Boolea
 	}
 
 	static final class AnySubscriber<T> extends SubscriberDeferredScalar<T, Boolean>
-			implements Publishable {
+			implements Receiver {
 		final Predicate<? super T> predicate;
 
 		Subscription s;

@@ -18,7 +18,7 @@ package reactor.rx;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
+import reactor.core.flow.Receiver;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.util.BackpressureUtils;
 
@@ -44,7 +44,7 @@ final class MonoCount<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Long
 	}
 
 	static final class CountSubscriber<T> extends SubscriberDeferredScalar<T, Long>
-			implements Publishable {
+			implements Receiver {
 
 		long counter;
 

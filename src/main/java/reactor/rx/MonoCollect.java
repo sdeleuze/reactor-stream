@@ -16,17 +16,18 @@
 package reactor.rx;
 
 import java.util.Objects;
+import reactor.fn.BiConsumer;
+import reactor.fn.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Publishable;
+import reactor.core.flow.Receiver;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.BiConsumer;
-import reactor.fn.Supplier;
+import reactor.core.util.BackpressureUtils;
+import reactor.core.util.Exceptions;
 
 /**
  * Collects the values of the source sequence into a container returned by
@@ -75,7 +76,7 @@ final class MonoCollect<T, R> extends reactor.core.publisher.Mono.MonoBarrier<T,
 
 	static final class CollectSubscriber<T, R>
 			extends SubscriberDeferredScalar<T, R>
-			implements Publishable {
+			implements Receiver {
 
 		final BiConsumer<? super R, ? super T> action;
 

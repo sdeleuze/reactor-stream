@@ -16,16 +16,17 @@
 package reactor.rx;
 
 import java.util.Objects;
+import reactor.fn.Predicate;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.graph.Connectable;
-import reactor.core.graph.Subscribable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.Producer;
 import reactor.core.state.Completable;
+import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Predicate;
 
 /**
  * Skips source values while a predicate returns
@@ -60,7 +61,7 @@ final class StreamSkipWhile<T> extends StreamBarrier<T, T> {
 		source.subscribe(new SkipWhileSubscriber<>(s, predicate));
 	}
 
-	static final class SkipWhileSubscriber<T> implements Subscriber<T>, Subscribable, Connectable,
+	static final class SkipWhileSubscriber<T> implements Subscriber<T>, Producer, Loopback,
 																  Completable, Subscription {
 		final Subscriber<? super T> actual;
 
