@@ -273,6 +273,7 @@ final class UnicastProcessor<T>
 		return INNER;
 	}
 
+	@Override
 	public void request(long n) {
 		if (BackpressureUtils.validate(n)) {
 			if (enableOperatorFusion) {
@@ -287,6 +288,7 @@ final class UnicastProcessor<T>
 		}
 	}
 
+	@Override
 	public void cancel() {
 		if (cancelled) {
 			return;
@@ -302,10 +304,12 @@ final class UnicastProcessor<T>
 		}
 	}
 
+	@Override
 	public T poll() {
 		return queue.poll();
 	}
 
+	@Override
 	public T peek() {
 		return queue.peek();
 	}
@@ -385,11 +389,13 @@ final class UnicastProcessor<T>
 		return queue.isEmpty();
 	}
 
+	@Override
 	public void clear() {
 		queue.clear();
 	}
 
-	public boolean enableOperatorFusion() {
+	@Override
+	public boolean requestSyncFusion() {
 		enableOperatorFusion = true;
 		return false;
 	}
