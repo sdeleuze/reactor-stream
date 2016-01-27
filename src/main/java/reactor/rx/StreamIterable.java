@@ -98,7 +98,7 @@ extends Stream<T>
 	}
 
 	static final class IterableSubscription<T>
-			implements Producer, Completable, Requestable, Cancellable, Subscription {
+			implements Producer, Receiver, Completable, Requestable, Cancellable, Subscription {
 
 		final Subscriber<? super T> actual;
 

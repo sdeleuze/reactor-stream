@@ -21,6 +21,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Completable;
 import reactor.core.state.Prefetchable;
@@ -66,7 +67,7 @@ final class StreamTake<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class TakeSubscriber<T>
-	  implements Subscriber<T>, Subscription, Completable, Prefetchable, Backpressurable, Producer {
+	  implements Subscriber<T>, Subscription, Receiver, Completable, Prefetchable, Backpressurable, Producer {
 
 		final Subscriber<? super T> actual;
 

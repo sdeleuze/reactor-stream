@@ -28,6 +28,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Producer;
 import reactor.core.flow.MultiProducer;
+import reactor.core.flow.Receiver;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
 import reactor.core.queue.RingBuffer;
@@ -64,7 +65,7 @@ final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K, T>> {
 	}
 
 	static final class GroupedEmitter<T, K> extends GroupedStream<K, T>
-			implements Subscription, Subscriber<T>, Completable, Producer, Cancellable {
+			implements Subscription, Subscriber<T>, Receiver, Completable, Producer, Cancellable {
 
 		private final GroupByAction<T, K> parent;
 		private final FluxProcessor<T, T> processor;

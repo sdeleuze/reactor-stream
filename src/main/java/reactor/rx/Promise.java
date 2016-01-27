@@ -25,6 +25,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.publisher.Mono;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
@@ -56,7 +57,7 @@ import reactor.fn.Supplier;
  * @see <a href="https://github.com/promises-aplus/promises-spec">Promises/A+ specification</a>
  */
 public class Promise<O> extends Mono<O>
-		implements Processor<O, O>, Consumer<O>, Subscription, Failurable, Completable, Cancellable, Producer {
+		implements Processor<O, O>, Consumer<O>, Subscription, Failurable, Completable, Cancellable, Receiver, Producer {
 
 	final static AtomicIntegerFieldUpdater<Promise>              STATE     =
 			AtomicIntegerFieldUpdater.newUpdater(Promise.class, "state");

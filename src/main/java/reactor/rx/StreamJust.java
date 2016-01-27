@@ -19,6 +19,7 @@ package reactor.rx;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
 import reactor.core.util.Exceptions;
 import reactor.fn.Supplier;
@@ -91,7 +92,7 @@ final class StreamJust<T> extends Stream<T> implements Supplier<T>, Loopback {
 		return "singleValue=" + value;
 	}
 
-	private static final class SingleSubscription<T> implements Subscription, Completable {
+	private static final class SingleSubscription<T> implements Subscription, Receiver, Completable {
 
 		boolean terminado;
 		final T                     value;

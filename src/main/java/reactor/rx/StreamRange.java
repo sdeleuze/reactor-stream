@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
@@ -74,7 +75,7 @@ extends Stream<Integer> {
 
 	static final class RangeSubscription
 			extends SynchronousSubscription<Integer>
-	  implements Cancellable, Requestable, Completable, Producer {
+	  implements Cancellable, Requestable, Completable, Receiver, Producer {
 
 		final Subscriber<? super Integer> actual;
 

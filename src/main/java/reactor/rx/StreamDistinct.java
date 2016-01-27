@@ -17,6 +17,8 @@ package reactor.rx;
 
 import java.util.Collection;
 import java.util.Objects;
+
+import reactor.core.flow.Receiver;
 import reactor.fn.Function;
 import reactor.fn.Supplier;
 
@@ -77,7 +79,7 @@ final class StreamDistinct<T, K, C extends Collection<? super K>> extends Stream
 	}
 
 	static final class DistinctSubscriber<T, K, C extends Collection<? super K>>
-			implements Subscriber<T>, Producer, Loopback, Completable, Subscription {
+			implements Subscriber<T>, Producer, Receiver, Loopback, Completable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final C collection;

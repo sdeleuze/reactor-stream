@@ -16,6 +16,8 @@
 package reactor.rx;
 
 import java.util.Objects;
+
+import reactor.core.flow.Receiver;
 import reactor.fn.Predicate;
 
 import org.reactivestreams.Publisher;
@@ -61,8 +63,8 @@ final class StreamSkipWhile<T> extends StreamBarrier<T, T> {
 		source.subscribe(new SkipWhileSubscriber<>(s, predicate));
 	}
 
-	static final class SkipWhileSubscriber<T> implements Subscriber<T>, Producer, Loopback,
-																  Completable, Subscription {
+	static final class SkipWhileSubscriber<T> implements Receiver, Subscriber<T>, Producer, Loopback,
+	                                                     Completable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final Predicate<? super T> predicate;

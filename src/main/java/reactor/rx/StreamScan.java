@@ -17,6 +17,8 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+
+import reactor.core.flow.Receiver;
 import reactor.fn.BiFunction;
 
 import org.reactivestreams.Publisher;
@@ -70,7 +72,7 @@ final class StreamScan<T, R> extends StreamBarrier<T, R> {
 	}
 
 	static final class ScanSubscriber<T, R>
-	  implements Subscriber<T>, Subscription, Producer, Requestable, Loopback, Completable {
+	  implements Subscriber<T>, Subscription, Producer, Receiver, Requestable, Loopback, Completable {
 
 		final Subscriber<? super R> actual;
 

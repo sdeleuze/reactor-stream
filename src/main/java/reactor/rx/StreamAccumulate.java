@@ -16,6 +16,8 @@
 package reactor.rx;
 
 import java.util.Objects;
+
+import reactor.core.flow.Receiver;
 import reactor.fn.BiFunction;
 
 import org.reactivestreams.Publisher;
@@ -64,7 +66,7 @@ final class StreamAccumulate<T> extends StreamBarrier<T, T> {
 		source.subscribe(new AccumulateSubscriber<>(s, accumulator));
 	}
 
-	static final class AccumulateSubscriber<T> implements Subscriber<T>, Producer, Completable, Loopback, Subscription {
+	static final class AccumulateSubscriber<T> implements Subscriber<T>, Receiver, Producer, Completable, Loopback, Subscription {
 		final Subscriber<? super T> actual;
 
 		final BiFunction<T, ? super T, T> accumulator;

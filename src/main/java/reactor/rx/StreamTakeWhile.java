@@ -16,6 +16,8 @@
 package reactor.rx;
 
 import java.util.Objects;
+
+import reactor.core.flow.Receiver;
 import reactor.fn.Predicate;
 
 import org.reactivestreams.Publisher;
@@ -57,7 +59,7 @@ final class StreamTakeWhile<T> extends StreamBarrier<T, T> {
 		source.subscribe(new TakeWhileSubscriber<>(s, predicate));
 	}
 
-	static final class TakeWhileSubscriber<T> implements Subscriber<T>, Producer, Completable, Loopback, Subscription {
+	static final class TakeWhileSubscriber<T> implements Subscriber<T>, Receiver, Producer, Completable, Loopback, Subscription {
 		final Subscriber<? super T> actual;
 
 		final Predicate<? super T> predicate;

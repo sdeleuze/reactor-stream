@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Subscription;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
 import reactor.core.state.Introspectable;
 import reactor.core.util.BackpressureUtils;
@@ -31,7 +32,7 @@ import reactor.core.util.PlatformDependent;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class SwapSubscription implements Subscription, Completable, Introspectable {
+public final class SwapSubscription implements Subscription, Receiver, Completable, Introspectable {
 
 	@SuppressWarnings("unused")
 	private volatile Subscription subscription;

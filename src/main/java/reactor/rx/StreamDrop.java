@@ -17,6 +17,8 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+
+import reactor.core.flow.Receiver;
 import reactor.fn.Consumer;
 
 import org.reactivestreams.Publisher;
@@ -69,7 +71,7 @@ final class StreamDrop<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class DropSubscriber<T>
-			implements Subscriber<T>, Subscription, Producer, Completable, Requestable, Loopback {
+			implements Subscriber<T>, Subscription, Producer, Receiver, Completable, Requestable, Loopback {
 
 		final Subscriber<? super T> actual;
 

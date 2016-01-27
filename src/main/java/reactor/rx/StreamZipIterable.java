@@ -18,6 +18,8 @@ package reactor.rx;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
+
+import reactor.core.flow.Receiver;
 import reactor.fn.BiFunction;
 
 import org.reactivestreams.Publisher;
@@ -91,8 +93,7 @@ final class StreamZipIterable<T, U, R> extends StreamBarrier<T, R> {
 		source.subscribe(new ZipSubscriber<>(s, it, zipper));
 	}
 	
-	static final class ZipSubscriber<T, U, R> implements Subscriber<T>, Producer, MultiReceiver,
-																  Completable, Subscription {
+	static final class ZipSubscriber<T, U, R> implements Subscriber<T>, Producer, MultiReceiver, Receiver, Completable, Subscription {
 		
 		final Subscriber<? super R> actual;
 		

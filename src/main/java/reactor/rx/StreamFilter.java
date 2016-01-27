@@ -16,6 +16,8 @@
 package reactor.rx;
 
 import java.util.Objects;
+
+import reactor.core.flow.Receiver;
 import reactor.fn.Predicate;
 
 import org.reactivestreams.Publisher;
@@ -56,7 +58,8 @@ final class StreamFilter<T> extends StreamBarrier<T, T> {
 		source.subscribe(new FilterSubscriber<>(s, predicate));
 	}
 
-	static final class FilterSubscriber<T> implements Subscriber<T>, Producer, Loopback, Completable, Subscription {
+	static final class FilterSubscriber<T> implements Subscriber<T>, Receiver,  Producer, Loopback, Completable,
+	                                                  Subscription {
 		final Subscriber<? super T> actual;
 
 		final Predicate<? super T> predicate;

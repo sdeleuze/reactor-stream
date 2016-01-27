@@ -16,6 +16,8 @@
 package reactor.rx;
 
 import java.util.Objects;
+
+import reactor.core.flow.Receiver;
 import reactor.fn.Function;
 
 import org.reactivestreams.Publisher;
@@ -54,7 +56,7 @@ final class StreamDistinctUntilChanged<T, K> extends StreamBarrier<T, T> {
 	}
 
 	static final class DistinctUntilChangedSubscriber<T, K>
-			implements Subscriber<T>, Producer, Loopback, Completable, Subscription {
+			implements Subscriber<T>, Receiver, Producer, Loopback, Completable, Subscription {
 		final Subscriber<? super T> actual;
 
 		final Function<? super T, K> keyExtractor;

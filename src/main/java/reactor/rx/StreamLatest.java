@@ -23,6 +23,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
 import reactor.core.state.Failurable;
@@ -53,8 +54,8 @@ final class StreamLatest<T> extends StreamBarrier<T, T> {
 	}
 
 	static final class LatestSubscriber<T>
-			implements Subscriber<T>, Subscription, Cancellable, Failurable, Completable, Producer,
-					   Requestable {
+			implements Subscriber<T>, Subscription, Cancellable, Receiver, Failurable, Completable, Producer,
+			           Requestable {
 
 		final Subscriber<? super T> actual;
 
