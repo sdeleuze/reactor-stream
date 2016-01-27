@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.graph.Subscribable;
+import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
@@ -74,7 +75,7 @@ extends Stream<Integer> {
 
 	static final class RangeSubscription
 	extends SynchronousSource<Integer>
-	  implements Subscription, Cancellable, Requestable, Completable, Subscribable {
+	  implements Subscription, Cancellable, Requestable, Completable, Backpressurable, Subscribable {
 
 		final Subscriber<? super Integer> actual;
 
@@ -178,6 +179,16 @@ extends Stream<Integer> {
 		}
 
 		@Override
+		public long getCapacity() {
+			return end;
+		}
+
+		@Override
+		public long getPending() {
+			return end - index;
+		}
+
+		@Override
 		public boolean isCancelled() {
 			return cancelled;
 		}
@@ -199,7 +210,7 @@ extends Stream<Integer> {
 
 		@Override
 		public Object upstream() {
-			return index;
+			return null;
 		}
 
 		@Override
