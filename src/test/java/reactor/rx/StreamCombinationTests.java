@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import reactor.AbstractReactorTest;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Processors;
 import reactor.core.util.Logger;
@@ -79,13 +80,12 @@ public class StreamCombinationTests extends AbstractReactorTest {
 
 	@Test
 	public void testMerge1ToN() throws Exception {
-		final int n = 1000;
+		final int n = 1000000;
 
-		Stream<Integer> stream = Stream.merge(Stream.just(1)
-		                                            .map(i -> Stream.range(0, n)));
+		Stream<Integer> stream = Stream.range(0, n).flatMap(Flux::just).publishOn(asyncGroup);
 
-		final CountDownLatch latch = new CountDownLatch(n);
-		awaitLatch(stream.consume(integer -> latch.countDown()), latch);
+		final CountDownLatch latch = new CountDownLatch(1);
+		awaitLatch(stream.consume(null, null, latch::countDown), latch);
 	}
 
 	public Stream<SensorData> sensorOdd() {
