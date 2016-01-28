@@ -22,7 +22,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
-import reactor.core.publisher.ProcessorEmitter;
+import reactor.core.publisher.ReplayProcessor;
 import reactor.core.subscriber.MultiSubscriptionSubscriber;
 import reactor.core.util.DeferredSubscription;
 import reactor.core.util.EmptySubscription;
@@ -200,7 +200,7 @@ final class StreamRepeatWhen<T> extends StreamSource<T, T> {
 	implements Subscriber<Object>, Loopback {
 		RepeatWhenMainSubscriber<?> main;
 
-		final ProcessorEmitter<Long> completionSignal = new ProcessorEmitter<>();
+		final ReplayProcessor<Long> completionSignal = new ReplayProcessor<>();
 
 		@Override
 		public void onSubscribe(Subscription s) {

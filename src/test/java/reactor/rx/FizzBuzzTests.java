@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Test;
 import reactor.AbstractReactorTest;
-import reactor.core.publisher.ProcessorTopic;
+import reactor.core.publisher.TopicProcessor;
 import reactor.core.util.Assert;
 import reactor.rx.subscriber.Control;
 
@@ -82,7 +82,7 @@ public class FizzBuzzTests extends AbstractReactorTest {
 
 		//this line causes an java.lang.ArrayIndexOutOfBoundsException unless there is a break point in ZipAction
 		// .createSubscriber()
-		ProcessorTopic<String> ring = ProcessorTopic.create("test", 1024);
+		TopicProcessor<String> ring = TopicProcessor.create("test", 1024);
 
 		//this line works
 //        Broadcaster<String> ring = Broadcaster.create(Environment.get());
