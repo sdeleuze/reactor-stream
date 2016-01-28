@@ -21,23 +21,20 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
-import reactor.core.flow.Receiver;
-import reactor.fn.BooleanSupplier;
-import reactor.fn.Supplier;
-
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.Exceptions;
+import reactor.fn.BooleanSupplier;
+import reactor.fn.Supplier;
 
 /**
  * Buffers a certain number of subsequent elements and emits the buffers.
@@ -50,7 +47,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamBuffer<T, C extends Collection<? super T>> extends StreamBarrier<T, C>
+final class StreamBuffer<T, C extends Collection<? super T>> extends StreamSource<T, C>
 		implements Backpressurable {
 
 	final int size;

@@ -29,7 +29,6 @@ import reactor.core.state.Completable;
 import reactor.core.state.Failurable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
-import reactor.core.util.BackpressureUtils;
 
 /**
  * Runs the source in unbounded mode and emits only the latest value
@@ -42,7 +41,7 @@ import reactor.core.util.BackpressureUtils;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamLatest<T> extends StreamBarrier<T, T> {
+final class StreamLatest<T> extends StreamSource<T, T> {
 
 	public StreamLatest(Publisher<? extends T> source) {
 		super(source);

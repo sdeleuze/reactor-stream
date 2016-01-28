@@ -31,7 +31,7 @@ import reactor.rx.subscriber.SubscriberWithDemand;
  * @author Stephane Maldini
  * @since 1.1, 2.0, 2.5
  */
-abstract class StreamBatch<T, V> extends StreamBarrier<T, V> {
+abstract class StreamBatch<T, V> extends StreamSource<T, V> {
 
 	protected final boolean  next;
 	protected final boolean  flush;

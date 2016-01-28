@@ -41,7 +41,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamTake<T> extends StreamBarrier<T, T> {
+final class StreamTake<T> extends StreamSource<T, T> {
 
 	final long n;
 

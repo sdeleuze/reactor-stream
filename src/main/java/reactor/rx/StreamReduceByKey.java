@@ -29,7 +29,7 @@ import reactor.fn.tuple.Tuple2;
  * @since 2.0, 2.5
  */
 final class StreamReduceByKey<K, V>
-		extends StreamBarrier<Tuple2<K, V>, Tuple2<K, V>> {
+		extends StreamSource<Tuple2<K, V>, Tuple2<K, V>> {
 
 	private final BiFunction<? super V, ? super V, V>        fn;
 	private final Map<K, V>                                  store;

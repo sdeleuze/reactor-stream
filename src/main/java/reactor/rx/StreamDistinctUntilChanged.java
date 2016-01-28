@@ -17,18 +17,16 @@ package reactor.rx;
 
 import java.util.Objects;
 
-import reactor.core.flow.Receiver;
-import reactor.fn.Function;
-
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
-import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
+import reactor.fn.Function;
 
 /**
  * Filters out subsequent and repeated elements.
@@ -41,7 +39,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamDistinctUntilChanged<T, K> extends StreamBarrier<T, T> {
+final class StreamDistinctUntilChanged<T, K> extends StreamSource<T, T> {
 
 	final Function<? super T, K> keyExtractor;
 

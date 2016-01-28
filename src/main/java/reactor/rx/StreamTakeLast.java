@@ -17,7 +17,6 @@ package reactor.rx;
 
 import java.util.ArrayDeque;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
-import reactor.fn.BooleanSupplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -28,6 +27,7 @@ import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
 import reactor.core.subscriber.SubscriberDeferredScalar;
 import reactor.core.util.BackpressureUtils;
+import reactor.fn.BooleanSupplier;
 
 /**
  * Emits the last N values the source emitted before its completion.
@@ -39,7 +39,7 @@ import reactor.core.util.BackpressureUtils;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamTakeLast<T> extends StreamBarrier<T, T> {
+final class StreamTakeLast<T> extends StreamSource<T, T> {
 
 	final int n;
 

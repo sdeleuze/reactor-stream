@@ -25,7 +25,7 @@ import reactor.fn.Consumer;
  * @author Stephane Maldini
  * @since 1.1, 2.0, 2.5
  */
-final class StreamError<T, E extends Throwable> extends StreamBarrier<T, T> {
+final class StreamError<T, E extends Throwable> extends StreamSource<T, T> {
 
 	private final Consumer<? super E> consumer;
 	private final Class<E>            selector;

@@ -18,8 +18,8 @@ package reactor.rx;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.flow.Receiver;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.queue.Sequencer;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
@@ -39,7 +39,7 @@ import reactor.core.util.WaitStrategy;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamBlock<T> extends StreamBarrier<T, T> {
+final class StreamBlock<T> extends StreamSource<T, T> {
 
 	final WaitStrategy waitStrategy;
 

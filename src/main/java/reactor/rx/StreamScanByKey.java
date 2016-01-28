@@ -32,7 +32,7 @@ import reactor.fn.tuple.Tuple2;
  * @since 2.0, 2.5
  */
 final class StreamScanByKey<K, V>
-		extends StreamBarrier<Tuple2<K, V>, Tuple2<K, V>> {
+		extends StreamSource<Tuple2<K, V>, Tuple2<K, V>> {
 
 	protected final BiFunction<? super V, ? super V, V>        fn;
 	protected final Publisher<? extends StreamKv.Signal<K, V>> mapListener;

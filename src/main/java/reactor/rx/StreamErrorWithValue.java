@@ -26,7 +26,7 @@ import reactor.fn.BiConsumer;
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-final class StreamErrorWithValue<T, E extends Throwable> extends StreamBarrier<T, T> {
+final class StreamErrorWithValue<T, E extends Throwable> extends StreamSource<T, T> {
 
 	private final BiConsumer<Object, ? super E> consumer;
 	private final Class<E>                      selector;

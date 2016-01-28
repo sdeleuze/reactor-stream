@@ -47,6 +47,7 @@ import reactor.core.converter.DependencyUtils;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSource;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.Processors;
 import reactor.core.queue.QueueSupplier;
@@ -756,7 +757,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 				return just(t);
 			}
 		}
-		return new StreamBarrier.Identity<>(publisher);
+		return new StreamSource.Identity<>(publisher);
 	}
 
 	/**
@@ -938,7 +939,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public static <I, O> Stream<O> lift(final Publisher<I> publisher,
 			Function<Subscriber<? super O>, Subscriber<? super I>> operator) {
-		return new StreamBarrier.Operator<>(publisher, operator);
+		return new StreamSource.Operator<>(publisher, operator);
 	}
 
 	/**
@@ -1834,7 +1835,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	@SuppressWarnings("unchecked")
 	public final <V> Stream<V> after(final Supplier<? extends Publisher<V>> sourceSupplier) {
-		return new StreamBarrier<>(Flux.flatMap(
+		return new StreamSource<>(Flux.flatMap(
 				Flux.mapSignal(after(), null, new Function<Throwable, Publisher<V>>() {
 					@Override
 					public Publisher<V> apply(Throwable throwable) {
@@ -1862,7 +1863,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public final Stream<O> ambWith(final Publisher<? extends O> publisher) {
-		return new StreamBarrier<O, O>(this) {
+		return new StreamSource<O, O>(this) {
 			@Override
 			public String getName() {
 				return "ambWith";
@@ -2093,7 +2094,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0, 2.5
 	 */
 	public final Stream<O> bufferSort(final Comparator<? super O> comparator) {
-		return new StreamBarrier<>(collect(new Supplier<PriorityQueue<O>>() {
+		return new StreamSource<>(collect(new Supplier<PriorityQueue<O>>() {
 			@Override
 			public PriorityQueue<O> get() {
 				if (comparator == null) {
@@ -2168,7 +2169,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			return this;
 		}
 
-		return new StreamBarrier<O, O>(this) {
+		return new StreamSource<O, O>(this) {
 			@Override
 			public long getCapacity() {
 				return elements;
@@ -2220,7 +2221,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 1.1, 2.0
 	 */
 	public final <V> Stream<V> concatMap(final Function<? super O, Publisher<? extends V>> fn) {
-		return new StreamBarrier<O, V>(this) {
+		return new StreamSource<O, V>(this) {
 			@Override
 			public String getName() {
 				return "concatMap";
@@ -2665,7 +2666,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final <V> Stream<V> flatMap(final Function<? super O, ? extends Publisher<? extends V>> fn) {
 
-		return new StreamBarrier<O, V>(this) {
+		return new StreamSource<O, V>(this) {
 			@Override
 			public String getName() {
 				return "flatMap";
@@ -2695,7 +2696,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final <R> Stream<R> flatMap(Function<? super O, ? extends Publisher<? extends R>> mapperOnNext,
 			Function<Throwable, ? extends Publisher<? extends R>> mapperOnError,
 			Supplier<? extends Publisher<? extends R>> mapperOnComplete) {
-		return new StreamBarrier<>(Flux.flatMap(
+		return new StreamSource<>(Flux.flatMap(
 				Flux.mapSignal(this, mapperOnNext, mapperOnError, mapperOnComplete),
 				IDENTITY_FUNCTION, PlatformDependent.SMALL_BUFFER_SIZE, 32, false)
 		);
@@ -2978,7 +2979,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 		final Publisher<V> mergedStream = Flux.merge(publisherList);
 
-		return new StreamBarrier<O, V>(this) {
+		return new StreamSource<O, V>(this) {
 			@Override
 			public String getName() {
 				return "forkJoin";
@@ -3074,7 +3075,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public final Mono<O> last() {
-		return new Mono.MonoBarrier<>(new StreamTakeLast<>(this, 1));
+		return new MonoSource<>(new StreamTakeLast<>(this, 1));
 	}
 
 
@@ -3101,7 +3102,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public <V> Stream<V> liftProcessor(final Supplier<? extends Processor<O, V>> processorSupplier) {
-		return lift(new Flux.Operator<O, V>() {
+		return lift(new Function<Subscriber<? super V>, Subscriber<? super O>>() {
 			@Override
 			public Subscriber<? super O> apply(Subscriber<? super V> subscriber) {
 				Processor<O, V> processor = processorSupplier.get();
@@ -3161,7 +3162,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public final Stream<O> log(final String category, Level level, int options) {
-		return new StreamBarrier.Identity<>(Flux.log(this, category, level, options));
+		return new StreamSource.Identity<>(Flux.log(this, category, level, options));
 	}
 
 	/**
@@ -3203,7 +3204,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final <V> Stream<V> merge() {
 		final Stream<? extends Publisher<? extends V>> thiz = (Stream<? extends Publisher<? extends V>>) this;
 
-		return new StreamBarrier<O, V>(this) {
+		return new StreamSource<O, V>(this) {
 			@Override
 			public String getName() {
 				return "merge";
@@ -3225,7 +3226,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public final Stream<O> mergeWith(final Publisher<? extends O> publisher) {
-		return new StreamBarrier<O, O>(this) {
+		return new StreamSource<O, O>(this) {
 			@Override
 			public String getName() {
 				return "mergeWith";
@@ -3379,7 +3380,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0, 2.5
 	 */
 	public final Stream<O> onBackpressureBuffer(final int size) {
-		return new StreamBarrier<O, O>(this) {
+		return new StreamSource<O, O>(this) {
 			@Override
 			public String getName() {
 				return "onBackpressureBuffer";
@@ -3453,7 +3454,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return {@literal new Stream}
 	 */
 	public final Stream<O> onErrorResumeWith(final Function<Throwable, ? extends Publisher<? extends O>> fallback) {
-		return new StreamBarrier.Identity<>(Flux.onErrorResumeWith(this, fallback));
+		return new StreamSource.Identity<>(Flux.onErrorResumeWith(this, fallback));
 	}
 
 	/**
@@ -3514,7 +3515,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			return (Stream<E>) processor;
 		}
 
-		return new StreamBarrier<O, E>(this) {
+		return new StreamSource<O, E>(this) {
 			@Override
 			public String getName() {
 				return "process";
@@ -4126,7 +4127,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return {@literal new Stream}
 	 */
 	public final Stream<O> switchOnError(final Publisher<? extends O> fallback) {
-		return new StreamBarrier.Identity<>(Flux.onErrorResumeWith(this, new Function<Throwable, Publisher<? extends O>>() {
+		return new StreamSource.Identity<>(Flux.onErrorResumeWith(this, new Function<Throwable, Publisher<? extends O>>() {
 			@Override
 			public Publisher<? extends O> apply(Throwable throwable) {
 				return fallback;
@@ -4424,7 +4425,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a configured stream
 	 */
 	public Stream<O> timer(final Timer timer) {
-		return new StreamBarrier<O, O>(this) {
+		return new StreamSource<O, O>(this) {
 			@Override
 			public String getName() {
 				return "timerSetup";
@@ -4925,7 +4926,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final <T2, V> Stream<V> zipWith(final Publisher<? extends T2> publisher,
 			final BiFunction<? super O, ? super T2, ? extends V> zipper) {
-		return new StreamBarrier<O, V>(this) {
+		return new StreamSource<O, V>(this) {
 			@Override
 			public String getName() {
 				return "zipWith";
@@ -4947,7 +4948,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public final <T2> Stream<Tuple2<O, T2>> zipWith(final Publisher<? extends T2> publisher) {
-		return new StreamBarrier<O, Tuple2<O, T2>>(this) {
+		return new StreamSource<O, Tuple2<O, T2>>(this) {
 			@Override
 			public String getName() {
 				return "zipWith";
@@ -4987,7 +4988,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamZipIterable<>(this, iterable, (BiFunction<O, T2, Tuple2<O, T2>>)TUPLE2_BIFUNCTION);
 	}
 
-	private static final class DispatchOn<O> extends StreamBarrier<O, O> implements Loopback {
+	private static final class DispatchOn<O> extends StreamSource<O, O> implements Loopback {
 
 		private final ProcessorGroup processorProvider;
 
@@ -5025,7 +5026,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		}
 	}
 
-	private static final class PublishOn<O> extends StreamBarrier<O, O> implements Loopback {
+	private static final class PublishOn<O> extends StreamSource<O, O> implements Loopback {
 
 		final ProcessorGroup processorProvider;
 

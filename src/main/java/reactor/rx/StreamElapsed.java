@@ -27,7 +27,7 @@ import reactor.fn.tuple.Tuple2;
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-final class StreamElapsed<T> extends StreamBarrier<T, Tuple2<Long, T>> {
+final class StreamElapsed<T> extends StreamSource<T, Tuple2<Long, T>> {
 
 	public StreamElapsed(Publisher<T> source) {
 		super(source);

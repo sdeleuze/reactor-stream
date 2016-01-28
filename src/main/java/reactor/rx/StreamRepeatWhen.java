@@ -17,18 +17,18 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import reactor.fn.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.ProcessorEmitter;
-import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 import reactor.core.util.DeferredSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
+import reactor.fn.Function;
+import reactor.rx.subscriber.SerializedSubscriber;
 
 /**
  * Repeats a source when a companion sequence
@@ -44,7 +44,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamRepeatWhen<T> extends StreamBarrier<T, T> {
+final class StreamRepeatWhen<T> extends StreamSource<T, T> {
 
 	final Function<? super Stream<Long>, ? extends Publisher<? extends Object>> whenSourceFactory;
 

@@ -19,7 +19,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import reactor.fn.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -27,8 +26,7 @@ import org.reactivestreams.Subscription;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.DeferredSubscription;
 import reactor.core.util.Exceptions;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.Exceptions;
+import reactor.fn.Function;
 
 /**
  * Takes a value from upstream then uses the duration provided by a 
@@ -42,7 +40,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamThrottleFirst<T, U> extends StreamBarrier<T, T> {
+final class StreamThrottleFirst<T, U> extends StreamSource<T, T> {
 
 	final Function<? super T, ? extends Publisher<U>> throttler;
 

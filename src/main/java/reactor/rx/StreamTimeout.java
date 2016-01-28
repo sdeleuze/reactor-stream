@@ -19,18 +19,17 @@ import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import reactor.fn.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.Exceptions;
+import reactor.fn.Function;
+import reactor.rx.subscriber.SerializedSubscriber;
 
 /**
  * Signals a timeout (or switches to another sequence) in case a per-item
@@ -46,7 +45,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamTimeout<T, U, V> extends StreamBarrier<T, T> {
+final class StreamTimeout<T, U, V> extends StreamSource<T, T> {
 
 	final Publisher<U> firstTimeout;
 

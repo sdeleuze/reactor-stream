@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.rx.subscriber.SerializedSubscriber;
+import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
-import reactor.core.util.BackpressureUtils;
+import reactor.rx.subscriber.SerializedSubscriber;
 
 /**
  * Relays values from the main Publisher until another Publisher signals an event.
@@ -37,7 +37,7 @@ import reactor.core.util.BackpressureUtils;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamTakeUntil<T, U> extends StreamBarrier<T, T> {
+final class StreamTakeUntil<T, U> extends StreamSource<T, T> {
 
 	final Publisher<U> other;
 

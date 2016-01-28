@@ -24,7 +24,7 @@ import reactor.fn.Consumer;
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-final  class StreamCallback<T> extends StreamBarrier<T, T> {
+final  class StreamCallback<T> extends StreamSource<T, T> {
 
 	private final Consumer<? super T> consumer;
 	private final Runnable completeConsumer;

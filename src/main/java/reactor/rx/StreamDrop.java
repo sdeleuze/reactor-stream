@@ -18,20 +18,17 @@ package reactor.rx;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
-import reactor.core.flow.Receiver;
-import reactor.fn.Consumer;
-
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.Exceptions;
+import reactor.fn.Consumer;
 
 /**
  * Drops values if the subscriber doesn't request fast enough.
@@ -43,7 +40,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamDrop<T> extends StreamBarrier<T, T> {
+final class StreamDrop<T> extends StreamSource<T, T> {
 
 	static final Consumer<Object> NOOP = new Consumer<Object>() {
 		@Override

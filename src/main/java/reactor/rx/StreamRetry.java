@@ -17,8 +17,8 @@ package reactor.rx;
 
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-import org.reactivestreams.*;
-
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 
 /**
@@ -34,7 +34,7 @@ import reactor.core.subscriber.SubscriberMultiSubscription;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamRetry<T> extends StreamBarrier<T, T> {
+final class StreamRetry<T> extends StreamSource<T, T> {
 
 	final long times;
 

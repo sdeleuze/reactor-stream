@@ -15,7 +15,9 @@
  */
 package reactor.rx;
 
-import org.reactivestreams.*;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 /**
  * Hides the identities of the upstream Publisher object and its Subscription
@@ -28,7 +30,7 @@ import org.reactivestreams.*;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamHide<T> extends StreamBarrier<T, T> {
+final class StreamHide<T> extends StreamSource<T, T> {
 
 	public StreamHide(Publisher<? extends T> source) {
 		super(source);

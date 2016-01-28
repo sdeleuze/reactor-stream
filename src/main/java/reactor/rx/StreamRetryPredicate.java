@@ -17,12 +17,12 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import reactor.fn.Predicate;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.subscriber.SubscriberMultiSubscription;
 import reactor.core.util.Exceptions;
+import reactor.fn.Predicate;
 
 /**
  * Repeatedly subscribes to the source if the predicate returns true after
@@ -35,7 +35,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamRetryPredicate<T> extends StreamBarrier<T, T> {
+final class StreamRetryPredicate<T> extends StreamSource<T, T> {
 
 	final Predicate<Throwable> predicate;
 

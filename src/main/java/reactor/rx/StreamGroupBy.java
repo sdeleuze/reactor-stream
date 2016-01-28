@@ -48,7 +48,7 @@ import reactor.rx.subscriber.SubscriberWithDemand;
  * result in a new stream to be signaled
  * @since 2.0, 2.5
  */
-final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K, T>> {
+final class StreamGroupBy<T, K> extends StreamSource<T, GroupedStream<K, T>> {
 
 	private final Function<? super T, ? extends K> fn;
 	private final Timer                            timer;

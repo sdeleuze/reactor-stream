@@ -36,7 +36,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamDelaySubscription<T, U> extends StreamBarrier<T, T> {
+final class StreamDelaySubscription<T, U> extends StreamSource<T, T> {
 
 	final Publisher<U> other;
 

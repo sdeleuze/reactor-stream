@@ -17,17 +17,16 @@ package reactor.rx;
 
 import java.util.Objects;
 
-import reactor.core.flow.Receiver;
-import reactor.fn.Function;
-
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
+import reactor.fn.Function;
 
 /**
  * Maps the values of the source publisher one-on-one via a mapper function.
@@ -40,7 +39,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamMap<T, R> extends StreamBarrier<T, R> {
+final class StreamMap<T, R> extends StreamSource<T, R> {
 
 	final Function<? super T, ? extends R> mapper;
 

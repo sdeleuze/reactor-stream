@@ -31,7 +31,7 @@ import reactor.rx.subscriber.SubscriberWithDemand;
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-final class StreamThrottleRequest<T> extends StreamBarrier<T, T> {
+final class StreamThrottleRequest<T> extends StreamSource<T, T> {
 
 	private final Timer timer;
 	private final long  period;

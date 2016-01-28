@@ -17,18 +17,16 @@ package reactor.rx;
 
 import java.util.Objects;
 
-import reactor.core.flow.Receiver;
-import reactor.fn.Predicate;
-
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
-import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
+import reactor.fn.Predicate;
 
 /**
  * Skips source values while a predicate returns
@@ -41,7 +39,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamSkipWhile<T> extends StreamBarrier<T, T> {
+final class StreamSkipWhile<T> extends StreamSource<T, T> {
 
 	final Predicate<? super T> predicate;
 

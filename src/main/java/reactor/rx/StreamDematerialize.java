@@ -23,7 +23,7 @@ import reactor.core.subscriber.SubscriberBarrier;
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-final class StreamDematerialize<T> extends StreamBarrier<Signal<T>, T> {
+final class StreamDematerialize<T> extends StreamSource<Signal<T>, T> {
 
 	public StreamDematerialize(Publisher<Signal<T>> source) {
 		super(source);

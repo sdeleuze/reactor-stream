@@ -24,7 +24,7 @@ import reactor.fn.Consumer;
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-final  class StreamFinally<T> extends StreamBarrier<T, T> {
+final  class StreamFinally<T> extends StreamSource<T, T> {
 
 	private final Consumer<Signal<T>> consumer;
 

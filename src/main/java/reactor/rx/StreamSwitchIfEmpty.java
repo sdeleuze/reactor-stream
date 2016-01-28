@@ -32,7 +32,7 @@ import reactor.core.subscriber.SubscriberMultiSubscription;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamSwitchIfEmpty<T> extends StreamBarrier<T, T> {
+final class StreamSwitchIfEmpty<T> extends StreamSource<T, T> {
 
     final Publisher<? extends T> other;
 

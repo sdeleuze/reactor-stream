@@ -24,7 +24,7 @@ import reactor.core.subscriber.SubscriberBarrier;
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-final class StreamMaterialize<T> extends StreamBarrier<T, Signal<T>> {
+final class StreamMaterialize<T> extends StreamSource<T, Signal<T>> {
 
 	public StreamMaterialize(Publisher<T> source) {
 		super(source);

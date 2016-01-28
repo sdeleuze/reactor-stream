@@ -25,8 +25,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import reactor.fn.Function;
-import reactor.fn.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -35,8 +33,8 @@ import reactor.core.util.BackpressureUtils;
 import reactor.core.util.DeferredSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.Exceptions;
+import reactor.fn.Function;
+import reactor.fn.Supplier;
 
 /**
  * buffers elements into possibly overlapping buffers whose boundaries are determined
@@ -53,7 +51,7 @@ import reactor.core.util.Exceptions;
  * @since 2.5
  */
 final class StreamBufferStartEnd<T, U, V, C extends Collection<? super T>>
-extends StreamBarrier<T, C> {
+		extends StreamSource<T, C> {
 
 	final Publisher<U> start;
 	

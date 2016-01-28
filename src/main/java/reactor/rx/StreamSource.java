@@ -19,7 +19,6 @@ package reactor.rx;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.Receiver;
-import reactor.core.publisher.Flux;
 import reactor.core.state.Backpressurable;
 import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
@@ -30,11 +29,13 @@ import reactor.fn.Function;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class StreamBarrier<I, O> extends Stream<O> implements Receiver, Flux.Operator<I, O> {
+class StreamSource<I, O> extends Stream<O>
+		implements Receiver,
+		           Function<Subscriber<? super O>, Subscriber<? super I>> {
 
 	final protected Publisher<? extends I> source;
 
-	public StreamBarrier(Publisher<? extends I> source) {
+	public StreamSource(Publisher<? extends I> source) {
 		this.source = source;
 	}
 
@@ -81,7 +82,7 @@ public class StreamBarrier<I, O> extends Stream<O> implements Receiver, Flux.Ope
 				'}';
 	}
 
-	public final static class Identity<I> extends StreamBarrier<I, I> {
+	public final static class Identity<I> extends StreamSource<I, I> {
 
 		public Identity(Publisher<I> source) {
 			super(source);
@@ -93,7 +94,7 @@ public class StreamBarrier<I, O> extends Stream<O> implements Receiver, Flux.Ope
 		}
 	}
 
-	public final static class Operator<I, O> extends StreamBarrier<I, O> {
+	public final static class Operator<I, O> extends StreamSource<I, O> {
 
 		private final Function<Subscriber<? super O>, Subscriber<? super I>> barrierProvider;
 

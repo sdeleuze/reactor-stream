@@ -43,7 +43,7 @@ import reactor.fn.BiFunction;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamZipIterable<T, U, R> extends StreamBarrier<T, R> {
+final class StreamZipIterable<T, U, R> extends StreamSource<T, R> {
 
 	final Iterable<? extends U> other;
 	

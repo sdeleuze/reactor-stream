@@ -18,20 +18,18 @@ package reactor.rx;
 import java.util.Collection;
 import java.util.Objects;
 
-import reactor.core.flow.Receiver;
-import reactor.fn.Function;
-import reactor.fn.Supplier;
-
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
+import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.Exceptions;
+import reactor.fn.Function;
+import reactor.fn.Supplier;
 
 /**
  * For each subscriber, tracks the source values that have been seen and
@@ -46,7 +44,7 @@ import reactor.core.util.Exceptions;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamDistinct<T, K, C extends Collection<? super K>> extends StreamBarrier<T, T> {
+final class StreamDistinct<T, K, C extends Collection<? super K>> extends StreamSource<T, T> {
 
 	final Function<? super T, ? extends K> keyExtractor;
 
