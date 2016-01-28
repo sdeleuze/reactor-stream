@@ -32,7 +32,7 @@ import reactor.core.util.BackpressureUtils;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-final class MonoCount<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Long> {
+final class MonoCount<T> extends reactor.core.publisher.MonoSource<T, Long> {
 
 	public MonoCount(Publisher<? extends T> source) {
 		super(source);

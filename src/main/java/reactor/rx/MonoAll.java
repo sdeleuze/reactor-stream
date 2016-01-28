@@ -16,16 +16,15 @@
 package reactor.rx;
 
 import java.util.Objects;
-import reactor.fn.Predicate;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
+import reactor.fn.Predicate;
 
 /**
  * Emits a single boolean true if all values of the source sequence match
@@ -41,7 +40,7 @@ import reactor.core.util.Exceptions;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-final class MonoAll<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Boolean> {
+final class MonoAll<T> extends reactor.core.publisher.MonoSource<T, Boolean> {
 
 	final Predicate<? super T> predicate;
 

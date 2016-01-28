@@ -16,18 +16,17 @@
 package reactor.rx;
 
 import java.util.Objects;
-import reactor.fn.BiFunction;
-import reactor.fn.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
 import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.Exceptions;
+import reactor.fn.BiFunction;
+import reactor.fn.Supplier;
 
 /**
  * Aggregates the source values with the help of an accumulator
@@ -41,7 +40,7 @@ import reactor.core.util.Exceptions;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-final class MonoReduce<T, R> extends reactor.core.publisher.Mono.MonoBarrier<T, R> {
+final class MonoReduce<T, R> extends reactor.core.publisher.MonoSource<T, R> {
 
 	final Supplier<R> initialSupplier;
 

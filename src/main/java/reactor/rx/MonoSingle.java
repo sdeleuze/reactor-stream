@@ -17,16 +17,15 @@ package reactor.rx;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import reactor.fn.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
 import reactor.core.subscriber.SubscriberDeferredScalar;
-import reactor.core.util.Exceptions;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
+import reactor.fn.Supplier;
 
 /**
  * Expects and emits a single item from the source or signals
@@ -40,7 +39,7 @@ import reactor.core.util.Exceptions;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-final class MonoSingle<T> extends reactor.core.publisher.Mono.MonoBarrier<T, T> {
+final class MonoSingle<T> extends reactor.core.publisher.MonoSource<T, T> {
 
 	private static final Supplier<Object> COMPLETE_ON_EMPTY_SEQUENCE = new Supplier<Object>() {
 		@Override

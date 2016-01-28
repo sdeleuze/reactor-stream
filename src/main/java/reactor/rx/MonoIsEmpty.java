@@ -27,7 +27,7 @@ import reactor.core.util.BackpressureUtils;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-final class MonoIsEmpty<T> extends reactor.core.publisher.Mono.MonoBarrier<T, Boolean> {
+final class MonoIsEmpty<T> extends reactor.core.publisher.MonoSource<T, Boolean> {
 
 	public MonoIsEmpty(Publisher<? extends T> source) {
 		super(source);
