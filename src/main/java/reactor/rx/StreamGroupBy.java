@@ -31,7 +31,7 @@ import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
-import reactor.core.queue.RingBuffer;
+import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
@@ -105,8 +105,7 @@ final class StreamGroupBy<T, K> extends StreamSource<T, GroupedStream<K, T>> {
 		Queue<T> getBuffer() {
 		Queue<T> q = buffer;
 			if (q == null) {
-				q =
-						RingBuffer.createSequencedQueue(RingBuffer.<T>createSingleProducer(PlatformDependent.SMALL_BUFFER_SIZE));
+				q = QueueSupplier.<T>small().get();
 				buffer = q;
 			}
 			return q;

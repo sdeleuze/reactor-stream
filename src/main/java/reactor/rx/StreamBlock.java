@@ -20,7 +20,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
-import reactor.core.queue.Sequencer;
+import reactor.core.queue.RingBuffer;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
@@ -64,7 +64,7 @@ final class StreamBlock<T> extends StreamSource<T, T> {
 		Subscription s;
 
 		@SuppressWarnings("rawtypes")
-		static final Sequence REQUESTED = Sequencer.newSequence(0L);
+		static final Sequence REQUESTED = RingBuffer.newSequence(0L);
 
 		boolean done;
 
