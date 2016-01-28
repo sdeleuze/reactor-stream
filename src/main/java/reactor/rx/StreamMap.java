@@ -65,6 +65,7 @@ final class StreamMap<T, R> extends StreamSource<T, R> {
 	public void subscribe(Subscriber<? super R> s) {
 		if (source instanceof Fuseable) {
 			source.subscribe(new MapFuseableSubscriber<>(s, mapper));
+			return;
 		}
 		source.subscribe(new MapSubscriber<>(s, mapper));
 	}
