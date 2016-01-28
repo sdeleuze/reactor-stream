@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.flow.Fuseable;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.state.Cancellable;
@@ -28,7 +29,6 @@ import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
-import reactor.core.util.BackpressureUtils;
 
 /**
  * Emits the contents of an Iterable source.
@@ -42,7 +42,7 @@ import reactor.core.util.BackpressureUtils;
  */
 final class StreamIterable<T> 
 extends Stream<T>
-		implements Receiver {
+		implements Receiver, Fuseable {
 
 	final Iterable<? extends T> iterable;
 
@@ -98,7 +98,8 @@ extends Stream<T>
 	}
 
 	static final class IterableSubscription<T>
-			implements Producer, Receiver, Completable, Requestable, Cancellable, Subscription {
+	extends SynchronousSubscription<T>
+			implements Producer, Completable, Requestable, Cancellable, Subscription {
 
 		final Subscriber<? super T> actual;
 
@@ -111,6 +112,19 @@ extends Stream<T>
 		static final AtomicLongFieldUpdater<IterableSubscription> REQUESTED =
 		  AtomicLongFieldUpdater.newUpdater(IterableSubscription.class, "requested");
 
+		int state;
+		
+		/** Indicates that the iterator's hasNext returned true before but the value is not yet retrieved. */
+		static final int STATE_HAS_NEXT_NO_VALUE = 0;
+		/** Indicates that there is a value available in current. */
+		static final int STATE_HAS_NEXT_HAS_VALUE = 1;
+		/** Indicates that there are no more values available. */
+		static final int STATE_NO_NEXT = 2;
+		/** Indicates that the value has been consumed and a new value should be retrieved. */
+		static final int STATE_CALL_HAS_NEXT = 3;
+		
+		T current;
+		
 		public IterableSubscription(Subscriber<? super T> actual, Iterator<? extends T> iterator) {
 			this.actual = actual;
 			this.iterator = iterator;
@@ -280,8 +294,332 @@ extends Stream<T>
 		}
 
 		@Override
-		public Object upstream() {
-			return iterator;
+		public void clear() {
+			// no op
+		}
+		
+		@Override
+		public boolean isEmpty() {
+		   int s = state;
+		   if (s == STATE_NO_NEXT) {
+			   return true;
+		   } else
+		   if (s == STATE_HAS_NEXT_HAS_VALUE || s == STATE_HAS_NEXT_NO_VALUE) {
+			   return false;
+		   } else
+		   if (iterator.hasNext()) {
+			   state = STATE_HAS_NEXT_NO_VALUE;
+			   return false;
+		   }
+		   state = STATE_NO_NEXT;
+		   return true;
+		}
+		
+		@Override
+		public T peek() {
+			if (!isEmpty()) {
+				T c;
+				if (state == STATE_HAS_NEXT_NO_VALUE) {
+					c = iterator.next();
+					current = c;
+					state = STATE_HAS_NEXT_HAS_VALUE;
+				} else {
+					c = current;
+				}
+				return c;
+			}
+			return null;
+		}
+		
+		@Override
+		public T poll() {
+			if (!isEmpty()) {
+				T c;
+				if (state == STATE_HAS_NEXT_NO_VALUE) {
+					c = iterator.next();
+				} else {
+					c = current;
+					current = null;
+				}
+				state = STATE_CALL_HAS_NEXT;
+				return c;
+			}
+			return null;
+		}
+		
+		@Override
+		public boolean requestSyncFusion() {
+			return true;
+		}
+		
+		@Override
+		public void drop() {
+			current = null;
+			state = STATE_CALL_HAS_NEXT;
+		}
+	}
+
+	static final class IterableSubscriptionConditional<T>
+	extends SynchronousSubscription<T>
+			implements Producer, Completable, Requestable, Cancellable, Subscription {
+
+		final ConditionalSubscriber<? super T> actual;
+
+		final Iterator<? extends T> iterator;
+
+		volatile boolean cancelled;
+
+		volatile long requested;
+		@SuppressWarnings("rawtypes")
+		static final AtomicLongFieldUpdater<IterableSubscriptionConditional> REQUESTED =
+		  AtomicLongFieldUpdater.newUpdater(IterableSubscriptionConditional.class, "requested");
+
+		int state;
+		
+		/** Indicates that the iterator's hasNext returned true before but the value is not yet retrieved. */
+		static final int STATE_HAS_NEXT_NO_VALUE = 0;
+		/** Indicates that there is a value available in current. */
+		static final int STATE_HAS_NEXT_HAS_VALUE = 1;
+		/** Indicates that there are no more values available. */
+		static final int STATE_NO_NEXT = 2;
+		/** Indicates that the value has been consumed and a new value should be retrieved. */
+		static final int STATE_CALL_HAS_NEXT = 3;
+		
+		T current;
+		
+		public IterableSubscriptionConditional(ConditionalSubscriber<? super T> actual, Iterator<? extends T> iterator) {
+			this.actual = actual;
+			this.iterator = iterator;
+		}
+
+		@Override
+		public void request(long n) {
+			if (BackpressureUtils.validate(n)) {
+				if (BackpressureUtils.addAndGet(REQUESTED, this, n) == 0) {
+					if (n == Long.MAX_VALUE) {
+						fastPath();
+					} else {
+						slowPath(n);
+					}
+				}
+			}
+		}
+
+		void slowPath(long n) {
+			final Iterator<? extends T> a = iterator;
+			final ConditionalSubscriber<? super T> s = actual;
+
+			long e = 0L;
+
+			for (; ; ) {
+
+				while (e != n) {
+					T t;
+
+					try {
+						t = a.next();
+					} catch (Throwable ex) {
+						s.onError(ex);
+						return;
+					}
+
+					if (cancelled) {
+						return;
+					}
+
+					if (t == null) {
+						s.onError(new NullPointerException("The iterator returned a null value"));
+						return;
+					}
+
+					boolean consumed = s.tryOnNext(t);
+
+					if (cancelled) {
+						return;
+					}
+
+					boolean b;
+
+					try {
+						b = a.hasNext();
+					} catch (Throwable ex) {
+						s.onError(ex);
+						return;
+					}
+
+					if (cancelled) {
+						return;
+					}
+
+					if (!b) {
+						s.onComplete();
+						return;
+					}
+
+					if (consumed) {
+						e++;
+					}
+				}
+
+				n = requested;
+
+				if (n == e) {
+					n = REQUESTED.addAndGet(this, -e);
+					if (n == 0L) {
+						return;
+					}
+					e = 0L;
+				}
+			}
+		}
+
+		void fastPath() {
+			final Iterator<? extends T> a = iterator;
+			final ConditionalSubscriber<? super T> s = actual;
+
+			for (; ; ) {
+
+				if (cancelled) {
+					return;
+				}
+
+				T t;
+
+				try {
+					t = a.next();
+				} catch (Exception ex) {
+					s.onError(ex);
+					return;
+				}
+
+				if (cancelled) {
+					return;
+				}
+
+				if (t == null) {
+					s.onError(new NullPointerException("The iterator returned a null value"));
+					return;
+				}
+
+				s.tryOnNext(t);
+
+				if (cancelled) {
+					return;
+				}
+
+				boolean b;
+
+				try {
+					b = a.hasNext();
+				} catch (Exception ex) {
+					s.onError(ex);
+					return;
+				}
+
+				if (cancelled) {
+					return;
+				}
+
+				if (!b) {
+					s.onComplete();
+					return;
+				}
+			}
+		}
+
+		@Override
+		public void cancel() {
+			cancelled = true;
+		}
+
+		@Override
+		public boolean isCancelled() {
+			return cancelled;
+		}
+
+		@Override
+		public boolean isStarted() {
+			return iterator.hasNext();
+		}
+
+		@Override
+		public boolean isTerminated() {
+			return !iterator.hasNext();
+		}
+
+		@Override
+		public Object downstream() {
+			return actual;
+		}
+
+		@Override
+		public long requestedFromDownstream() {
+			return requested;
+		}
+
+		@Override
+		public void clear() {
+			// no op
+		}
+		
+		@Override
+		public boolean isEmpty() {
+		   int s = state;
+		   if (s == STATE_NO_NEXT) {
+			   return true;
+		   } else
+		   if (s == STATE_HAS_NEXT_HAS_VALUE || s == STATE_HAS_NEXT_NO_VALUE) {
+			   return false;
+		   } else
+		   if (iterator.hasNext()) {
+			   state = STATE_HAS_NEXT_NO_VALUE;
+			   return false;
+		   }
+		   state = STATE_NO_NEXT;
+		   return true;
+		}
+		
+		@Override
+		public T peek() {
+			if (!isEmpty()) {
+				T c;
+				if (state == STATE_HAS_NEXT_NO_VALUE) {
+					c = iterator.next();
+					current = c;
+					state = STATE_HAS_NEXT_HAS_VALUE;
+				} else {
+					c = current;
+				}
+				return c;
+			}
+			return null;
+		}
+		
+		@Override
+		public T poll() {
+			if (!isEmpty()) {
+				T c;
+				if (state == STATE_HAS_NEXT_NO_VALUE) {
+					c = iterator.next();
+				} else {
+					c = current;
+					current = null;
+				}
+				state = STATE_CALL_HAS_NEXT;
+				return c;
+			}
+			return null;
+		}
+		
+		@Override
+		public boolean requestSyncFusion() {
+			return true;
+		}
+		
+		@Override
+		public void drop() {
+			current = null;
+			state = STATE_CALL_HAS_NEXT;
 		}
 	}
 }

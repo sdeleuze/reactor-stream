@@ -907,7 +907,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public static <T> Stream<T> just(T value1) {
 		if(value1 == null){
-			throw new Exceptions.Spec213_ArgumentIsNull();
+			throw Exceptions.argumentIsNullException();
 		}
 
 		return new StreamJust<T>(value1);
@@ -3338,7 +3338,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public final Stream<O> onBackpressureBlock() {
-		return onBackpressureBlock(new WaitStrategy.Blocking());
+		return onBackpressureBlock(WaitStrategy.blocking());
 	}
 
 	/**

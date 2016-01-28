@@ -48,7 +48,7 @@ public class StreamSource<I, O> extends Stream<O>
 	@Override
 	public void subscribe(Subscriber<? super O> s) {
 		if (s == null) {
-			throw Exceptions.spec_2_13_exception();
+			throw Exceptions.argumentIsNullException();
 		}
 		source.subscribe(apply(s));
 	}

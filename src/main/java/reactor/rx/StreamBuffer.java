@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *	   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -97,7 +97,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamSourc
 	}
 
 	static final class BufferExactSubscriber<T, C extends Collection<? super T>>
-	  implements Subscriber<T>, Subscription, Producer, Loopback, Receiver,Completable, Backpressurable {
+	  implements Subscriber<T>, Subscription, Receiver, Producer, Loopback, Completable, Backpressurable {
 
 		final Subscriber<? super C> actual;
 
@@ -242,7 +242,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamSourc
 	}
 
 	static final class BufferSkipSubscriber<T, C extends Collection<? super T>>
-	  implements Subscriber<T>, Subscription, Producer, Loopback, Receiver, Completable, Backpressurable {
+	  implements Subscriber<T>, Subscription, Receiver, Producer, Loopback, Completable, Backpressurable {
 
 		final Subscriber<? super C> actual;
 
@@ -418,7 +418,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamSourc
 
 
 	static final class BufferOverlappingSubscriber<T, C extends Collection<? super T>>
-	  implements Subscriber<T>, Subscription, BooleanSupplier, Producer,Receiver, Completable, Cancellable, Loopback,
+	  implements Subscriber<T>, Subscription, Receiver, BooleanSupplier, Producer, Completable, Cancellable, Loopback,
 				 Backpressurable, Requestable {
 		final Subscriber<? super C> actual;
 

@@ -82,7 +82,7 @@ extends Stream<T>
 	}
 
 	static final class ConcatIterableSubscriber<T>
-	  extends MultiSubscriptionSubscriber<T, T> {
+			extends MultiSubscriptionSubscriber<T, T> {
 
 		final Iterator<? extends Publisher<? extends T>> it;
 

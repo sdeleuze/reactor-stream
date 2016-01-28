@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *	   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -91,7 +91,8 @@ final class StreamZipIterable<T, U, R> extends StreamSource<T, R> {
 		source.subscribe(new ZipSubscriber<>(s, it, zipper));
 	}
 	
-	static final class ZipSubscriber<T, U, R> implements Subscriber<T>, Producer, MultiReceiver, Receiver, Completable, Subscription {
+	static final class ZipSubscriber<T, U, R> implements Subscriber<T>, Producer, MultiReceiver,
+																  Completable, Receiver, Subscription {
 		
 		final Subscriber<? super R> actual;
 		

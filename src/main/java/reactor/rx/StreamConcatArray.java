@@ -87,7 +87,7 @@ extends Stream<T>
 	}
 
 	static final class ConcatArraySubscriber<T>
-	  extends MultiSubscriptionSubscriber<T, T> {
+			extends MultiSubscriptionSubscriber<T, T> {
 
 		final Publisher<? extends T>[] sources;
 

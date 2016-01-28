@@ -25,8 +25,8 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.flow.Fuseable;
 import reactor.core.util.BackpressureUtils;
-import reactor.core.util.FusionSubscription;
 
 /**
  * A Processor implementation that takes a custom queue and allows
@@ -39,7 +39,7 @@ import reactor.core.util.FusionSubscription;
  */
 final class UnicastProcessor<T>
 		extends reactor.rx.Stream<T>
-		implements Processor<T, T>, FusionSubscription<T> {
+		implements Processor<T, T>, Fuseable.QueueSubscription<T>, Fuseable {
 
 	final Queue<T> queue;
 
@@ -398,5 +398,10 @@ final class UnicastProcessor<T>
 	public boolean requestSyncFusion() {
 		enableOperatorFusion = true;
 		return false;
+	}
+
+	@Override
+	public void drop() {
+		queue.poll();
 	}
 }

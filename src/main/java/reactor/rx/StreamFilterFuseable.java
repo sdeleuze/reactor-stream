@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *	   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,6 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Fuseable;
-import reactor.core.flow.Fuseable.ConditionalSubscriber;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
@@ -29,7 +28,6 @@ import reactor.core.state.Completable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Predicate;
-import reactor.rx.StreamFilterFuseable.FilterFuseableSubscriber;
 
 /**
  * Filters out values that make a filter function return false.
@@ -41,12 +39,16 @@ import reactor.rx.StreamFilterFuseable.FilterFuseableSubscriber;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamFilter<T> extends StreamSource<T, T> {
+final class StreamFilterFuseable<T> extends StreamSource<T, T>
+		implements Fuseable {
 
 	final Predicate<? super T> predicate;
 
-	public StreamFilter(Publisher<? extends T> source, Predicate<? super T> predicate) {
+	public StreamFilterFuseable(Publisher<? extends T> source, Predicate<? super T> predicate) {
 		super(source);
+		if (!(source instanceof Fuseable)) {
+			throw new IllegalArgumentException("The source must implement the Fuseable interface for this operator to work");
+		}
 		this.predicate = Objects.requireNonNull(predicate, "predicate");
 	}
 
@@ -56,32 +58,39 @@ final class StreamFilter<T> extends StreamSource<T, T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		if (source instanceof Fuseable) {
-			source.subscribe(new FilterFuseableSubscriber<>(s, predicate));
-			return;
-		}
-		source.subscribe(new FilterSubscriber<>(s, predicate));
+		source.subscribe(new FilterFuseableSubscriber<>(s, predicate));
 	}
 
-	static final class FilterSubscriber<T> 
+	static final class FilterFuseableSubscriber<T> 
+	extends SynchronousSubscription<T>
 	implements Receiver, Producer, Loopback, Completable, Subscription, ConditionalSubscriber<T> {
 		final Subscriber<? super T> actual;
 
 		final Predicate<? super T> predicate;
 
-		Subscription s;
+		QueueSubscription<T> s;
 
 		boolean done;
+		
+		int sourceMode;
 
-		public FilterSubscriber(Subscriber<? super T> actual, Predicate<? super T> predicate) {
+		/** Running with regular, arbitrary source. */
+		static final int NORMAL = 0;
+		/** Running with a source that implements SynchronousSource. */
+		static final int SYNC = 1;
+		/** Running with a source that implements AsynchronousSource. */
+		static final int ASYNC = 2;
+		
+		public FilterFuseableSubscriber(Subscriber<? super T> actual, Predicate<? super T> predicate) {
 			this.actual = actual;
 			this.predicate = predicate;
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.validate(this.s, s)) {
-				this.s = s;
+				this.s = (QueueSubscription<T>)s;
 				actual.onSubscribe(this);
 			}
 		}
@@ -93,24 +102,31 @@ final class StreamFilter<T> extends StreamSource<T, T> {
 				return;
 			}
 
-			boolean b;
-
-			try {
-				b = predicate.test(t);
-			} catch (Throwable e) {
-				s.cancel();
-
-				Exceptions.throwIfFatal(e);
-				onError(Exceptions.unwrap(e));
-				return;
-			}
-			if (b) {
-				actual.onNext(t);
-			} else {
-				s.request(1);
+			int m = sourceMode;
+			
+			if (m == 0) {
+				boolean b;
+	
+				try {
+					b = predicate.test(t);
+				} catch (Throwable e) {
+					s.cancel();
+	
+					Exceptions.throwIfFatal(e);
+					onError(Exceptions.unwrap(e));
+					return;
+				}
+				if (b) {
+					actual.onNext(t);
+				} else {
+					s.request(1);
+				}
+			} else
+			if (m == 2) {
+				actual.onNext(null);
 			}
 		}
-
+		
 		@Override
 		public boolean tryOnNext(T t) {
 			if (done) {
@@ -118,22 +134,30 @@ final class StreamFilter<T> extends StreamSource<T, T> {
 				return false;
 			}
 
-			boolean b;
-
-			try {
-				b = predicate.test(t);
-			} catch (Throwable e) {
-				s.cancel();
-
-				Exceptions.throwIfFatal(e);
-				onError(Exceptions.unwrap(e));
+			int m = sourceMode;
+			
+			if (m == 0) {
+				boolean b;
+	
+				try {
+					b = predicate.test(t);
+				} catch (Throwable e) {
+					s.cancel();
+	
+					Exceptions.throwIfFatal(e);
+					onError(Exceptions.unwrap(e));
+					return false;
+				}
+				if (b) {
+					actual.onNext(t);
+					return true;
+				}
 				return false;
+			} else
+			if (m == 2) {
+				actual.onNext(null);
 			}
-			if (b) {
-				actual.onNext(t);
-				return true;
-			}
-			return false;
+			return true;
 		}
 
 		@Override
@@ -193,6 +217,82 @@ final class StreamFilter<T> extends StreamSource<T, T> {
 		@Override
 		public void cancel() {
 			s.cancel();
+		}
+
+		@Override
+		public T poll() {
+			if (sourceMode == ASYNC) {
+				long dropped = 0;
+				for (;;) {
+					T v = s.poll();
+	
+					if (v == null || predicate.test(v)) {
+						if (dropped != 0) {
+							request(dropped);
+						}
+						return v;
+					}
+					dropped++;
+				}
+			} else {
+				for (;;) {
+					T v = s.poll();
+	
+					if (v == null || predicate.test(v)) {
+						return v;
+					}
+				}
+			}
+		}
+
+		@Override
+		public T peek() {
+			if (sourceMode == ASYNC) {
+				long dropped = 0;
+				for (;;) {
+					T v = s.peek();
+	
+					if (v == null || predicate.test(v)) {
+						if (dropped != 0) {
+							request(dropped);
+						}
+						return v;
+					}
+					s.drop();
+					dropped++;
+				}
+			} else {
+				for (;;) {
+					T v = s.peek();
+	
+					if (v == null || predicate.test(v)) {
+						return v;
+					}
+					s.drop();
+				}
+			}
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return peek() == null;
+		}
+
+		@Override
+		public void clear() {
+			s.clear();
+		}
+		
+		@Override
+		public void drop() {
+			s.drop();
+		}
+		
+		@Override
+		public boolean requestSyncFusion() {
+			boolean b = s.requestSyncFusion();
+			sourceMode = b ? SYNC : ASYNC;
+			return b;
 		}
 	}
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *	   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,11 +28,12 @@ import reactor.core.state.Completable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Function;
-import reactor.rx.StreamMapFuseable.MapFuseableSubscriber;
 
 /**
  * Maps the values of the source publisher one-on-one via a mapper function.
- *
+ * <p>
+ * This variant allows composing fuseable stages.
+ * 
  * @param <T> the source value type
  * @param <R> the result value type
  */
@@ -41,7 +42,8 @@ import reactor.rx.StreamMapFuseable.MapFuseableSubscriber;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamMap<T, R> extends StreamSource<T, R> {
+final class StreamMapFuseable<T, R> extends StreamSource<T, R>
+		implements Fuseable {
 
 	final Function<? super T, ? extends R> mapper;
 
@@ -52,8 +54,11 @@ final class StreamMap<T, R> extends StreamSource<T, R> {
 	 * @param mapper the mapper function
 	 * @throws NullPointerException if either {@code source} or {@code mapper} is null.
 	 */
-	public StreamMap(Publisher<? extends T> source, Function<? super T, ? extends R> mapper) {
+	public StreamMapFuseable(Publisher<? extends T> source, Function<? super T, ? extends R> mapper) {
 		super(source);
+		if (!(source instanceof Fuseable)) {
+			throw new IllegalArgumentException("The source must implement the Fuseable interface for this operator to work");
+		}
 		this.mapper = Objects.requireNonNull(mapper, "mapper");
 	}
 
@@ -63,29 +68,38 @@ final class StreamMap<T, R> extends StreamSource<T, R> {
 
 	@Override
 	public void subscribe(Subscriber<? super R> s) {
-		if (source instanceof Fuseable) {
-			source.subscribe(new MapFuseableSubscriber<>(s, mapper));
-		}
-		source.subscribe(new MapSubscriber<>(s, mapper));
+		source.subscribe(new MapFuseableSubscriber<>(s, mapper));
 	}
 
-	static final class MapSubscriber<T, R> implements Subscriber<T>, Completable, Receiver, Producer, Loopback, Subscription {
+	static final class MapFuseableSubscriber<T, R> 
+	extends SynchronousSubscription<R>
+	implements Subscriber<T>, Completable, Receiver, Producer, Loopback, Subscription {
 		final Subscriber<? super R>			actual;
 		final Function<? super T, ? extends R> mapper;
 
 		boolean done;
 
-		Subscription s;
+		QueueSubscription<T> s;
 
-		public MapSubscriber(Subscriber<? super R> actual, Function<? super T, ? extends R> mapper) {
+		int sourceMode;
+
+		/** Running with regular, arbitrary source. */
+		static final int NORMAL = 0;
+		/** Running with a source that implements SynchronousSource. */
+		static final int SYNC = 1;
+		/** Running with a source that implements AsynchronousSource. */
+		static final int ASYNC = 2;
+		
+		public MapFuseableSubscriber(Subscriber<? super R> actual, Function<? super T, ? extends R> mapper) {
 			this.actual = actual;
 			this.mapper = mapper;
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.validate(this.s, s)) {
-				this.s = s;
+				this.s = (QueueSubscription<T>)s;
 
 				actual.onSubscribe(this);
 			}
@@ -98,25 +112,32 @@ final class StreamMap<T, R> extends StreamSource<T, R> {
 				return;
 			}
 
-			R v;
-
-			try {
-				v = mapper.apply(t);
-			} catch (Throwable e) {
-				done = true;
-				s.cancel();
-				actual.onError(e);
-				return;
+			int m = sourceMode;
+			
+			if (m == 0) {
+				R v;
+	
+				try {
+					v = mapper.apply(t);
+				} catch (Throwable e) {
+					done = true;
+					s.cancel();
+					actual.onError(e);
+					return;
+				}
+	
+				if (v == null) {
+					done = true;
+					s.cancel();
+					actual.onError(new NullPointerException("The mapper returned a null value."));
+					return;
+				}
+	
+				actual.onNext(v);
+			} else
+			if (m == 2) {
+				actual.onNext(null);
 			}
-
-			if (v == null) {
-				done = true;
-				s.cancel();
-				actual.onError(new NullPointerException("The mapper returned a null value."));
-				return;
-			}
-
-			actual.onNext(v);
 		}
 
 		@Override
@@ -179,6 +200,48 @@ final class StreamMap<T, R> extends StreamSource<T, R> {
 		@Override
 		public void cancel() {
 			s.cancel();
+		}
+
+		@Override
+		public R poll() {
+			// FIXME maybe should cache the result to avoid mapping twice in case of peek/poll pairs
+			T v = s.poll();
+			if (v != null) {
+				return mapper.apply(v);
+			}
+			return null;
+		}
+
+		@Override
+		public R peek() {
+			// FIXME maybe should cache the result to avoid mapping twice in case of peek/poll pairs
+			T v = s.peek();
+			if (v != null) {
+				return mapper.apply(v);
+			}
+			return null;
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return s.isEmpty();
+		}
+
+		@Override
+		public void clear() {
+			s.clear();
+		}
+
+		@Override
+		public boolean requestSyncFusion() {
+			boolean b = s.requestSyncFusion();
+			sourceMode = b ? SYNC : ASYNC;
+			return b;
+		}
+
+		@Override
+		public void drop() {
+			s.drop();
 		}
 	}
 }
