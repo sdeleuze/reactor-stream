@@ -29,6 +29,7 @@ import org.reactivestreams.Subscription;
 import reactor.core.flow.MultiProducer;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Backpressurable;
