@@ -75,11 +75,26 @@ final class UnicastProcessor<T>
 
 	volatile boolean enableOperatorFusion;
 
-	public UnicastProcessor(Queue<T> queue) {
-		this(queue, null);
+	/**
+	 * @param queue
+	 * @param <T>
+	 * @return a new {@link UnicastProcessor} instance using the given queue
+	 */
+	public static <T> UnicastProcessor create(Queue<T> queue) {
+		return  new UnicastProcessor<>(queue, null);
 	}
 
-	public UnicastProcessor(Queue<T> queue, Runnable onTerminate) {
+	/**
+	 * @param queue
+	 * @param onTerminate
+	 * @param <T>
+	 * @return a new {@link UnicastProcessor} instance using the given queue
+	 */
+	public static <T> UnicastProcessor create(Queue<T> queue, Runnable onTerminate) {
+		return  new UnicastProcessor<>(queue, onTerminate);
+	}
+
+	UnicastProcessor(Queue<T> queue, Runnable onTerminate) {
 		this.queue = queue;
 		this.onTerminate = onTerminate;
 	}
