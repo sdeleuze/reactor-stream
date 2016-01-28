@@ -17,6 +17,7 @@ package reactor.rx
 
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription
+import reactor.core.publisher.EmitterProcessor
 import reactor.core.publisher.ProcessorGroup
 import reactor.core.subscriber.SubscriberWithContext
 import reactor.core.test.TestSubscriber
@@ -1724,7 +1725,7 @@ class StreamsSpec extends Specification {
 	def 'Wrap Stream from processor'() {
 		given:
 			'a source stream with a given publisher factory'
-			def emitter = Processors.emitter()
+			def emitter = EmitterProcessor.create()
 			emitter.start()
 			def s = Stream.fromProcessor(emitter)
 

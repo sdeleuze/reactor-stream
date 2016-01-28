@@ -20,6 +20,7 @@ import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
@@ -83,7 +84,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * @return a new {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> create(Timer timer, boolean autoCancel) {
-		return from(Processors.<T>emitter(autoCancel), timer, autoCancel);
+		return from(EmitterProcessor.<T>create(autoCancel), timer, autoCancel);
 	}
 
 	/**
@@ -129,7 +130,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * @return a new {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> serialize(Timer timer) {
-		Processor<T, T> processor = Processors.emitter();
+		Processor<T, T> processor = EmitterProcessor.create();
 		return new Broadcaster<T>(SerializedSubscriber.create(processor), processor, timer, true);
 	}
 
@@ -235,7 +236,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * @return a new {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> replay(Timer timer) {
-		return new Broadcaster<T>(Processors.<T>replay(), timer, false);
+		return new Broadcaster<T>(EmitterProcessor.<T>replay(), timer, false);
 	}
 
 	/**
@@ -284,7 +285,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * @return a new {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> replayLastOrDefault(T value, Timer timer) {
-		Broadcaster<T> b = new Broadcaster<T>(Processors.<T>replay(1), timer, false);
+		Broadcaster<T> b = new Broadcaster<T>(EmitterProcessor.<T>replay(1), timer, false);
 		if(value != null){
 			b.onNext(value);
 		}

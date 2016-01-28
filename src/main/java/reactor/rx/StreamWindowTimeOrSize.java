@@ -23,6 +23,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.timer.Timer;
 import reactor.core.util.PlatformDependent;
@@ -64,7 +65,7 @@ final class StreamWindowTimeOrSize<T> extends StreamBatch<T, Stream<T>> {
 		}
 
 		public Window(Timer timer, int size) {
-			this.processor = Processors.emitter(size);
+			this.processor = EmitterProcessor.create(size);
 			this.processor.onSubscribe(this);
 			this.timer = timer;
 		}

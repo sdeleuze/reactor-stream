@@ -97,7 +97,7 @@ final class StreamGroupBy<T, K> extends StreamSource<T, GroupedStream<K, T>> {
 		public GroupedEmitter(K key, GroupByAction<T, K> parent) {
 			super(key);
 			this.parent = parent;
-			this.processor = Processors.replay(PlatformDependent.SMALL_BUFFER_SIZE, Integer.MAX_VALUE, true);
+			this.processor = EmitterProcessor.replay(PlatformDependent.SMALL_BUFFER_SIZE, Integer.MAX_VALUE, true);
 		}
 
 

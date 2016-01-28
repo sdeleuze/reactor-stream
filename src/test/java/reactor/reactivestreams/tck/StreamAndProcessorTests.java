@@ -22,6 +22,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Test;
 import org.reactivestreams.Processor;
 import org.testng.SkipException;
+import reactor.core.publisher.FluxProcessor;
+import reactor.core.publisher.TopicProcessor;
+import reactor.core.publisher.WorkQueueProcessor;
 import reactor.fn.BiFunction;
 import reactor.rx.Stream;
 
@@ -46,8 +49,8 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 		cumulatedJoin.set(0);
 
 		BiFunction<Integer, String, Integer> combinator = (t1, t2) -> t1;
-		return Processors.create(p, Stream.fromProcessor(p)
-		                                  .forkJoin(2, stream -> stream.scan((prev, next) -> next)
+		return FluxProcessor.create(p, Stream.fromProcessor(p)
+		                                     .forkJoin(2, stream -> stream.scan((prev, next) -> next)
 		                                                                .map(integer -> -integer)
 		                                                                .filter(integer -> integer <= 0)
 		                                                                .every(1)
@@ -59,9 +62,9 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 		                                                                                          otherStream,
 		                                                                                          combinator))
 		                                                                .doOnNext(this::monitorThreadUse))
-		                                  .doOnNext(array -> cumulatedJoin.getAndIncrement())
-		                                  .process(TopicProcessor.create("stream-raw-join", bufferSize))
-		                                  .when(Throwable.class, Throwable::printStackTrace));
+		                                     .doOnNext(array -> cumulatedJoin.getAndIncrement())
+		                                     .process(TopicProcessor.create("stream-raw-join", bufferSize))
+		                                     .when(Throwable.class, Throwable::printStackTrace));
 	}
 
 	@Override

@@ -45,6 +45,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.converter.DependencyUtils;
 import reactor.core.flow.Loopback;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSource;
@@ -1242,7 +1243,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public static <T> StreamProcessor<Publisher<? extends T>, T> switchOnNext() {
-		Processor<Publisher<? extends T>, Publisher<? extends T>> emitter = Processors.replay();
+		Processor<Publisher<? extends T>, Publisher<? extends T>> emitter = EmitterProcessor.replay();
 		StreamProcessor<Publisher<? extends T>, T> p = StreamProcessor.from(emitter, switchOnNext(emitter));
 		p.onSubscribe(EmptySubscription.INSTANCE);
 		return p;
@@ -2137,7 +2138,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public final Stream<O> cache(int last) {
-		Processor<O, O> emitter = Processors.replay(last);
+		Processor<O, O> emitter = EmitterProcessor.replay(last);
 		subscribe(emitter);
 		return StreamProcessor.from(emitter);
 	}
@@ -3386,7 +3387,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 			@Override
 			public void subscribe(Subscriber<? super O> s) {
-				Processor<O, O> emitter = Processors.replay(size);
+				Processor<O, O> emitter = EmitterProcessor.replay(size);
 				emitter.subscribe(s);
 				source.subscribe(emitter);
 			}

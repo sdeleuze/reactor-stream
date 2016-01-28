@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.reactivestreams.Processor;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.fn.BiFunction;
 import reactor.rx.Broadcaster;
@@ -47,7 +48,7 @@ public class StreamAndProcessorGroupTests extends AbstractStreamVerification {
 						Throwable::printStackTrace);
 
 		BiFunction<Integer, String, Integer> combinator = (t1, t2) -> t1;
-		return Processors.blackbox(Broadcaster.<Integer>create(true), p ->
+		return FluxProcessor.blackbox(Broadcaster.<Integer>create(true), p ->
 
 				p.dispatchOn(sharedGroup)
 		                  .partition(2)

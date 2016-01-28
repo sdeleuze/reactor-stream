@@ -51,6 +51,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.AbstractReactorTest;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.TopicProcessor;
@@ -889,7 +890,7 @@ public class StreamTests extends AbstractReactorTest {
 			final String source = "ASYNC_TEST " + i;
 
 			Stream.just(source)
-			      .liftProcessor(() -> Processors.blackbox(Broadcaster.<String>create(),
+			      .liftProcessor(() -> FluxProcessor.blackbox(Broadcaster.<String>create(),
 					       operationStream -> operationStream.dispatchOn(asyncGroup)
 					                                         .throttleRequest(100)
 					                                         .map(s -> s + " MODIFIED")
