@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *	   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package reactor.rx;
 
 import java.util.Objects;
+import java.util.Queue;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -68,7 +69,8 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 
 		final Predicate<? super T> predicate;
 
-		QueueSubscription<T> s;
+		FusionSubscription<T> s;
+		Queue<T>			  q;
 
 		boolean done;
 		
@@ -90,7 +92,8 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 		@Override
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.validate(this.s, s)) {
-				this.s = (QueueSubscription<T>)s;
+				this.s = (FusionSubscription<T>)s;
+				this.q = this.s.queue();
 				actual.onSubscribe(this);
 			}
 		}
@@ -224,7 +227,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 			if (sourceMode == ASYNC) {
 				long dropped = 0;
 				for (;;) {
-					T v = s.poll();
+					T v = q.poll();
 	
 					if (v == null || predicate.test(v)) {
 						if (dropped != 0) {
@@ -236,7 +239,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 				}
 			} else {
 				for (;;) {
-					T v = s.poll();
+					T v = q.poll();
 	
 					if (v == null || predicate.test(v)) {
 						return v;
@@ -250,7 +253,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 			if (sourceMode == ASYNC) {
 				long dropped = 0;
 				for (;;) {
-					T v = s.peek();
+					T v = q.peek();
 	
 					if (v == null || predicate.test(v)) {
 						if (dropped != 0) {
@@ -263,7 +266,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 				}
 			} else {
 				for (;;) {
-					T v = s.peek();
+					T v = q.peek();
 	
 					if (v == null || predicate.test(v)) {
 						return v;
@@ -280,7 +283,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 
 		@Override
 		public void clear() {
-			s.clear();
+			q.clear();
 		}
 		
 		@Override

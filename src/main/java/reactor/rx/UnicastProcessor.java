@@ -15,8 +15,6 @@
  */
 package reactor.rx;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
@@ -39,7 +37,7 @@ import reactor.core.util.BackpressureUtils;
  */
 final class UnicastProcessor<T>
 		extends reactor.rx.Stream<T>
-		implements Processor<T, T>, Fuseable.QueueSubscription<T>, Fuseable {
+		implements Processor<T, T>, Fuseable.FusionSubscription<T>, Fuseable {
 
 	final Queue<T> queue;
 
@@ -320,93 +318,8 @@ final class UnicastProcessor<T>
 	}
 
 	@Override
-	public T poll() {
-		return queue.poll();
-	}
-
-	@Override
-	public T peek() {
-		return queue.peek();
-	}
-
-	@Override
-	public boolean add(T t) {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public boolean offer(T t) {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public T remove() {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public T element() {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public int size() {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public boolean contains(Object o) {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public Iterator<T> iterator() {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public Object[] toArray() {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public <T1> T1[] toArray(T1[] a) {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public boolean remove(Object o) {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public boolean containsAll(Collection<?> c) {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public boolean addAll(Collection<? extends T> c) {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public boolean removeAll(Collection<?> c) {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> c) {
-		throw new UnsupportedOperationException("Operators should not use this method!");
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return queue.isEmpty();
-	}
-
-	@Override
-	public void clear() {
-		queue.clear();
+	public Queue<T> queue() {
+		return queue;
 	}
 
 	@Override
