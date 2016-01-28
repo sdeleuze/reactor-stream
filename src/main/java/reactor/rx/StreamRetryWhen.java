@@ -196,7 +196,7 @@ final class StreamRetryWhen<T> extends StreamSource<T, T> {
 	implements Subscriber<Object>, Loopback {
 		RetryWhenMainSubscriber<?> main;
 
-		final EmitterProcessor<Throwable> completionSignal = new EmitterProcessor<>();
+		final EmitterProcessor<Throwable> completionSignal = EmitterProcessor.create();
 
 		@Override
 		public void onSubscribe(Subscription s) {

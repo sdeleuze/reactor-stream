@@ -200,7 +200,7 @@ final class StreamRepeatWhen<T> extends StreamSource<T, T> {
 	implements Subscriber<Object>, Loopback {
 		RepeatWhenMainSubscriber<?> main;
 
-		final EmitterProcessor<Long> completionSignal = new EmitterProcessor<>();
+		final EmitterProcessor<Long> completionSignal = EmitterProcessor.create();
 
 		@Override
 		public void onSubscribe(Subscription s) {
