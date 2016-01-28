@@ -59,7 +59,6 @@ import reactor.core.subscriber.ReactiveSession;
 import reactor.core.subscriber.SubscriberWithContext;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.timer.Timer;
-import reactor.core.timer.Timers;
 import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -688,7 +687,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Mono<Long> delay(long delay) {
-		return Mono.delay(delay, TimeUnit.SECONDS, Timers.globalOrNew());
+		return Mono.delay(delay, TimeUnit.SECONDS, Timer.globalOrNew());
 	}
 
 	/**
@@ -699,7 +698,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Mono<Long> delay(long delay, TimeUnit unit) {
-		return Mono.delay(delay, unit, Timers.globalOrNew());
+		return Mono.delay(delay, unit, Timer.globalOrNew());
 	}
 
 	/**
@@ -1003,7 +1002,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Long> interval(long period) {
-		return interval(Timers.globalOrNew(), -1l, period, TimeUnit.SECONDS);
+		return interval(Timer.globalOrNew(), -1l, period, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -1028,7 +1027,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Long> interval(long delay, long period) {
-		return interval(Timers.globalOrNew(), delay, period, TimeUnit.SECONDS);
+		return interval(Timer.globalOrNew(), delay, period, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -1053,7 +1052,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Long> interval(long period, TimeUnit unit) {
-		return interval(Timers.globalOrNew(), -1l, period, unit);
+		return interval(Timer.globalOrNew(), -1l, period, unit);
 	}
 
 	/**
@@ -1079,7 +1078,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Long> interval(long delay, long period, TimeUnit unit) {
-		return interval(Timers.globalOrNew(), delay, period, unit);
+		return interval(Timer.globalOrNew(), delay, period, unit);
 	}
 
 	/**
@@ -2479,7 +2478,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public final Stream<O> delaySubscription(long delay, TimeUnit unit) {
-		return delaySubscription(delay, unit, Timers.global());
+		return delaySubscription(delay, unit, Timer.global());
 	}
 	/**
 	 * @param delay
@@ -3020,7 +3019,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return any available timer
 	 */
 	public Timer getTimer() {
-		return Timers.globalOrNull();
+		return Timer.globalOrNull();
 	}
 
 	/**
@@ -4828,7 +4827,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final Stream<Stream<O>> window(long timespan, TimeUnit unit) {
 		Timer t = getTimer();
-		if(t == null) t = Timers.global();
+		if(t == null) t = Timer.global();
 		return window(interval(t, timespan, unit));
 	}
 
@@ -4865,7 +4864,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		}
 
 		Timer t = getTimer();
-		if(t == null) t = Timers.global();
+		if(t == null) t = Timer.global();
 		final Timer timer = t;
 
 		return window(interval(timer, 0L, timeshift, unit), new Function<Long, Publisher<Long>>() {

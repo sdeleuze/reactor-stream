@@ -19,7 +19,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
-import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.subscriber.DeferredScalarSubscriber;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -43,7 +43,7 @@ final class MonoCount<T> extends reactor.core.publisher.MonoSource<T, Long> {
 		source.subscribe(new CountSubscriber<>(s));
 	}
 
-	static final class CountSubscriber<T> extends SubscriberDeferredScalar<T, Long>
+	static final class CountSubscriber<T> extends DeferredScalarSubscriber<T, Long>
 			implements Receiver {
 
 		long counter;

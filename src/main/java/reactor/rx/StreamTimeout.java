@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.core.subscriber.MultiSubscriptionSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
@@ -87,7 +87,7 @@ final class StreamTimeout<T, U, V> extends StreamSource<T, T> {
 		source.subscribe(main);
 	}
 
-	static final class TimeoutMainSubscriber<T, V> extends SubscriberMultiSubscription<T, T> {
+	static final class TimeoutMainSubscriber<T, V> extends MultiSubscriptionSubscriber<T, T> {
 
 		final Function<? super T, ? extends Publisher<V>> itemTimeout;
 
@@ -274,9 +274,9 @@ final class StreamTimeout<T, U, V> extends StreamSource<T, T> {
 
 		final Subscriber<? super T> actual;
 
-		final SubscriberMultiSubscription<T, T> arbiter;
+		final MultiSubscriptionSubscriber<T, T> arbiter;
 
-		public TimeoutOtherSubscriber(Subscriber<? super T> actual, SubscriberMultiSubscription<T, T>
+		public TimeoutOtherSubscriber(Subscriber<? super T> actual, MultiSubscriptionSubscriber<T, T>
 		  arbiter) {
 			this.actual = actual;
 			this.arbiter = arbiter;

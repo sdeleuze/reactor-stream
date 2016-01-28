@@ -32,7 +32,6 @@ import reactor.core.state.Completable;
 import reactor.core.state.Failurable;
 import reactor.core.state.Introspectable;
 import reactor.core.timer.Timer;
-import reactor.core.timer.Timers;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -86,7 +85,7 @@ public class Promise<O> extends Mono<O>
 	 * @return A {@link Promise} that is completed with the given error
 	 */
 	public static <T> Promise<T> error(Throwable error) {
-		return error(Timers.globalOrNull(), error);
+		return error(Timer.globalOrNull(), error);
 	}
 
 	/**
@@ -134,7 +133,7 @@ public class Promise<O> extends Mono<O>
 	 * @return A {@link Promise}.
 	 */
 	public static <T> Promise<T> prepare() {
-		return prepare(Timers.globalOrNull());
+		return prepare(Timer.globalOrNull());
 	}
 
 	/**
@@ -171,7 +170,7 @@ public class Promise<O> extends Mono<O>
 	 * @return A {@link Promise}.
 	 */
 	public static <T> Promise<T> ready() {
-		return ready(Timers.globalOrNull());
+		return ready(Timer.globalOrNull());
 	}
 
 	/**
@@ -193,7 +192,7 @@ public class Promise<O> extends Mono<O>
 	 * @return A {@link Promise} that is completed with the given value
 	 */
 	public static <T> Promise<T> success(T value) {
-		return success(Timers.globalOrNull(), value);
+		return success(Timer.globalOrNull(), value);
 	}
 
 	/**

@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.MultiReceiver;
-import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.core.subscriber.MultiSubscriptionSubscriber;
 import reactor.core.util.EmptySubscription;
 
 /**
@@ -87,7 +87,7 @@ extends Stream<T>
 	}
 
 	static final class ConcatArraySubscriber<T>
-	  extends SubscriberMultiSubscription<T, T> {
+	  extends MultiSubscriptionSubscriber<T, T> {
 
 		final Publisher<? extends T>[] sources;
 

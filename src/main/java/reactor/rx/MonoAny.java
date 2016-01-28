@@ -21,7 +21,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
-import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.subscriber.DeferredScalarSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Predicate;
@@ -54,7 +54,7 @@ final class MonoAny<T> extends reactor.core.publisher.MonoSource<T, Boolean> {
 		source.subscribe(new AnySubscriber<T>(s, predicate));
 	}
 
-	static final class AnySubscriber<T> extends SubscriberDeferredScalar<T, Boolean>
+	static final class AnySubscriber<T> extends DeferredScalarSubscriber<T, Boolean>
 			implements Receiver {
 		final Predicate<? super T> predicate;
 

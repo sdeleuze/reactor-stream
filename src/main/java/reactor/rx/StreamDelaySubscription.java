@@ -20,7 +20,7 @@ import java.util.Objects;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.subscriber.SubscriberDeferredSubscription;
+import reactor.core.subscriber.DeferredSubscriptionSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 
@@ -51,7 +51,7 @@ final class StreamDelaySubscription<T, U> extends StreamSource<T, T> {
 	}
 
 	static final class DelaySubscriptionOtherSubscriber<T, U>
-			extends SubscriberDeferredSubscription<U, T> {
+			extends DeferredSubscriptionSubscriber<U, T> {
 
 		final Publisher<? extends T> source;
 
@@ -120,10 +120,10 @@ final class StreamDelaySubscription<T, U> extends StreamSource<T, T> {
 
 			final Subscriber<? super T> actual;
 
-			final SubscriberDeferredSubscription<?, ?> arbiter;
+			final DeferredSubscriptionSubscriber<?, ?> arbiter;
 
 			public DelaySubscriptionMainSubscriber(Subscriber<? super T> actual,
-															SubscriberDeferredSubscription<?, ?> arbiter) {
+															DeferredSubscriptionSubscriber<?, ?> arbiter) {
 				this.actual = actual;
 				this.arbiter = arbiter;
 			}

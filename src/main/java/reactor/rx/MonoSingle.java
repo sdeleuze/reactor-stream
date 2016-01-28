@@ -22,7 +22,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
-import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.subscriber.DeferredScalarSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Supplier;
@@ -74,7 +74,7 @@ final class MonoSingle<T> extends reactor.core.publisher.MonoSource<T, T> {
 		source.subscribe(new SingleSubscriber<>(s, defaultSupplier));
 	}
 
-	static final class SingleSubscriber<T> extends SubscriberDeferredScalar<T, T>
+	static final class SingleSubscriber<T> extends DeferredScalarSubscriber<T, T>
 			implements Receiver {
 
 		final Supplier<? extends T> defaultSupplier;

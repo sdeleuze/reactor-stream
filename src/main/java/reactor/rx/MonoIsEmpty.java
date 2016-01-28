@@ -19,7 +19,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
-import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.subscriber.DeferredScalarSubscriber;
 import reactor.core.util.BackpressureUtils;
 
 
@@ -38,7 +38,7 @@ final class MonoIsEmpty<T> extends reactor.core.publisher.MonoSource<T, Boolean>
 		source.subscribe(new IsEmptySubscriber<>(s));
 	}
 
-	static final class IsEmptySubscriber<T> extends SubscriberDeferredScalar<T, Boolean>
+	static final class IsEmptySubscriber<T> extends DeferredScalarSubscriber<T, Boolean>
 			implements Receiver {
 		Subscription s;
 

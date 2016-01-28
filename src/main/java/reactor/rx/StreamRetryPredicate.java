@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.core.subscriber.MultiSubscriptionSubscriber;
 import reactor.core.util.Exceptions;
 import reactor.fn.Predicate;
 
@@ -57,7 +57,7 @@ final class StreamRetryPredicate<T> extends StreamSource<T, T> {
 	}
 
 	static final class RetryPredicateSubscriber<T>
-	  extends SubscriberMultiSubscription<T, T> {
+	  extends MultiSubscriptionSubscriber<T, T> {
 
 		final Publisher<? extends T> source;
 

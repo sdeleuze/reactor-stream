@@ -21,7 +21,6 @@ import reactor.core.publisher.ProcessorGroup
 import reactor.core.publisher.Processors
 import reactor.core.subscriber.SubscriberWithContext
 import reactor.core.test.TestSubscriber
-import reactor.core.timer.Timers
 import reactor.core.util.ReactiveStateUtils
 import reactor.fn.BiFunction
 import spock.lang.Ignore
@@ -39,12 +38,12 @@ class StreamsSpec extends Specification {
 	ProcessorGroup asyncGroup
 
 	void setupSpec() {
-		Timers.global()
+		Timer.global()
 		asyncGroup = Processors.asyncGroup("stream-spec", 128, 4, null, null, false)
 	}
 
 	def cleanupSpec() {
-		Timers.unregisterGlobal()
+		Timer.unregisterGlobal()
 		asyncGroup.shutdown()
 		asyncGroup = null
 	}

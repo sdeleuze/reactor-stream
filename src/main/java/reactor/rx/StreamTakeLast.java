@@ -25,7 +25,7 @@ import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
-import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.subscriber.DeferredScalarSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.fn.BooleanSupplier;
 
@@ -121,7 +121,7 @@ final class StreamTakeLast<T> extends StreamSource<T, T> {
 	}
 
 	static final class TakeLastOneSubscriber<T>
-			extends SubscriberDeferredScalar<T, T>
+			extends DeferredScalarSubscriber<T, T>
 			implements Receiver {
 
 		Subscription s;

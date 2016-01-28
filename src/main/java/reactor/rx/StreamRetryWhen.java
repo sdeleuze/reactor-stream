@@ -23,7 +23,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.publisher.ProcessorEmitter;
-import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.core.subscriber.MultiSubscriptionSubscriber;
 import reactor.core.util.DeferredSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -91,7 +91,7 @@ final class StreamRetryWhen<T> extends StreamSource<T, T> {
 		}
 	}
 
-	static final class RetryWhenMainSubscriber<T> extends SubscriberMultiSubscription<T, T> {
+	static final class RetryWhenMainSubscriber<T> extends MultiSubscriptionSubscriber<T, T> {
 
 		final DeferredSubscription otherArbiter;
 

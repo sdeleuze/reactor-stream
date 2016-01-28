@@ -26,10 +26,16 @@ import reactor.core.util.ReactiveStateUtils;
 import reactor.fn.Function;
 
 /**
+ *
+ * A connecting {@link Stream} Publisher (right-to-left from a composition chain perspective)
+ *
+ * @param <I> Upstream type
+ * @param <O> Downstream type
+ *
  * @author Stephane Maldini
  * @since 2.5
  */
-class StreamSource<I, O> extends Stream<O>
+public class StreamSource<I, O> extends Stream<O>
 		implements Receiver,
 		           Function<Subscriber<? super O>, Subscriber<? super I>> {
 

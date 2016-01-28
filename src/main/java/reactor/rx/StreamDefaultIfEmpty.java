@@ -21,7 +21,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
-import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.subscriber.DeferredScalarSubscriber;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -49,7 +49,7 @@ final class StreamDefaultIfEmpty<T> extends StreamSource<T, T> {
 	}
 
 	static final class DefaultIfEmptySubscriber<T>
-			extends SubscriberDeferredScalar<T, T>
+			extends DeferredScalarSubscriber<T, T>
 			implements Receiver {
 
 		Subscription s;

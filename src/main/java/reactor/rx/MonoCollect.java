@@ -21,7 +21,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Receiver;
-import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.subscriber.DeferredScalarSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -74,7 +74,7 @@ final class MonoCollect<T, R> extends reactor.core.publisher.MonoSource<T, R> {
 	}
 
 	static final class CollectSubscriber<T, R>
-			extends SubscriberDeferredScalar<T, R>
+			extends DeferredScalarSubscriber<T, R>
 			implements Receiver {
 
 		final BiConsumer<? super R, ? super T> action;

@@ -15,11 +15,13 @@
  */
 package reactor.rx;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.reactivestreams.Subscriber;
-
-import reactor.core.subscriber.SubscriberDeferredScalar;
+import reactor.core.subscriber.DeferredScalarSubscriber;
 
 
 /**
@@ -48,7 +50,7 @@ final class StreamFuture<T> extends Stream<T> {
 
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
-		SubscriberDeferredScalar<T, T> sds = new SubscriberDeferredScalar<>(s);
+		DeferredScalarSubscriber<T, T> sds = new DeferredScalarSubscriber<>(s);
 		
 		s.onSubscribe(sds);
 		

@@ -40,7 +40,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import reactor.core.publisher.Processors;
 import reactor.core.subscriber.ReactiveSession;
-import reactor.core.timer.Timers;
 import reactor.core.util.Assert;
 import reactor.rx.Broadcaster;
 import reactor.rx.Stream;
@@ -71,7 +70,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 	@BeforeClass
 	@Before
 	public void setup() {
-		Timers.global();
+		Timer.global();
 	}
 
 	@AfterClass

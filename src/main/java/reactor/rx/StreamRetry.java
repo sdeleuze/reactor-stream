@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.subscriber.SubscriberMultiSubscription;
+import reactor.core.subscriber.MultiSubscriptionSubscriber;
 
 /**
  * Repeatedly subscribes to the source sequence if it signals any error
@@ -62,7 +62,7 @@ final class StreamRetry<T> extends StreamSource<T, T> {
 	}
 
 	static final class RetrySubscriber<T>
-	  extends SubscriberMultiSubscription<T, T> {
+	  extends MultiSubscriptionSubscriber<T, T> {
 
 		final Publisher<? extends T> source;
 
