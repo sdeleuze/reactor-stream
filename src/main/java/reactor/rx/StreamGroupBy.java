@@ -30,7 +30,6 @@ import reactor.core.flow.MultiProducer;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.publisher.Processors;
 import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;

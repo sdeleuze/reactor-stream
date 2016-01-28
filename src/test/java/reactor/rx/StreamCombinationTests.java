@@ -32,7 +32,6 @@ import org.reactivestreams.Subscriber;
 import reactor.AbstractReactorTest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Processors;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 import reactor.rx.subscriber.Control;
@@ -91,7 +90,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 	public Stream<SensorData> sensorOdd() {
 		if (sensorOdd == null) {
 			// this is the stream we publish odd-numbered events to
-			this.sensorOdd = Processors.blackbox(Processors.topic("odd"), p -> p.log("odd"));
+			this.sensorOdd = Processors.blackbox(TopicProcessor.create("odd"), p -> p.log("odd"));
 
 			// add substream to "master" list
 			//allSensors().add(sensorOdd.reduce(this::computeMin).timeout(1000));
@@ -103,7 +102,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 	public Stream<SensorData> sensorEven() {
 		if (sensorEven == null) {
 			// this is the stream we publish even-numbered events to
-			this.sensorEven = Processors.blackbox(Processors.topic("even"), p -> p.log("even"));
+			this.sensorEven = Processors.blackbox(TopicProcessor.create("even"), p -> p.log("even"));
 
 			// add substream to "master" list
 			//allSensors().add(sensorEven.reduce(this::computeMin).timeout(1000));

@@ -38,7 +38,6 @@ import org.reactivestreams.Subscription;
 import org.reactivestreams.tck.TestEnvironment;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import reactor.core.publisher.Processors;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
@@ -264,7 +263,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 
 		System.out.println(counters);
 		long count = latch.getCount();
-		Assert.state(latch.getCount() == 0, "Count > 0 : " + count + " , Running on " + Processors.DEFAULT_POOL_SIZE + " " +
+		Assert.state(latch.getCount() == 0, "Count > 0 : " + count + " , Running on " + ProcessorGroup.DEFAULT_POOL_SIZE + " " +
 		  "CPU");
 
 		stream.onComplete();

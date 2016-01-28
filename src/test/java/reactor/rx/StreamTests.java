@@ -53,7 +53,6 @@ import reactor.AbstractReactorTest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.ProcessorGroup;
-import reactor.core.publisher.Processors;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.util.Exceptions;
@@ -912,7 +911,7 @@ public class StreamTests extends AbstractReactorTest {
 	 */
 	@Test
 	public void testParallelWithJava8StreamsInput() throws InterruptedException {
-		ProcessorGroup<Long> supplier = Processors.asyncGroup("test-p", 2048, 2);
+		ProcessorGroup<Long> supplier = ProcessorGroup.async("test-p", 2048, 2);
 
 		int max = ThreadLocalRandom.current()
 		                           .nextInt(100, 300);
@@ -1166,8 +1165,8 @@ public class StreamTests extends AbstractReactorTest {
 
 	@Test
 	public void consistentMultithreadingWithPartition() throws InterruptedException {
-		ProcessorGroup<Long> supplier1 = Processors.asyncGroup("groupByPool", 32, 2);
-		ProcessorGroup<Long> supplier2 = Processors.asyncGroup("partitionPool", 32, 5);
+		ProcessorGroup<Long> supplier1 = ProcessorGroup.async("groupByPool", 32, 2);
+		ProcessorGroup<Long> supplier2 = ProcessorGroup.async("partitionPool", 32, 5);
 
 		CountDownLatch latch = new CountDownLatch(10);
 
@@ -1400,7 +1399,7 @@ public class StreamTests extends AbstractReactorTest {
 
 		final Broadcaster<Integer> computationBroadcaster = Broadcaster.create();
 		final Stream<List<String>> computationStream =
-				computationBroadcaster.dispatchOn(Processors.singleGroup("computation", BACKLOG))
+				computationBroadcaster.dispatchOn(ProcessorGroup.single("computation", BACKLOG))
 				                      .map(i -> {
 					                      final List<String> list = new ArrayList<>(i);
 					                      for (int j = 0; j < i; j++) {
@@ -1413,19 +1412,19 @@ public class StreamTests extends AbstractReactorTest {
 
 		final Broadcaster<Integer> persistenceBroadcaster = Broadcaster.create();
 		final Stream<List<String>> persistenceStream =
-				persistenceBroadcaster.dispatchOn(Processors.singleGroup("persistence", BACKLOG))
+				persistenceBroadcaster.dispatchOn(ProcessorGroup.single("persistence", BACKLOG))
 				                      .doOnNext(i -> println("Persisted: ", i))
 				                      .map(i -> Collections.singletonList("done" + i))
 				                      .log("persistence");
 
-		Stream<Integer> forkStream = forkBroadcaster.dispatchOn(Processors.singleGroup("fork", BACKLOG))
+		Stream<Integer> forkStream = forkBroadcaster.dispatchOn(ProcessorGroup.single("fork", BACKLOG))
 		                                            .log("fork");
 
 		forkStream.subscribe(computationBroadcaster);
 		forkStream.subscribe(persistenceBroadcaster);
 
 		final Stream<List<String>> joinStream = Stream.join(computationStream, persistenceStream)
-		                                              .dispatchOn(Processors.singleGroup("join", BACKLOG))
+		                                              .dispatchOn(ProcessorGroup.single("join", BACKLOG))
 		                                              .map(listOfLists -> {
 			                                               listOfLists.get(0)
 			                                                          .addAll(listOfLists.get(1));

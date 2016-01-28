@@ -24,7 +24,6 @@ import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Producer;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.publisher.Processors;
 import reactor.core.timer.Timer;
 import reactor.core.util.PlatformDependent;
 

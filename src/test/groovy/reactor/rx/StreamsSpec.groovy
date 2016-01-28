@@ -18,7 +18,6 @@ package reactor.rx
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription
 import reactor.core.publisher.ProcessorGroup
-import reactor.core.publisher.Processors
 import reactor.core.subscriber.SubscriberWithContext
 import reactor.core.test.TestSubscriber
 import reactor.core.timer.Timer
@@ -40,7 +39,7 @@ class StreamsSpec extends Specification {
 
 	void setupSpec() {
 		Timer.global()
-		asyncGroup = Processors.asyncGroup("stream-spec", 128, 4, null, null, false)
+		asyncGroup = ProcessorGroup.async("stream-spec", 128, 4, null, null, false)
 	}
 
 	def cleanupSpec() {
@@ -314,7 +313,7 @@ class StreamsSpec extends Specification {
 			'the most recent value is retrieved'
 			def last = s
 					.every(2l, TimeUnit.SECONDS)
-					.publishOn(Processors.ioGroup("work", 8, 4))
+					.publishOn(ProcessorGroup.io("work", 8, 4))
 					.dispatchOn(asyncGroup)
 					.log()
 					.take(1)
@@ -334,7 +333,7 @@ class StreamsSpec extends Specification {
 			def last =
 			s
 					.take(4, TimeUnit.SECONDS)
-					.publishOn(Processors.ioGroup("work", 8, 4))
+					.publishOn(ProcessorGroup.io("work", 8, 4))
 					.last()
 					.subscribeWith(Promise.ready())
 
@@ -1009,7 +1008,7 @@ class StreamsSpec extends Specification {
 			def source = Broadcaster.<Integer> replay()
 
 			def res = source
-					.publishOn(Processors.ioGroup("test",32,2))
+					.publishOn(ProcessorGroup.io("test",32,2))
 					.delaySubscription(1L)
 					.map { it * 2 }
 					.buffer()
@@ -1658,7 +1657,7 @@ class StreamsSpec extends Specification {
 					{ println Thread.currentThread().name + ' end' }
 			)
 					.log()
-					.publishOn(Processors.ioGroup("work", 8, 4))
+					.publishOn(ProcessorGroup.io("work", 8, 4))
 
 		when:
 			'accept a value'

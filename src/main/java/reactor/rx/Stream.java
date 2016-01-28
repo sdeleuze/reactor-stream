@@ -49,7 +49,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSource;
 import reactor.core.publisher.ProcessorGroup;
-import reactor.core.publisher.Processors;
 import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Introspectable;
@@ -3470,8 +3469,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Re-route incoming values into a dynamically created {@link Stream} for each unique key evaluated by the {param
 	 * keyMapper}. The hashcode of the incoming data will be used for partitioning over {@link
-	 * Processors#DEFAULT_POOL_SIZE} buckets. That means that at any point of time at most {@link
-	 * Processors#DEFAULT_POOL_SIZE} number of streams will be created and used accordingly to the current hashcode % n
+	 * ProcessorGroup#DEFAULT_POOL_SIZE} buckets. That means that at any point of time at most {@link
+	 * ProcessorGroup#DEFAULT_POOL_SIZE} number of streams will be created and used accordingly to the current hashcode % n
 	 * result.
 	 *
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values routed to this partition
@@ -3479,7 +3478,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public final Stream<GroupedStream<Integer, O>> partition() {
-		return partition(Processors.DEFAULT_POOL_SIZE);
+		return partition(ProcessorGroup.DEFAULT_POOL_SIZE);
 	}
 
 	/**
@@ -4453,7 +4452,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 *
-	 * {@code stream.subscribeWith(Processors.queue()).subscribe(Subscribers.unbounded()) }
+	 * {@code stream.subscribeWith(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param subscriber
 	 * @param <E>

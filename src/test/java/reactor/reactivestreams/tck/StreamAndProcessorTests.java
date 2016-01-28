@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Test;
 import org.reactivestreams.Processor;
 import org.testng.SkipException;
-import reactor.core.publisher.Processors;
 import reactor.fn.BiFunction;
 import reactor.rx.Stream;
 
@@ -41,7 +40,7 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 
 		Stream<String> otherStream = Stream.just("test", "test2", "test3");
 		System.out.println("Providing new downstream");
-		Processor<Integer, Integer> p = Processors.queue("stream-raw-fork", bufferSize);
+		Processor<Integer, Integer> p = WorkQueueProcessor.create("stream-raw-fork", bufferSize);
 
 		cumulated.set(0);
 		cumulatedJoin.set(0);
@@ -61,7 +60,7 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 		                                                                                          combinator))
 		                                                                .doOnNext(this::monitorThreadUse))
 		                                  .doOnNext(array -> cumulatedJoin.getAndIncrement())
-		                                  .process(Processors.topic("stream-raw-join", bufferSize))
+		                                  .process(TopicProcessor.create("stream-raw-join", bufferSize))
 		                                  .when(Throwable.class, Throwable::printStackTrace));
 	}
 

@@ -21,7 +21,6 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.ProcessorGroup;
-import reactor.core.publisher.Processors;
 import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
 import reactor.rx.subscriber.SerializedSubscriber;

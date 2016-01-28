@@ -23,7 +23,6 @@ import org.reactivestreams.Processor;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import reactor.core.publisher.ProcessorGroup;
-import reactor.core.publisher.Processors;
 import reactor.fn.BiFunction;
 import reactor.rx.Broadcaster;
 import reactor.rx.Stream;
@@ -44,7 +43,7 @@ public class StreamAndProcessorGroupTests extends AbstractStreamVerification {
 		System.out.println("Providing new downstream");
 
 		ProcessorGroup<Integer> asyncGroup =
-				Processors.asyncGroup("stream-p-tck", bufferSize, 2,
+				ProcessorGroup.async("stream-p-tck", bufferSize, 2,
 						Throwable::printStackTrace);
 
 		BiFunction<Integer, String, Integer> combinator = (t1, t2) -> t1;
@@ -106,7 +105,7 @@ public class StreamAndProcessorGroupTests extends AbstractStreamVerification {
 	@BeforeClass
 	public static void setupGlobal(){
 		System.out.println("test ");
-		sharedGroup = Processors.asyncGroup("stream-tck", 32, 2,
+		sharedGroup = ProcessorGroup.async("stream-tck", 32, 2,
 				Throwable::printStackTrace, null, false);
 	}
 
