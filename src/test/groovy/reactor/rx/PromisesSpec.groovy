@@ -16,6 +16,7 @@
 package reactor.rx
 
 import reactor.core.publisher.Mono
+import reactor.core.publisher.ProcessorGroup
 import reactor.core.util.Exceptions
 import spock.lang.Specification
 
