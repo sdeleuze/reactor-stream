@@ -136,7 +136,7 @@ public class StreamAndProcessorGroupTests extends AbstractStreamVerification {
 	/*public static void main(String... args) throws Exception {
 		AbstractStreamVerification s = new StreamAndProcessorGroupTests();
 		Processor p = s.createProcessor(256);
-		ReactiveSession sess = ReactiveSession.create(p);
+		SignalEmitter sess = SignalEmitter.create(p);
 		p.subscribe(Subscribers.unbounded());
 		Nexus nexus = ReactiveNet.nexus().withSystemStats();
 		nexus.monitor(p);

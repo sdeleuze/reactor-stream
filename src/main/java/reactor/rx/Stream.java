@@ -55,7 +55,7 @@ import reactor.core.state.Backpressurable;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.BlockingIterable;
-import reactor.core.subscriber.ReactiveSession;
+import reactor.core.subscriber.SignalEmitter;
 import reactor.core.subscriber.SubscriberWithContext;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.timer.Timer;
@@ -1270,7 +1270,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @see Flux#yield(Consumer)
 	 * @return a new {@link Stream}
 	 */
-	public static <T> Stream<T> yield(Consumer<? super ReactiveSession<T>> sessionConsumer) {
+	public static <T> Stream<T> yield(Consumer<? super SignalEmitter<T>> sessionConsumer) {
 		return from(Flux.yield(sessionConsumer));
 	}
 

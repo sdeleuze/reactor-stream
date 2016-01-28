@@ -39,7 +39,7 @@ import org.reactivestreams.tck.TestEnvironment;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import reactor.core.publisher.Processors;
-import reactor.core.subscriber.ReactiveSession;
+import reactor.core.subscriber.SignalEmitter;
 import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
 import reactor.rx.Broadcaster;
@@ -221,7 +221,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 		Processor<Integer, Integer> processor = createProcessor(1024);
 
 		Broadcaster<Integer> stream = Broadcaster.create();
-		ReactiveSession<Integer> session = ReactiveSession.create(stream);
+		SignalEmitter<Integer> session = SignalEmitter.create(stream);
 		stream.subscribe(processor);
 		if(Stream.class.isAssignableFrom(processor.getClass())) {
 			System.out.println(((Stream)processor).debug());
