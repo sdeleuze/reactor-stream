@@ -26,8 +26,8 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.flow.Producer;
 import reactor.core.flow.MultiProducer;
+import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Processors;
@@ -415,7 +415,7 @@ final class StreamGroupBy<T, K> extends StreamBarrier<T, GroupedStream<K, T>> {
 		}
 
 		@Override
-		public long downstreamsCount() {
+		public long downstreamCount() {
 			return groupByMap.size();
 		}
 

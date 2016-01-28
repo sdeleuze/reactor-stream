@@ -22,8 +22,6 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import reactor.fn.Function;
-import reactor.fn.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -39,8 +37,8 @@ import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.core.util.BackpressureUtils;
-import reactor.core.util.Exceptions;
+import reactor.fn.Function;
+import reactor.fn.Supplier;
 
 /**
  * Combines the latest values from multiple sources through a function.
@@ -101,7 +99,7 @@ extends Stream<R>
 	}
 
 	@Override
-	public long upstreamsCount() {
+	public long upstreamCount() {
 		return array != null ? array.length : -1L;
 	}
 
@@ -283,7 +281,7 @@ extends Stream<R>
 		}
 
 		@Override
-		public long upstreamsCount() {
+		public long upstreamCount() {
 			return subscribers.length;
 		}
 

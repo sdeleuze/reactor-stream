@@ -54,7 +54,7 @@ extends Stream<T>
 	}
 
 	@Override
-	public long upstreamsCount() {
+	public long upstreamCount() {
 		return array.length;
 	}
 
