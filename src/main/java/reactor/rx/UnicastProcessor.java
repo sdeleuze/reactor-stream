@@ -80,7 +80,7 @@ final class UnicastProcessor<T>
 	 * @param <T>
 	 * @return a new {@link UnicastProcessor} instance using the given queue
 	 */
-	public static <T> UnicastProcessor create(Queue<T> queue) {
+	public static <T> UnicastProcessor<T> create(Queue<T> queue) {
 		return  new UnicastProcessor<>(queue, null);
 	}
 
@@ -90,8 +90,8 @@ final class UnicastProcessor<T>
 	 * @param <T>
 	 * @return a new {@link UnicastProcessor} instance using the given queue
 	 */
-	public static <T> UnicastProcessor create(Queue<T> queue, Runnable onTerminate) {
-		return  new UnicastProcessor<>(queue, onTerminate);
+	public static <T> UnicastProcessor<T> create(Queue<T> queue, Runnable onTerminate) {
+		return new UnicastProcessor<>(queue, onTerminate);
 	}
 
 	UnicastProcessor(Queue<T> queue, Runnable onTerminate) {
