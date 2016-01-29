@@ -16,7 +16,6 @@
 package reactor.rx;
 
 import java.util.Objects;
-import java.util.Queue;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -70,7 +69,6 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 		final Predicate<? super T> predicate;
 
 		QueueSubscription<T> s;
-		Queue<T>			  q;
 
 		boolean done;
 		
@@ -93,7 +91,6 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.validate(this.s, s)) {
 				this.s = (QueueSubscription<T>)s;
-				this.q = this.s.queue();
 				actual.onSubscribe(this);
 			}
 		}
@@ -227,7 +224,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 			if (sourceMode == ASYNC) {
 				long dropped = 0;
 				for (;;) {
-					T v = q.poll();
+					T v = s.poll();
 	
 					if (v == null || predicate.test(v)) {
 						if (dropped != 0) {
@@ -239,7 +236,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 				}
 			} else {
 				for (;;) {
-					T v = q.poll();
+					T v = s.poll();
 	
 					if (v == null || predicate.test(v)) {
 						return v;
@@ -253,7 +250,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 			if (sourceMode == ASYNC) {
 				long dropped = 0;
 				for (;;) {
-					T v = q.peek();
+					T v = s.peek();
 	
 					if (v == null || predicate.test(v)) {
 						if (dropped != 0) {
@@ -266,7 +263,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 				}
 			} else {
 				for (;;) {
-					T v = q.peek();
+					T v = s.peek();
 	
 					if (v == null || predicate.test(v)) {
 						return v;
@@ -283,7 +280,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 
 		@Override
 		public void clear() {
-			q.clear();
+			s.clear();
 		}
 		
 		@Override

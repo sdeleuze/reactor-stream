@@ -16,7 +16,6 @@
 package reactor.rx;
 
 import java.util.Objects;
-import java.util.Queue;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -81,7 +80,6 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 		boolean done;
 
 		QueueSubscription<T> s;
-		Queue<T>			  q;
 
 		int sourceMode;
 
@@ -102,7 +100,6 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.validate(this.s, s)) {
 				this.s = (QueueSubscription<T>)s;
-				this.q = this.s.queue();
 				actual.onSubscribe(this);
 			}
 		}
@@ -207,7 +204,7 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 		@Override
 		public R poll() {
 			// FIXME maybe should cache the result to avoid mapping twice in case of peek/poll pairs
-			T v = q.poll();
+			T v = s.poll();
 			if (v != null) {
 				return mapper.apply(v);
 			}
@@ -217,7 +214,7 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 		@Override
 		public R peek() {
 			// FIXME maybe should cache the result to avoid mapping twice in case of peek/poll pairs
-			T v = q.peek();
+			T v = s.peek();
 			if (v != null) {
 				return mapper.apply(v);
 			}
@@ -226,12 +223,12 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 
 		@Override
 		public boolean isEmpty() {
-			return q.isEmpty();
+			return s.isEmpty();
 		}
 
 		@Override
 		public void clear() {
-			q.clear();
+			s.clear();
 		}
 
 		@Override
