@@ -348,7 +348,7 @@ extends Stream<T>
 		}
 		
 		@Override
-		public boolean requestSyncFusion() {
+		public boolean requestFusion() {
 			return true;
 		}
 		
@@ -612,7 +612,7 @@ extends Stream<T>
 		}
 		
 		@Override
-		public boolean requestSyncFusion() {
+		public boolean requestFusion() {
 			return true;
 		}
 		

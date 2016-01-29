@@ -24,6 +24,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Fuseable;
+import reactor.core.flow.Fuseable.FusionMode;
 import reactor.core.subscriber.MultiSubscriptionSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
@@ -165,17 +166,29 @@ final class StreamConcatMap<T, R> extends StreamSource<T, R> {
 
 				if (s instanceof Fuseable.QueueSubscription) {
 					@SuppressWarnings("unchecked") Fuseable.QueueSubscription<T> f = (Fuseable.QueueSubscription<T>)s;
-					queue = f;
-					if (f.requestSyncFusion()){
+					FusionMode m = f.requestFusion(FusionMode.ANY);
+					if (m == FusionMode.SYNC){
 						sourceMode = SYNC;
+						queue = f;
 						done = true;
 						
 						actual.onSubscribe(this);
 						
 						drain();
 						return;
-					} else {
+					} else 
+					if (m == FusionMode.ASYNC) {
 						sourceMode = ASYNC;
+						queue = f;
+					} else {
+						try {
+							queue = queueSupplier.get();
+						} catch (Throwable ex) {
+							s.cancel();
+							
+							EmptySubscription.error(actual, ex);
+							return;
+						}
 					}
 				} else {
 					try {
@@ -476,17 +489,31 @@ final class StreamConcatMap<T, R> extends StreamSource<T, R> {
 
 				if (s instanceof Fuseable.QueueSubscription) {
 					@SuppressWarnings("unchecked") Fuseable.QueueSubscription<T> f = (Fuseable.QueueSubscription<T>)s;
-					queue = f;
-					if (f.requestSyncFusion()){
+					
+					FusionMode m = f.requestFusion(FusionMode.ANY);
+					
+					if (m == FusionMode.SYNC){
 						sourceMode = SYNC;
+						queue = f;
 						done = true;
 						
 						actual.onSubscribe(this);
 						
 						drain();
 						return;
-					} else {
+					} else 
+					if (m == FusionMode.ASYNC) {
 						sourceMode = ASYNC;
+						queue = f;
+					} else {
+						try {
+							queue = queueSupplier.get();
+						} catch (Throwable ex) {
+							s.cancel();
+							
+							EmptySubscription.error(actual, ex);
+							return;
+						}
 					}
 				} else {
 					try {

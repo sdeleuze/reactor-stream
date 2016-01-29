@@ -2220,18 +2220,24 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 1.1, 2.0
 	 */
 	public final <V> Stream<V> concatMap(final Function<? super O, Publisher<? extends V>> fn) {
-		return new StreamSource<O, V>(this) {
-			@Override
-			public String getName() {
-				return "concatMap";
-			}
+		return new StreamConcatMap<>(this, fn, QueueSupplier.<O>xs(), PlatformDependent.XS_BUFFER_SIZE,
+				StreamConcatMap.ErrorMode.IMMEDIATE);
+	}
 
-			@Override
-			public void subscribe(Subscriber<? super V> s) {
-				Flux.flatMap(Stream.this, fn, PlatformDependent.SMALL_BUFFER_SIZE, 1, false)
-				    .subscribe(s);
-			}
-		};
+	/**
+	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@code Stream<O,V>} and pass
+	 * it into another {@code Stream}. The produced stream will emit the data from all transformed streams in order.
+	 *
+	 * @param fn the transformation function
+	 * @param <V> the type of the return value of the transformation function
+	 *
+	 * @return a new {@link Stream} containing the transformed values
+	 *
+	 * @since 2.5
+	 */
+	public final <V> Stream<V> concatMapDelayError(final Function<? super O, Publisher<? extends V>> fn) {
+		return new StreamConcatMap<>(this, fn, QueueSupplier.<O>xs(), PlatformDependent.XS_BUFFER_SIZE,
+				StreamConcatMap.ErrorMode.END);
 	}
 
 	/**
