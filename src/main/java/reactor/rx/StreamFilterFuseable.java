@@ -69,7 +69,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 
 		final Predicate<? super T> predicate;
 
-		FusionSubscription<T> s;
+		QueueSubscription<T> s;
 		Queue<T>			  q;
 
 		boolean done;
@@ -92,7 +92,7 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 		@Override
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.validate(this.s, s)) {
-				this.s = (FusionSubscription<T>)s;
+				this.s = (QueueSubscription<T>)s;
 				this.q = this.s.queue();
 				actual.onSubscribe(this);
 			}

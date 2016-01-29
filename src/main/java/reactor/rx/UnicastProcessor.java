@@ -37,7 +37,7 @@ import reactor.core.util.BackpressureUtils;
  */
 final class UnicastProcessor<T>
 		extends reactor.rx.Stream<T>
-		implements Processor<T, T>, Fuseable.FusionSubscription<T>, Fuseable {
+		implements Processor<T, T>, Fuseable.QueueSubscription<T>, Fuseable {
 
 	final Queue<T> queue;
 

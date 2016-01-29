@@ -163,8 +163,8 @@ final class StreamConcatMap<T, R> extends StreamSource<T, R> {
 			if (BackpressureUtils.validate(this.s, s))  {
 				this.s = s;
 
-				if (s instanceof Fuseable.FusionSubscription) {
-					@SuppressWarnings("unchecked") Fuseable.FusionSubscription<T> f = (Fuseable.FusionSubscription<T>)s;
+				if (s instanceof Fuseable.QueueSubscription) {
+					@SuppressWarnings("unchecked") Fuseable.QueueSubscription<T> f = (Fuseable.QueueSubscription<T>)s;
 					queue = f.queue();
 					if (f.requestSyncFusion()){
 						sourceMode = SYNC;
@@ -474,8 +474,8 @@ final class StreamConcatMap<T, R> extends StreamSource<T, R> {
 			if (BackpressureUtils.validate(this.s, s))  {
 				this.s = s;
 
-				if (s instanceof Fuseable.FusionSubscription) {
-					@SuppressWarnings("unchecked") Fuseable.FusionSubscription<T> f = (Fuseable.FusionSubscription<T>)s;
+				if (s instanceof Fuseable.QueueSubscription) {
+					@SuppressWarnings("unchecked") Fuseable.QueueSubscription<T> f = (Fuseable.QueueSubscription<T>)s;
 					queue = f.queue();
 					if (f.requestSyncFusion()){
 						sourceMode = SYNC;

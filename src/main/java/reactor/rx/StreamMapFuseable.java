@@ -80,7 +80,7 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 
 		boolean done;
 
-		FusionSubscription<T> s;
+		QueueSubscription<T> s;
 		Queue<T>			  q;
 
 		int sourceMode;
@@ -101,7 +101,7 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 		@Override
 		public void onSubscribe(Subscription s) {
 			if (BackpressureUtils.validate(this.s, s)) {
-				this.s = (FusionSubscription<T>)s;
+				this.s = (QueueSubscription<T>)s;
 				this.q = this.s.queue();
 				actual.onSubscribe(this);
 			}
