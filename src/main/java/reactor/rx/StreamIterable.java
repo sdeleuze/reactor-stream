@@ -348,11 +348,6 @@ extends Stream<T>
 		}
 		
 		@Override
-		public boolean requestFusion() {
-			return true;
-		}
-		
-		@Override
 		public void drop() {
 			current = null;
 			state = STATE_CALL_HAS_NEXT;
@@ -609,11 +604,6 @@ extends Stream<T>
 				return c;
 			}
 			return null;
-		}
-		
-		@Override
-		public boolean requestFusion() {
-			return true;
 		}
 		
 		@Override
