@@ -165,7 +165,7 @@ final class StreamConcatMap<T, R> extends StreamSource<T, R> {
 
 				if (s instanceof Fuseable.QueueSubscription) {
 					@SuppressWarnings("unchecked") Fuseable.QueueSubscription<T> f = (Fuseable.QueueSubscription<T>)s;
-					queue = f.queue();
+					queue = f;
 					if (f.requestSyncFusion()){
 						sourceMode = SYNC;
 						done = true;
