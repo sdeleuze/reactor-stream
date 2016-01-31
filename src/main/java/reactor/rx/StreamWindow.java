@@ -181,7 +181,7 @@ final class StreamWindow<T> extends StreamSource<T, Stream<T>> {
 					return;
 				}
 				
-				w = UnicastProcessor.create(q, this);
+				w = new UnicastProcessor<>(q, this);
 				window = w;
 				
 				actual.onNext(w);
@@ -337,7 +337,7 @@ final class StreamWindow<T> extends StreamSource<T, Stream<T>> {
 					return;
 				}
 				
-				w = UnicastProcessor.create(q, this);
+				w = new UnicastProcessor<>(q, this);
 				window = w;
 				
 				actual.onNext(w);
@@ -525,7 +525,7 @@ final class StreamWindow<T> extends StreamSource<T, Stream<T>> {
 						return;
 					}
 					
-					UnicastProcessor<T> w = UnicastProcessor.create(q, this);
+					UnicastProcessor<T> w = new UnicastProcessor<>(q, this);
 					
 					windows.offer(w);
 					

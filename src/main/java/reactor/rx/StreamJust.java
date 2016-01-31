@@ -18,11 +18,11 @@ package reactor.rx;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.flow.Fuseable;
 import reactor.core.flow.Loopback;
 import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
 import reactor.core.util.Exceptions;
-import reactor.fn.Supplier;
 
 /**
  * A Stream that emits only one value and then complete.
@@ -50,7 +50,7 @@ import reactor.fn.Supplier;
  *
  * @author Stephane Maldini
  */
-final class StreamJust<T> extends Stream<T> implements Supplier<T>, Loopback {
+final class StreamJust<T> extends Stream<T> implements Fuseable.ScalarSupplier<T>, Loopback {
 
 	final public static StreamJust<?> EMPTY = new StreamJust<>(null);
 

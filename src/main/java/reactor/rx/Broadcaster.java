@@ -24,6 +24,7 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
+import reactor.fn.Supplier;
 import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.rx.util.SwapSubscription;
 
@@ -184,7 +185,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * @param <T> the type of values passing through the {@literal Broadcaster}
 	 * @return a new {@link Broadcaster}
 	 */
-	public static <T> Broadcaster<T> from(ProcessorGroup emitter) {
+	public static <T> Broadcaster<T> from(Supplier<? extends Processor<T, T>> emitter) {
 		return from(emitter, false);
 	}
 
@@ -197,7 +198,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * @param <T> the type of values passing through the {@literal Broadcaster}
 	 * @return a new {@link Broadcaster}
 	 */
-	public static <T> Broadcaster<T> from(ProcessorGroup emitter, boolean autoCancel) {
+	public static <T> Broadcaster<T> from(Supplier<? extends Processor<T, T>> emitter, boolean autoCancel) {
 		return from(emitter, null, autoCancel);
 	}
 
@@ -212,8 +213,9 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * @return a new {@link Broadcaster}
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> Broadcaster<T> from(ProcessorGroup emitter, Timer timer, boolean autoCancel) {
-		return from(emitter.dispatchOn(), timer, autoCancel);
+	public static <T> Broadcaster<T> from(Supplier<? extends Processor> emitter, Timer timer, boolean
+			autoCancel) {
+		return from(emitter.get(), timer, autoCancel);
 	}
 
 	/**

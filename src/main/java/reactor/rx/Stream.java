@@ -44,7 +44,6 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.converter.DependencyUtils;
-import reactor.core.flow.Loopback;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -2529,8 +2528,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @return a new dispatched {@link Stream}
 	 */
-	public final Stream<O> dispatchOn(final ProcessorGroup processorProvider) {
-		return new DispatchOn<>(this, processorProvider);
+	public final Stream<O> dispatchOn(final Callable<? extends Consumer<Runnable>> scheduler) {
+		return new StreamSource<>(Flux.dispatchOn(this, scheduler, true,
+				PlatformDependent.SMALL_BUFFER_SIZE, QueueSupplier.<O>small()));
 	}
 
 	/**
@@ -3546,8 +3546,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @return a new dispatched {@link Stream}
 	 */
-	public final Stream<O> publishOn(final ProcessorGroup processorProvider) {
-		return new PublishOn<>(this, processorProvider);
+	public final Stream<O> publishOn(final Callable<? extends Consumer<Runnable>> scheduler) {
+		return new StreamSource<>(Flux.publishOn(this, scheduler));
 	}
 
 	/**
@@ -4105,7 +4105,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public final Stream<O> switchIfEmpty(final Publisher<? extends O> fallback) {
-		return new StreamSwitchIfEmpty<O>(this, fallback);
+		return new StreamSwitchIfEmpty<>(this, fallback);
 	}
 
 	/**
@@ -4991,81 +4991,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	@SuppressWarnings("unchecked")
 	public final <T2> Stream<Tuple2<O, T2>> zipWithIterable(Iterable<? extends T2> iterable) {
 		return new StreamZipIterable<>(this, iterable, (BiFunction<O, T2, Tuple2<O, T2>>)TUPLE2_BIFUNCTION);
-	}
-
-	private static final class DispatchOn<O> extends StreamSource<O, O> implements Loopback {
-
-		private final ProcessorGroup processorProvider;
-
-		public DispatchOn(Stream<O> s, ProcessorGroup processorProvider) {
-			super(s);
-			this.processorProvider = processorProvider;
-		}
-
-		@Override
-		public Object connectedInput() {
-			return processorProvider;
-		}
-
-		@Override
-		public Object connectedOutput() {
-			return processorProvider;
-		}
-
-		@Override
-		public String getName() {
-			return "dispatchOn";
-		}
-
-		@Override
-		@SuppressWarnings("unchecked")
-		public void subscribe(Subscriber s) {
-			try {
-				Processor<O, O> processor = processorProvider.dispatchOn();
-				processor.subscribe(s);
-				source.subscribe(processor);
-			}
-			catch (Throwable t) {
-				s.onError(t);
-			}
-		}
-	}
-
-	private static final class PublishOn<O> extends StreamSource<O, O> implements Loopback {
-
-		final ProcessorGroup processorProvider;
-
-		public PublishOn(Stream<O> s, ProcessorGroup processorProvider) {
-			super(s);
-			this.processorProvider = processorProvider;
-		}
-
-		@Override
-		public Object connectedInput() {
-			return processorProvider.connectedInput();
-		}
-
-		@Override
-		public Object connectedOutput() {
-			return processorProvider.connectedOutput();
-		}
-
-		@Override
-		public String getName() {
-			return "publishOn";
-		}
-
-		@Override
-		@SuppressWarnings("unchecked")
-		public void subscribe(Subscriber s) {
-			try {
-				Processor<O, O> processor = processorProvider.publishOn(source);
-				processor.subscribe(s);
-			}
-			catch (Throwable t) {
-				s.onError(t);
-			}
-		}
 	}
 
 	static final BooleanSupplier ALWAYS_BOOLEAN_SUPPLIER = new BooleanSupplier() {

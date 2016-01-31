@@ -379,7 +379,7 @@ final class StreamWindowStartEnd<T, U, V> extends StreamSource<T, Stream<T>>{
 
 							OPEN.getAndIncrement(this);
 							
-							UnicastProcessor<T> w = UnicastProcessor.create(pq, this);
+							UnicastProcessor<T> w = new UnicastProcessor<>(pq, this);
 							
 							WindowStartEndEnder<T, V> end = new WindowStartEndEnder<>(this, w);
 							

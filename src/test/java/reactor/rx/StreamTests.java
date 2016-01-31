@@ -55,6 +55,7 @@ import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.ProcessorGroup;
 import reactor.core.publisher.TopicProcessor;
+import reactor.core.subscriber.SignalEmitter;
 import reactor.core.subscriber.Subscribers;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
@@ -283,6 +284,7 @@ public class StreamTests extends AbstractReactorTest {
 		Random random = ThreadLocalRandom.current();
 
 		Broadcaster<String> d = Broadcaster.<String>create();
+		SignalEmitter<String> s = SignalEmitter.create(d);
 		Stream<Integer> tasks = d.dispatchOn(asyncGroup)
 		                         .partition(8)
 		                         .flatMap(stream -> stream.dispatchOn(asyncGroup)
@@ -304,7 +306,7 @@ public class StreamTests extends AbstractReactorTest {
 		System.out.println(tail.debug());
 
 		for (int i = 1; i <= items; i++) {
-			d.onNext(String.valueOf(i));
+			s.submit(String.valueOf(i));
 		}
 		latch.await(15, TimeUnit.SECONDS);
 		System.out.println(tail.debug());
@@ -386,6 +388,7 @@ public class StreamTests extends AbstractReactorTest {
 		final ConcurrentHashMap<Object, Long> seenConsumer = new ConcurrentHashMap<>();
 
 		Broadcaster<Integer> d = Broadcaster.create();
+		SignalEmitter<Integer> s = SignalEmitter.create(d);
 
 		Control c = d.dispatchOn(asyncGroup)
 		             .partition(8)
@@ -431,7 +434,7 @@ public class StreamTests extends AbstractReactorTest {
 		                                      }));
 
 		for (int i = 0; i < COUNT; i++) {
-			d.onNext(i);
+			s.submit(i);
 		}
 
 		internalLatch.await(5, TimeUnit.SECONDS);
@@ -446,8 +449,8 @@ public class StreamTests extends AbstractReactorTest {
 		Broadcaster<Integer> source = Broadcaster.<Integer>create();
 		long avgTime = 50l;
 
-		Promise<Long> result = source.onBackpressureBuffer()
-		                          .dispatchOn(asyncGroup)
+		Promise<Long> result = source
+				.dispatchOn(asyncGroup)
 		                          .throttleRequest(avgTime)
 		                          .elapsed()
 		                          .skip(1)
@@ -774,13 +777,14 @@ public class StreamTests extends AbstractReactorTest {
 		 */
 		final double TOLERANCE = 0.9;
 
-		Broadcaster<Integer> batchingStreamDef = Broadcaster.from(asyncGroup);
+		StreamProcessor<Integer, Integer> batchingStreamDef = Broadcaster.from(asyncGroup.processor());
 
 		List<Integer> testDataset = createTestDataset(NUM_MESSAGES);
 
 		final CountDownLatch latch = new CountDownLatch(NUM_MESSAGES);
 		Map<Integer, Integer> batchesDistribution = new ConcurrentHashMap<>();
-		batchingStreamDef.partition(PARALLEL_STREAMS)
+		batchingStreamDef
+		                 .partition(PARALLEL_STREAMS)
 		                 .consume(substream -> substream.dispatchOn(asyncGroup)
 		                                                .buffer(BATCH_SIZE, TIMEOUT, TimeUnit.MILLISECONDS)
 		                                                .consume(items -> {
@@ -789,7 +793,9 @@ public class StreamTests extends AbstractReactorTest {
 			                                                items.forEach(item -> latch.countDown());
 		                                                }));
 
-		testDataset.forEach(batchingStreamDef::onNext);
+		testDataset.forEach(d -> {
+			batchingStreamDef.onNext(d);
+		});
 
 		System.out.println(batchingStreamDef.debug());
 
@@ -912,7 +918,7 @@ public class StreamTests extends AbstractReactorTest {
 	 */
 	@Test
 	public void testParallelWithJava8StreamsInput() throws InterruptedException {
-		ProcessorGroup<Long> supplier = ProcessorGroup.async("test-p", 2048, 2);
+		ProcessorGroup supplier = ProcessorGroup.async("test-p", 2048, 2);
 
 		int max = ThreadLocalRandom.current()
 		                           .nextInt(100, 300);
@@ -937,10 +943,13 @@ public class StreamTests extends AbstractReactorTest {
 
 		CountDownLatch countDownLatch = new CountDownLatch(tasks.size());
 		Stream<Integer> worker = Stream.fromIterable(tasks)
+		                               .log("before")
 		                               .dispatchOn(asyncGroup);
 
-		Control tail = worker.partition(2)
-		                     .consume(s -> s.dispatchOn(asyncGroup)
+		Control tail = worker.log("after")
+		                     .partition(2)
+		                     .consume(s -> s.log("w"+s.key())
+		                                    .dispatchOn(asyncGroup)
 		                                    .map(v -> v)
 		                                    .consume(v -> countDownLatch.countDown(), Throwable::printStackTrace));
 
@@ -948,7 +957,7 @@ public class StreamTests extends AbstractReactorTest {
 		if (countDownLatch.getCount() > 0) {
 			System.out.println(tail.debug());
 		}
-		Assert.assertEquals(0, countDownLatch.getCount());
+		Assert.assertEquals("Count max: "+ tasks.size(), 0, countDownLatch.getCount());
 	}
 
 	@Test
@@ -1166,8 +1175,8 @@ public class StreamTests extends AbstractReactorTest {
 
 	@Test
 	public void consistentMultithreadingWithPartition() throws InterruptedException {
-		ProcessorGroup<Long> supplier1 = ProcessorGroup.async("groupByPool", 32, 2);
-		ProcessorGroup<Long> supplier2 = ProcessorGroup.async("partitionPool", 32, 5);
+		ProcessorGroup supplier1 = ProcessorGroup.async("groupByPool", 32, 2);
+		ProcessorGroup supplier2 = ProcessorGroup.async("partitionPool", 32, 5);
 
 		CountDownLatch latch = new CountDownLatch(10);
 
