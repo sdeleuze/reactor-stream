@@ -153,10 +153,11 @@ public class StreamCombinationTests extends AbstractReactorTest {
 	@Test
 	public void sampleCombineLatestTest() throws Exception {
 		int elements = 40;
-		CountDownLatch latch = new CountDownLatch(elements / 2);
+		CountDownLatch latch = new CountDownLatch(elements / 2 - 2);
 
-		Control tail = Stream.combineLatest(sensorOdd().cache().throttleRequest(100), sensorEven().cache()
-		                                                                                         .throttleRequest(100),
+		Control tail = Stream.combineLatest(
+				sensorOdd().cache().throttleRequest(50),
+				sensorEven().cache().throttleRequest(100),
 		this::computeMin)
 		                      .log("combineLatest")
 		                      .consume(i -> latch.countDown(), null, latch::countDown);
