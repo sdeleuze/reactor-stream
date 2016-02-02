@@ -24,7 +24,6 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Fuseable;
-import reactor.core.flow.Fuseable.FusionMode;
 import reactor.core.subscriber.MultiSubscriptionSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
@@ -166,8 +165,8 @@ final class StreamConcatMap<T, R> extends StreamSource<T, R> {
 
 				if (s instanceof Fuseable.QueueSubscription) {
 					@SuppressWarnings("unchecked") Fuseable.QueueSubscription<T> f = (Fuseable.QueueSubscription<T>)s;
-					FusionMode m = f.requestFusion(FusionMode.ANY);
-					if (m == FusionMode.SYNC){
+					int m = f.requestFusion(Fuseable.ANY);
+					if (m == Fuseable.SYNC){
 						sourceMode = SYNC;
 						queue = f;
 						done = true;
@@ -177,7 +176,7 @@ final class StreamConcatMap<T, R> extends StreamSource<T, R> {
 						drain();
 						return;
 					} else 
-					if (m == FusionMode.ASYNC) {
+					if (m == Fuseable.ASYNC) {
 						sourceMode = ASYNC;
 						queue = f;
 					} else {
@@ -490,9 +489,9 @@ final class StreamConcatMap<T, R> extends StreamSource<T, R> {
 				if (s instanceof Fuseable.QueueSubscription) {
 					@SuppressWarnings("unchecked") Fuseable.QueueSubscription<T> f = (Fuseable.QueueSubscription<T>)s;
 					
-					FusionMode m = f.requestFusion(FusionMode.ANY);
+					int m = f.requestFusion(Fuseable.ANY);
 					
-					if (m == FusionMode.SYNC){
+					if (m == Fuseable.SYNC){
 						sourceMode = SYNC;
 						queue = f;
 						done = true;
@@ -502,7 +501,7 @@ final class StreamConcatMap<T, R> extends StreamSource<T, R> {
 						drain();
 						return;
 					} else 
-					if (m == FusionMode.ASYNC) {
+					if (m == Fuseable.ASYNC) {
 						sourceMode = ASYNC;
 						queue = f;
 					} else {

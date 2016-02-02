@@ -410,12 +410,12 @@ final class UnicastProcessor<T>
 	}
 
 	@Override
-	public FusionMode requestFusion(FusionMode requestedMode) {
-		if (requestedMode == FusionMode.ANY || requestedMode == FusionMode.ASYNC) {
+	public int requestFusion(int requestedMode) {
+		if (requestedMode == Fuseable.ANY || requestedMode == Fuseable.ASYNC) {
 			enableOperatorFusion = true;
-			return FusionMode.ASYNC;
+			return Fuseable.ASYNC;
 		}
-		return FusionMode.NONE;
+		return Fuseable.NONE;
 	}
 
 	@Override
