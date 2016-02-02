@@ -18,6 +18,7 @@ package reactor.rx;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.flow.Fuseable;
 import reactor.core.flow.Receiver;
 import reactor.core.state.Backpressurable;
 import reactor.core.timer.Timer;
@@ -40,6 +41,21 @@ public class StreamSource<I, O> extends Stream<O>
 		           Function<Subscriber<? super O>, Subscriber<? super I>> {
 
 	final protected Publisher<? extends I> source;
+
+	/**
+	 * Unchecked wrap of {@link Publisher} as {@link Stream}, supporting {@link Fuseable} sources
+	 *
+	 * @param source the {@link Publisher} to wrap 
+	 * @param <I> input upstream type
+	 * @return a wrapped {@link Stream}
+	 */
+	public static <I> Stream<I> wrap(Publisher<? extends I> source){
+		if(source instanceof Fuseable){
+			return new FuseableStreamSource<>(source);
+		}
+		return new StreamSource<>(source);
+	}
+
 
 	public StreamSource(Publisher<? extends I> source) {
 		this.source = source;
@@ -88,19 +104,7 @@ public class StreamSource<I, O> extends Stream<O>
 				'}';
 	}
 
-	public final static class Identity<I> extends StreamSource<I, I> {
-
-		public Identity(Publisher<I> source) {
-			super(source);
-		}
-
-		@Override
-		public void subscribe(Subscriber<? super I> s) {
-			source.subscribe(s);
-		}
-	}
-
-	public final static class Operator<I, O> extends StreamSource<I, O> {
+	final static class Operator<I, O> extends StreamSource<I, O> {
 
 		private final Function<Subscriber<? super O>, Subscriber<? super I>> barrierProvider;
 
@@ -117,6 +121,12 @@ public class StreamSource<I, O> extends Stream<O>
 		@Override
 		public Subscriber<? super I> apply(Subscriber<? super O> subscriber) {
 			return barrierProvider.apply(subscriber);
+		}
+	}
+
+	static final class FuseableStreamSource<I> extends StreamSource<I, I> implements Fuseable{
+		public FuseableStreamSource(Publisher<? extends I> source) {
+			super(source);
 		}
 	}
 }

@@ -326,6 +326,9 @@ extends Stream<T>
 				} else {
 					c = current;
 				}
+				if (c == null) {
+					throw new NullPointerException();
+				}
 				return c;
 			}
 			return null;
@@ -342,6 +345,9 @@ extends Stream<T>
 					current = null;
 				}
 				state = STATE_CALL_HAS_NEXT;
+				if (c == null) {
+					throw new NullPointerException();
+				}
 				return c;
 			}
 			return null;

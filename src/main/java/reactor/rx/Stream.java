@@ -757,7 +757,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 				return just(t);
 			}
 		}
-		return new StreamSource.Identity<>(publisher);
+		return StreamSource.wrap(publisher);
 	}
 
 	/**
@@ -3091,7 +3091,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public final Mono<O> last() {
-		return new MonoSource<>(new StreamTakeLast<>(this, 1));
+		return MonoSource.wrap(new StreamTakeLast<>(this, 1));
 	}
 
 
@@ -3178,7 +3178,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public final Stream<O> log(final String category, Level level, int options) {
-		return new StreamSource.Identity<>(Flux.log(this, category, level, options));
+		return StreamSource.wrap(Flux.log(this, category, level, options));
 	}
 
 	/**
@@ -3470,7 +3470,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return {@literal new Stream}
 	 */
 	public final Stream<O> onErrorResumeWith(final Function<Throwable, ? extends Publisher<? extends O>> fallback) {
-		return new StreamSource.Identity<>(Flux.onErrorResumeWith(this, fallback));
+		return StreamSource.wrap(Flux.onErrorResumeWith(this, fallback));
 	}
 
 	/**
@@ -4152,7 +4152,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return {@literal new Stream}
 	 */
 	public final Stream<O> switchOnError(final Publisher<? extends O> fallback) {
-		return new StreamSource.Identity<>(Flux.onErrorResumeWith(this, new Function<Throwable, Publisher<? extends O>>() {
+		return StreamSource.wrap(Flux.onErrorResumeWith(this, new Function<Throwable, Publisher<? extends O>>() {
 			@Override
 			public Publisher<? extends O> apply(Throwable throwable) {
 				return fallback;
