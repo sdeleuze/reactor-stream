@@ -62,7 +62,6 @@ import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveStateUtils;
@@ -2541,7 +2540,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new dispatched {@link Stream}
 	 */
 	public final Stream<O> dispatchOn(final ExecutorService executorService) {
-		return dispatchOn(ExecutorUtils.schedulerFromExecutor(executorService));
+		return dispatchOn(new ExecutorServiceScheduler(executorService));
 	}
 
 	/**
@@ -3567,7 +3566,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new dispatched {@link Stream}
 	 */
 	public final Stream<O> publishOn(final ExecutorService executorService) {
-		return publishOn(ExecutorUtils.schedulerFromExecutor(executorService));
+		return publishOn(new ExecutorServiceScheduler(executorService));
 	}
 
 	/**
