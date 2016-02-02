@@ -34,6 +34,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,6 +62,7 @@ import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
+import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveStateUtils;
@@ -2534,6 +2536,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * @see Flux#dispatchOn
+	 *
+	 * @return a new dispatched {@link Stream}
+	 */
+	public final Stream<O> dispatchOn(final ExecutorService executorService) {
+		return dispatchOn(ExecutorUtils.schedulerFromExecutor(executorService));
+	}
+
+	/**
 	 * Create a new {@code Stream} that filters in only unique values.
 	 *
 	 * @return a new {@link Stream} with unique values
@@ -3548,6 +3559,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final Stream<O> publishOn(final Callable<? extends Consumer<Runnable>> scheduler) {
 		return new StreamSource<>(Flux.publishOn(this, scheduler));
+	}
+
+	/**
+	 * @see Flux#publishOn
+	 *
+	 * @return a new dispatched {@link Stream}
+	 */
+	public final Stream<O> publishOn(final ExecutorService executorService) {
+		return publishOn(ExecutorUtils.schedulerFromExecutor(executorService));
 	}
 
 	/**
