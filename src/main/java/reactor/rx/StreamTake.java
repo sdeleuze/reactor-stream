@@ -66,6 +66,11 @@ final class StreamTake<T> extends StreamSource<T, T> {
 		source.subscribe(new TakeSubscriber<>(s, n));
 	}
 
+	@Override
+	public long getCapacity() {
+		return n;
+	}
+
 	static final class TakeSubscriber<T>
 	  implements Subscriber<T>, Subscription, Completable, Receiver, Prefetchable, Backpressurable, Producer {
 

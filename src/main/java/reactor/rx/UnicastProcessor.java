@@ -17,6 +17,7 @@ package reactor.rx;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
@@ -26,6 +27,12 @@ import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Fuseable;
+import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
+import reactor.core.state.Cancellable;
+import reactor.core.state.Completable;
+import reactor.core.state.Failurable;
+import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 
 /**
@@ -39,7 +46,8 @@ import reactor.core.util.BackpressureUtils;
  */
 final class UnicastProcessor<T>
 		extends reactor.rx.Stream<T>
-		implements Processor<T, T>, Fuseable.QueueSubscription<T>, Fuseable {
+		implements Processor<T, T>, Fuseable.QueueSubscription<T>, Fuseable, Producer, Receiver, Failurable,
+		           Completable, Cancellable, Requestable {
 
 	final Queue<T> queue;
 
@@ -75,28 +83,14 @@ final class UnicastProcessor<T>
 
 	volatile boolean enableOperatorFusion;
 
-	/**
-	 * @param queue
-	 * @param <T>
-	 * @return a new {@link UnicastProcessor} instance using the given queue
-	 */
-	public static <T> UnicastProcessor<T> create(Queue<T> queue) {
-		return  new UnicastProcessor<>(queue, null);
+	public UnicastProcessor(Queue<T> queue) {
+		this.queue = Objects.requireNonNull(queue, "queue");
+		this.onTerminate = null;
 	}
 
-	/**
-	 * @param queue
-	 * @param onTerminate
-	 * @param <T>
-	 * @return a new {@link UnicastProcessor} instance using the given queue
-	 */
-	public static <T> UnicastProcessor<T> create(Queue<T> queue, Runnable onTerminate) {
-		return new UnicastProcessor<>(queue, onTerminate);
-	}
-
-	UnicastProcessor(Queue<T> queue, Runnable onTerminate) {
-		this.queue = queue;
-		this.onTerminate = onTerminate;
+	public UnicastProcessor(Queue<T> queue, Runnable onTerminate) {
+		this.queue = Objects.requireNonNull(queue, "queue");
+		this.onTerminate = Objects.requireNonNull(onTerminate, "onTerminate");
 	}
 
 	void doTerminate() {
@@ -160,7 +154,7 @@ final class UnicastProcessor<T>
 
 			if (a == null) {
 				a = actual;
-			}
+		}
 		}
 	}
 
@@ -175,9 +169,10 @@ final class UnicastProcessor<T>
 			actual = null;
 			if (e != null) {
 				a.onError(e);
-			} else {
-				a.onComplete();
 			}
+			else {
+				a.onComplete();
+		}
 			return true;
 		}
 
@@ -262,23 +257,27 @@ final class UnicastProcessor<T>
 			actual = s;
 			if (cancelled) {
 				actual = null;
-			} else {
+		} else {
 				if (enableOperatorFusion) {
 					if (done) {
 						Throwable e = error;
 						if (e != null) {
 							s.onError(e);
-						} else {
-							s.onComplete();
 						}
-					} else {
+						else {
+							s.onComplete();
+		}
+					}
+					else {
 						s.onNext(null);
 					}
-				} else {
+				}
+				else {
 					drain();
 				}
 			}
-		} else {
+		}
+		else {
 			s.onError(new IllegalStateException("This processor allows only a single Subscriber"));
 		}
 	}
@@ -295,8 +294,9 @@ final class UnicastProcessor<T>
 				Subscriber<? super T> a = actual;
 				if (a != null) {
 					a.onNext(null); // in op-fusion, onNext(null) is the indicator of more data
-				}
-			} else {
+		}
+			}
+			else {
 				BackpressureUtils.addAndGet(REQUESTED, this, n);
 				drain();
 			}
@@ -315,10 +315,9 @@ final class UnicastProcessor<T>
 		if (!enableOperatorFusion) {
 			if (WIP.getAndIncrement(this) == 0) {
 				queue.clear();
-			}
+		}
 		}
 	}
-
 
 	@Override
 	public T poll() {
@@ -352,7 +351,7 @@ final class UnicastProcessor<T>
 
 	@Override
 	public int size() {
-		throw new UnsupportedOperationException("Operators should not use this method!");
+		return queue.size();
 	}
 
 	@Override
@@ -410,7 +409,6 @@ final class UnicastProcessor<T>
 		queue.clear();
 	}
 
-
 	@Override
 	public FusionMode requestFusion(FusionMode requestedMode) {
 		if (requestedMode == FusionMode.ANY || requestedMode == FusionMode.ASYNC) {
@@ -423,5 +421,40 @@ final class UnicastProcessor<T>
 	@Override
 	public void drop() {
 		queue.poll();
+	}
+
+	@Override
+	public boolean isCancelled() {
+		return cancelled;
+	}
+
+	@Override
+	public boolean isStarted() {
+		return once == 1 && !done && !cancelled;
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return done;
+	}
+
+	@Override
+	public Throwable getError() {
+		return error;
+	}
+
+	@Override
+	public Object downstream() {
+		return actual;
+	}
+
+	@Override
+	public Object upstream() {
+		return onTerminate;
+	}
+
+	@Override
+	public long requestedFromDownstream() {
+		return requested;
 	}
 }

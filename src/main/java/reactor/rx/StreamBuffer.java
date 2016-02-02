@@ -47,8 +47,7 @@ import reactor.fn.Supplier;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamBuffer<T, C extends Collection<? super T>> extends StreamSource<T, C>
-		implements Backpressurable {
+final class StreamBuffer<T, C extends Collection<? super T>> extends StreamSource<T, C>  {
 
 	final int size;
 
@@ -89,11 +88,6 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamSourc
 	@Override
 	public long getCapacity() {
 		return size;
-	}
-
-	@Override
-	public long getPending() {
-		return -1L;
 	}
 
 	static final class BufferExactSubscriber<T, C extends Collection<? super T>>

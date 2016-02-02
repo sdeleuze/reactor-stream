@@ -240,8 +240,6 @@ extends Stream<R>
 		static final AtomicReferenceFieldUpdater<CombineLatestCoordinator, Throwable> ERROR =
 				AtomicReferenceFieldUpdater.newUpdater(CombineLatestCoordinator.class, Throwable.class, "error");
 		
-		static final Throwable TERMINAL_ERROR = new Throwable();
-		
 		public CombineLatestCoordinator(Subscriber<? super R> actual, 
 				Function<Object[], R> combiner, int n, Queue<SourceAndArray> queue,
 				int bufferSize) {
@@ -352,30 +350,12 @@ extends Stream<R>
 		
 		void innerError(Throwable e) {
 			
-			for (;;) {
-				Throwable ex = error;
-				
-				if (ex == TERMINAL_ERROR) {
-					Exceptions.onErrorDropped(ex);
-					return;
-				}
-				
-				Throwable u;
-				if (ex == null) {
-					u = e;
-				} else {
-					u = new RuntimeException("Multiple exceptions");
-					u.addSuppressed(ex);
-					u.addSuppressed(e);
-				}
-				
-				if (ERROR.compareAndSet(this, ex, u)) {
-					done = true;
-					break;
-				}
+			if (Exceptions.addThrowable(ERROR, this, e)) {
+				done = true;
+				drain();
+			} else {
+				Exceptions.onErrorDropped(e);
 			}
-			
-			drain();
 		}
 		
 		void drain() {
@@ -455,9 +435,9 @@ extends Stream<R>
 			}
 			
 			if (d) {
-				Throwable e = ERROR.getAndSet(this, TERMINAL_ERROR);
+				Throwable e = Exceptions.terminate(ERROR, this);
 				
-				if (e != null) {
+				if (e != null && e != Exceptions.TERMINATED) {
 					cancelAll();
 					q.clear();
 					a.onError(e);

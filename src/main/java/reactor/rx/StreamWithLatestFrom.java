@@ -178,11 +178,13 @@ final class StreamWithLatestFrom<T, U, R> extends StreamSource<T, R> {
 		public void onError(Throwable t) {
 			if (main == null) {
 				if (MAIN.compareAndSet(this, null, CancelledSubscription.INSTANCE)) {
+					cancelOther();
+
 					EmptySubscription.error(actual, t);
 					return;
 				}
 			}
-			cancel();
+			cancelOther();
 
 			otherValue = null;
 			actual.onError(t);
@@ -196,6 +198,36 @@ final class StreamWithLatestFrom<T, U, R> extends StreamSource<T, R> {
 			actual.onComplete();
 		}
 
+		void otherError(Throwable t) {
+			if (main == null) {
+				if (MAIN.compareAndSet(this, null, CancelledSubscription.INSTANCE)) {
+					cancelMain();
+
+					EmptySubscription.error(actual, t);
+					return;
+				}
+			}
+			cancelMain();
+			
+			otherValue = null;
+			actual.onError(t);
+		}
+		
+		void otherComplete() {
+			if (otherValue == null) {
+				if (main == null) {
+					if (MAIN.compareAndSet(this, null, CancelledSubscription.INSTANCE)) {
+						cancelMain();
+
+						EmptySubscription.complete(actual);
+						return;
+					}
+				}
+				cancelMain();
+				
+				actual.onComplete();
+			}
+		}
 	}
 
 	static final class WithLatestFromOtherSubscriber<U> implements Subscriber<U> {
@@ -219,19 +251,12 @@ final class StreamWithLatestFrom<T, U, R> extends StreamSource<T, R> {
 
 		@Override
 		public void onError(Throwable t) {
-			main.onError(t);
+			main.otherError(t);
 		}
 
 		@Override
 		public void onComplete() {
-			WithLatestFromSubscriber<?, U, ?> m = main;
-			if (m.otherValue == null) {
-				m.cancelMain();
-
-				m.onComplete();
-			}
+			main.otherComplete();
 		}
-
-
 	}
 }

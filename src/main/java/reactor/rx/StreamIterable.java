@@ -358,6 +358,14 @@ extends Stream<T>
 			current = null;
 			state = STATE_CALL_HAS_NEXT;
 		}
+		
+		@Override
+		public int size() {
+			if (state == STATE_NO_NEXT) {
+				return 0;
+			}
+			return 1;
+		}
 	}
 
 	static final class IterableSubscriptionConditional<T>
@@ -616,6 +624,14 @@ extends Stream<T>
 		public void drop() {
 			current = null;
 			state = STATE_CALL_HAS_NEXT;
+		}
+
+		@Override
+		public int size() {
+			if (state == STATE_NO_NEXT) {
+				return 0;
+			}
+			return 1; // no way of knowing without enumerating first
 		}
 	}
 }

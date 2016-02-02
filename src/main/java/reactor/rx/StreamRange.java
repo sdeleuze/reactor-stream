@@ -238,6 +238,11 @@ extends Stream<Integer>
 		public void drop() {
 			index++;
 		}
+		
+		@Override
+		public int size() {
+			return (int)(end - index);
+		}
 	}
 	
 	static final class RangeSubscriptionConditional
@@ -403,6 +408,11 @@ extends Stream<Integer>
 		@Override
 		public void drop() {
 			index++;
+		}
+
+		@Override
+		public int size() {
+			return (int)(end - index);
 		}
 	}
 }

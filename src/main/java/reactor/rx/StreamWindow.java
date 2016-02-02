@@ -104,7 +104,12 @@ final class StreamWindow<T> extends StreamSource<T, Stream<T>> {
 			source.subscribe(new WindowOverlapSubscriber<>(s, size, skip, processorQueueSupplier, overflowQueue));
 		}
 	}
-	
+
+	@Override
+	public long getCapacity() {
+		return size;
+	}
+
 	static final class WindowExactSubscriber<T> implements Subscriber<T>, Subscription, Runnable {
 		
 		final Subscriber<? super Stream<T>> actual;

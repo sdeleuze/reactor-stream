@@ -57,7 +57,15 @@ final class StreamFilter<T> extends StreamSource<T, T> {
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
 		if (source instanceof Fuseable) {
+			if (s instanceof ConditionalSubscriber) {
+				source.subscribe(new FilterConditionalSubscriber<>((ConditionalSubscriber<? super T>)s, predicate));
+				return;
+			}
 			source.subscribe(new FilterFuseableSubscriber<>(s, predicate));
+			return;
+		}
+		if (s instanceof ConditionalSubscriber) {
+			source.subscribe(new FilterConditionalSubscriber<>((ConditionalSubscriber<? super T>)s, predicate));
 			return;
 		}
 		source.subscribe(new FilterSubscriber<>(s, predicate));
@@ -195,4 +203,137 @@ final class StreamFilter<T> extends StreamSource<T, T> {
 			s.cancel();
 		}
 	}
+
+	static final class FilterConditionalSubscriber<T> 
+	implements Receiver, Producer, Loopback, Completable, Subscription, ConditionalSubscriber<T> {
+		final ConditionalSubscriber<? super T> actual;
+
+		final Predicate<? super T> predicate;
+
+		Subscription s;
+
+		boolean done;
+
+		public FilterConditionalSubscriber(ConditionalSubscriber<? super T> actual, Predicate<? super T> predicate) {
+			this.actual = actual;
+			this.predicate = predicate;
+		}
+
+		@Override
+		public void onSubscribe(Subscription s) {
+			if (BackpressureUtils.validate(this.s, s)) {
+				this.s = s;
+				actual.onSubscribe(this);
+			}
+		}
+
+		@Override
+		public void onNext(T t) {
+			if (done) {
+				Exceptions.onNextDropped(t);
+				return;
+			}
+
+			boolean b;
+
+			try {
+				b = predicate.test(t);
+			} catch (Throwable e) {
+				s.cancel();
+
+				Exceptions.throwIfFatal(e);
+				onError(Exceptions.unwrap(e));
+				return;
+			}
+			if (b) {
+				actual.onNext(t);
+			} else {
+				s.request(1);
+			}
+		}
+
+		@Override
+		public boolean tryOnNext(T t) {
+			if (done) {
+				Exceptions.onNextDropped(t);
+				return false;
+			}
+
+			boolean b;
+
+			try {
+				b = predicate.test(t);
+			} catch (Throwable e) {
+				s.cancel();
+
+				Exceptions.throwIfFatal(e);
+				onError(Exceptions.unwrap(e));
+				return false;
+			}
+			if (b) {
+				return actual.tryOnNext(t);
+			}
+			return false;
+		}
+
+		@Override
+		public void onError(Throwable t) {
+			if (done) {
+				Exceptions.onErrorDropped(t);
+				return;
+			}
+			done = true;
+			actual.onError(t);
+		}
+
+		@Override
+		public void onComplete() {
+			if (done) {
+				return;
+			}
+			done = true;
+			actual.onComplete();
+		}
+
+		@Override
+		public boolean isStarted() {
+			return s != null && !done;
+		}
+
+		@Override
+		public boolean isTerminated() {
+			return done;
+		}
+
+		@Override
+		public Object downstream() {
+			return actual;
+		}
+
+		@Override
+		public Object connectedInput() {
+			return predicate;
+		}
+
+		@Override
+		public Object connectedOutput() {
+			return null;
+		}
+
+		@Override
+		public Object upstream() {
+			return s;
+		}
+		
+		@Override
+		public void request(long n) {
+			s.request(n);
+		}
+		
+		@Override
+		public void cancel() {
+			s.cancel();
+		}
+	}
+
 }

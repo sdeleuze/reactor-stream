@@ -62,6 +62,11 @@ final class StreamTakeLast<T> extends StreamSource<T, T> {
 		}
 	}
 
+	@Override
+	public long getCapacity() {
+		return n;
+	}
+
 	static final class TakeLastZeroSubscriber<T> implements Subscriber<T>, Producer, Subscription,
 																	 Receiver {
 

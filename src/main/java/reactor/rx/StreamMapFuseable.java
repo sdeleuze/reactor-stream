@@ -67,6 +67,7 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void subscribe(Subscriber<? super R> s) {
 		if (s instanceof ConditionalSubscriber) {
 			
@@ -257,6 +258,11 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 		@Override
 		public void drop() {
 			s.drop();
+		}
+		
+		@Override
+		public int size() {
+			return s.size();
 		}
 	}
 
@@ -477,6 +483,11 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 		@Override
 		public void drop() {
 			s.drop();
+		}
+		
+		@Override
+		public int size() {
+			return s.size();
 		}
 	}
 }
