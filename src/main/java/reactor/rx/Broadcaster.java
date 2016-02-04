@@ -21,10 +21,11 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.EmitterProcessor;
-import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.FluxProcessor;
+import reactor.core.publisher.SchedulerGroup;
+import reactor.core.queue.QueueSupplier;
 import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
-import reactor.fn.Supplier;
 import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.rx.util.SwapSubscription;
 
@@ -38,6 +39,24 @@ import reactor.rx.util.SwapSubscription;
  * @author Stephane Maldini
  */
 public class Broadcaster<O> extends StreamProcessor<O, O> {
+
+	/**
+	 * @param <IN>
+	 * @return
+	 */
+	public static <IN> Broadcaster<IN> async(final SchedulerGroup group) {
+		FluxProcessor<IN, IN> emitter = EmitterProcessor.create();
+		return new Broadcaster<>(emitter, emitter.dispatchOn(group), null, false);
+	}
+
+	/**
+	 * @param <IN>
+	 * @return
+	 */
+	public static <IN> Broadcaster<IN> blocking() {
+		FluxProcessor<IN, IN> emitter = FluxProcessor.blocking();
+		return new Broadcaster<>(emitter, emitter, null, false);
+	}
 
 	/**
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link reactor.rx
@@ -95,8 +114,8 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * @param <T> the type of values passing through the {@literal Broadcaster}
 	 * @return a new {@link Broadcaster}
 	 */
-	public static <T> Broadcaster<T> passthrough() {
-		return passthrough(null);
+	public static <T> Broadcaster<T> unicast() {
+		return unicast(null);
 	}
 
 	/**
@@ -107,8 +126,8 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * @param <T> the type of values passing through the {@literal Broadcaster}
 	 * @return a new {@link Broadcaster}
 	 */
-	public static <T> Broadcaster<T> passthrough(Timer timer) {
-		return from(ProcessorGroup.sync(), timer, true);
+	public static <T> Broadcaster<T> unicast(Timer timer) {
+		return from(new UnicastProcessor<>(QueueSupplier.<T>small(true).get()), timer, true);
 	}
 
 	/**
@@ -140,13 +159,11 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
 	 * subscribing to the returned instance.
 	 * @param emitter Identity processor to support broadcasting
-	 * @param <I> the type of values passing through the {@literal Broadcaster}
-	 * @param <O> the type of values passing through the {@literal Broadcaster}
+	 * @param <T> the type of values passing through the {@literal Broadcaster}
 	 * @return a new {@link Broadcaster}
 	 */
-	@SuppressWarnings("unchecked")
-	public static <I, O> StreamProcessor<I, O> from(Processor<I, O> emitter) {
-		return (StreamProcessor<I, O>)from((Processor<O, O>)emitter, false);
+	public static <T> Broadcaster<T> from(Processor<T, T> emitter) {
+		return from(emitter, null, false);
 	}
 
 	/**
@@ -174,48 +191,6 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 */
 	public static <T> Broadcaster<T> from(Processor<T, T> emitter, Timer timer, boolean autoCancel) {
 		return new Broadcaster<T>(emitter, timer, autoCancel);
-	}
-
-
-	/**
-	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
-	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
-	 * subscribing to the returned instance.
-	 * @param emitter Identity processor to support broadcasting
-	 * @param <T> the type of values passing through the {@literal Broadcaster}
-	 * @return a new {@link Broadcaster}
-	 */
-	public static <T> Broadcaster<T> from(Supplier<? extends Processor<T, T>> emitter) {
-		return from(emitter, false);
-	}
-
-	/**
-	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
-	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
-	 * subscribing to the returned instance.
-	 * @param emitter Identity processor to support broadcasting
-	 * @param autoCancel Propagate cancel upstream
-	 * @param <T> the type of values passing through the {@literal Broadcaster}
-	 * @return a new {@link Broadcaster}
-	 */
-	public static <T> Broadcaster<T> from(Supplier<? extends Processor<T, T>> emitter, boolean autoCancel) {
-		return from(emitter, null, autoCancel);
-	}
-
-	/**
-	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
-	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
-	 * subscribing to the returned instance.
-	 * @param timer the Reactor {@link Timer} to use downstream
-	 * @param autoCancel Propagate cancel upstream
-	 * @param emitter Identity processor to support broadcasting
-	 * @param <T> the type of values passing through the {@literal Broadcaster}
-	 * @return a new {@link Broadcaster}
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> Broadcaster<T> from(Supplier<? extends Processor> emitter, Timer timer, boolean
-			autoCancel) {
-		return from(emitter.get(), timer, autoCancel);
 	}
 
 	/**

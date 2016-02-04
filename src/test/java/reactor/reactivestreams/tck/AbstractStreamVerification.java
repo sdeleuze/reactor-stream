@@ -39,7 +39,7 @@ import org.reactivestreams.tck.TestEnvironment;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.SchedulerGroup;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
@@ -206,7 +206,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 		}
 
 		long count = latch.getCount();
-		Assert.state(latch.getCount() == 0, "Count > 0 : " + count + " (" + list + ")  , Running on " + ProcessorGroup
+		Assert.state(latch.getCount() == 0, "Count > 0 : " + count + " (" + list + ")  , Running on " + SchedulerGroup
 		  .DEFAULT_POOL_SIZE + " CPU");
 
 	}
@@ -270,7 +270,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 
 		System.out.println(counters);
 		long count = latch.getCount();
-		Assert.state(latch.getCount() == 0, "Count > 0 : " + count + " , Running on " + ProcessorGroup.DEFAULT_POOL_SIZE + " " +
+		Assert.state(latch.getCount() == 0, "Count > 0 : " + count + " , Running on " + SchedulerGroup.DEFAULT_POOL_SIZE + " " +
 		  "CPU");
 
 		stream.onComplete();

@@ -34,29 +34,6 @@ public class StreamProcessor<E, O> extends Stream<O> implements Processor<E, O>,
 	protected final Subscriber<E> receiver;
 	protected final Publisher<O> publisher;
 
-	/**
-	 *
-	 * @param processor
-	 * @param <E>
-	 * @param <O>
-	 * @return
-	 */
-	public static <E, O> StreamProcessor<E, O> from(Processor<E, O> processor){
-		return from(processor, processor);
-	}
-
-	/**
-	 *
-	 * @param receiver
-	 * @param publisher
-	 * @param <E>
-	 * @param <O>
-	 * @return
-	 */
-	public static <E, O> StreamProcessor<E, O> from(Subscriber<E> receiver, Publisher<O> publisher){
-		return new StreamProcessor<>(receiver, publisher);
-	}
-
 	protected StreamProcessor(Subscriber<E> receiver, Publisher<O> publisher) {
 		this.receiver = receiver;
 		this.publisher = publisher;

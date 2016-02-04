@@ -24,7 +24,7 @@ import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import reactor.core.publisher.FluxProcessor;
-import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.SchedulerGroup;
 import reactor.fn.BiFunction;
 import reactor.rx.Broadcaster;
 import reactor.rx.Stream;
@@ -33,9 +33,9 @@ import reactor.rx.Stream;
  * @author Stephane Maldini
  */
 @org.testng.annotations.Test
-public class StreamAndProcessorGroupTests extends AbstractStreamVerification {
+public class StreamAndSchedulerGroupTests extends AbstractStreamVerification {
 
-	static ProcessorGroup sharedGroup;
+	static SchedulerGroup sharedGroup;
 
 
 	@Override
@@ -44,8 +44,8 @@ public class StreamAndProcessorGroupTests extends AbstractStreamVerification {
 		Stream<String> otherStream = Stream.just("test", "test2", "test3");
 		System.out.println("Providing new downstream");
 
-		ProcessorGroup asyncGroup =
-				ProcessorGroup.async("stream-p-tck", bufferSize, 2,
+		SchedulerGroup asyncGroup =
+				SchedulerGroup.async("stream-p-tck", bufferSize, 2,
 						Throwable::printStackTrace, () -> System.out.println("EEEEE"));
 
 		BiFunction<Integer, String, Integer> combinator = (t1, t2) -> t1;
@@ -53,7 +53,7 @@ public class StreamAndProcessorGroupTests extends AbstractStreamVerification {
 
 				p.dispatchOn(sharedGroup)
 		                  .partition(2)
-		                  .flatMap(stream -> stream.dispatchOn(asyncGroup).log("w")
+		                  .flatMap(stream -> stream.dispatchOn(asyncGroup)
 		                                           .doOnNext(this::monitorThreadUse)
 		                                           .scan((prev, next) -> next)
 		                                           .map(integer -> -integer)
@@ -112,7 +112,7 @@ public class StreamAndProcessorGroupTests extends AbstractStreamVerification {
 	@BeforeClass
 	public static void setupGlobal(){
 		System.out.println("test ");
-		sharedGroup = ProcessorGroup.async("stream-tck", 32, 2,
+		sharedGroup = SchedulerGroup.async("stream-tck", 32, 2,
 				Throwable::printStackTrace, null, false);
 	}
 
@@ -159,7 +159,7 @@ public class StreamAndProcessorGroupTests extends AbstractStreamVerification {
 	}
 
 	/*public static void main(String... args) throws Exception {
-		AbstractStreamVerification s = new StreamAndProcessorGroupTests();
+		AbstractStreamVerification s = new StreamAndSchedulerGroupTests();
 		Processor p = s.createProcessor(256);
 		SignalEmitter sess = SignalEmitter.create(p);
 		p.subscribe(Subscribers.unbounded());

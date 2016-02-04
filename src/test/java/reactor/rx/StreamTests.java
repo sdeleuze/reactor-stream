@@ -53,7 +53,7 @@ import reactor.AbstractReactorTest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.SchedulerGroup;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.subscriber.Subscribers;
@@ -702,7 +702,7 @@ public class StreamTests extends AbstractReactorTest {
 				break;
 			default:
 				mapManydeferred = Broadcaster.<Integer>create();
-				mapManydeferred.dispatchOn("sync".equals(dispatcher) ? ProcessorGroup.sync() : asyncGroup)
+				mapManydeferred.dispatchOn("sync".equals(dispatcher) ? SchedulerGroup.sync() : asyncGroup)
 				               .flatMap(Stream::just)
 				               .consume(i -> latch.countDown());
 		}
@@ -777,7 +777,7 @@ public class StreamTests extends AbstractReactorTest {
 		 */
 		final double TOLERANCE = 0.9;
 
-		StreamProcessor<Integer, Integer> batchingStreamDef = Broadcaster.from(asyncGroup.processor());
+		StreamProcessor<Integer, Integer> batchingStreamDef = Broadcaster.async(asyncGroup);
 
 		List<Integer> testDataset = createTestDataset(NUM_MESSAGES);
 
@@ -918,7 +918,7 @@ public class StreamTests extends AbstractReactorTest {
 	 */
 	@Test
 	public void testParallelWithJava8StreamsInput() throws InterruptedException {
-		ProcessorGroup supplier = ProcessorGroup.async("test-p", 2048, 2);
+		SchedulerGroup supplier = SchedulerGroup.async("test-p", 2048, 2);
 
 		int max = ThreadLocalRandom.current()
 		                           .nextInt(100, 300);
@@ -1175,8 +1175,8 @@ public class StreamTests extends AbstractReactorTest {
 
 	@Test
 	public void consistentMultithreadingWithPartition() throws InterruptedException {
-		ProcessorGroup supplier1 = ProcessorGroup.async("groupByPool", 32, 2);
-		ProcessorGroup supplier2 = ProcessorGroup.async("partitionPool", 32, 5);
+		SchedulerGroup supplier1 = SchedulerGroup.async("groupByPool", 32, 2);
+		SchedulerGroup supplier2 = SchedulerGroup.async("partitionPool", 32, 5);
 
 		CountDownLatch latch = new CountDownLatch(10);
 
@@ -1409,7 +1409,7 @@ public class StreamTests extends AbstractReactorTest {
 
 		final Broadcaster<Integer> computationBroadcaster = Broadcaster.create();
 		final Stream<List<String>> computationStream =
-				computationBroadcaster.dispatchOn(ProcessorGroup.single("computation", BACKLOG))
+				computationBroadcaster.dispatchOn(SchedulerGroup.single("computation", BACKLOG))
 				                      .map(i -> {
 					                      final List<String> list = new ArrayList<>(i);
 					                      for (int j = 0; j < i; j++) {
@@ -1422,19 +1422,19 @@ public class StreamTests extends AbstractReactorTest {
 
 		final Broadcaster<Integer> persistenceBroadcaster = Broadcaster.create();
 		final Stream<List<String>> persistenceStream =
-				persistenceBroadcaster.dispatchOn(ProcessorGroup.single("persistence", BACKLOG))
+				persistenceBroadcaster.dispatchOn(SchedulerGroup.single("persistence", BACKLOG))
 				                      .doOnNext(i -> println("Persisted: ", i))
 				                      .map(i -> Collections.singletonList("done" + i))
 				                      .log("persistence");
 
-		Stream<Integer> forkStream = forkBroadcaster.dispatchOn(ProcessorGroup.single("fork", BACKLOG))
+		Stream<Integer> forkStream = forkBroadcaster.dispatchOn(SchedulerGroup.single("fork", BACKLOG))
 		                                            .log("fork");
 
 		forkStream.subscribe(computationBroadcaster);
 		forkStream.subscribe(persistenceBroadcaster);
 
 		final Stream<List<String>> joinStream = Stream.join(computationStream, persistenceStream)
-		                                              .dispatchOn(ProcessorGroup.single("join", BACKLOG))
+		                                              .dispatchOn(SchedulerGroup.single("join", BACKLOG))
 		                                              .map(listOfLists -> {
 			                                               listOfLists.get(0)
 			                                                          .addAll(listOfLists.get(1));

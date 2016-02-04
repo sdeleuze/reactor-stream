@@ -49,7 +49,7 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSource;
-import reactor.core.publisher.ProcessorGroup;
+import reactor.core.publisher.SchedulerGroup;
 import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Introspectable;
@@ -824,7 +824,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		if (StreamProcessor.class.isAssignableFrom(processor.getClass())) {
 			return (StreamProcessor<I, O>) processor;
 		}
-		return StreamProcessor.from(processor);
+		return new StreamProcessor<>(processor, processor);
 	}
 
 	/**
@@ -1244,7 +1244,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public static <T> StreamProcessor<Publisher<? extends T>, T> switchOnNext() {
 		Processor<Publisher<? extends T>, Publisher<? extends T>> emitter = EmitterProcessor.replay();
-		StreamProcessor<Publisher<? extends T>, T> p = StreamProcessor.from(emitter, switchOnNext(emitter));
+		StreamProcessor<Publisher<? extends T>, T> p = new StreamProcessor<>(emitter, switchOnNext(emitter));
 		p.onSubscribe(EmptySubscription.INSTANCE);
 		return p;
 	}
@@ -2140,7 +2140,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<O> cache(int last) {
 		Processor<O, O> emitter = EmitterProcessor.replay(last);
 		subscribe(emitter);
-		return StreamProcessor.from(emitter);
+		return new StreamProcessor<>(emitter, emitter);
 	}
 
 	/**
@@ -3486,8 +3486,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Re-route incoming values into a dynamically created {@link Stream} for each unique key evaluated by the {param
 	 * keyMapper}. The hashcode of the incoming data will be used for partitioning over {@link
-	 * ProcessorGroup#DEFAULT_POOL_SIZE} buckets. That means that at any point of time at most {@link
-	 * ProcessorGroup#DEFAULT_POOL_SIZE} number of streams will be created and used accordingly to the current hashcode % n
+	 * SchedulerGroup#DEFAULT_POOL_SIZE} buckets. That means that at any point of time at most {@link
+	 * SchedulerGroup#DEFAULT_POOL_SIZE} number of streams will be created and used accordingly to the current hashcode % n
 	 * result.
 	 *
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values routed to this partition
@@ -3495,7 +3495,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public final Stream<GroupedStream<Integer, O>> partition() {
-		return partition(ProcessorGroup.DEFAULT_POOL_SIZE);
+		return partition(SchedulerGroup.DEFAULT_POOL_SIZE);
 	}
 
 	/**

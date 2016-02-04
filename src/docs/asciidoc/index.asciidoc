@@ -16,10 +16,13 @@ include::gettingstarted.adoc[]
 
 include::20to25.adoc[]
 
+
+////
 [[reactor-stream]]
 = *reactor-stream*
 include::streams.adoc[]
 
 [[reactor-samples]]
 == Cookbook
-include::recipes.adoc[]
+include::recipes.adoc[]////
+

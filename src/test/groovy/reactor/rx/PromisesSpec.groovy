@@ -16,7 +16,7 @@
 package reactor.rx
 
 import reactor.core.publisher.Mono
-import reactor.core.publisher.ProcessorGroup
+import reactor.core.publisher.SchedulerGroup
 import reactor.core.util.Exceptions
 import spock.lang.Specification
 
@@ -463,7 +463,7 @@ class PromisesSpec extends Specification {
 
   def "A combined promise through 'any' is fulfilled with the first component result when using asynchronously"() {
 	given: "two fulfilled promises"
-	def ioGroup = ProcessorGroup.io("promise-task", 8, 2)
+	def ioGroup = SchedulerGroup.io("promise-task", 8, 2)
 	def promise1 = Mono.fromCallable { sleep(10000); 1 }.publishOn(ioGroup)
 	def promise2 = Mono.fromCallable { sleep(325); 2 }.publishOn(ioGroup)
 
@@ -615,7 +615,7 @@ class PromisesSpec extends Specification {
 
 	when: "p1 is consumed by p2"
 	def p2 = p1
-			.dispatchOn(ProcessorGroup.single('test'))
+			.dispatchOn(SchedulerGroup.single('test'))
 			.map {
 	  println Thread.currentThread();
 	  sleep(3000);
