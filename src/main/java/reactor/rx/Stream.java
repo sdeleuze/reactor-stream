@@ -45,6 +45,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.converter.DependencyUtils;
+import reactor.core.flow.Fuseable;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -2651,6 +2652,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream} containing only values that pass the predicate test
 	 */
 	public final Stream<O> filter(final Predicate<? super O> p) {
+		if (this instanceof Fuseable) {
+			return new StreamFilterFuseable<>(this, p);
+		}
 		return new StreamFilter<>(this, p);
 	}
 
@@ -3190,6 +3194,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream} containing the transformed values
 	 */
 	public final <V> Stream<V> map(final Function<? super O, ? extends V> fn) {
+		if (this instanceof Fuseable) {
+			return new StreamMapFuseable<>(this, fn);
+		}
 		return new StreamMap<>(this, fn);
 	}
 
