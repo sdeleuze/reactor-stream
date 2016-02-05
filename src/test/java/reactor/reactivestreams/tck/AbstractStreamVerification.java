@@ -106,7 +106,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 
 	@Override
 	public Publisher<Integer> createFailedPublisher() {
-		return Stream.fail(new Exception("oops")).cast(Integer.class);
+		return Stream.error(new Exception("oops")).cast(Integer.class);
 	}
 
 	public abstract Processor<Integer, Integer> createProcessor(int bufferSize);

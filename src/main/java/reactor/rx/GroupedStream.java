@@ -18,7 +18,7 @@ package reactor.rx;
 import reactor.core.state.Groupable;
 
 /**
- * The Stream will complete or fail whever the parent groupBy action terminates itself.
+ * The Stream will complete or error whever the parent groupBy action terminates itself.
  * <p>
  * Create such stream with the provided factory, E.g.:
  * {@code

@@ -172,7 +172,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'the error signal is observed and stream is retrieved'
-			stream = Stream.fail(new Exception())
+			stream = Stream.error(new Exception())
 			stream.after().get()
 
 		then:
@@ -538,7 +538,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'A new error consumer is subscribed'
-		Stream.fail(new RuntimeException()).when(RuntimeException) { errors++ }.consume()
+		Stream.error(new RuntimeException()).when(RuntimeException) { errors++ }.consume()
 
 		then:
 			'it is called since publisher is in error state'

@@ -66,7 +66,7 @@ Publisher<String> fileStream = new Publisher<String>() { // <1>
 			});
 
 		} catch (FileNotFoundException e) {
-			Streams.<String, FileNotFoundException> fail(e)
+			Streams.<String, FileNotFoundException> error(e)
 				.subscribe(subscriber); // <8>
 		}
 	}

@@ -730,7 +730,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @return a new {@link Stream}
 	 */
-	public static <O> Stream<O> fail(Throwable throwable) {
+	public static <O> Stream<O> error(Throwable throwable) {
 		return from(Mono.<O>error(throwable));
 	}
 
@@ -1839,7 +1839,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 				Flux.mapSignal(after(), null, new Function<Throwable, Publisher<V>>() {
 					@Override
 					public Publisher<V> apply(Throwable throwable) {
-						return concat(sourceSupplier.get(), Stream.<V>fail(throwable));
+						return concat(sourceSupplier.get(), Stream.<V>error(throwable));
 					}
 				}, sourceSupplier),
 				IDENTITY_FUNCTION, PlatformDependent.SMALL_BUFFER_SIZE, 32, false));

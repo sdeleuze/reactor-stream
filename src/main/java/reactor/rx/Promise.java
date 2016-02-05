@@ -566,7 +566,7 @@ public class Promise<O> extends Mono<O>
 			return Stream.just(value);
 		}
 		else if (endState == STATE_ERROR) {
-			return Stream.fail(error);
+			return Stream.error(error);
 		}
 
 		Processor<O, O> out = processor;
