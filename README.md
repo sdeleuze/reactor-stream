@@ -4,7 +4,15 @@
 
 [![Build Status](https://drone.io/github.com/reactor/reactor-stream/status.png)](https://drone.io/github.com/reactor/reactor-stream/latest)
 
-A Reactive Streams micro-toolkit to build fantastic Reactive libraries or application on the JVM.
+An extended Reactive Extensions implementation for Reactive Streams and more.
+
+## Stream
+
+## Promise
+
+## Broadcaster
+
+## The backpressure thing
 
 ## Reference
 http://next.projectreactor.io/stream/docs/reference/
