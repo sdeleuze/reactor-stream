@@ -24,6 +24,8 @@ With Gradle from repo.spring.io or Maven Central repositories (stable releases o
 
 ## Stream
 
+[<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" width="500">](http://next.projectreactor.io/stream/docs/api/reactor/rx/Stream.html)
+
 ## Promise
 
 ## Broadcaster
