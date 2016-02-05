@@ -4,7 +4,7 @@
 
 [![Build Status](https://drone.io/github.com/reactor/reactor-stream/status.png)](https://drone.io/github.com/reactor/reactor-stream/latest)
 
-An extended Reactive Extensions implementation for Reactive Streams and more.
+[Reactive Extensions](http://reactivex.io) over [Reactive Streams](http://reactive-streams.org) for the JVM.
 
 ## Getting it
 
@@ -28,10 +28,18 @@ With Gradle from repo.spring.io or Maven Central repositories (stable releases o
 
 ## Broadcaster
 
-## The backpressure thing
+## The Backpressure Thing
 
 ## Reference
 http://next.projectreactor.io/stream/docs/reference/
 
 ## Javadoc
 http://next.projectreactor.io/stream/docs/api/
+
+-------------------------------------
+_Powered by [Reactive Stream Commons](http://github.com/reactor/reactive-streams-commons)_
+
+_Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_
+
+_Sponsored by [Pivotal](http://pivotal.io)_
+
