@@ -6,6 +6,22 @@
 
 An extended Reactive Extensions implementation for Reactive Streams and more.
 
+## Getting it
+
+With Gradle from repo.spring.io or Maven Central repositories (stable releases only):
+```groovy
+    repositories {
+      //maven { url 'http://repo.spring.io/libs-release' }
+      //maven { url 'http://repo.spring.io/libs-milestone' }
+      maven { url 'http://repo.spring.io/libs-snapshot' }
+      mavenCentral()
+    }
+
+    dependencies {
+      compile "io.projectreactor:reactor-stream:2.5.0.BUILD-SNAPSHOT"
+    }
+```
+
 ## Stream
 
 ## Promise
