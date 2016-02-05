@@ -24,7 +24,7 @@ With Gradle from repo.spring.io or Maven Central repositories (stable releases o
 
 ## Stream
 
-[<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" width="500">](http://next.projectreactor.io/stream/docs/api/reactor/rx/Stream.html)
+[<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" width="500">](http://projectreactor.io/stream/docs/api/reactor/rx/Stream.html)
 
 ## Promise
 
@@ -33,10 +33,10 @@ With Gradle from repo.spring.io or Maven Central repositories (stable releases o
 ## The Backpressure Thing
 
 ## Reference
-http://next.projectreactor.io/stream/docs/reference/
+http://projectreactor.io/stream/docs/reference/
 
 ## Javadoc
-http://next.projectreactor.io/stream/docs/api/
+http://projectreactor.io/stream/docs/api/
 
 -------------------------------------
 _Powered by [Reactive Stream Commons](http://github.com/reactor/reactive-streams-commons)_
