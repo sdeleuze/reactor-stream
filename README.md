@@ -2,8 +2,6 @@
 
 [![Join the chat at https://gitter.im/reactor/reactor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/reactor/reactor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-[![Build Status](https://drone.io/github.com/reactor/reactor-stream/status.png)](https://drone.io/github.com/reactor/reactor-stream/latest)
-
 [Reactive Extensions](http://reactivex.io) over [Reactive Streams](http://reactive-streams.org) for the JVM.
 
 ## Getting it
@@ -36,7 +34,7 @@ A Reactive Streams Publisher implementing the most common Reactive Extensions an
 
 A Reactive Streams Processor extending [reactor-core](http://github.com/reactor/reactor-core) Mono and supporting "hot/deferred fulfilling".
 
-[<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" width="500">](http://projectreactor.io/stream/docs/api/reactor/rx/Stream.html)
+[<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/mono.png" width="500">](http://projectreactor.io/stream/docs/api/reactor/rx/Promise.html)
 
 ## Broadcaster
 
