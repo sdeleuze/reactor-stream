@@ -12,22 +12,22 @@ import reactor.core.util.BackpressureUtils;
  * {@see https://github.com/reactor/reactive-streams-commons}
  * @since 2.5
  */
-final class MonoIsEmpty<T> extends reactor.core.publisher.MonoSource<T, Boolean> {
+final class MonoHasElements<T> extends reactor.core.publisher.MonoSource<T, Boolean> {
 
-	public MonoIsEmpty(Publisher<? extends T> source) {
+	public MonoHasElements(Publisher<? extends T> source) {
 		super(source);
 	}
 
 	@Override
 	public void subscribe(Subscriber<? super Boolean> s) {
-		source.subscribe(new IsEmptySubscriber<>(s));
+		source.subscribe(new HasElementsSubscriber<>(s));
 	}
 
-	static final class IsEmptySubscriber<T> extends DeferredScalarSubscriber<T, Boolean>
+	static final class HasElementsSubscriber<T> extends DeferredScalarSubscriber<T, Boolean>
 			implements Receiver {
 		Subscription s;
 
-		public IsEmptySubscriber(Subscriber<? super Boolean> actual) {
+		public HasElementsSubscriber(Subscriber<? super Boolean> actual) {
 			super(actual);
 		}
 
@@ -51,12 +51,12 @@ final class MonoIsEmpty<T> extends reactor.core.publisher.MonoSource<T, Boolean>
 		public void onNext(T t) {
 			s.cancel();
 
-			complete(false);
+			complete(true);
 		}
 
 		@Override
 		public void onComplete() {
-			complete(true);
+			complete(false);
 		}
 
 		@Override

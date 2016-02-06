@@ -3060,7 +3060,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return
 	 */
 	public final Mono<Boolean> hasElements() {
-		return new MonoIsEmpty<>(this);
+		return new MonoHasElements<>(this);
 	}
 
 	/**
