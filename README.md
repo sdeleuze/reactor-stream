@@ -11,9 +11,8 @@
 With Gradle from repo.spring.io or Maven Central repositories (stable releases only):
 ```groovy
     repositories {
-      //maven { url 'http://repo.spring.io/libs-release' }
-      //maven { url 'http://repo.spring.io/libs-milestone' }
-      maven { url 'http://repo.spring.io/libs-snapshot' }
+      //maven { url 'http://repo.spring.io/milestone' }
+      maven { url 'http://repo.spring.io/snapshot' }
       mavenCentral()
     }
 
