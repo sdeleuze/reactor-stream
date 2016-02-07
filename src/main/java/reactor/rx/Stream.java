@@ -1105,11 +1105,11 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Integer> range(int start, int count) {
-		if(count == 0){
-			return empty();
-		}
 		if(count == 1){
 			return just(start);
+		}
+		if(count == 0){
+			return empty();
 		}
 		return new StreamRange(start, count);
 	}
