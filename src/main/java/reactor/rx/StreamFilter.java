@@ -29,6 +29,7 @@ import reactor.core.state.Completable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Predicate;
+import reactor.rx.StreamFilterFuseable.FilterFuseableConditionalSubscriber;
 import reactor.rx.StreamFilterFuseable.FilterFuseableSubscriber;
 
 /**
