@@ -1447,7 +1447,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a {@link Stream} based on the produced value
 	 * @since 2.5
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T1, T2, T3, T4, T5, T6> Stream<Tuple6<T1, T2, T3, T4, T5, T6>> zip(Publisher<? extends T1> source1,
 															                          Publisher<? extends T2> source2,
 															                          Publisher<? extends T3> source3,
@@ -1479,7 +1478,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a {@link Stream} based on the produced value
 	 * @since 2.5
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T1, T2, T3, T4, T5, T6, T7> Stream<Tuple7<T1, T2, T3, T4, T5, T6, T7>> zip(
 			Publisher<? extends T1> source1,
 			Publisher<? extends T2> source2,
@@ -1488,7 +1486,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			Publisher<? extends T5> source5,
 			Publisher<? extends T6> source6,
 			Publisher<? extends T7> source7) {
-		return from(Flux.zip(Tuple.fn7(), source1, source2, source3, source4, source5, source6, source7));
+		return from(Flux.zip(Tuple.<T1, T2, T3, T4, T5, T6, T7>fn7(), source1, source2, source3, source4, source5,
+				source6,
+				source7));
 	}
 
 	/**
@@ -1514,7 +1514,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a {@link Stream} based on the produced value
 	 * @since 2.5
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T1, T2, T3, T4, T5, T6, T7, T8> Stream<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>> zip(
 			Publisher<? extends T1> source1,
 			Publisher<? extends T2> source2,
@@ -1524,7 +1523,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			Publisher<? extends T6> source6,
 			Publisher<? extends T7> source7,
 			Publisher<? extends T8> source8) {
-		return from(Flux.zip(Tuple.fn8(), source1, source2, source3, source4, source5, source6, source7,
+		return from(Flux.zip(Tuple.<T1, T2, T3, T4, T5, T6, T7, T8>fn8(), source1, source2, source3, source4, source5,
+				source6, source7,
 				source8));
 	}
 
