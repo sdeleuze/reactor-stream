@@ -30,9 +30,9 @@ import org.junit.Test;
 import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import reactor.AbstractReactorTest;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SchedulerGroup;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
@@ -83,7 +83,8 @@ public class StreamCombinationTests extends AbstractReactorTest {
 	public void testMerge1ToN() throws Exception {
 		final int n = 1000000;
 
-		Stream<Integer> stream = Stream.range(0, n).flatMap(Flux::just).publishOn(asyncGroup);
+		Stream<Integer> stream = Stream.range(0, n).publishOn
+				(SchedulerGroup.single("b")).dispatchOn(SchedulerGroup.single("a"));
 
 		final CountDownLatch latch = new CountDownLatch(1);
 		awaitLatch(stream.consume(null, null, latch::countDown), latch);
