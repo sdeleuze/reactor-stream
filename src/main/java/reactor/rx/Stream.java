@@ -1835,7 +1835,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	@SuppressWarnings("unchecked")
 	public final <V> Stream<V> after(final Supplier<? extends Publisher<V>> sourceSupplier) {
-		return new StreamSource<>(Flux.flatMap(
+		return StreamSource.wrap(Flux.flatMap(
 				Flux.mapSignal(after(), null, new Function<Throwable, Publisher<V>>() {
 					@Override
 					public Publisher<V> apply(Throwable throwable) {
@@ -1863,18 +1863,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public final Stream<O> ambWith(final Publisher<? extends O> publisher) {
-		return new StreamSource<O, O>(this) {
-			@Override
-			public String getName() {
-				return "ambWith";
-			}
-
-			@Override
-			public void subscribe(Subscriber<? super O> s) {
-				Flux.amb(Stream.this, publisher)
-				    .subscribe(s);
-			}
-		};
+		return StreamSource.wrap(Flux.amb(this, publisher));
 	}
 
 	/**
@@ -2094,7 +2083,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0, 2.5
 	 */
 	public final Stream<O> bufferSort(final Comparator<? super O> comparator) {
-		return new StreamSource<>(collect(new Supplier<PriorityQueue<O>>() {
+		return StreamSource.wrap(collect(new Supplier<PriorityQueue<O>>() {
 			@Override
 			public PriorityQueue<O> get() {
 				if (comparator == null) {
@@ -2531,7 +2520,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new dispatched {@link Stream}
 	 */
 	public final Stream<O> dispatchOn(final Callable<? extends Consumer<Runnable>> scheduler) {
-		return new StreamSource<>(Flux.dispatchOn(this, scheduler, true,
+		return StreamSource.wrap(Flux.dispatchOn(this, scheduler, true,
 				PlatformDependent.SMALL_BUFFER_SIZE, QueueSupplier.<O>small()));
 	}
 
@@ -2684,20 +2673,11 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 1.1, 2.0
 	 */
 	public final <V> Stream<V> flatMap(final Function<? super O, ? extends Publisher<? extends V>> fn) {
-
-		return new StreamSource<O, V>(this) {
-			@Override
-			public String getName() {
-				return "flatMap";
-			}
-
-			@Override
-			public void subscribe(Subscriber<? super V> s) {
-				Flux.flatMap(Stream.this, fn, PlatformDependent.SMALL_BUFFER_SIZE, PlatformDependent.XS_BUFFER_SIZE,
-						false)
-				    .subscribe(s);
-			}
-		};
+		return StreamSource.wrap(Flux.flatMap(this,
+				fn,
+				PlatformDependent.SMALL_BUFFER_SIZE,
+				PlatformDependent.XS_BUFFER_SIZE,
+				false));
 	}
 
 	/**
@@ -2715,7 +2695,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final <R> Stream<R> flatMap(Function<? super O, ? extends Publisher<? extends R>> mapperOnNext,
 			Function<Throwable, ? extends Publisher<? extends R>> mapperOnError,
 			Supplier<? extends Publisher<? extends R>> mapperOnComplete) {
-		return new StreamSource<>(Flux.flatMap(
+		return StreamSource.wrap(Flux.flatMap(
 				Flux.mapSignal(this, mapperOnNext, mapperOnError, mapperOnComplete),
 				IDENTITY_FUNCTION, PlatformDependent.SMALL_BUFFER_SIZE, 32, false)
 		);
@@ -2996,19 +2976,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			}
 		}
 
-		final Publisher<V> mergedStream = Flux.merge(publisherList);
-
-		return new StreamSource<O, V>(this) {
-			@Override
-			public String getName() {
-				return "forkJoin";
-			}
-
-			@Override
-			public void subscribe(Subscriber<? super V> s) {
-				mergedStream.subscribe(s);
-			}
-		};
+		return StreamSource.wrap(Flux.merge(publisherList));
 	}
 
 	@Override
@@ -3225,19 +3193,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	@SuppressWarnings("unchecked")
 	public final <V> Stream<V> merge() {
 		final Stream<? extends Publisher<? extends V>> thiz = (Stream<? extends Publisher<? extends V>>) this;
-
-		return new StreamSource<O, V>(this) {
-			@Override
-			public String getName() {
-				return "merge";
-			}
-
-			@Override
-			public void subscribe(Subscriber<? super V> s) {
-				Flux.merge(thiz)
-				    .subscribe(s);
-			}
-		};
+		return StreamSource.wrap(Flux.merge(thiz));
 	}
 
 	/**
@@ -3248,18 +3204,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public final Stream<O> mergeWith(final Publisher<? extends O> publisher) {
-		return new StreamSource<O, O>(this) {
-			@Override
-			public String getName() {
-				return "mergeWith";
-			}
-
-			@Override
-			public void subscribe(Subscriber<? super O> s) {
-				Flux.merge(Stream.this, publisher)
-				    .subscribe(s);
-			}
-		};
+		return StreamSource.wrap(Flux.merge(this, publisher));
 	}
 
 	/**
@@ -3537,17 +3482,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			return (Stream<E>) processor;
 		}
 
-		return new StreamSource<O, E>(this) {
-			@Override
-			public String getName() {
-				return "process";
-			}
-
-			@Override
-			public void subscribe(Subscriber s) {
-				processor.subscribe(s);
-			}
-		};
+		return StreamSource.wrap(processor);
 	}
 
 	/**
@@ -3564,7 +3499,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new dispatched {@link Stream}
 	 */
 	public final Stream<O> publishOn(final Callable<? extends Consumer<Runnable>> scheduler) {
-		return new StreamSource<>(Flux.publishOn(this, scheduler));
+		return StreamSource.wrap(Flux.publishOn(this, scheduler));
 	}
 
 	/**
@@ -4957,17 +4892,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final <T2, V> Stream<V> zipWith(final Publisher<? extends T2> publisher,
 			final BiFunction<? super O, ? super T2, ? extends V> zipper) {
-		return new StreamSource<O, V>(this) {
-			@Override
-			public String getName() {
-				return "zipWith";
-			}
-
-			@Override
-			public void subscribe(Subscriber<? super V> s) {
-				Flux.zip(source, publisher, zipper).subscribe(s);
-			}
-		};
+		return StreamSource.wrap(Flux.zip(this, publisher, zipper));
 	}
 
 	/**
@@ -4979,18 +4904,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public final <T2> Stream<Tuple2<O, T2>> zipWith(final Publisher<? extends T2> publisher) {
-		return new StreamSource<O, Tuple2<O, T2>>(this) {
-			@Override
-			public String getName() {
-				return "zipWith";
-			}
-
-			@SuppressWarnings("unchecked")
-			@Override
-			public void subscribe(Subscriber<? super Tuple2<O, T2>> s) {
-				Flux.<O, T2, Tuple2<O, T2>>zip(source, publisher, TUPLE2_BIFUNCTION).subscribe(s);
-			}
-		};
+		return StreamSource.wrap(Flux.<O, T2, Tuple2<O, T2>>zip(this, publisher, TUPLE2_BIFUNCTION));
 	}
 
 	/**

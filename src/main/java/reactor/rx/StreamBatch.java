@@ -94,10 +94,6 @@ abstract class StreamBatch<T, V> extends StreamSource<T, V> {
 		private volatile int index = 0;
 		private Pausable timespanRegistration;
 
-		public BatchAction(Subscriber<? super V> actual, int batchSize, boolean next, boolean first, boolean flush) {
-			this(actual, batchSize, next, first, flush, -1L, null, null);
-		}
-
 		public BatchAction(Subscriber<? super V> actual,
 				int batchSize,
 				boolean next,

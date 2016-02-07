@@ -58,7 +58,8 @@ final class StreamFilter<T> extends StreamSource<T, T> {
 	public void subscribe(Subscriber<? super T> s) {
 		if (source instanceof Fuseable) {
 			if (s instanceof ConditionalSubscriber) {
-				source.subscribe(new FilterConditionalSubscriber<>((ConditionalSubscriber<? super T>)s, predicate));
+				source.subscribe(new FilterFuseableConditionalSubscriber<>((ConditionalSubscriber<? super T>) s,
+						predicate));
 				return;
 			}
 			source.subscribe(new FilterFuseableSubscriber<>(s, predicate));
