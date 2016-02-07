@@ -69,7 +69,7 @@ final class StreamJust<T> extends Stream<T> implements Fuseable.ScalarSupplier<T
 	@Override
 	public void subscribe(final Subscriber<? super T> subscriber) {
 		try {
-			subscriber.onSubscribe(new SingleSubscription<>(value, subscriber));
+			subscriber.onSubscribe(new WeakScalarSubscription<>(value, subscriber));
 		}
 		catch (Throwable throwable) {
 			Exceptions.throwIfFatal(throwable);
@@ -92,13 +92,13 @@ final class StreamJust<T> extends Stream<T> implements Fuseable.ScalarSupplier<T
 		return "singleValue=" + value;
 	}
 
-	private static final class SingleSubscription<T> implements Subscription, Receiver, Completable {
+	static final class WeakScalarSubscription<T> implements Subscription, Receiver, Completable {
 
 		boolean terminado;
 		final T                     value;
 		final Subscriber<? super T> subscriber;
 
-		public SingleSubscription(T value, Subscriber<? super T> subscriber) {
+		public WeakScalarSubscription(T value, Subscriber<? super T> subscriber) {
 			this.value = value;
 			this.subscriber = subscriber;
 		}
