@@ -189,16 +189,16 @@ class StreamsSpec extends Specification {
 			'the complete signal is observed and stream is retrieved'
 			def value = null
 
-			def tap = stream.finallyDo {
+			def tap = stream.doAfterTerminate {
 				println 'test'
-				value = it
+				value = true
 			}.tap()
 
 			println tap.debug()
 
 		then:
 			'it is available'
-			value == Signal.complete()
+			value
 	}
 
 	def 'A deferred Stream can be translated into a list'() {
@@ -2417,7 +2417,7 @@ class StreamsSpec extends Specification {
 					.buffer()
 					.throttleRequest(avgTime)
 					.map { timeWindow -> timeWindow.size() }
-					.finallyDo { latch.countDown() }
+					.doAfterTerminate { latch.countDown() }
 
 			def value = reduced.tap()
 			println source.debug()

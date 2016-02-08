@@ -65,7 +65,7 @@ public class PopularTagTests extends AbstractReactorTest {
 				Stream.reduceByKey(s, (acc, next) -> acc + next)
 				      .bufferSort((a, b) -> -a.t2.compareTo(b.t2))
 				      .take(10)
-				      .finallyDo(_s -> LOG.info("------------------------ window " + _s.getType()+"! " +
+				      .doAfterTerminate(() -> LOG.info("------------------------ window terminated" +
 						      "----------------------"))
 			)
 		        .consume(

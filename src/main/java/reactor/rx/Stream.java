@@ -69,6 +69,7 @@ import reactor.fn.BiFunction;
 import reactor.fn.BooleanSupplier;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
+import reactor.fn.LongConsumer;
 import reactor.fn.Predicate;
 import reactor.fn.Supplier;
 import reactor.fn.tuple.Tuple;
@@ -2448,20 +2449,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a {@link Consumer} to this {@code Stream} that will observe terminal signal complete|error. The consumer
-	 * will listen for the signal and introspect its state.
-	 *
-	 * @param consumer the consumer to invoke on terminal signal
-	 *
-	 * @return {@literal new Stream}
-	 *
-	 * @since 2.0
-	 */
-	public final Stream<O> finallyDo(final Consumer<Signal<O>> consumer) {
-		return new StreamFinally<O>(this, consumer);
-	}
-
-	/**
 	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@code Stream<O,V>} and pass
 	 * it into another {@code Stream}.
 	 *
@@ -3032,6 +3019,22 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Attach a {@link Runnable} to this {@code Stream} that will observe after onError or onComplete has been emitted
+	 *
+	 * @param consumer the consumer to invoke after terminate
+	 *
+	 * @return {@literal new Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> doAfterTerminate(final Runnable consumer) {
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, null, null, consumer, null, null);
+		}
+		return new StreamPeek<>(this, null, null, null, null, consumer, null, null);
+	}
+
+	/**
 	 * Attach a {@link Consumer} to this {@code Stream} that will observe any values accepted by this {@code Stream}.
 	 *
 	 * @param consumer the consumer to invoke on each value
@@ -3041,7 +3044,26 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0, 2.5
 	 */
 	public final Stream<O> doOnNext(final Consumer<? super O> consumer) {
-		return new StreamCallback<O>(this, consumer, null);
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, consumer, null, null, null, null, null);
+		}
+		return new StreamPeek<>(this, null, consumer, null, null, null, null, null);
+	}
+
+	/**
+	 * Attach a {@link LongConsumer} to this {@code Stream} that will observe any request to this {@code Stream}.
+	 *
+	 * @param consumer the consumer to invoke on each request
+	 *
+	 * @return {@literal new Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> doOnRequest(final LongConsumer consumer) {
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, null, null, null, consumer, null);
+		}
+		return new StreamPeek<>(this, null, null, null, null, null, consumer, null);
 	}
 
 	/**
@@ -3054,7 +3076,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0, 2.5
 	 */
 	public final Stream<O> doOnCancel(final Runnable runnable) {
-		return new StreamStateCallback<O>(this, runnable, null);
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, null, null, null, null, runnable);
+		}
+		return new StreamPeek<>(this, null, null, null, null, null, null, runnable);
 	}
 
 	/**
@@ -3067,7 +3092,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0, 2.5
 	 */
 	public final Stream<O> doOnComplete(final Runnable consumer) {
-		return new StreamCallback<O>(this, null, consumer);
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, null, consumer, null, null, null);
+		}
+		return new StreamPeek<>(this, null, null, null, consumer, null, null, null);
 	}
 
 	/**
@@ -3080,7 +3108,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0, 2.5
 	 */
 	public final Stream<O> doOnError(final Consumer<Throwable> consumer) {
-		return new StreamError<>(this, Throwable.class, consumer);
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, consumer, null, null, null, null);
+		}
+		return new StreamPeek<>(this, null, null, consumer, null, null, null, null);
 	}
 
 	/**
@@ -3093,7 +3124,26 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public final Stream<O> doOnSubscribe(final Consumer<? super Subscription> consumer) {
-		return new StreamStateCallback<O>(this, null, consumer);
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, consumer, null, null, null, null, null, null);
+		}
+		return new StreamPeek<>(this, consumer, null, null, null, null, null, null);
+	}
+
+	/**
+	 * Attach a {@link Consumer} to this {@code Stream} that will observe before onError or onComplete emission
+	 *
+	 * @param consumer the consumer to invoke before terminate
+	 *
+	 * @return {@literal new Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> doOnTerminate(final Runnable consumer) {
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, null, consumer, null, null, null);
+		}
+		return new StreamPeek<>(this, null, null, null, consumer, null, null, null);
 	}
 
 	/**

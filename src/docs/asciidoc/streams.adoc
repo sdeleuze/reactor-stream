@@ -30,7 +30,7 @@ Stream.from(aListOfString)
     BiStream.reduceByKey(words, (prev, next) -> prev + next)
       .sort((wordWithCountA, wordWithCountB) -> -wordWithCountA.t2.compareTo(wordWithCountB.t2))
       .take(10)
-      .finallyDo(event -> LOG.info("---- window complete! ----"))
+      .doAfterTerminate(() -> LOG.info("---- window complete! ----"))
   )
   .consume(
     wordWithCount -> LOG.info(wordWithCount.t1 + ": " + wordWithCount.t2),
@@ -1109,7 +1109,7 @@ Control controls = sensorDataStream
     System.out.println("New window starting");
     window
       .reduce(Integer.MAX_VALUE, (acc, next) -> Math.min(acc, next))
-      .finallyDo(o -> endLatch.countDown())
+      .doAfterTerminate(endLatch::countDown)
       .consume(i -> System.out.println("Minimum " + i));
   });
 
