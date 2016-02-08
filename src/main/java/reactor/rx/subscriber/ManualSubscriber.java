@@ -20,7 +20,8 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import org.reactivestreams.Subscription;
-import reactor.core.state.Backpressurable;
+import reactor.core.state.Prefetchable;
+import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.fn.Consumer;
 
@@ -28,21 +29,23 @@ import reactor.fn.Consumer;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class ManualSubscriber<T> extends InterruptableSubscriber<T> implements Backpressurable, Subscription {
+public final class ManualSubscriber<T> extends InterruptableSubscriber<T> implements Requestable,
+                                                                                     Prefetchable,
+                                                                                     Subscription {
 
 	@SuppressWarnings("unused")
-	private volatile long requested;
-	private final AtomicLongFieldUpdater<ManualSubscriber> REQUESTED =
+	volatile long requested;
+	final AtomicLongFieldUpdater<ManualSubscriber> REQUESTED =
 			AtomicLongFieldUpdater.newUpdater(ManualSubscriber.class, "requested");
 
 	@SuppressWarnings("unused")
-	private volatile long outstanding;
-	private final AtomicLongFieldUpdater<ManualSubscriber> OUTSTANDING =
+	volatile long outstanding;
+	final AtomicLongFieldUpdater<ManualSubscriber> OUTSTANDING =
 			AtomicLongFieldUpdater.newUpdater(ManualSubscriber.class, "outstanding");
 
 	@SuppressWarnings("unused")
-	private volatile int running;
-	private final AtomicIntegerFieldUpdater<ManualSubscriber> RUNNING =
+	volatile int running;
+	final AtomicIntegerFieldUpdater<ManualSubscriber> RUNNING =
 			AtomicIntegerFieldUpdater.newUpdater(ManualSubscriber.class, "running");
 
 	public ManualSubscriber(Consumer<? super T> consumer,
@@ -79,7 +82,7 @@ public final class ManualSubscriber<T> extends InterruptableSubscriber<T> implem
 		drain();
 	}
 
-	protected void drain(){
+	void drain(){
 		if(RUNNING.getAndIncrement(this) == 0) {
 			int missed = 1;
 			long r;
@@ -102,7 +105,17 @@ public final class ManualSubscriber<T> extends InterruptableSubscriber<T> implem
 	}
 
 	@Override
-	public long getCapacity() {
+	public long expectedFromUpstream() {
+		return outstanding;
+	}
+
+	@Override
+	public long limit() {
+		return -1L;
+	}
+
+	@Override
+	public long requestedFromDownstream() {
 		return requested;
 	}
 
