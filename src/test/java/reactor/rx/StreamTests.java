@@ -62,6 +62,7 @@ import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
+import reactor.fn.tuple.Tuple;
 import reactor.rx.subscriber.InterruptableSubscriber;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -455,7 +456,8 @@ public class StreamTests extends AbstractReactorTest {
 		                          .elapsed()
 		                          .skip(1)
 		                          .nest()
-		                          .flatMap(self -> Stream.reduceByKey(self, (acc, next) -> acc + next))
+		                          .flatMap(self -> self.groupBy(w -> w.t1)
+		                                           .flatMap(w -> w.count().map(c -> Tuple.of(w.key(), c))))
 		                          .log("elapsed")
 		                          .bufferSort((a, b) -> a.t1.compareTo(b.t1))
 		                          .reduce(-1L, (acc, next) -> acc > 0l ? ((next.t1 + acc) / 2) : next.t1)

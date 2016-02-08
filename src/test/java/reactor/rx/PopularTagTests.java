@@ -59,13 +59,12 @@ public class PopularTagTests extends AbstractReactorTest {
 				  .filter(w -> !w.trim().isEmpty())
 				  .doOnNext(i -> simulateLatency())
 			)
-		        .map(w -> Tuple.of(w, 1))
 		        .window(2, SECONDS)
-		        .flatMap(s ->
-				Stream.reduceByKey(s, (acc, next) -> acc + next)
-				      .bufferSort((a, b) -> -a.t2.compareTo(b.t2))
-				      .take(10)
-				      .doAfterTerminate(() -> LOG.info("------------------------ window terminated" +
+		        .flatMap(s -> s.groupBy(w -> w)
+		                       .flatMap(w -> w.count().map(c -> Tuple.of(w.key(), c)))
+		                       .bufferSort((a, b) -> -a.t2.compareTo(b.t2))
+		                       .take(10)
+		                       .doAfterTerminate(() -> LOG.info("------------------------ window terminated" +
 						      "----------------------"))
 			)
 		        .consume(

@@ -24,10 +24,10 @@ Stream.from(aListOfString)
       .filter(word -> !word.trim().isEmpty())
       .doOnNext(word -> doSomething(word))
   )
-  .map(word -> Tuple.of(word, 1))
   .window(1, TimeUnit.SECONDS)
   .flatMap(words ->
-    BiStream.reduceByKey(words, (prev, next) -> prev + next)
+    	words.groupBy(w -> w)
+        	 .flatMap(w -> w.count().map(c -> Tuple.of(w.key(), c)))
       .sort((wordWithCountA, wordWithCountB) -> -wordWithCountA.t2.compareTo(wordWithCountB.t2))
       .take(10)
       .doAfterTerminate(() -> LOG.info("---- window complete! ----"))
@@ -54,7 +54,6 @@ image::images/streams-overview.png[Stream Overview, width=650, align="center", l
 ** Can be transformed back to Stream with `Promise.stream()`
 * Static *Factories*, the one-stop-shops to create related components
 ** `Streams` for `Stream` creation from well-defined data sources (Iterable, nothing, Future, Publisher...)
-** `BiStreams` for key-value `Stream<Tuple2>` processing (reduceByKey...)
 ** `IOStreams` for <<streams.adoc#streams-persistent, Persisting>> and <<core-codec#core-codecs, Decoding>> `Streams`
 ** `Promises` for single-data-only `Promise`
 * `Action` and its direct implementations of every operation provided by the `Stream` following the *Reactive Streams Processor* specification
@@ -309,14 +308,6 @@ h|IOStream.<K,V>persistentMapReader(*String*)
 h|IOStream.decode(*Codec<SRC, IN, ?>, Publisher<SRC>*)
 |IN
 2+|Use <<core.adoc#core-codecs, Codec decoder>> to decode the passed source data type into *IN* type.
-
-h|BiStream.reduceByKey(*Publisher<Tuple2<KEY,VALUE>>*, _Map<KEY,VALUE>, Publisher<MapStream.Signal<KEY, VALUE>>_, *BiFunction<VALUE, VALUE, VALUE>*)
-|Tuple2<KEY,VALUE>
-2+|A key-value operation that accumulates computed results for each 2 sequential `onNext(VALUE)` passed to the `BiFunction` argument. The result will be released `onComplete()` only. The options allow to use an existing map store and listen for its events.
-
-h|BiStream.scanByKey(*Publisher<Tuple2<KEY,VALUE>>*, _Map<KEY,VALUE>, Publisher<MapStream.Signal<KEY, VALUE>>_, *BiFunction<VALUE, VALUE, VALUE>*)
-|Tuple2<KEY,VALUE>
-2+|A key-value operation that accumulates computed results for each 2 sequential `onNext(VALUE)` passed to the `BiFunction` argument. The result will be released every time just after it has been stored.  The options allow you to use an existing map store and listen for its events.
 
 h|Promises.when(*Promise<T1>, Promise<T2>*, _Promise<T3-N> x6_)
 |TupleN<T1,T2,\*?>
@@ -1870,7 +1861,8 @@ Promise<Long> result = source
     .elapsed() // <2>
     .nest() // <3>
     .flatMap(self ->
-            BiStream.reduceByKey(self, (prev, next) -> prev + 1) // <4>
+            self.groupBy(w -> w.t1)
+                .flatMap(w -> w.count().map(c -> Tuple.of(w.key(), c))) // <4>
     )
     .sort((a,b) -> a.t1.compareTo(b.t1)) // <5>
     .log("elapsed")
@@ -1934,14 +1926,6 @@ h|reduce(BiFunction<T,T>)
 
 h|reduce(A, BiFunction<A,T>)
 |A
-2+|
-
-h|BiStream.reduceByKey()
-|
-2+|
-
-h|BiStream.scanByKey()
-|
 2+|
 
 h|timestamp()
