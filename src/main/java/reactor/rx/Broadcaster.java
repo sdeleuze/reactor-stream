@@ -16,18 +16,27 @@
 
 package reactor.rx;
 
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+
 import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.flow.Receiver;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.queue.QueueSupplier;
+import reactor.core.state.Completable;
+import reactor.core.state.Introspectable;
 import reactor.core.timer.Timer;
+import reactor.core.util.BackpressureUtils;
+import reactor.core.util.CancelledSubscription;
+import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
+import reactor.core.util.PlatformDependent;
 import reactor.rx.subscriber.SerializedSubscriber;
-import reactor.rx.util.SwapSubscription;
 
 /**
  * Broadcasters are akin to Reactive Extensions Subject. Extending Stream, they fulfil the
@@ -273,9 +282,9 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * INTERNAL
 	 */
 
-	private final Timer            timer;
-	private final boolean          ignoreDropped;
-	private final SwapSubscription subscription;
+	final Timer            timer;
+	final boolean          ignoreDropped;
+	final SwapSubscription subscription;
 
 	protected Broadcaster(Processor<O, O> processor, Timer timer, boolean ignoreDropped) {
 		this(processor, processor, timer, ignoreDropped);
@@ -338,5 +347,132 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	@Override
 	public Timer getTimer() {
 		return timer != null ? timer : Timer.globalOrNull();
+	}
+
+	static final class SwapSubscription implements Subscription, Receiver, Completable, Introspectable {
+
+		@SuppressWarnings("unused")
+		volatile Subscription subscription;
+		static final AtomicReferenceFieldUpdater<SwapSubscription, Subscription> SUBSCRIPTION =
+				PlatformDependent.newAtomicReferenceFieldUpdater(SwapSubscription.class, "subscription");
+
+
+		@SuppressWarnings("unused")
+		volatile long requested;
+		protected static final AtomicLongFieldUpdater<SwapSubscription> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(SwapSubscription.class, "requested");
+
+		public static SwapSubscription create() {
+			return new SwapSubscription();
+		}
+
+		SwapSubscription() {
+			SUBSCRIPTION.lazySet(this, EmptySubscription.INSTANCE);
+		}
+
+		/**
+		 *
+		 * @param subscription
+		 */
+		public void swapTo(Subscription subscription) {
+			Subscription old = SUBSCRIPTION.getAndSet(this, subscription);
+			if(old != EmptySubscription.INSTANCE){
+				subscription.cancel();
+				return;
+			}
+			long r = REQUESTED.getAndSet(this, 0L);
+			if(r != 0L){
+				subscription.request(r);
+			}
+		}
+
+		/**
+		 *
+		 * @return
+		 */
+		public boolean isUnsubscribed(){
+			return subscription == EmptySubscription.INSTANCE;
+		}
+
+		/**
+		 *
+		 * @param l
+		 * @return
+		 */
+		public boolean ack(long l) {
+			return BackpressureUtils.getAndSub(REQUESTED, this, l) >= l;
+		}
+
+		/**
+		 *
+		 * @return
+		 */
+		public boolean ack(){
+			return BackpressureUtils.getAndSub(REQUESTED, this, 1L) != 0;
+		}
+
+		/**
+		 *
+		 * @return
+		 */
+		public boolean isCancelled(){
+			return subscription == CancelledSubscription.INSTANCE;
+		}
+
+		@Override
+		public void request(long n) {
+			BackpressureUtils.getAndAdd(REQUESTED, this, n);
+			SUBSCRIPTION.get(this)
+			            .request(n);
+		}
+
+		@Override
+		public void cancel() {
+			Subscription s;
+			for(;;) {
+				s = subscription;
+				if(s == CancelledSubscription.INSTANCE || s == EmptySubscription.INSTANCE){
+					return;
+				}
+
+				if(SUBSCRIPTION.compareAndSet(this, s, CancelledSubscription.INSTANCE)){
+					s.cancel();
+					break;
+				}
+			}
+		}
+
+		@Override
+		public Object upstream() {
+			return subscription;
+		}
+
+		@Override
+		public boolean isStarted() {
+			return !isUnsubscribed();
+		}
+
+		@Override
+		public boolean isTerminated() {
+			return isUnsubscribed();
+		}
+
+		@Override
+		public int getMode() {
+			return 0;
+		}
+
+		@Override
+		public String getName() {
+			return null;
+		}
+
+		@Override
+		public String toString() {
+			return "SwapSubscription{" +
+					"subscription=" + subscription +
+					", requested=" + requested +
+					'}';
+		}
 	}
 }

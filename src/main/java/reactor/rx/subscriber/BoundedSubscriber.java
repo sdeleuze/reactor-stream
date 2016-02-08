@@ -25,7 +25,7 @@ import reactor.fn.Consumer;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class BoundedSubscriber<T> extends InterruptableSubscriber<T> implements Backpressurable, Prefetchable {
+final class BoundedSubscriber<T> extends InterruptableSubscriber<T> implements Backpressurable, Prefetchable {
 
 	final int capacity;
 	final int limit;

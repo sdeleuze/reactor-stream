@@ -32,7 +32,7 @@ import reactor.fn.Function;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class AdaptiveSubscriber<T, E extends Processor<Long, Long>> extends InterruptableSubscriber<T>
+final class AdaptiveSubscriber<T, E extends Processor<Long, Long>> extends InterruptableSubscriber<T>
 		implements Backpressurable {
 
 	private final E                                                           requestMapperStream;

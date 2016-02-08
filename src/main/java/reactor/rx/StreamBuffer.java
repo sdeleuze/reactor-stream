@@ -463,7 +463,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamSourc
 				return;
 			}
 
-			if (reactor.rx.util.DrainUtils.postCompleteRequest(n, actual, buffers, REQUESTED, this, this)) {
+			if (DrainUtils.postCompleteRequest(n, actual, buffers, REQUESTED, this, this)) {
 				return;
 			}
 
@@ -571,7 +571,7 @@ final class StreamBuffer<T, C extends Collection<? super T>> extends StreamSourc
 
 			done = true;
 
-			reactor.rx.util.DrainUtils.postComplete(actual, buffers, REQUESTED, this, this);
+			DrainUtils.postComplete(actual, buffers, REQUESTED, this, this);
 		}
 
 		@Override

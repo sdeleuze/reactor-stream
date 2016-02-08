@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.rx.util;
+package reactor.rx;
 
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
@@ -26,7 +26,7 @@ import reactor.fn.BooleanSupplier;
  * @author Stephane Maldini
  * @since 2.1
  */
-public enum DrainUtils {
+enum DrainUtils {
 	;
 
 

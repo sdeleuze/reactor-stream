@@ -28,7 +28,7 @@ import reactor.fn.Consumer;
  * @author Stephane Maldini
  * @since 2.5
  */
-public final class ManualSubscriber<T> extends InterruptableSubscriber<T> implements Backpressurable,
+final class ManualSubscriber<T> extends InterruptableSubscriber<T> implements Backpressurable,
                                                                                      Control.Demand {
 
 	@SuppressWarnings("unused")

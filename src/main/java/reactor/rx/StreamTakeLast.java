@@ -210,7 +210,7 @@ final class StreamTakeLast<T> extends StreamSource<T, T> {
 		@Override
 		public void request(long n) {
 			if (BackpressureUtils.validate(n)) {
-				reactor.rx.util.DrainUtils.postCompleteRequest(n, actual, buffer, REQUESTED, this, this);
+				DrainUtils.postCompleteRequest(n, actual, buffer, REQUESTED, this, this);
 			}
 		}
 
@@ -249,7 +249,7 @@ final class StreamTakeLast<T> extends StreamSource<T, T> {
 		@Override
 		public void onComplete() {
 
-			reactor.rx.util.DrainUtils.postComplete(actual, buffer, REQUESTED, this, this);
+			DrainUtils.postComplete(actual, buffer, REQUESTED, this, this);
 		}
 
 		@Override

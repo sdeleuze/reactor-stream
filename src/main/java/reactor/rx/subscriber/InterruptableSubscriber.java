@@ -17,6 +17,8 @@ package reactor.rx.subscriber;
 
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
+import org.reactivestreams.Processor;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.ConsumerSubscriber;
 import reactor.core.util.CancelledSubscription;
@@ -25,6 +27,7 @@ import reactor.core.util.Exceptions;
 import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveStateUtils;
 import reactor.fn.Consumer;
+import reactor.fn.Function;
 
 /**
  * @author Stephane Maldini
@@ -32,9 +35,67 @@ import reactor.fn.Consumer;
  */
 public class InterruptableSubscriber<T> extends ConsumerSubscriber<T> implements Control {
 
+	/**
+	 *
+	 * @param prefetch
+	 * @param callback
+	 * @param <T>
+	 * @return
+	 */
+	public static <T> InterruptableSubscriber<T> bounded(int prefetch, Consumer<? super T> callback){
+		return bounded(prefetch, callback, null, null);
+	}
+
+	/**
+	 *
+	 * @param prefetch
+	 * @param callback
+	 * @param errorCallback
+	 * @param completeCallback
+	 * @param <T>
+	 * @return
+	 */
+	public static <T> InterruptableSubscriber<T> bounded(int prefetch, Consumer<? super T> callback,
+			Consumer<? super Throwable> errorCallback, Runnable completeCallback){
+		return new BoundedSubscriber<>(prefetch, callback, errorCallback, completeCallback);
+	}
+
+	/**
+	 *
+	 * @param consumer
+	 * @param mapper
+	 * @param broadcaster
+	 * @param <O>
+	 * @param <E>
+	 * @return
+	 */
+	public static <O, E extends Processor<Long, Long>> InterruptableSubscriber<O> adaptive(Consumer<? super O> consumer,
+			Function<? super Publisher<Long>, ? extends Publisher<? extends Long>> mapper,
+			E broadcaster) {
+		return new AdaptiveSubscriber<>(consumer, mapper, broadcaster);
+	}
+
+	/**
+	 *
+	 * @param stream
+	 * @param consumer
+	 * @param consumer1
+	 * @param consumer2
+	 * @param <O>
+	 * @return
+	 */
+	public static <O> Demand bindLater(Publisher<O> stream,
+			Consumer<? super O> consumer,
+			Consumer<? super Throwable> consumer1,
+			Runnable consumer2) {
+		ManualSubscriber<O> manualSubscriber = new ManualSubscriber<>(consumer, consumer1, consumer2);
+		stream.subscribe(manualSubscriber);
+		return manualSubscriber;
+	}
 
 	@SuppressWarnings("unused")
 	volatile Subscription subscription;
+
 	final static AtomicReferenceFieldUpdater<InterruptableSubscriber, Subscription> SUBSCRIPTION =
 			PlatformDependent.newAtomicReferenceFieldUpdater(InterruptableSubscriber.class, "subscription");
 

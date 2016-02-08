@@ -82,12 +82,9 @@ import reactor.fn.tuple.Tuple5;
 import reactor.fn.tuple.Tuple6;
 import reactor.fn.tuple.Tuple7;
 import reactor.fn.tuple.Tuple8;
-import reactor.rx.subscriber.AdaptiveSubscriber;
 import reactor.rx.subscriber.BlockingQueueSubscriber;
-import reactor.rx.subscriber.BoundedSubscriber;
 import reactor.rx.subscriber.Control;
 import reactor.rx.subscriber.InterruptableSubscriber;
-import reactor.rx.subscriber.ManualSubscriber;
 import reactor.rx.subscriber.Tap;
 
 /**
@@ -2073,10 +2070,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		long c = Math.min(Integer.MAX_VALUE, getCapacity());
 		InterruptableSubscriber<O> consumerAction;
 		if (c == Integer.MAX_VALUE) {
-			consumerAction = new InterruptableSubscriber<O>(consumer, null, null);
+			consumerAction = new InterruptableSubscriber<>(consumer, null, null);
 		}
 		else {
-			consumerAction = new BoundedSubscriber<O>((int) c, consumer, null, null);
+			consumerAction = InterruptableSubscriber.bounded((int)c, consumer);
 		}
 		subscribe(consumerAction);
 		return consumerAction;
@@ -2119,7 +2116,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			consumerAction = new InterruptableSubscriber<O>(consumer, errorConsumer, completeConsumer);
 		}
 		else {
-			consumerAction = new BoundedSubscriber<O>((int) c, consumer, errorConsumer, completeConsumer);
+			consumerAction = InterruptableSubscriber.bounded((int) c, consumer, errorConsumer,
+					completeConsumer);
 		}
 
 		subscribe(consumerAction);
@@ -2178,8 +2176,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Control.Demand consumeLater(final Consumer<? super O> consumer,
 			Consumer<? super Throwable> errorConsumer,
 			Runnable completeConsumer) {
-		ManualSubscriber<O> consumerAction = new ManualSubscriber<>(consumer, errorConsumer, completeConsumer);
-		subscribe(consumerAction);
+		Control.Demand consumerAction = InterruptableSubscriber.bindLater(this, consumer,
+				errorConsumer, completeConsumer);
 		return consumerAction;
 	}
 
@@ -2198,8 +2196,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	@SuppressWarnings("unchecked")
 	public final Control consumeWhen(final Consumer<? super O> consumer,
 			final Function<? super Stream<Long>, ? extends Publisher<? extends Long>> requestMapper) {
-		AdaptiveSubscriber<O, Broadcaster<Long>> consumerAction =
-				new AdaptiveSubscriber<>(consumer,
+		InterruptableSubscriber<O> consumerAction =
+				InterruptableSubscriber.adaptive(consumer,
 						(Function<? super Publisher<Long>, ? extends Publisher<? extends Long>>)requestMapper,
 				Broadcaster.<Long>create(getTimer()));
 
