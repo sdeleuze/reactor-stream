@@ -226,14 +226,14 @@ class StreamsSpec extends Specification {
 			'the stream is retrieved'
 			stream = stream.map { it + '-ok' }.log()
 
-			def queue = stream.toBlockingQueue()
+			def queue = stream.toIterable().iterator()
 			//	println stream.debug()
 
 			def res
 			def result = []
 
-			while (res = queue.take()) {
-				result << res
+			while (queue.hasNext()) {
+				result << queue.next()
 			}
 
 		then:

@@ -26,8 +26,8 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.flow.Receiver;
 import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.util.Assert;
 import reactor.core.util.BackpressureUtils;
@@ -56,9 +56,6 @@ public class BlockingQueueSubscriber<IN> extends BaseSubscriber<IN> implements R
 	private static final AtomicLongFieldUpdater<BlockingQueueSubscriber> REMAINING = AtomicLongFieldUpdater
 	  .newUpdater(BlockingQueueSubscriber.class, "remainingCapacity");
 
-	public BlockingQueueSubscriber(Publisher<IN> source, Subscriber<IN> target, Queue<IN> store, int capacity) {
-		this(source, target, store, false, capacity);
-	}
 
 	public BlockingQueueSubscriber(Publisher<IN> source, Subscriber<IN> target, Queue<IN> store,
 	                               boolean cancelAfterFirstRequestComplete, int capacity) {
