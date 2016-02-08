@@ -62,7 +62,7 @@ import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
-import reactor.rx.subscriber.Control;
+import reactor.rx.subscriber.InterruptableSubscriber;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -180,11 +180,11 @@ public class StreamTests extends AbstractReactorTest {
 		Stream<Integer> last = s.every(5);
 
 		assertThat("First is 1",
-				first.tap()
+				first.next()
 				     .get(),
 				is(1));
 		assertThat("Last is 5",
-				last.tap()
+				last.next()
 				    .get(),
 				is(5));
 	}
@@ -299,7 +299,7 @@ public class StreamTests extends AbstractReactorTest {
 			                                                  return Integer.parseInt(str);
 		                                                  }));
 
-		Control tail = tasks.consume(i -> {
+		InterruptableSubscriber<?> tail = tasks.consume(i -> {
 			latch.countDown();
 		});
 
@@ -390,7 +390,7 @@ public class StreamTests extends AbstractReactorTest {
 		Broadcaster<Integer> d = Broadcaster.create();
 		SignalEmitter<Integer> s = SignalEmitter.create(d);
 
-		Control c = d.dispatchOn(asyncGroup)
+		InterruptableSubscriber<?> c = d.dispatchOn(asyncGroup)
 		             .partition(8)
 		             .consume(stream -> stream.dispatchOn(asyncGroup)
 		                                      .map(o -> {
@@ -864,7 +864,7 @@ public class StreamTests extends AbstractReactorTest {
 
 		                           );
 
-		Control action = s.capacity(1L)
+		InterruptableSubscriber<?> action = s.capacity(1L)
 		                  .consume(integer -> {
 			                  latch.countDown();
 			                  System.out.println(integer);
@@ -946,7 +946,7 @@ public class StreamTests extends AbstractReactorTest {
 		                               .log("before")
 		                               .dispatchOn(asyncGroup);
 
-		Control tail = worker.log("after")
+		InterruptableSubscriber<?> tail = worker.log("after")
 		                     .partition(2)
 		                     .consume(s -> s.log("w"+s.key())
 		                                    .dispatchOn(asyncGroup)
@@ -1081,7 +1081,7 @@ public class StreamTests extends AbstractReactorTest {
 
 		CountDownLatch endLatch = new CountDownLatch(1000 / 100);
 
-		Control controls = sensorDataStream
+		InterruptableSubscriber<?> controls = sensorDataStream
 				/*     step 2  */.window(100)
 				///*     step 3  */.timeout(1000)
 				/*     step 4  */
@@ -1180,7 +1180,7 @@ public class StreamTests extends AbstractReactorTest {
 
 		CountDownLatch latch = new CountDownLatch(10);
 
-		Control c = Stream.range(1, 10)
+		InterruptableSubscriber<?> c = Stream.range(1, 10)
 		                  .groupBy(n -> n % 2 == 0)
 		                  .flatMap(stream -> stream.dispatchOn(supplier1)
 		                                            .log("groupBy-" + stream.key()))
@@ -1266,15 +1266,15 @@ public class StreamTests extends AbstractReactorTest {
 		                        .toEpochMilli();
 		long elapsed = System.nanoTime();
 
-		Control ctrl = Stream.interval(delayMS, TimeUnit.MILLISECONDS)
-		                     .map((signal) -> {
+		InterruptableSubscriber<Long> ctrl = Stream.interval(delayMS, TimeUnit.MILLISECONDS)
+		                                           .map((signal) -> {
 			                      return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - elapsed);
 		                      })
-		                     .doOnNext((elapsedMillis) -> {
+		                                           .doOnNext((elapsedMillis) -> {
 			                      times.add(localTime + elapsedMillis);
 			                      barrier.arrive();
 		                      })
-		                     .consume();
+		                                           .consume();
 
 		barrier.awaitAdvanceInterruptibly(barrier.arrive(), tasks * delayMS + 1000, TimeUnit.MILLISECONDS);
 		ctrl.cancel();

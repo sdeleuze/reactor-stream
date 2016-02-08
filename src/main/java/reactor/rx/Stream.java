@@ -80,9 +80,8 @@ import reactor.fn.tuple.Tuple5;
 import reactor.fn.tuple.Tuple6;
 import reactor.fn.tuple.Tuple7;
 import reactor.fn.tuple.Tuple8;
-import reactor.rx.subscriber.Control;
 import reactor.rx.subscriber.InterruptableSubscriber;
-import reactor.rx.subscriber.Tap;
+import reactor.rx.subscriber.ManualSubscriber;
 
 /**
  * A public factory to build {@link Stream}, Streams provide for common transformations from a few structures such as
@@ -2061,7 +2060,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return the consuming action
 	 */
 	@SuppressWarnings("unchecked")
-	public Control consume() {
+	public InterruptableSubscriber<O> consume() {
 		return consume(NOOP);
 	}
 
@@ -2072,9 +2071,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param consumer the consumer to invoke on each value
 	 *
-	 * @return a new {@link Control} interface to operate on the materialized upstream
+	 * @return a new {@link InterruptableSubscriber} interface to operate on the materialized upstream
 	 */
-	public final Control consume(final Consumer<? super O> consumer) {
+	public final InterruptableSubscriber<O> consume(final Consumer<? super O> consumer) {
 		long c = Math.min(Integer.MAX_VALUE, getCapacity());
 		InterruptableSubscriber<O> consumerAction;
 		if (c == Integer.MAX_VALUE) {
@@ -2095,9 +2094,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param consumer the consumer to invoke on each next signal
 	 * @param errorConsumer the consumer to invoke on each error signal
 	 *
-	 * @return a new {@link Control} interface to operate on the materialized upstream
+	 * @return a new {@link InterruptableSubscriber} interface to operate on the materialized upstream
 	 */
-	public final Control consume(final Consumer<? super O> consumer, Consumer<? super Throwable> errorConsumer) {
+	public final InterruptableSubscriber<O> consume(final Consumer<? super O> consumer, Consumer<? super Throwable> errorConsumer) {
 		return consume(consumer, errorConsumer, null);
 	}
 
@@ -2113,7 +2112,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @return {@literal new Stream}
 	 */
-	public final Control consume(final Consumer<? super O> consumer,
+	public final InterruptableSubscriber<O> consume(final Consumer<? super O> consumer,
 			Consumer<? super Throwable> errorConsumer,
 			Runnable completeConsumer) {
 
@@ -2137,7 +2136,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @return the consuming action
 	 */
-	public Control.Demand consumeLater() {
+	public ManualSubscriber<O> consumeLater() {
 		return consumeLater(null);
 	}
 
@@ -2148,9 +2147,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param consumer the consumer to invoke on each value
 	 *
-	 * @return a new {@link Control} interface to operate on the materialized upstream
+	 * @return a new {@link InterruptableSubscriber} interface to operate on the materialized upstream
 	 */
-	public final Control.Demand consumeLater(final Consumer<? super O> consumer) {
+	public final  ManualSubscriber<O> consumeLater(final Consumer<? super O> consumer) {
 		return consumeLater(consumer, null, null);
 	}
 
@@ -2162,9 +2161,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param consumer the consumer to invoke on each next signal
 	 * @param errorConsumer the consumer to invoke on each error signal
 	 *
-	 * @return a new {@link Control} interface to operate on the materialized upstream
+	 * @return a new {@link InterruptableSubscriber} interface to operate on the materialized upstream
 	 */
-	public final Control.Demand consumeLater(final Consumer<? super O> consumer,
+	public final  ManualSubscriber<O> consumeLater(final Consumer<? super O> consumer,
 			Consumer<? super Throwable> errorConsumer) {
 		return consumeLater(consumer, errorConsumer, null);
 	}
@@ -2181,10 +2180,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @return {@literal new Stream}
 	 */
-	public final Control.Demand consumeLater(final Consumer<? super O> consumer,
+	public final  ManualSubscriber<O> consumeLater(final Consumer<? super O> consumer,
 			Consumer<? super Throwable> errorConsumer,
 			Runnable completeConsumer) {
-		Control.Demand consumerAction = InterruptableSubscriber.bindLater(this, consumer,
+		ManualSubscriber<O> consumerAction = InterruptableSubscriber.bindLater(this, consumer,
 				errorConsumer, completeConsumer);
 		return consumerAction;
 	}
@@ -2199,10 +2198,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param consumer the consumer to invoke on each value
 	 *
-	 * @return a new {@link Control} interface to operate on the materialized upstream
+	 * @return a new {@link InterruptableSubscriber} interface to operate on the materialized upstream
 	 */
 	@SuppressWarnings("unchecked")
-	public final Control consumeWhen(final Consumer<? super O> consumer,
+	public final InterruptableSubscriber<O> consumeWhen(final Consumer<? super O> consumer,
 			final Function<? super Stream<Long>, ? extends Publisher<? extends Long>> requestMapper) {
 		InterruptableSubscriber<O> consumerAction =
 				InterruptableSubscriber.adaptive(consumer,
@@ -2224,9 +2223,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param consumer the consumer to invoke on each value
 	 *
-	 * @return a new {@link Control} interface to operate on the materialized upstream
+	 * @return a new {@link InterruptableSubscriber} interface to operate on the materialized upstream
 	 */
-	public final Control consumeWithRequest(final Consumer<? super O> consumer,
+	public final InterruptableSubscriber<O> consumeWithRequest(final Consumer<? super O> consumer,
 			final Function<Long, ? extends Long> requestMapper) {
 		return consumeWhen(consumer, new Function<Stream<Long>, Publisher<? extends Long>>() {
 			@Override
@@ -4102,16 +4101,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a {@link Tap} that maintains a reference to the last value seen by this {@code Stream}. The {@link Tap} is
+	 * Create a {@link StreamTap} that maintains a reference to the last value seen by this {@code Stream}. The {@link StreamTap} is
 	 * continually updated when new values pass through the {@code Stream}.
 	 *
-	 * @return the new {@link Tap}
+	 * @return the new {@link StreamTap}
 	 *
 	 * @see Consumer
 	 */
-	public final Tap.Control<O> tap() {
-		final Tap<O> tap = Tap.create();
-		return new Tap.Control<>(tap, consume(tap));
+	public final StreamTap<O> tap() {
+		return StreamTap.tap(this);
 	}
 
 	/**

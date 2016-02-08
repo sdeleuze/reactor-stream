@@ -28,8 +28,7 @@ import reactor.fn.Consumer;
  * @author Stephane Maldini
  * @since 2.5
  */
-final class ManualSubscriber<T> extends InterruptableSubscriber<T> implements Backpressurable,
-                                                                                     Control.Demand {
+public final class ManualSubscriber<T> extends InterruptableSubscriber<T> implements Backpressurable, Subscription {
 
 	@SuppressWarnings("unused")
 	private volatile long requested;
@@ -52,19 +51,9 @@ final class ManualSubscriber<T> extends InterruptableSubscriber<T> implements Ba
 		super(consumer, errorConsumer, completeConsumer);
 	}
 
-	@Override
-	protected void doPostNext(T ev) {
-		if(BackpressureUtils.getAndSub(OUTSTANDING, this, 1L) == 1L){
-			drain();
-		}
-	}
-
-	@Override
-	protected void doSafeSubscribe(Subscription subscription) {
-		drain();
-	}
-
-	@Override
+	/**
+	 *
+	 */
 	public void requestAll() {
 		request(Long.MAX_VALUE);
 	}
@@ -76,6 +65,18 @@ final class ManualSubscriber<T> extends InterruptableSubscriber<T> implements Ba
 		if(isStarted()) {
 			drain();
 		}
+	}
+
+	@Override
+	protected void doPostNext(T ev) {
+		if(BackpressureUtils.getAndSub(OUTSTANDING, this, 1L) == 1L){
+			drain();
+		}
+	}
+
+	@Override
+	protected void doSafeSubscribe(Subscription subscription) {
+		drain();
 	}
 
 	protected void drain(){

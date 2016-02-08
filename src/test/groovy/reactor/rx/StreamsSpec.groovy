@@ -57,6 +57,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the value is retrieved'
 			def value = stream.tap()
+			value.subscribe()
 
 		then:
 			'it is available'
@@ -71,7 +72,9 @@ class StreamsSpec extends Specification {
 		when:
 			'the value is retrieved'
 			def value = stream.tap()
+			value.subscribe()
 			def value2 = stream.tap()
+			value2.subscribe()
 
 		then:
 			'it is available in value 1 but value 2 has subscribed after dispatching'
@@ -194,6 +197,8 @@ class StreamsSpec extends Specification {
 				value = true
 			}.tap()
 
+			tap.subscribe()
+
 			println tap.debug()
 
 		then:
@@ -251,6 +256,7 @@ class StreamsSpec extends Specification {
 			'the value is retrieved'
 			test = "test"
 			def value = stream.tap()
+			value.subscribe()
 
 		then:
 			'it is available'
@@ -294,10 +300,12 @@ class StreamsSpec extends Specification {
 		when:
 			'the first value is retrieved'
 			def first = s.everyFirst(5).tap()
+			first.subscribe()
 
 		and:
 			'the last value is retrieved'
 			def last = s.every(5).tap()
+			last.subscribe()
 
 		then:
 			'first and last'
@@ -350,6 +358,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the values are filtered and result is collected'
 			def tap = s.distinctUntilChanged().buffer().tap()
+			tap.subscribe()
 
 		then:
 			'collected must remove duplicates'
@@ -364,6 +373,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the values are filtered and result is collected'
 			def tap = s.distinctUntilChanged { it % 2 == 0 }.buffer().tap()
+			tap.subscribe()
 
 		then:
 			'collected must remove duplicates'
@@ -378,6 +388,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the values are filtered and result is collected'
 			def tap = s.distinct().buffer().tap()
+			tap.subscribe()
 
 		then:
 			'collected should be without duplicates'
@@ -392,6 +403,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the values are filtered and result is collected'
 			def tap = s.distinct { it % 3 }.buffer().tap()
+			tap.subscribe()
 
 		then:
 			'collected should be without duplicates'
@@ -501,6 +513,7 @@ class StreamsSpec extends Specification {
 			'a composable with a registered consumer'
 			def composable = Broadcaster.<Integer> create()
 			def value = composable.tap()
+			value.subscribe()
 
 		when:
 			'a value is accepted'
@@ -555,6 +568,7 @@ class StreamsSpec extends Specification {
 		when:
 			'accept list of Strings'
 			def tap = composable.tap()
+			tap.subscribe()
 			d.onNext(['a', 'b', 'c'])
 
 		then:
@@ -572,6 +586,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the expected accept count is set and that number of values is accepted'
 			def tap = composable.every(3).log().tap()
+			tap.subscribe()
 			println composable.debug()
 			d.onNext(1)
 			d.onNext(2)
@@ -584,6 +599,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the expected accept count is set and that number of values is accepted'
 			tap = composable.every(3).tap()
+			tap.subscribe()
 			d.onNext(1)
 			d.onNext(2)
 			d.onNext(3)
@@ -602,6 +618,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the source accepts a value'
 			def value = mapped.tap()
+			value.subscribe()
 			source.onNext(1)
 
 		then:
@@ -642,6 +659,7 @@ class StreamsSpec extends Specification {
 			def source3 = Broadcaster.<Integer> create()
 
 			def tap = Stream.merge(source1, source2, source3).log().buffer(3).log().tap()
+			tap.subscribe()
 
 		when:
 			'the sources accept a value'
@@ -664,6 +682,7 @@ class StreamsSpec extends Specification {
 			def source2 = Broadcaster.<Integer> create()
 			def zippedStream = Stream.zip(source1, source2, (BiFunction) { t1, t2 -> println t1; t1 + t2 }).log()
 			def tap = zippedStream.tap()
+			tap.subscribe()
 
 		when:
 			'the sources accept a value'
@@ -947,6 +966,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the source accepts an even value'
 			def value = filtered.tap()
+			value.subscribe()
 			println value.debug()
 			source.onNext(2)
 
@@ -967,6 +987,7 @@ class StreamsSpec extends Specification {
 			'simple filter'
 			def anotherSource = Broadcaster.<Boolean> create()
 			def tap = anotherSource.filter{ it }.tap()
+			tap.subscribe()
 			anotherSource.onNext(true)
 
 		then:
@@ -977,6 +998,7 @@ class StreamsSpec extends Specification {
 			'simple filter nominal case'
 			anotherSource = Broadcaster.<Boolean> create()
 			tap = anotherSource.filter{ it }.tap()
+			tap.subscribe()
 			anotherSource.onNext(false)
 
 		then:
@@ -1181,6 +1203,7 @@ class StreamsSpec extends Specification {
 			def source = Broadcaster.<Integer> create()
 			def reduced = source.scan(new Reduction())
 			def value = reduced.tap()
+			value.subscribe()
 
 		when:
 			'the first value is accepted'
@@ -1201,6 +1224,7 @@ class StreamsSpec extends Specification {
 		when:
 			'use an initial value'
 			value = source.scan(4, new Reduction()).tap()
+			value.subscribe()
 			source.onNext(1)
 
 		then:
@@ -1422,6 +1446,7 @@ class StreamsSpec extends Specification {
 
 			source.log('w').window(2).consume {
 				value = it.log().buffer(2).tap()
+			  	value.subscribe()
 			}
 
 
@@ -1933,6 +1958,7 @@ class StreamsSpec extends Specification {
 			def source = Broadcaster.<Integer> create()
 			def reduced = source.buffer(2).log().throttleRequest(300)
 			def value = reduced.tap()
+			value.subscribe()
 
 		when:
 			'the first values are accepted on the source'
@@ -1987,6 +2013,7 @@ class StreamsSpec extends Specification {
 			def source = Broadcaster.<Integer> create()
 			def reduced = source.buffer(5, 600, TimeUnit.MILLISECONDS)
 			def value = reduced.tap()
+			value.subscribe()
 			println value.debug()
 
 		when:
@@ -2027,6 +2054,7 @@ class StreamsSpec extends Specification {
 				error = it
 			  Stream.just(-5)
 			}.tap()
+			value.subscribe()
 			println value.debug()
 
 		when:
@@ -2057,6 +2085,7 @@ class StreamsSpec extends Specification {
 			def value = reduced.when(TimeoutException) {
 				error = it
 			}.tap()
+			value.subscribe()
 			println value.debug()
 
 		when:
@@ -2420,6 +2449,7 @@ class StreamsSpec extends Specification {
 					.doAfterTerminate { latch.countDown() }
 
 			def value = reduced.tap()
+			value.subscribe()
 			println source.debug()
 
 		when:
@@ -2736,7 +2766,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'timestamp operation is added and the stream is retrieved'
-			def value = stream.timestamp().tap().get()
+			def value = stream.timestamp().next().get()
 
 		then:
 			'it is available'
@@ -2754,7 +2784,7 @@ class StreamsSpec extends Specification {
 			'elapsed operation is added and the stream is retrieved'
 			def value = stream.doOnNext {
 				sleep(1000)
-			}.elapsed().tap().get()
+			}.elapsed().next().get()
 
 			long totalElapsed = System.currentTimeMillis() - timestamp
 
@@ -2772,6 +2802,7 @@ class StreamsSpec extends Specification {
 		when:
 			'sorted operation is added and the stream is retrieved'
 			def value = stream.bufferSort().buffer().tap()
+			value.subscribe()
 
 		then:
 			'it is available'
@@ -2784,6 +2815,7 @@ class StreamsSpec extends Specification {
 		and:
 			'sorted operation is added for up to 3 elements ordered at once and the stream is retrieved'
 			value = stream.window(3).flatMap{ it.bufferSort() }.buffer(6).tap()
+			value.subscribe()
 			println value.debug()
 
 		then:
@@ -2800,6 +2832,7 @@ class StreamsSpec extends Specification {
 					.bufferSort({ a, b -> b <=> a } as Comparator<Integer>)
 					.buffer()
 					.tap()
+			value.subscribe()
 
 		then:
 			'it is available'
@@ -2814,6 +2847,7 @@ class StreamsSpec extends Specification {
 		when:
 			'take to the first 2 elements'
 			def value = stream.take(2).tap()
+	  		value.subscribe()
 
 		then:
 			'the second is the last available'
@@ -2825,6 +2859,8 @@ class StreamsSpec extends Specification {
 			def value2 = stream2.log().takeWhile {
 				'test2' != it
 			}.tap()
+			value2.subscribe()
+
 
 		stream2.onNext('test1')
 		stream2.onNext('test2')

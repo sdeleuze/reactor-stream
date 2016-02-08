@@ -36,7 +36,7 @@ import reactor.core.publisher.SchedulerGroup;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
-import reactor.rx.subscriber.Control;
+import reactor.rx.subscriber.InterruptableSubscriber;
 
 /**
  * @author Stephane Maldini
@@ -118,9 +118,9 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 40;
 		CountDownLatch latch = new CountDownLatch(elements);
 
-		Control tail = sensorOdd().mergeWith(sensorEven())
-		                          .doOnNext(loggingConsumer())
-		                          .consume(i -> latch.countDown());
+		InterruptableSubscriber<?> tail = sensorOdd().mergeWith(sensorEven())
+		                                                .doOnNext(loggingConsumer())
+		                                                .consume(i -> latch.countDown());
 
 		generateData(elements);
 
@@ -141,7 +141,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 
 		CountDownLatch latch = new CountDownLatch(elements + 1);
 
-		Control tail = Stream.concat(sensorEven(), sensorOdd())
+		InterruptableSubscriber<?> tail = Stream.concat(sensorEven(), sensorOdd())
 		                     .log("concat")
 		                     .consume(i -> latch.countDown(), null, latch::countDown);
 
@@ -156,7 +156,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 40;
 		CountDownLatch latch = new CountDownLatch(elements / 2 - 2);
 
-		Control tail = Stream.combineLatest(
+		InterruptableSubscriber<?> tail = Stream.combineLatest(
 				sensorOdd().cache().throttleRequest(50),
 				sensorEven().cache().throttleRequest(100),
 		this::computeMin)
@@ -173,7 +173,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 40;
 		CountDownLatch latch = new CountDownLatch(elements + 1);
 
-		Control tail = Stream.range(1, elements)
+		InterruptableSubscriber<?> tail = Stream.range(1, elements)
 		                     .forkJoin(d -> Mono.just(d + "!"), d -> Mono.just(d + "?"))
 		                     .log("forkJoin")
 		                     .consume(i -> latch.countDown(), null, latch::countDown);
@@ -210,7 +210,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 40;
 		CountDownLatch latch = new CountDownLatch(elements + 1);
 
-		Control tail = sensorEven().concatWith(sensorOdd())
+		InterruptableSubscriber<?> tail = sensorEven().concatWith(sensorOdd())
 		                           .log("concat")
 		                           .consume(i -> latch.countDown(), null, latch::countDown);
 
@@ -224,7 +224,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 40;
 		CountDownLatch latch = new CountDownLatch(elements / 2);
 
-		Control tail = sensorOdd().zipWith(sensorEven(), this::computeMin)
+		InterruptableSubscriber<?> tail = sensorOdd().zipWith(sensorEven(), this::computeMin)
 		                          .log("zipWithTest")
 		                          .consume(i -> latch.countDown());
 
@@ -243,7 +243,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		                              .collect(Collectors.toList());
 
 		LOG.info("range from 0 to " + list.size());
-		Control tail = sensorOdd().zipWith(list, (t1, t2) -> (t1.toString() + " -- " + t2))
+		InterruptableSubscriber<?> tail = sensorOdd().zipWith(list, (t1, t2) -> (t1.toString() + " -- " + t2))
 		                          .log("zipWithIterableTest")
 		                          .consume(i -> latch.countDown());
 
@@ -258,7 +258,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 40;
 		CountDownLatch latch = new CountDownLatch(elements / 2);
 
-		Control tail = sensorOdd().joinWith(sensorEven())
+		InterruptableSubscriber<?> tail = sensorOdd().joinWith(sensorEven())
 		                          .log("joinWithTest")
 		                          .consume(i -> latch.countDown());
 
@@ -272,7 +272,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 69;
 		CountDownLatch latch = new CountDownLatch(elements / 2);
 
-		Control tail = Stream.zip(sensorEven(), sensorOdd(), this::computeMin)
+		InterruptableSubscriber<?> tail = Stream.zip(sensorEven(), sensorOdd(), this::computeMin)
 		                     .log("sampleZipTest")
 		                     .consume(x -> latch.countDown());
 
@@ -282,7 +282,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void awaitLatch(Control tail, CountDownLatch latch) throws Exception {
+	private void awaitLatch(InterruptableSubscriber<?> tail, CountDownLatch latch) throws Exception {
 		if (!latch.await(10, TimeUnit.SECONDS)) {
 			throw new Exception("Never completed: (" + latch.getCount() + ") " + tail.debug());
 		}

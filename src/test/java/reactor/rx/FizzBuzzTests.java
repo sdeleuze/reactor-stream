@@ -25,7 +25,7 @@ import org.junit.Test;
 import reactor.AbstractReactorTest;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.util.Assert;
-import reactor.rx.subscriber.Control;
+import reactor.rx.subscriber.InterruptableSubscriber;
 
 /**
  * https://github.com/reactor/reactor/issues/500
@@ -43,7 +43,7 @@ public class FizzBuzzTests extends AbstractReactorTest {
 		final Timer timer = new Timer();
 		AtomicLong globalCounter = new AtomicLong();
 
-		Control c = Stream.createWith((demand, subscriber) -> {
+		InterruptableSubscriber<?> c = Stream.createWith((demand, subscriber) -> {
 			System.out.println("demand is " + demand);
 			if (!subscriber.isCancelled()) {
 				for (int i = 0; i < demand; i++) {
@@ -60,17 +60,17 @@ public class FizzBuzzTests extends AbstractReactorTest {
 				}
 			}
 		}).log("oooo")
-		                  .flatMap((s) -> Stream.yield((sub) -> timer.schedule(new TimerTask() {
+		                                     .flatMap((s) -> Stream.yield((sub) -> timer.schedule(new TimerTask() {
 			  @Override
 			  public void run() {
 				  sub.onNext(s);
 				  sub.onComplete();
 			  }
 		  }, 10)))
-		                  .capacity(batchSize)
-		                  .log()
-		                  .take(numOfItems+1)
-		                  .consume();
+		                                     .capacity(batchSize)
+		                                     .log()
+		                                     .take(numOfItems + 1)
+		                                     .consume();
 
 		while (!c.isTerminated()) ;
 	}

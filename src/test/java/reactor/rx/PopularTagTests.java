@@ -23,7 +23,7 @@ import org.junit.Test;
 import reactor.AbstractReactorTest;
 import reactor.core.util.Logger;
 import reactor.fn.tuple.Tuple;
-import reactor.rx.subscriber.Control;
+import reactor.rx.subscriber.InterruptableSubscriber;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -49,7 +49,7 @@ public class PopularTagTests extends AbstractReactorTest {
 	public void sampleTest() throws Exception {
 		CountDownLatch latch = new CountDownLatch(1);
 
-		Control top10every1second =
+		InterruptableSubscriber<?> top10every1second =
 		  Stream.fromIterable(PULP_SAMPLE)
 		        .dispatchOn(asyncGroup)
 		        .flatMap(samuelJackson ->
@@ -86,7 +86,7 @@ public class PopularTagTests extends AbstractReactorTest {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void awaitLatch(Control tail, CountDownLatch latch) throws Exception {
+	private void awaitLatch(InterruptableSubscriber<?> tail, CountDownLatch latch) throws Exception {
 		if (!latch.await(10, SECONDS)) {
 			throw new Exception("Never completed: (" + latch.getCount() + ") "
 			  + tail.debug());

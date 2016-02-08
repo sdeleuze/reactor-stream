@@ -33,7 +33,7 @@ import reactor.fn.Function;
  * @author Stephane Maldini
  * @since 2.5
  */
-public class InterruptableSubscriber<T> extends ConsumerSubscriber<T> implements Control {
+public class InterruptableSubscriber<T> extends ConsumerSubscriber<T> {
 
 	/**
 	 *
@@ -84,7 +84,7 @@ public class InterruptableSubscriber<T> extends ConsumerSubscriber<T> implements
 	 * @param <O>
 	 * @return
 	 */
-	public static <O> Demand bindLater(Publisher<O> stream,
+	public static <O>  ManualSubscriber<O> bindLater(Publisher<O> stream,
 			Consumer<? super O> consumer,
 			Consumer<? super Throwable> consumer1,
 			Runnable consumer2) {
@@ -171,7 +171,11 @@ public class InterruptableSubscriber<T> extends ConsumerSubscriber<T> implements
 		return SUBSCRIPTION.get(this) == CancelledSubscription.INSTANCE ;
 	}
 
-	@Override
+	/**
+	 * Parse the materialized upstream source to fetch a materialized map form which allows for graph-style printing.
+	 *
+	 * @return {@link ReactiveStateUtils.Graph} a Debug container for the current source
+	 */
 	public ReactiveStateUtils.Graph debug() {
 		return ReactiveStateUtils.scan(this);
 	}
