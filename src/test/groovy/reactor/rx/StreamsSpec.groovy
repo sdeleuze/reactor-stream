@@ -269,16 +269,16 @@ class StreamsSpec extends Specification {
 
 	given: "Iterable publisher of 1000 to read queue"
 	def pub = Stream.fromIterable(1..1000)
-	def queue = pub.toBlockingQueue()
+	def queue = pub.toIterable().iterator()
 
 	when: "read the queue"
-	def v = queue.take()
-	def v2 = queue.take()
+	def v = queue.next()
+	def v2 = queue.next()
 	997.times {
-	  queue.poll()
+	  queue.next()
 	}
 
-	def v3 = queue.take()
+	def v3 = queue.next()
 
 	then: "queues values correct"
 	v == 1

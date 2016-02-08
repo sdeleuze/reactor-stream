@@ -29,10 +29,7 @@ import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -82,7 +79,6 @@ import reactor.fn.tuple.Tuple5;
 import reactor.fn.tuple.Tuple6;
 import reactor.fn.tuple.Tuple7;
 import reactor.fn.tuple.Tuple8;
-import reactor.rx.subscriber.BlockingQueueSubscriber;
 import reactor.rx.subscriber.Control;
 import reactor.rx.subscriber.InterruptableSubscriber;
 import reactor.rx.subscriber.Tap;
@@ -4234,46 +4230,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final <E extends Subscriber<? super O>> E subscribeWith(E subscriber) {
 		subscribe(subscriber);
 		return subscriber;
-	}
-
-	/**
-	 * Blocking call to pass values from this stream to the queue that can be polled from a consumer.
-	 *
-	 * @return the buffered queue
-	 *
-	 * @since 2.0
-	 */
-	public final BlockingQueue<O> toBlockingQueue() {
-		return toBlockingQueue(PlatformDependent.SMALL_BUFFER_SIZE);
-	}
-
-	/**
-	 * Blocking call to eagerly fetch values from this stream
-	 *
-	 * @param maximum queue getCapacity(), a full queue might block the stream producer.
-	 *
-	 * @return the buffered queue
-	 *
-	 * @since 2.0
-	 */
-	@SuppressWarnings("unchecked")
-	public final BlockingQueue<O> toBlockingQueue(int maximum) {
-		return toBlockingQueue(maximum,
-				maximum == Integer.MAX_VALUE ? new ConcurrentLinkedQueue<O>() : new ArrayBlockingQueue<O>(maximum));
-	}
-
-	/**
-	 * Blocking call to eagerly fetch values from this stream
-	 *
-	 * @param maximum queue getCapacity(), a full queue might block the stream producer.
-	 *
-	 * @return the buffered queue
-	 *
-	 * @since 2.0
-	 */
-	@SuppressWarnings("unchecked")
-	public final BlockingQueue<O> toBlockingQueue(int maximum, Queue<O> store) {
-		return new BlockingQueueSubscriber<>(this, null, store, false, maximum);
 	}
 
 	/**
