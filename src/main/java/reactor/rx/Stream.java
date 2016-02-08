@@ -722,10 +722,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Build a {@literal Stream} that will only emit an error signal to any new subscriber.
 	 *
-	 * @return a new {@link Stream}
+	 * @return a new failed {@link Stream}
 	 */
 	public static <O> Stream<O> error(Throwable throwable) {
-		return from(Mono.<O>error(throwable));
+		return new StreamError<O>(throwable);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will only emit an error signal to any new subscriber.
+	 *
+	 * @param whenRequested if true, will onError on the first request instead of subscribe().
+	 *
+	 * @return a new failed {@link Stream}
+	 */
+	public static <O> Stream<O> error(Throwable throwable, boolean whenRequested) {
+		return new StreamError<O>(throwable, whenRequested);
 	}
 
 	/**
@@ -4536,7 +4547,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final <E extends Throwable> Stream<O> when(final Class<E> exceptionType,
 			final Consumer<E> onError) {
-		return new StreamError<O, E>(this, exceptionType, onError);
+		return new StreamWhenError<O, E>(this, exceptionType, onError);
 	}
 
 	/**

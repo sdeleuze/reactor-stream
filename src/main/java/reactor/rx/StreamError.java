@@ -15,72 +15,113 @@
  */
 package reactor.rx;
 
-import org.reactivestreams.Publisher;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+
 import org.reactivestreams.Subscriber;
-import reactor.core.subscriber.SubscriberBarrier;
-import reactor.core.util.Exceptions;
-import reactor.fn.Consumer;
+import org.reactivestreams.Subscription;
+import reactor.core.state.Failurable;
+import reactor.core.util.BackpressureUtils;
+import reactor.core.util.EmptySubscription;
+import reactor.fn.Supplier;
 
 /**
- * @author Stephane Maldini
- * @since 1.1, 2.0, 2.5
+ * Emits a constant or generated Throwable instance to Subscribers.
+ *
+ * @param <T> the value type
  */
-final class StreamError<T, E extends Throwable> extends StreamSource<T, T> {
 
-	private final Consumer<? super E> consumer;
-	private final Class<E>            selector;
+/**
+ * {@see https://github.com/reactor/reactive-streams-commons}
+ * @since 2.5
+ */
+final class StreamError<T>
+extends Stream<T>
+		implements Failurable {
 
-	public StreamError(Publisher<T> source, Class<E> selector, Consumer<? super E> consumer) {
-		super(source);
-		this.consumer = consumer;
-		this.selector = selector;
+	final Supplier<? extends Throwable> supplier;
+	
+	final boolean whenRequested;
+
+	public StreamError(Throwable error) {
+		this(create(error), false);
+	}
+
+	public StreamError(Throwable error, boolean whenRequested) {
+		this(create(error), whenRequested);
+	}
+
+	static Supplier<Throwable> create(final Throwable error) {
+		Objects.requireNonNull(error);
+		return new Supplier<Throwable>() {
+			@Override
+			public Throwable get() {
+				return error;
+			}
+		};
+	}
+
+	public StreamError(Supplier<? extends Throwable> supplier) {
+		this(supplier, false);
+	}
+
+	
+	public StreamError(Supplier<? extends Throwable> supplier, boolean whenRequested) {
+		this.supplier = Objects.requireNonNull(supplier);
+		this.whenRequested = whenRequested;
 	}
 
 	@Override
-	public Subscriber<? super T> apply(Subscriber<? super T> subscriber) {
-		return new ErrorAction<>(subscriber, selector, consumer);
+	public Throwable getError() {
+		return supplier.get();
 	}
 
-	final static class ErrorAction<T, E extends Throwable> extends SubscriberBarrier<T, T> {
+	@Override
+	public void subscribe(Subscriber<? super T> s) {
+		Throwable e;
 
-		private final Consumer<? super E> consumer;
-		private final Class<E>            selector;
-
-		public ErrorAction(Subscriber<? super T> actual,
-				Class<E> selector, Consumer<? super E> consumer) {
-			super(actual);
-			this.consumer = consumer;
-			this.selector = selector;
+		try {
+			e = supplier.get();
+		} catch (Throwable ex) {
+			e = ex;
 		}
 
-		@Override
-		protected void doNext(T ev) {
-			try {
-				subscriber.onNext(ev);
-			}
-			catch (Exceptions.CancelException c){
-				doError(c);
-				throw c;
-			}
+		if (e == null) {
+			e = new NullPointerException("The Throwable returned by the supplier is null");
 		}
 
+		if (whenRequested) {
+			s.onSubscribe(new ErrorSubscription(s, e));
+		} else {
+			EmptySubscription.error(s, e);
+		}
+	}
+	
+	static final class ErrorSubscription
+	implements Subscription {
+		final Subscriber<?> actual;
+		
+		final Throwable error;
+		
+		volatile int once;
+		static final AtomicIntegerFieldUpdater<ErrorSubscription> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(ErrorSubscription.class, "once");
+		
+		public ErrorSubscription(Subscriber<?> actual, Throwable error) {
+			this.actual = actual;
+			this.error = error;
+		}
 		@Override
-		@SuppressWarnings("unchecked")
-		protected void doError(Throwable cause) {
-			if (selector.isAssignableFrom(cause.getClass())) {
-				if (consumer != null) {
-					consumer.accept((E) cause);
+		public void request(long n) {
+			if (BackpressureUtils.validate(n)) {
+				if (ONCE.compareAndSet(this, 0, 1)) {
+					actual.onError(error);
 				}
 			}
-			super.doError(cause);
 		}
-
 		@Override
-		public String toString() {
-			return super.toString() + "{" +
-					"catch-type=" + selector +
-					'}';
+		public void cancel() {
+			once = 1;
 		}
 	}
-
 }
