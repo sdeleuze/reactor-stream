@@ -2468,6 +2468,44 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@code Stream<O,V>} and pass
+	 * it into another {@code Stream}.
+	 *
+	 * @param fn the transformation function
+	 * @param <V> the type of the return value of the transformation function
+	 *
+	 * @return a new {@link Stream} containing the transformed values
+	 *
+	 * @since 2.5
+	 */
+	public final <V> Stream<V> flatMap(final Function<? super O, ? extends Publisher<? extends V>> fn, int
+			concurrency) {
+		return flatMap(fn, concurrency, PlatformDependent.XS_BUFFER_SIZE);
+	}
+
+	/**
+	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@code Stream<O,V>} and pass
+	 * it into another {@code Stream}.
+	 *
+	 * @param fn the transformation function
+	 * @param concurrency
+	 * @param prefetch
+	 * @param <V> the type of the return value of the transformation function
+	 *
+	 * @return a new {@link Stream} containing the transformed values
+	 *
+	 * @since 2.5
+	 */
+	public final <V> Stream<V> flatMap(final Function<? super O, ? extends Publisher<? extends V>> fn, int
+			concurrency, int prefetch) {
+		return StreamSource.wrap(Flux.flatMap(this,
+				fn,
+				concurrency,
+				prefetch,
+				false));
+	}
+
+	/**
 	 * Transform the signals emitted by this {@link Flux} into Publishers, then flatten the emissions from those by
 	 * merging them into a single {@link Flux}, so that they may interleave.
 	 *

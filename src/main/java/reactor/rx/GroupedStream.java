@@ -30,7 +30,7 @@ import reactor.core.state.Groupable;
 public abstract class GroupedStream<K, T> extends Stream<T> implements Groupable<K> {
 	private final K key;
 
-	public GroupedStream(K key) {
+	protected GroupedStream(K key) {
 		this.key = key;
 	}
 
