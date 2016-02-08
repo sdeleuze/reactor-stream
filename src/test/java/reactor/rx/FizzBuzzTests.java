@@ -97,7 +97,7 @@ public class FizzBuzzTests extends AbstractReactorTest {
 				  }
 			  }
 		  }), (t1, t2) -> String.format("%s : %s", t1, t2))
-				.whenErrorValue(Throwable.class, (o, t) -> {
+				.doOnValueError(Throwable.class, (o, t) -> {
 			  System.err.println(t.toString());
 			  t.printStackTrace();
 		  });

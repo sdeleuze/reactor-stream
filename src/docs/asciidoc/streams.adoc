@@ -16,7 +16,7 @@ Environment.initialize()
 
 //find the top 10 words used in a list of Strings
 Stream.from(aListOfString)
-  .dispatchOn(sharedDispatcher())
+  .dispatchOn(SchedulerGroup.single())
   .flatMap(sentence ->
     Stream
       .from(sentence.split(" "))
@@ -186,15 +186,15 @@ Cold Data Sources will be replayed from start for every fresh Subscriber passed 
 |T
 2+|Emit `onNext(T)` from the producing `Supplier.get()` factory everytime `Subscription.request(N)` is called. The demand N is ignored as only one data is emitted. When a null value is returned, emit `onComplete()`.
 
-|Promises.syncTask(Supplier<T>), Promises.task(Supplier<T>)
+|Promise.syncTask(Supplier<T>), Promise.task(Supplier<T>)
 |T
 2+|Emit a single `onNext(T)` and `onComplete()` from the producing `Supplier.get()` on the first `Subscription.request(N)` received. The demand N is ignored.
 
-|Promises.success(*T*)
+|Promise.success(*T*)
 |T
 2+|Emit `onNext(T)` and `onComplete()` whenever a `Subscriber` is provided to `Promise.subscribe(Subscriber)`.
 
-|Promises.<T>error(*Throwable*)
+|Promise.<T>error(*Throwable*)
 |T
 2+|Emit `onError(Throwable)` whenever a `Subscriber` is subscribed is provided to `Promise.subscribe(Subscriber)`.
 
@@ -309,15 +309,15 @@ h|IOStream.decode(*Codec<SRC, IN, ?>, Publisher<SRC>*)
 |IN
 2+|Use <<core.adoc#core-codecs, Codec decoder>> to decode the passed source data type into *IN* type.
 
-h|Promises.when(*Promise<T1>, Promise<T2>*, _Promise<T3-N> x6_)
+h|Promise.when(*Promise<T1>, Promise<T2>*, _Promise<T3-N> x6_)
 |TupleN<T1,T2,\*?>
 2+|Join all unique results from `Promises` and provide for the new `Promise` with the aggregated `Tuple`.
 
-h|Promises.any(*Promise<T>, Promise<T>*, _Promise<T> x6_)
+h|Promise.any(*Promise<T>, Promise<T>*, _Promise<T> x6_)
 |T
 2+|Pick the first signal available among the passed promises and `onNext(T)` the returned `Promise` with this result.
 
-h|Promises.multiWhen(*Promise<T>, Promise<T>*, _Promise<T> x6_)
+h|Promise.multiWhen(*Promise<T>, Promise<T>*, _Promise<T> x6_)
 |List<T>
 2+|Join all unique results from `Promises` and provide for the new `Promise` with the aggregated `List`. The difference with the `when` alternative is that the type of promises must match.
 
@@ -510,7 +510,7 @@ h|Stream.from(*Processor<I, O>*)
 onSubscribe > onNext\* > (onError \| onComplete)
 
 
-h|Promises.<T>prepare(*Environment, Dispatcher*)
+h|Promise.<T>prepare(*Environment, Dispatcher*)
 
 Promise.ready()
 |T
@@ -560,7 +560,7 @@ Stream<String> stream = Stream.just("a","b","c","d","e","f","g","h");
 
 //prepare two unique pipelines
 Stream<String> actionChain1 = stream.map(String::toUpperCase).filter(w -> w.equals("C"));
-Stream<Long> actionChain2 = stream.dispatchOn(sharedDispatcher()).take(5).count();
+Stream<Long> actionChain2 = stream.dispatchOn(SchedulerGroup.single()).take(5).count();
 
 actionChain1.consume(System.out::println); //start chain1
 InterruptableSubscriber<?> c = actionChain2.consume(System.out::println); //start chain2
@@ -611,15 +611,15 @@ h|Stream<T> method
 
 h|subscribe(*Subscriber<T>*)
 
-_subscribeOn_
+_publishOn_
 |void
-2+|Subscribe the passed *Subscriber<T>* and materialize any pending upstream, wired up lazily (the implicit *lift* for non terminal operation). Note a Subscriber must request data if it expects some. The `dispatchOn` and `subscribeOn` alternatives provide for signaling `onSubscribe` using the passed `Dispatcher`.
+2+|Subscribe the passed *Subscriber<T>* and materialize any pending upstream, wired up lazily (the implicit *lift* for non terminal operation). Note a Subscriber must request data if it expects some. The `dispatchOn` and `publishOn` alternatives provide for signaling `onSubscribe` using the passed `Dispatcher`.
 
 h|consume(_Consumer<T>,Consumer<T>,Consumer<T>_)
 
 _consumeOn_
 |Control
-2+|Call `subscribe` with a `ConsumerAction` which interacts with each passed `Consumer`, each time the interest signal is detected. It will `request(Stream.capacity())` to the received `Subscription`, which is `Long.MAX_VALUE` by default, which results in unbounded consuming. The `subscribeOn` and `consumeOn` alternatives provide for signalling `onSubscribe` using the passed `Dispatcher`. Returns a `Control` component to cancel the materialized `Stream`, if necessary. Note that `ConsumeAction` takes care of unbounded recursion if the `onNext(T)` signal triggers a blocking request.
+2+|Call `subscribe` with a `ConsumerAction` which interacts with each passed `Consumer`, each time the interest signal is detected. It will `request(Stream.capacity())` to the received `Subscription`, which is `Long.MAX_VALUE` by default, which results in unbounded consuming. The `publishOn` and `consumeOn` alternatives provide for signalling `onSubscribe` using the passed `Dispatcher`. Returns a `Control` component to cancel the materialized `Stream`, if necessary. Note that `ConsumeAction` takes care of unbounded recursion if the `onNext(T)` signal triggers a blocking request.
 
 h|consumeLater()
 |Control
@@ -687,7 +687,7 @@ To limit the amount of data in-flight in a `Stream`, use the link:/docs/api/reac
 Stream<String> st;
 
 st
-  .dispatchOn(sharedDispatcher())
+  .dispatchOn(SchedulerGroup.single())
   .capacity(256) // <1>
   .consume(s -> service.doWork(s)); // <2>
 ----
@@ -709,7 +709,7 @@ These operations are called `Actions`, and they will not <<streams.adoc#wireup,w
 
 ****
 * `Actions` are `onSubscribe()` in declarative order (left to right), so `stream.actionA().actionB()` will execute actionA first then actionB.
-** `onSubscribe()` runs on the parent `Publisher` thread context which can be altered by `subscribeOn(Dispatcher)` for instance.
+** `onSubscribe()` runs on the parent `Publisher` thread context which can be altered by `publishOn(Dispatcher)` for instance.
 * `Actions` `subscribe()` in inverse declarative order (right to left). Whenever `subscribe` is excplicitely called at the end of the pipeline, `subscribe()` propagates backward.
 ** `subscribe()` synchronously propagates back which might affect stack size use. If that becomes an issue, use a delegate `Processor` that runs `subscribe()` on a `Environment.tailRecurse()` dispatcher. Then `process()` it at any point of the chain.
 ****
@@ -717,7 +717,7 @@ These operations are called `Actions`, and they will not <<streams.adoc#wireup,w
 ==== Observe
 
 If you want to passively observe data as it passes through the pipeline, then use the `.doOnNext(Consumer)` methods and other `reactor.rx.action.passive` actions.
-To observe values, use link:/docs/api/reactor/rx/Stream.html#observe-reactor.fn.Consumer-[.doOnNext(Consumer<? super T>)]. To observe errors without dealing with them definitively, use link:/docs/api/reactor/rx/Stream.html#observeError-java.lang.Class-reactor.fn.BiConsumer-[.doOnNext(Class<? extends Throwable>, BiConsumer<Object,? extends Throwable>)]. To observe the Reactive Streams complete signal, use link:/docs/api/reactor/rx/Stream.html#doOnComplete-reactor.fn.Consumer-[.doOnComplete(Consumer<Void>)]. To observe the cancel signal, use link:/docs/api/reactor/rx/Stream.html#doOnCancel-reactor.fn.Consumer-[.doOnCancel(Consumer<Void>)]. To observe the Reactive Streams subscribe signal, use link:/docs/api/reactor/rx/Stream.html#observeSubscribe-reactor.fn.Consumer-[.observeSubscribe(Consumer<? super Subscription<T>>)].
+To observe values, use link:/docs/api/reactor/rx/Stream.html#observe-reactor.fn.Consumer-[.doOnNext(Consumer<? super T>)]. To observe errors without dealing with them definitively, use link:/docs/api/reactor/rx/Stream.html#doOnError-java.lang.Class-reactor.fn.BiConsumer-[.doOnNext(Class<? extends Throwable>, BiConsumer<Object,? extends Throwable>)]. To observe the Reactive Streams complete signal, use link:/docs/api/reactor/rx/Stream.html#doOnComplete-reactor.fn.Consumer-[.doOnComplete(Consumer<Void>)]. To observe the cancel signal, use link:/docs/api/reactor/rx/Stream.html#doOnCancel-reactor.fn.Consumer-[.doOnCancel(Consumer<Void>)]. To observe the Reactive Streams subscribe signal, use link:/docs/api/reactor/rx/Stream.html#observeSubscribe-reactor.fn.Consumer-[.observeSubscribe(Consumer<? super Subscription<T>>)].
 
 .doOnNext(Consumer<T>)
 [source,java]
@@ -726,7 +726,7 @@ Stream<String> st;
 
 st.doOnNext(s -> LOG.info("Got input [{}] on thread [{}}]", s, Thread.currentThread())) // <1>
   .doOnComplete(v -> LOG.info("Stream is complete")) // <2>
-  .observeError(Throwable.class, (o, t) -> LOG.error("{} caused an error: {}", o, t)) // <3>
+  .doOnError(Throwable.class, (o, t) -> LOG.error("{} caused an error: {}", o, t)) // <3>
   .consume(s -> service.doWork(s)); // <4>
 ----
 <1> Passively observe values passing through without producing demand.
@@ -807,7 +807,7 @@ The downstream request is split (minimum 1 by merged Publisher)
 ----
 Stream
   .range(1, 100)
-  .flatMap(number -> Stream.range(1, number).subscribeOn(Environment.workDispatcher()) ) // <1>
+  .flatMap(number -> Stream.range(1, number).publishOn(SchedulerGroup.io()) ) // <1>
   .consume(
     System.out::println, <2>
     Throwable::printStackTrace,
@@ -828,13 +828,13 @@ The Promise API offers a range of *stateful actions* which inspect the current *
 ----
 Promise<List<Long>> result = Stream
   .range(1, 100)
-  .subscribeOn(Environment.workDispatcher())
+  .publishOn(SchedulerGroup.io())
   .toList(); // <1>
 
 System.out.println(result.await()); // <2>
 result.onSuccess(System.out::println); // <3>
 ----
-<1> Consume the entire sequence on the dispatcher thread given in `subscribeOn(Dispatcher)` operation.
+<1> Consume the entire sequence on the dispatcher thread given in `publishOn(Dispatcher)` operation.
 <2> Block (default 30 Seconds) until `onComplete()` and print only `onNext(List<Long>)`; or, if `onError(e)`, wrap as RuntimeException and re-raise.
 <3> Since the promise is already fulfilled, `System.out.println()` will run immediately on the current context.
 
@@ -884,7 +884,7 @@ Various `Stream` factories, the `Broadcaster`, the `Stream.dispatchOn`  and the 
 * The `Stream.dispatchOn` action is the only one available under `Stream` that will be dispatching *onError*, *onComplete* and *onNext* signals on the given `Dispatcher`.
 ** Since an action is a `Processor` it doesn't support concurrent `Dispatcher` such as `WorkQueueDispatcher`.
 ** `request` and `cancel` will run on the dispatcher as well if in its context already. Otherwise, it will execute after the current dispatch ends.
-* The `Stream.subscribeOn` action will be executing *onSubscribe* only on the passed dispatcher.
+* The `Stream.publishOn` action will be executing *onSubscribe* only on the passed dispatcher.
 ** Since the only time the passed `Dispatcher` is called is *onSubscribe*, any dispatcher can be used including the concurrent ones such as `WorkQueueDispatcher`.
 ** The first `request` might still execute in the *onSubscribe* thread, for instance, with `Stream.consume()` actions.
 * Attaching a `Processor` via `Stream.process` for instance can affect the thread too. The `Processor` such as `TopicProcessor` will run the `Subscribers` on its managed threads.
@@ -892,8 +892,8 @@ Various `Stream` factories, the `Broadcaster`, the `Stream.dispatchOn`  and the 
 ** `WorkQueueProcessor` will only dispatch *onNext* signals to one `Subscriber` at most unless it has canceled in-flight (replay to a new Subscriber).
 ****
 
-Since the common contract is to start requesting data *onSubscribe*, `subscribeOn` is an efficient tool to scale-up streams, particularly unbounded ones.
-If a `Subscriber` requests *Long.MAX_VALUE* in *onSubscribe*, it will then be the only request executed and it will run on the dispatcher assigned in `subscribeOn`.
+Since the common contract is to start requesting data *onSubscribe*, `publishOn` is an efficient tool to scale-up streams, particularly unbounded ones.
+If a `Subscriber` requests *Long.MAX_VALUE* in *onSubscribe*, it will then be the only request executed and it will run on the dispatcher assigned in `publishOn`.
 This is the default behavior for unbounded `Stream.consume` actions.
 
 .Jumping between threads with an unbounded demand
@@ -901,19 +901,19 @@ This is the default behavior for unbounded `Stream.consume` actions.
 ----
 Stream
   .range(1, 100)
-  .dispatchOn(Environment.sharedDispatcher()) // <2>
-  .subscribeOn(Environment.workDispatcher()) // <1>
+  .dispatchOn(Environment.SchedulerGroup.single()) // <2>
+  .publishOn(SchedulerGroup.io()) // <1>
   .consume(); // <3>
 ----
 <1> Assign an *onSubscribe* work queue dispatcher.
 <2> Assign a signal *onNext, onError, onComplete* dispatcher.
 <3> Consume the `Stream` *onSubscribe* with `Subscription.request(Long.MAX)`
 
-.subscribeOn and dispatchOn/process with an unbounded Subscriber
+.publishOn and dispatchOn/process with an unbounded Subscriber
 image::images/longMaxThreading.png[Unbounded threading, width=600, align="center", link="images/longMaxThreading.png"]
 
-However, `subscribeOn` is less useful when more than 1 request will be involved, like in step-consuming with `Stream.capacity(n)`.
-The only request executed possibly running on the dispatcher assigned in `subscribeOn` is the *first one*.
+However, `publishOn` is less useful when more than 1 request will be involved, like in step-consuming with `Stream.capacity(n)`.
+The only request executed possibly running on the dispatcher assigned in `publishOn` is the *first one*.
 
 .Jumping between thread with a bounded demand 1
 [source,java]
@@ -921,16 +921,16 @@ The only request executed possibly running on the dispatcher assigned in `subscr
 Stream
   .range(1, 100)
   .process(TopicProcessor.create()) // <2>
-  .subscribeOn(Environment.workDispatcher()) // <1>
+  .publishOn(SchedulerGroup.io()) // <1>
   .capacity(1); // <3>
   .consume(); // <4>
 ----
-<1> Assign an *onSubscribe* work queue dispatcher. Note that it is placed after process as the subscribeOn will run on the ringBuffer thread on subscriber and we want to alter it to the work dispatcher.
+<1> Assign an *onSubscribe* work queue dispatcher. Note that it is placed after process as the publishOn will run on the ringBuffer thread on subscriber and we want to alter it to the work dispatcher.
 <2> Assign an async signal *onNext, onError, onComplete* processor. Similar to `dispatchOn` behavior.
 <3> Assign a `Stream` capacity to 1 so the downstream action adapts
 <4> Consume the `Stream` *onSubscribe* with `Subscription.request(1)` and after every 1 *onNext*.
 
-.subscribeOn and dispatchOn/process with an bounded (demand N < Long.MAX) Subscriber
+.publishOn and dispatchOn/process with an bounded (demand N < Long.MAX) Subscriber
 image::images/nThreading.png[Bounded threading, width=600, align="center", link="images/nThreading.png"]
 
 [[streams-microbatching]]
@@ -1428,12 +1428,12 @@ h|Stream.flatMap(Function<T,Publisher<V>)
 
 The sequence of produced `Publisher<V>` will flow in the `Subscriber` into a sequence of `V` by _safely_ subscribing in parallel.
 
-h|Stream.subscribeOn(Dispatcher), Stream.dispatchOn(Dispatcher), _Core Processors_
+h|Stream.publishOn(Dispatcher), Stream.dispatchOn(Dispatcher), _Core Processors_
 a|<<streams.adoc#streams-multithreading,Threading control>> is strategic:
 
 ****
-* Slow MicroService, low volume or low throughput, e.g. HTTP GET -> `subscribeOn(workQueueDispatcher())` to scale-up concurrent service calls.
-* Fast MicroService, high volume or high throughput, e.g. Message Bus -> `dispatchOn(sharedDispatcher())` or `RingBufferXXXProcessor.create()` to scale up message-dispatching.
+* Slow MicroService, low volume or low throughput, e.g. HTTP GET -> `publishOn(workQueueDispatcher())` to scale-up concurrent service calls.
+* Fast MicroService, high volume or high throughput, e.g. Message Bus -> `dispatchOn(SchedulerGroup.single())` or `RingBufferXXXProcessor.create()` to scale up message-dispatching.
 ****
 
 |===
@@ -1492,7 +1492,7 @@ public Promise<User> get(final String name) {
     .task( () -> userDB.findByName(name))
     .timeout(3, TimeUnit.Seconds)
     .map(this::convert)
-    .subscribeOn(workDispatcher());
+    .publishOn(workDispatcher());
 }
 
 public Stream<User> allFriends(final User user)  {
@@ -1503,7 +1503,7 @@ public Stream<User> allFriends(final User user)  {
     .map(this::convertToList)
     .flatMap(Streams::from)
     .dispatchOn(cachedDispatcher());
-    .subscribeOn(workDispatcher());
+    .publishOn(workDispatcher());
 }
 
 public Stream<User> filteredFind(String name){
@@ -1633,7 +1633,7 @@ return Stream
   .map(this::convertToList)
   .flatMap(Streams::from)
   .dispatchOn(cachedDispatcher());
-  .subscribeOn(workDispatcher());
+  .publishOn(workDispatcher());
 
 //Consuming in RickAndMortyService
 //looks like
@@ -1669,7 +1669,7 @@ return Stream
   .timeout(3, TimeUnit.Seconds)
   .map(this::convert)
   .dispatchOn(cachedDispatcher());
-  .subscribeOn(workDispatcher());
+  .publishOn(workDispatcher());
 
 //Consuming in RickAndMortyService
 //looks like
@@ -1774,7 +1774,7 @@ h|Stream<T> API
 
 |
 
-h|when(Class<Throwable>, Consumer<Throwable>)
+h|doOnError(Class<Throwable>, Consumer<Throwable>)
 |Observe specific exception types (and their hierarchy) coming from `onError(Throwable)`.
 
 h|oberveError(Class<Throwable>, BiConsumer<Object,Throwable>)
@@ -1967,7 +1967,7 @@ Stream
             .dispatchOn(supplier2.get()) // <4>
             .log("partition")
     )
-    .dispatchOn(Environment.sharedDispatcher()) // <5>
+    .dispatchOn(Environment.SchedulerGroup.single()) // <5>
     .log("join")
     .consume();
 ----
@@ -1975,7 +1975,7 @@ Stream
 <2> Add one of the pooled dispatchers for the two emitted `Stream` by previous `GroupByAction`. Effectively this is scaling up a stream by using 2 partitions assigned with their own dispatcher. `FlatMap` will merge the result returned by both partitions, running on one of the two threads, but never concurrently.
 <3> Create 5 Streams and forward `onNext(T)` to them in a round robin fashion
 <4> Use the second dispatcher pool of 5 to assign to the newly generated streams. The returned sequences will be merged.
-<5> Dispatch data on the `Environment.sharedDispatcher()`, so neither the first or the second pool. The 5 threads will then be merged under the `Dispatcher` thread
+<5> Dispatch data on the `Environment.SchedulerGroup.single()`, so neither the first or the second pool. The 5 threads will then be merged under the `Dispatcher` thread
 
 .Output extract
 ----

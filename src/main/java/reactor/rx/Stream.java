@@ -123,6 +123,77 @@ import reactor.rx.subscriber.ManualSubscriber;
 public abstract class Stream<O> implements Publisher<O>, Backpressurable, Introspectable {
 
 	/**
+	 *
+	 */
+	public static final BiFunction JOIN_BIFUNCTION = new BiFunction<Object, Object, List>() {
+		@Override
+		public List<?> apply(Object t1, Object t2) {
+			return Arrays.asList(t1, t2);
+		}
+	};
+	static final BooleanSupplier ALWAYS_BOOLEAN_SUPPLIER = new BooleanSupplier() {
+		@Override
+		public boolean getAsBoolean() {
+			return true;
+		}
+	};
+	static final Predicate ALWAYS_PREDICATE = new Predicate() {
+		@Override
+		public boolean test(Object o) {
+			return true;
+		}
+	};
+	static final Consumer   NOOP               = new Consumer() {
+		@Override
+		public void accept(Object o) {
+
+		}
+	};
+	static final Function HASHCODE_EXTRACTOR  = new Function<Object, Integer>() {
+		@Override
+		public Integer apply(Object t1) {
+			return t1.hashCode();
+		}
+	};
+	static final Supplier LIST_SUPPLIER = new Supplier() {
+		@Override
+		public Object get() {
+			return new ArrayList<>();
+		}
+	};
+	static final Supplier   SET_SUPPLIER       = new Supplier() {
+		@Override
+		public Object get() {
+			return new HashSet<>();
+		}
+	};
+	static final Function   TIMESTAMP_OPERATOR = new Function<Object, Tuple2<Long, ?>>() {
+		@Override
+		public Tuple2<Long, ?> apply(Object o) {
+			return Tuple.of(System.currentTimeMillis(), o);
+		}
+	};
+	static final Stream   NEVER             = from(Flux.never());
+	static final Function IDENTITY_FUNCTION = new Function() {
+		@Override
+		public Object apply(Object o) {
+			return o;
+		}
+	};
+	private static final BiFunction TUPLE2_BIFUNCTION  = new BiFunction() {
+		@Override
+		public Tuple2 apply(Object t1, Object t2) {
+			return Tuple.of(t1, t2);
+		}
+	};
+	private static final Function JOIN_FUNCTION = new Function<Object[], Object>() {
+		@Override
+		public Object apply(Object[] objects) {
+			return Arrays.asList(objects);
+		}
+	};
+
+	/**
 	 * Select the fastest source who won the "ambiguous" race and emitted first onNext or onComplete or onError
 	 *
 	 * <p>
@@ -580,6 +651,36 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	static BooleanSupplier countingBooleanSupplier(final BooleanSupplier predicate, final long max) {
+		if (max == 0) {
+			return predicate;
+		}
+		return new BooleanSupplier() {
+			long n;
+
+			@Override
+			public boolean getAsBoolean() {
+				return n++ < max && predicate.getAsBoolean();
+			}
+		};
+	}
+
+	@SuppressWarnings("unchecked")
+	static <O> Predicate<O> countingPredicate(final Predicate<O> predicate, final long max) {
+		if (max == 0) {
+			return predicate;
+		}
+		return new Predicate<O>() {
+			long n;
+
+			@Override
+			public boolean test(O o) {
+				return n++ < max && predicate.test(o);
+			}
+		};
+	}
+
 	/**
 	 * @see Flux#create(Consumer)
 	 */
@@ -673,7 +774,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamDefer<>(supplier);
 	}
 
-
 	/**
 	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
 	 *
@@ -706,7 +806,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public static Mono<Long> delay(Timer timer, long delay, TimeUnit unit) {
 		return Mono.delay(delay, unit, timer);
 	}
-
 
 	/**
 	 * Build a {@literal Stream} that will only emit a complete signal to any new subscriber.
@@ -869,6 +968,112 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		});
 	}
 
+	@SuppressWarnings("unchecked")
+	static <O> Supplier<Set<O>> hashSetSupplier() {
+		return (Supplier<Set<O>>) SET_SUPPLIER;
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after on each period from the subscribe
+	 * call.
+	 * It will never complete until cancelled.
+	 *
+	 * @param period the period in SECONDS before each following increment
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> interval(long period) {
+		return interval(Timer.globalOrNew(), -1l, period, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after on each period from the subscribe
+	 * call.
+	 * It will never complete until cancelled.
+	 *
+	 * @param timer  the timer to run on
+	 * @param period the period in SECONDS before each following increment
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> interval(Timer timer, long period) {
+		return interval(timer, -1l, period, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param delay  the timespan in SECONDS to wait before emitting 0l
+	 * @param period the period in SECONDS before each following increment
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> interval(long delay, long period) {
+		return interval(Timer.globalOrNew(), delay, period, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param timer  the timer to run on
+	 * @param delay  the timespan in SECONDS to wait before emitting 0l
+	 * @param period the period in SECONDS before each following increment
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> interval(Timer timer, long delay, long period) {
+		return interval(timer, delay, period, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param period the period in [unit] before each following increment
+	 * @param unit   the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> interval(long period, TimeUnit unit) {
+		return interval(Timer.globalOrNew(), -1l, period, unit);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param timer  the timer to run on
+	 * @param period the period in [unit] before each following increment
+	 * @param unit   the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> interval(Timer timer, long period, TimeUnit unit) {
+		return interval(timer, -1l, period, unit);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param delay  the timespan in [unit] to wait before emitting 0l
+	 * @param period the period in [unit] before each following increment
+	 * @param unit   the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> interval(long delay, long period, TimeUnit unit) {
+		return interval(Timer.globalOrNew(), delay, period, unit);
+	}
+
+	/**
+	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
+	 * It will never complete until cancelled.
+	 *
+	 * @param timer  the timer to run on
+	 * @param delay  the timespan in [unit] to wait before emitting 0l
+	 * @param period the period in [unit] before each following increment
+	 * @param unit   the time unit
+	 * @return a new {@link Stream}
+	 */
+	public static Stream<Long> interval(Timer timer, long delay, long period, TimeUnit unit) {
+		return new StreamInterval(TimeUnit.MILLISECONDS.convert(delay, unit), period, unit, timer);
+	}
 
 	/**
 	 * Build a Synchronous {@literal Stream} whose data are aggregated from the passed publishers
@@ -999,108 +1204,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after on each period from the subscribe
-	 * call.
-	 * It will never complete until cancelled.
-	 *
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> interval(long period) {
-		return interval(Timer.globalOrNew(), -1l, period, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after on each period from the subscribe
-	 * call.
-	 * It will never complete until cancelled.
-	 *
-	 * @param timer  the timer to run on
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> interval(Timer timer, long period) {
-		return interval(timer, -1l, period, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param delay  the timespan in SECONDS to wait before emitting 0l
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> interval(long delay, long period) {
-		return interval(Timer.globalOrNew(), delay, period, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param timer  the timer to run on
-	 * @param delay  the timespan in SECONDS to wait before emitting 0l
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> interval(Timer timer, long delay, long period) {
-		return interval(timer, delay, period, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> interval(long period, TimeUnit unit) {
-		return interval(Timer.globalOrNew(), -1l, period, unit);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param timer  the timer to run on
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> interval(Timer timer, long period, TimeUnit unit) {
-		return interval(timer, -1l, period, unit);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param delay  the timespan in [unit] to wait before emitting 0l
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> interval(long delay, long period, TimeUnit unit) {
-		return interval(Timer.globalOrNew(), delay, period, unit);
-	}
-
-	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the time delay on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param timer  the timer to run on
-	 * @param delay  the timespan in [unit] to wait before emitting 0l
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> interval(Timer timer, long delay, long period, TimeUnit unit) {
-		return new StreamInterval(TimeUnit.MILLISECONDS.convert(delay, unit), period, unit, timer);
-	}
-
-	/**
 	 * Build a {@literal Stream} that will only emit a sequence of int within the specified range and then
 	 * complete.
 	 *
@@ -1151,13 +1254,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 				QueueSupplier.xs(),
 				PlatformDependent.XS_BUFFER_SIZE);
 	}
-	/**
-	 * @see Flux#yield(Consumer)
-	 * @return a new {@link Stream}
-	 */
-	public static <T> Stream<T> yield(Consumer<? super SignalEmitter<T>> sessionConsumer) {
-		return from(Flux.yield(sessionConsumer));
-	}
 
 	/**
 	 * Uses a resource, generated by a supplier for each individual Subscriber,
@@ -1203,6 +1299,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public static <T, D> Stream<T> using(Callable<? extends D> resourceSupplier, Function<? super D, ? extends
 			Publisher<? extends T>> sourceSupplier, Consumer<? super D> resourceCleanup, boolean eager) {
 		return new StreamUsing<>(resourceSupplier, sourceSupplier, resourceCleanup, eager);
+	}
+
+	/**
+	 * @see Flux#yield(Consumer)
+	 * @return a new {@link Stream}
+	 */
+	public static <T> Stream<T> yield(Consumer<? super SignalEmitter<T>> sessionConsumer) {
+		return from(Flux.yield(sessionConsumer));
 	}
 
 	/**
@@ -1311,7 +1415,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return from(Flux.zip(source1, source2, source3, source4, source5));
 	}
 
-
 	/**
 	 * Build a {@literal Stream} whose data are generated by the passed publishers.
 
@@ -1339,7 +1442,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 															                          Publisher<? extends T6> source6) {
 		return from(Flux.zip(source1, source2, source3, source4, source5, source6));
 	}
-
 
 	/**
 	 * Build a {@literal Stream} whose data are generated by the passed publishers.
@@ -1492,19 +1594,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 *
-	 * {@code stream.as(Mono::from).subscribe(Subscribers.unbounded()) }
-	 *
-	 * @param transformer
-	 * @param <P>
-	 *
-	 * @return
-	 */
-	public final <V, P extends Publisher<V>> P as(Function<? super Stream<O>, P> transformer) {
-		return transformer.apply(this);
-	}
-
-	/**
 	 * Ignore the sequence and return onComplete
 	 *
 	 * @return {@literal new Stream}
@@ -1554,6 +1643,19 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final Stream<O> ambWith(final Publisher<? extends O> publisher) {
 		return StreamSource.wrap(Flux.amb(this, publisher));
+	}
+
+	/**
+	 *
+	 * {@code stream.as(Mono::from).subscribe(Subscribers.unbounded()) }
+	 *
+	 * @param transformer
+	 * @param <P>
+	 *
+	 * @return
+	 */
+	public final <V, P extends Publisher<V>> P as(Function<? super Stream<O>, P> transformer) {
+		return transformer.apply(this);
 	}
 
 	/**
@@ -1795,6 +1897,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			}
 		}));
 	}
+
 	/**
 	 * Cache last {@link PlatformDependent#SMALL_BUFFER_SIZE} signal to this {@code Stream} and release them on request that
 	 * will observe any values accepted by this {@code Stream}.
@@ -2156,6 +2259,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<O> delaySubscription(long seconds) {
 		return delaySubscription(seconds, TimeUnit.SECONDS);
 	}
+
 	/**
 	 * @param delay
 	 * @param unit
@@ -2167,6 +2271,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<O> delaySubscription(long delay, TimeUnit unit) {
 		return delaySubscription(delay, unit, Timer.global());
 	}
+
 	/**
 	 * @param delay
 	 * @param unit
@@ -2271,6 +2376,166 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Attach a {@link Runnable} to this {@code Stream} that will observe after onError or onComplete has been emitted
+	 *
+	 * @param consumer the consumer to invoke after terminate
+	 *
+	 * @return {@literal new Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> doAfterTerminate(final Runnable consumer) {
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, null, null, consumer, null, null);
+		}
+		return new StreamPeek<>(this, null, null, null, null, consumer, null, null);
+	}
+
+	/**
+	 * Attach a {@link Runnable} to this {@code Stream} that will observe any cancel signal
+	 *
+	 * @param runnable the runnable to invoke on cancel
+	 *
+	 * @return {@literal a new stream}
+	 *
+	 * @since 2.0, 2.5
+	 */
+	public final Stream<O> doOnCancel(final Runnable runnable) {
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, null, null, null, null, runnable);
+		}
+		return new StreamPeek<>(this, null, null, null, null, null, null, runnable);
+	}
+
+	/**
+	 * Attach a {@link Runnable} to this {@code Stream} that will observe any complete signal
+	 *
+	 * @param consumer the consumer to invoke on complete
+	 *
+	 * @return {@literal a new stream}
+	 *
+	 * @since 2.0, 2.5
+	 */
+	public final Stream<O> doOnComplete(final Runnable consumer) {
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, null, consumer, null, null, null);
+		}
+		return new StreamPeek<>(this, null, null, null, consumer, null, null, null);
+	}
+
+	/**
+	 * Attach a {@link Consumer} to this {@code Stream} that will observe any error signal
+	 *
+	 * @param consumer the runnable to invoke on cancel
+	 *
+	 * @return {@literal a new stream}
+	 *
+	 * @since 2.0, 2.5
+	 */
+	public final Stream<O> doOnError(final Consumer<Throwable> consumer) {
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, consumer, null, null, null, null);
+		}
+		return new StreamPeek<>(this, null, null, consumer, null, null, null, null);
+	}
+
+	/**
+	 * Assign an error handler to exceptions of the given type. Will not stop error propagation, use doOnError(class,
+	 * publisher), retry, ignoreError or recover to actively deal with the error
+	 *
+	 * @param exceptionType the type of exceptions to handle
+	 * @param onError the error handler for each error
+	 * @param <E> type of the error to handle
+	 *
+	 * @return {@literal new Stream}
+	 * @since 2.0, 2.5
+	 */
+	public final <E extends Throwable> Stream<O> doOnError(final Class<E> exceptionType,
+			final Consumer<E> onError) {
+		return new StreamWhenError<O, E>(this, exceptionType, onError);
+	}
+
+	/**
+	 * Attach a {@link Consumer} to this {@code Stream} that will observe any values accepted by this {@code Stream}.
+	 *
+	 * @param consumer the consumer to invoke on each value
+	 *
+	 * @return {@literal new Stream}
+	 *
+	 * @since 2.0, 2.5
+	 */
+	public final Stream<O> doOnNext(final Consumer<? super O> consumer) {
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, consumer, null, null, null, null, null);
+		}
+		return new StreamPeek<>(this, null, consumer, null, null, null, null, null);
+	}
+
+	/**
+	 * Attach a {@link LongConsumer} to this {@code Stream} that will observe any request to this {@code Stream}.
+	 *
+	 * @param consumer the consumer to invoke on each request
+	 *
+	 * @return {@literal new Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> doOnRequest(final LongConsumer consumer) {
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, null, null, null, consumer, null);
+		}
+		return new StreamPeek<>(this, null, null, null, null, null, consumer, null);
+	}
+
+	/**
+	 * Attach a {@link Consumer} to this {@code Stream} that will observe any onSubscribe signal
+	 *
+	 * @param consumer the consumer to invoke on onSubscribe
+	 *
+	 * @return {@literal a new stream}
+	 *
+	 * @since 2.0
+	 */
+	public final Stream<O> doOnSubscribe(final Consumer<? super Subscription> consumer) {
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, consumer, null, null, null, null, null, null);
+		}
+		return new StreamPeek<>(this, consumer, null, null, null, null, null, null);
+	}
+
+	/**
+	 * Attach a {@link Consumer} to this {@code Stream} that will observe before onError or onComplete emission
+	 *
+	 * @param consumer the consumer to invoke before terminate
+	 *
+	 * @return {@literal new Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> doOnTerminate(final Runnable consumer) {
+		if (this instanceof Fuseable) {
+			return new StreamPeekFuseable<>(this, null, null, null, consumer, null, null, null);
+		}
+		return new StreamPeek<>(this, null, null, null, consumer, null, null, null);
+	}
+
+	/**
+	 * Assign an error handler that will pass eventual associated values and exceptions of the given type. Will not stop
+	 * error propagation, use doOnError(class, publisher), retry, ignoreError or recover to actively deal with the
+	 * error.
+	 *
+	 * @param exceptionType the type of exceptions to handle
+	 * @param onError the error handler for each error
+	 * @param <E> type of the error to handle
+	 *
+	 * @return {@literal new Stream}
+	 */
+	public final <E extends Throwable> Stream<O> doOnValueError(final Class<E> exceptionType,
+			final BiConsumer<Object, ? super E> onError) {
+		return new StreamErrorWithValue<>(this, exceptionType, onError);
+	}
+
+	/**
 	 * Create a new {@code Stream} that accepts a {@link reactor.fn.tuple.Tuple2} of T1 {@link Long} timemillis and T2
 	 * {@link <T>} associated data. The timemillis corresponds to the elapsed time between the subscribe and the first
 	 * next signal OR between two next signals.
@@ -2306,6 +2571,69 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final Mono<O> elementAtOrDefault(final int index, final Supplier<? extends O> defaultValue) {
 		return new MonoElementAt<>(this, index, defaultValue);
+	}
+
+	/**
+	 * Create a new {@code Stream} whose values will be only the last value of each batch. Requires a {@code
+	 * getCapacity()}
+	 *
+	 * @param batchSize the batch size to use
+	 *
+	 * @return a new {@link Stream} whose values are the last value of each batch
+	 */
+	public final Stream<O> every(final int batchSize) {
+		return new StreamDebounce<O>(this, batchSize);
+	}
+
+	/**
+	 * Create a new {@code Stream} whose values will be only the last value of each batch.
+	 *
+	 * @param timespan the period in unit to use to release a buffered list
+	 * @param unit the time unit
+	 *
+	 * @return a new {@link Stream} whose values are the last value of each batch
+	 */
+	public final Stream<O> every(long timespan, TimeUnit unit) {
+		return every(Integer.MAX_VALUE, timespan, unit, getTimer());
+	}
+
+	/**
+	 * Create a new {@code Stream} whose values will be only the last value of each batch.
+	 *
+	 * @param maxSize the max counted size
+	 * @param timespan the period in unit to use to release a buffered list
+	 * @param unit the time unit
+	 *
+	 * @return a new {@link Stream} whose values are the last value of each batch
+	 */
+	public final Stream<O> every(int maxSize, long timespan, TimeUnit unit) {
+		return every(maxSize, timespan, unit, getTimer());
+	}
+
+	/**
+	 * Create a new {@code Stream} whose values will be only the last value of each batch.
+	 *
+	 * @param maxSize the max counted size
+	 * @param timespan the period in unit to use to release a buffered list
+	 * @param unit the time unit
+	 * @param timer the Timer to run on
+	 *
+	 * @return a new {@link Stream} whose values are the last value of each batch
+	 */
+	public final Stream<O> every(final int maxSize, final long timespan, final TimeUnit unit, final Timer timer) {
+		return new StreamDebounce<O>(this, false, maxSize, timespan, unit, timer);
+	}
+
+	/**
+	 * Create a new {@code Stream} whose values will be only the first value of each batch. <p> When a new batch is
+	 * triggered, the first value of that next batch will be pushed into this {@code Stream}.
+	 *
+	 * @param batchSize the batch size to use
+	 *
+	 * @return a new {@link Stream} whose values are the first value of each batch)
+	 */
+	public final Stream<O> everyFirst(final int batchSize) {
+		return new StreamDebounce<O>(this, batchSize, true);
 	}
 
 	/**
@@ -2755,7 +3083,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return Mono.ignoreElements(this);
 	}
 
-
 	/**
 	 * Pass all the nested {@link Publisher} values to a new {@link Stream} until one of them complete. The result will
 	 * be produced with a list of each upstream most recent emitted data.
@@ -2779,7 +3106,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Mono<O> last() {
 		return MonoSource.wrap(new StreamTakeLast<>(this, 1));
 	}
-
 
 	/**
 	 * @see {@link Flux#lift(Function)}
@@ -2944,134 +3270,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final Mono<O> next() {
 		return Mono.from(this);
-	}
-
-	/**
-	 * Attach a {@link Runnable} to this {@code Stream} that will observe after onError or onComplete has been emitted
-	 *
-	 * @param consumer the consumer to invoke after terminate
-	 *
-	 * @return {@literal new Stream}
-	 *
-	 * @since 2.5
-	 */
-	public final Stream<O> doAfterTerminate(final Runnable consumer) {
-		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, null, null, null, consumer, null, null);
-		}
-		return new StreamPeek<>(this, null, null, null, null, consumer, null, null);
-	}
-
-	/**
-	 * Attach a {@link Consumer} to this {@code Stream} that will observe any values accepted by this {@code Stream}.
-	 *
-	 * @param consumer the consumer to invoke on each value
-	 *
-	 * @return {@literal new Stream}
-	 *
-	 * @since 2.0, 2.5
-	 */
-	public final Stream<O> doOnNext(final Consumer<? super O> consumer) {
-		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, consumer, null, null, null, null, null);
-		}
-		return new StreamPeek<>(this, null, consumer, null, null, null, null, null);
-	}
-
-	/**
-	 * Attach a {@link LongConsumer} to this {@code Stream} that will observe any request to this {@code Stream}.
-	 *
-	 * @param consumer the consumer to invoke on each request
-	 *
-	 * @return {@literal new Stream}
-	 *
-	 * @since 2.5
-	 */
-	public final Stream<O> doOnRequest(final LongConsumer consumer) {
-		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, null, null, null, null, consumer, null);
-		}
-		return new StreamPeek<>(this, null, null, null, null, null, consumer, null);
-	}
-
-	/**
-	 * Attach a {@link Runnable} to this {@code Stream} that will observe any cancel signal
-	 *
-	 * @param runnable the runnable to invoke on cancel
-	 *
-	 * @return {@literal a new stream}
-	 *
-	 * @since 2.0, 2.5
-	 */
-	public final Stream<O> doOnCancel(final Runnable runnable) {
-		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, null, null, null, null, null, runnable);
-		}
-		return new StreamPeek<>(this, null, null, null, null, null, null, runnable);
-	}
-
-	/**
-	 * Attach a {@link Runnable} to this {@code Stream} that will observe any complete signal
-	 *
-	 * @param consumer the consumer to invoke on complete
-	 *
-	 * @return {@literal a new stream}
-	 *
-	 * @since 2.0, 2.5
-	 */
-	public final Stream<O> doOnComplete(final Runnable consumer) {
-		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, null, null, consumer, null, null, null);
-		}
-		return new StreamPeek<>(this, null, null, null, consumer, null, null, null);
-	}
-
-	/**
-	 * Attach a {@link Consumer} to this {@code Stream} that will observe any error signal
-	 *
-	 * @param consumer the runnable to invoke on cancel
-	 *
-	 * @return {@literal a new stream}
-	 *
-	 * @since 2.0, 2.5
-	 */
-	public final Stream<O> doOnError(final Consumer<Throwable> consumer) {
-		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, null, consumer, null, null, null, null);
-		}
-		return new StreamPeek<>(this, null, null, consumer, null, null, null, null);
-	}
-
-	/**
-	 * Attach a {@link Consumer} to this {@code Stream} that will observe any onSubscribe signal
-	 *
-	 * @param consumer the consumer to invoke on onSubscribe
-	 *
-	 * @return {@literal a new stream}
-	 *
-	 * @since 2.0
-	 */
-	public final Stream<O> doOnSubscribe(final Consumer<? super Subscription> consumer) {
-		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, consumer, null, null, null, null, null, null);
-		}
-		return new StreamPeek<>(this, consumer, null, null, null, null, null, null);
-	}
-
-	/**
-	 * Attach a {@link Consumer} to this {@code Stream} that will observe before onError or onComplete emission
-	 *
-	 * @param consumer the consumer to invoke before terminate
-	 *
-	 * @return {@literal new Stream}
-	 *
-	 * @since 2.5
-	 */
-	public final Stream<O> doOnTerminate(final Runnable consumer) {
-		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, null, null, consumer, null, null, null);
-		}
-		return new StreamPeek<>(this, null, null, null, consumer, null, null, null);
 	}
 
 	/**
@@ -3362,7 +3560,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Create a new {@code Stream} which will keep re-subscribing its oldest parent-child stream pair on complete. The
-	 * action will be propagating complete after {@param numRepeat}. 
+	 * action will be propagating complete after {@param numRepeat}.
 	 *
 	 * @param numRepeat the number of times to re-subscribe on complete
 	 *
@@ -3433,7 +3631,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<O> retry() {
 		return retry(ALWAYS_PREDICATE);
 	}
-
+	
 	/**
 	 * Create a new {@code Stream} which will re-subscribe its oldest parent-child stream pair. The action will start
 	 * propagating errors after {@param numRetries}. This is generally useful for retry strategies and fault-tolerant
@@ -3498,57 +3696,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@code Stream} whose values will be only the last value of each batch. Requires a {@code
-	 * getCapacity()}
-	 *
-	 * @param batchSize the batch size to use
-	 *
-	 * @return a new {@link Stream} whose values are the last value of each batch
-	 */
-	public final Stream<O> every(final int batchSize) {
-		return new StreamDebounce<O>(this, batchSize);
-	}
-
-	/**
-	 * Create a new {@code Stream} whose values will be only the last value of each batch.
-	 *
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
-	 *
-	 * @return a new {@link Stream} whose values are the last value of each batch
-	 */
-	public final Stream<O> every(long timespan, TimeUnit unit) {
-		return every(Integer.MAX_VALUE, timespan, unit, getTimer());
-	}
-
-	/**
-	 * Create a new {@code Stream} whose values will be only the last value of each batch.
-	 *
-	 * @param maxSize the max counted size
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
-	 *
-	 * @return a new {@link Stream} whose values are the last value of each batch
-	 */
-	public final Stream<O> every(int maxSize, long timespan, TimeUnit unit) {
-		return every(maxSize, timespan, unit, getTimer());
-	}
-
-	/**
-	 * Create a new {@code Stream} whose values will be only the last value of each batch.
-	 *
-	 * @param maxSize the max counted size
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
-	 * @param timer the Timer to run on
-	 *
-	 * @return a new {@link Stream} whose values are the last value of each batch
-	 */
-	public final Stream<O> every(final int maxSize, final long timespan, final TimeUnit unit, final Timer timer) {
-		return new StreamDebounce<O>(this, false, maxSize, timespan, unit, timer);
-	}
-
-	/**
 	 * Create a new {@code Stream} whose values will be only the first value signalled after the next {@code other}
 	 * emission.
 	 *
@@ -3558,18 +3705,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final <U> Stream<O> sample(Publisher<U> other) {
 		return new StreamSample<>(this, other);
-	}
-
-	/**
-	 * Create a new {@code Stream} whose values will be only the first value of each batch. <p> When a new batch is
-	 * triggered, the first value of that next batch will be pushed into this {@code Stream}.
-	 *
-	 * @param batchSize the batch size to use
-	 *
-	 * @return a new {@link Stream} whose values are the first value of each batch)
-	 */
-	public final Stream<O> everyFirst(final int batchSize) {
-		return new StreamDebounce<O>(this, batchSize, true);
 	}
 
 	/**
@@ -3628,6 +3763,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<O> sampleFirst(final int maxSize, final long timespan, final TimeUnit unit, final Timer timer) {
 		return new StreamDebounce<O>(this, true, maxSize, timespan, unit, timer);
 	}
+
 	/**
 	 * Emits the last value from upstream only if there were no newer values emitted
 	 * during the time window provided by a publisher for that particular last value.
@@ -3727,7 +3863,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<O> skip(long time, TimeUnit unit) {
 		return skip(time, unit, getTimer());
 	}
-	
+
 	/**
 	 * Create a new {@code Stream} that will NOT signal next elements up to the specified {@param time}.
 	 *
@@ -3789,8 +3925,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamSkipWhile<>(this, limitMatcher);
 	}
 
-
-
 	/**
 	 * Start emitting all items from the passed publisher then emits from the current stream.
 	 *
@@ -3832,6 +3966,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final void subscribe() {
 		subscribe(Subscribers.unbounded());
+	}
+
+	/**
+	 *
+	 * {@code stream.subscribeWith(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
+	 *
+	 * @param subscriber
+	 * @param <E>
+	 *
+	 * @return this subscriber
+	 */
+	public final <E extends Subscriber<? super O>> E subscribeWith(E subscriber) {
+		subscribe(subscriber);
+		return subscriber;
 	}
 
 	/**
@@ -3993,22 +4141,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Request once the parent stream every {@param period} milliseconds. Timeout is run on the environment root timer.
-	 *
-	 * @param period the period in milliseconds between two notifications on this stream
-	 *
-	 * @return a new {@link Stream}
-	 *
-	 * @since 2.0
-	 */
-	public final Stream<O> throttleRequest(final long period) {
-		final Timer timer = getTimer();
-		Assert.state(timer != null, "Cannot use default timer as no environment has been provided to this " + "Stream");
-
-		return new StreamThrottleRequest<O>(this, timer, period);
-	}
-
-	/**
 	 * @see #sampleFirst(Function)
 	 *
 	 * @return a new {@link Stream}
@@ -4029,6 +4161,23 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final <U> Stream<O> throttleLast(Publisher<U> throttler) {
 		return sample(throttler);
 	}
+
+	/**
+	 * Request once the parent stream every {@param period} milliseconds. Timeout is run on the environment root timer.
+	 *
+	 * @param period the period in milliseconds between two notifications on this stream
+	 *
+	 * @return a new {@link Stream}
+	 *
+	 * @since 2.0
+	 */
+	public final Stream<O> throttleRequest(final long period) {
+		final Timer timer = getTimer();
+		Assert.state(timer != null, "Cannot use default timer as no environment has been provided to this " + "Stream");
+
+		return new StreamThrottleRequest<O>(this, timer, period);
+	}
+
 	/**
 	 * @see #sampleTimeout(Function)
 	 *
@@ -4193,20 +4342,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	@SuppressWarnings("unchecked")
 	public final Stream<Tuple2<Long, O>> timestamp() {
 		return map(TIMESTAMP_OPERATOR);
-	}
-
-	/**
-	 *
-	 * {@code stream.subscribeWith(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
-	 *
-	 * @param subscriber
-	 * @param <E>
-	 *
-	 * @return this subscriber
-	 */
-	public final <E extends Subscriber<? super O>> E subscribeWith(E subscriber) {
-		subscribe(subscriber);
-		return subscriber;
 	}
 
 	/**
@@ -4413,37 +4548,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign an error handler to exceptions of the given type. Will not stop error propagation, use when(class,
-	 * publisher), retry, ignoreError or recover to actively deal with the error
-	 *
-	 * @param exceptionType the type of exceptions to handle
-	 * @param onError the error handler for each error
-	 * @param <E> type of the error to handle
-	 *
-	 * @return {@literal new Stream}
-	 * @since 2.0, 2.5
-	 */
-	public final <E extends Throwable> Stream<O> when(final Class<E> exceptionType,
-			final Consumer<E> onError) {
-		return new StreamWhenError<O, E>(this, exceptionType, onError);
-	}
-
-	/**
-	 * Assign an error handler that will pass eventual associated values and exceptions of the given type. Will not stop
-	 * error propagation, use when(class, publisher), retry, ignoreError or recover to actively deal with the error.
-	 *
-	 * @param exceptionType the type of exceptions to handle
-	 * @param onError the error handler for each error
-	 * @param <E> type of the error to handle
-	 *
-	 * @return {@literal new Stream}
-	 */
-	public final <E extends Throwable> Stream<O> whenErrorValue(final Class<E> exceptionType,
-			final BiConsumer<Object, ? super E> onError) {
-		return new StreamErrorWithValue<>(this, exceptionType, onError);
-	}
-
-	/**
 	 * Re-route incoming values into a dynamically created {@link Stream} every pre-defined {@param backlog} times. The
 	 * nested streams will be pushed into the returned {@code Stream}.
 	 *
@@ -4592,7 +4696,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamWithLatestFrom<>(this, other, resultSelector);
 	}
 
-
 	/**
 	 * Pass all the nested {@link Publisher} values to a new {@link Stream} until one of them complete. The result will
 	 * be produced by the zipper transformation from a tuple of each upstream most recent emitted data.
@@ -4669,116 +4772,5 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final <T2> Stream<Tuple2<O, T2>> zipWithIterable(Iterable<? extends T2> iterable) {
 		return new StreamZipIterable<>(this, iterable, (BiFunction<O, T2, Tuple2<O, T2>>)TUPLE2_BIFUNCTION);
 	}
-
-	static final BooleanSupplier ALWAYS_BOOLEAN_SUPPLIER = new BooleanSupplier() {
-		@Override
-		public boolean getAsBoolean() {
-			return true;
-		}
-	};
-
-	static final Predicate ALWAYS_PREDICATE = new Predicate() {
-		@Override
-		public boolean test(Object o) {
-			return true;
-		}
-	};
-
-	static final Consumer   NOOP               = new Consumer() {
-		@Override
-		public void accept(Object o) {
-
-		}
-	};
-	private static final BiFunction TUPLE2_BIFUNCTION  = new BiFunction() {
-		@Override
-		public Tuple2 apply(Object t1, Object t2) {
-			return Tuple.of(t1, t2);
-		}
-	};
-	static final Function HASHCODE_EXTRACTOR  = new Function<Object, Integer>() {
-		@Override
-		public Integer apply(Object t1) {
-			return t1.hashCode();
-		}
-	};
-	static final Supplier LIST_SUPPLIER = new Supplier() {
-		@Override
-		public Object get() {
-			return new ArrayList<>();
-		}
-	};
-	static final Supplier   SET_SUPPLIER       = new Supplier() {
-		@Override
-		public Object get() {
-			return new HashSet<>();
-		}
-	};
-	static final Function   TIMESTAMP_OPERATOR = new Function<Object, Tuple2<Long, ?>>() {
-		@Override
-		public Tuple2<Long, ?> apply(Object o) {
-			return Tuple.of(System.currentTimeMillis(), o);
-		}
-	};
-
-	@SuppressWarnings("unchecked")
-	static <O> Supplier<Set<O>> hashSetSupplier() {
-		return (Supplier<Set<O>>) SET_SUPPLIER;
-	}
-
-	@SuppressWarnings("unchecked")
-	static <O> Predicate<O> countingPredicate(final Predicate<O> predicate, final long max) {
-		if (max == 0) {
-			return predicate;
-		}
-		return new Predicate<O>() {
-			long n;
-
-			@Override
-			public boolean test(O o) {
-				return n++ < max && predicate.test(o);
-			}
-		};
-	}
-
-	@SuppressWarnings("unchecked")
-	static BooleanSupplier countingBooleanSupplier(final BooleanSupplier predicate, final long max) {
-		if (max == 0) {
-			return predicate;
-		}
-		return new BooleanSupplier() {
-			long n;
-
-			@Override
-			public boolean getAsBoolean() {
-				return n++ < max && predicate.getAsBoolean();
-			}
-		};
-	}
-
-	static final Stream   NEVER             = from(Flux.never());
-	static final Function IDENTITY_FUNCTION = new Function() {
-		@Override
-		public Object apply(Object o) {
-			return o;
-		}
-	};
-
-	/**
-	 *
-	 */
-	public static final BiFunction JOIN_BIFUNCTION = new BiFunction<Object, Object, List>() {
-		@Override
-		public List<?> apply(Object t1, Object t2) {
-			return Arrays.asList(t1, t2);
-		}
-	};
-
-	private static final Function JOIN_FUNCTION = new Function<Object[], Object>() {
-		@Override
-		public Object apply(Object[] objects) {
-			return Arrays.asList(objects);
-		}
-	};
 
 }

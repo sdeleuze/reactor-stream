@@ -65,7 +65,7 @@ public class StreamAndSchedulerGroupTests extends AbstractStreamVerification {
 		                                           .flatMap(i -> Stream.zip(Stream.just(i), otherStream, combinator))
 		                  )
 				.dispatchOn(sharedGroup)
-				.when(Throwable.class, Throwable::printStackTrace)
+				.doOnError(Throwable.class, Throwable::printStackTrace)
 		);
 	}/*
 

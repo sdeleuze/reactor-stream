@@ -146,7 +146,7 @@ public class StreamTests extends AbstractReactorTest {
 				                          return sum;
 			                          }
 		                          })
-		                          .when(IllegalArgumentException.class, e -> exception.set(true));
+		                          .doOnError(IllegalArgumentException.class, e -> exception.set(true));
 
 		await(5, s, is(10));
 		assertThat("error triggered", exception.get(), is(true));
@@ -226,7 +226,7 @@ public class StreamTests extends AbstractReactorTest {
 				                          return sum;
 			                          }
 		                          })
-		                          .when(NumberFormatException.class, new Consumer<NumberFormatException>() {
+		                          .doOnError(NumberFormatException.class, new Consumer<NumberFormatException>() {
 			                          @Override
 			                          public void accept(NumberFormatException e) {
 				                          latch.countDown();
@@ -536,7 +536,7 @@ public class StreamTests extends AbstractReactorTest {
 		final int maxErrors = 3;
 
 		Promise<List<String>> promise = circuitSwitcher.doOnNext(d -> successes.incrementAndGet())
-		                                               .when(Throwable.class, error -> failures.incrementAndGet())
+		                                               .doOnError(Throwable.class, error -> failures.incrementAndGet())
 		                                               .doOnSubscribe(s -> {
 			                                               if (failures.compareAndSet(maxErrors, 0)) {
 				                                               System.out.println("failures: " + failures + " successes:" + successes);
@@ -1143,7 +1143,7 @@ public class StreamTests extends AbstractReactorTest {
 		             .partition(parallelStreams)
 		             .log("batched-inner")
 		             .consume(innerStream -> innerStream.dispatchOn(asyncGroup)
-		                                                .when(Exception.class, Throwable::printStackTrace)
+		                                                .doOnError(Exception.class, Throwable::printStackTrace)
 		                                                .consume(i -> latch.countDown()));
 
 		streamBatcher.onNext(12);

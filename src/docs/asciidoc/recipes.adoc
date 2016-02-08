@@ -173,7 +173,7 @@ final int maxErrors = 3;
 Promise<List<String>> promise = // <5>
 		circuitSwitcher // <6>
 			.doOnNext(d -> successes.incrementAndGet()) // <7>
-			.when(Throwable.class, error -> failures.incrementAndGet())
+			.doOnError(Throwable.class, error -> failures.incrementAndGet())
 			.doOnSubscribe(s -> { // <8>
 
 				System.out.println("failures: " + failures +

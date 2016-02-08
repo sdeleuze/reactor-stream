@@ -126,7 +126,7 @@ class StreamsSpec extends Specification {
 			def latch = new CountDownLatch(1)
 			def stream = Stream.fromIterable([1, 2, 3])
 					.broadcast()
-					.when(Throwable) { e = it }
+					.doOnError(Throwable) { e = it }
 					.doOnComplete { latch.countDown() }
 
 		when:
@@ -537,7 +537,7 @@ class StreamsSpec extends Specification {
 			'a composable with a registered consumer of RuntimeExceptions'
 			Stream composable = Broadcaster.<Integer> create()
 			def errors = 0
-			def tail = composable.when(RuntimeException) { errors++ }.consume()
+			def tail = composable.doOnError(RuntimeException) { errors++ }.consume()
 			println tail.debug()
 
 		when:
@@ -551,7 +551,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'A new error consumer is subscribed'
-		Stream.error(new RuntimeException()).when(RuntimeException) { errors++ }.consume()
+		Stream.error(new RuntimeException()).doOnError(RuntimeException) { errors++ }.consume()
 
 		then:
 			'it is called since publisher is in error state'
@@ -633,7 +633,7 @@ class StreamsSpec extends Specification {
 			Stream<Integer> mapped = source.
 					dispatchOn(asyncGroup).
 					flatMap { v -> Stream.just(v * 2) }.
-					when(Throwable) { it.printStackTrace() }
+					doOnError(Throwable) { it.printStackTrace() }
 
 
 		when:
@@ -1012,7 +1012,7 @@ class StreamsSpec extends Specification {
 			def source = Broadcaster.<Integer> create()
 			Stream mapped = source.map { if (it == 1) throw new RuntimeException() else 'na' }
 			def errors = 0
-			mapped.when(Exception) { errors++ }.consume()
+			mapped.doOnError(Exception) { errors++ }.consume()
 
 		when:
 			'the source accepts a value'
@@ -1056,7 +1056,7 @@ class StreamsSpec extends Specification {
 			def source = Broadcaster.<Integer> create()
 			Stream filtered = source.filter { if (it == 1) throw new RuntimeException() else true }
 			def errors = 0
-			filtered.when(Exception) { errors++ }.consume()
+			filtered.doOnError(Exception) { errors++ }.consume()
 
 		when:
 			'the source accepts a value'
@@ -2082,7 +2082,7 @@ class StreamsSpec extends Specification {
 			def source = Broadcaster.<Integer> create()
 			def reduced = source.timeout(1500, TimeUnit.MILLISECONDS, Stream.just(10))
 			def error = null
-			def value = reduced.when(TimeoutException) {
+			def value = reduced.doOnError(TimeoutException) {
 				error = it
 			}.tap()
 			value.subscribe()
