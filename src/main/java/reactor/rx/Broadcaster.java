@@ -39,11 +39,15 @@ import reactor.core.util.PlatformDependent;
 import reactor.rx.subscriber.SerializedSubscriber;
 
 /**
- * Broadcasters are akin to Reactive Extensions Subject. Extending Stream, they fulfil the
- * {@link Processor} contract.
+ * Broadcaster is an identity {@link Processor} extending Stream. The message passing strategy can be chosen over the
+ * various factories including {@link #replay replaying} or {@link #blocking}.
+ * <p>
  *
- * Some broadcasters might be shared and will require serialization as onXXXX handle should not be invoke concurrently.
- * {@link #serialize} can take care of this specific issue.
+ * Broadcasters are akin to Reactive Extensions Subjects. Some broadcasters might be shared and will require
+ * serialization as
+ * onXXXX handle should not be invoke concurrently. }
+ * {@link #serialize} can take care of this specific issue. Excluding arbitrary {@link Processor} , the only
+ * unicast restricted {@link Broadcaster} are {@link #blocking()} and {@link #unicast()}.
  *
  * @author Stephane Maldini
  */
