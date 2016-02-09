@@ -104,18 +104,19 @@ String blockingResult = promise
 ## The Backpressure Thing
 
 ```java
+SchedulerGroup io = SchedulerGroup.io();
 Stream.merge(
         Stream.just(1)
             .repeat()
-            .publishOn(SchedulerGroup.io())
+            .publishOn(io)
             .onBackpressureDrop(System.out::println),
         Stream.just(2)
             .repeat()
-            .publishOn(SchedulerGroup.io())
+            .publishOn(io)
             .onBackpressureBlock(WaitStrategy.liteBlocking()),
         Stream.just(3)
             .repeat()
-            .publishOn(SchedulerGroup.io())
+            .publishOn(io)
             .onBackpressureBuffer(10)
     )
     .take(20, TimeUnit.SECONDS)
