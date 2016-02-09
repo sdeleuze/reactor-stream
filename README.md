@@ -40,7 +40,7 @@ Stream
     .takeUntil(Mono.delay(3))
     .delaySubscription(Mono.delay(1))
     .capacity(128)
-    .consume(someMetrics::updateCounter)
+    .consume(someMetrics::updateCounter);
 ```
 
 ## Promise
