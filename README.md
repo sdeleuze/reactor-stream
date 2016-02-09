@@ -46,12 +46,12 @@ Stream
     .consume(someMetrics::updateCounter);
 ```
 
-### Convert and Tap Streams
+### Log, Convert and Tap Streams
 
-RxJava Observable/Single, Java 8 CompletableFuture and Java 9 Flow Publishers can be converted to Stream directly. Using the conventional "[as](http://projectreactor.io/core/docs/api/reactor/core/publisher/Flux.html#as-reactor.fn.Function-)" operator, Reactive Stream Publisher implementations can easily convert too.
+RxJava Observable/Single, Java 8 CompletableFuture and Java 9 Flow Publishers can be converted to Stream directly. Alternatively, the conventional "[as](http://projectreactor.io/core/docs/api/reactor/core/publisher/Flux.html#as-reactor.fn.Function-)" operator,  can easily convert to Reactive Stream Publisher implementations. 
 ```java
 StreamTap<Tuple2<Integer, Long>> tapped = Stream.convert(Observable.range(1, 100_000_000))
-                                                .doOnNext(System.out::println)
+                                                .log("my.category", Logger.REQUEST)
                                                 .tap();
 tapped.zipWith(
             Flux.interval(1)
