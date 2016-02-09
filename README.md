@@ -2,7 +2,7 @@
 
 [![Join the chat at https://gitter.im/reactor/reactor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/reactor/reactor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-[Reactive Extensions](http://reactivex.io) over [Reactive Streams](http://reactive-streams.org) for the JVM.
+[Reactive Extensions](http://reactivex.io). With the Reactive Stream Subscription protocol, stream can push or be pulled, synchronously or asynchronously, in a bounded way. In fact Java 8 Streams over [Reactive Streams](http://reactive-streams.org) for the JVM.
 
 ## Getting it
 - Snapshot : **2.5.0.BUILD-SNAPSHOT**  ( Java 7+ required )
@@ -44,6 +44,8 @@ Stream
     .consume(someMetrics::updateCounter);
 ```
 
+### Convert and Tap Streams
+
 RxJava Observable/Single, Java 8 CompletableFuture and Java 9 Flow Publishers can be converted to Stream directly. Using the conventional "[as](http://projectreactor.io/core/docs/api/reactor/core/publisher/Flux.html#as-reactor.fn.Function-)" operator, Reactive Stream Publisher implementations can easily convert too.
 ```java
 StreamTap<Tuple2<Integer, Long>> tapped = Stream.convert(Observable.range(1, 100_000_000))
@@ -58,6 +60,10 @@ tapped.zipWith(
     
 Stream.interval(1).consume(n -> someService.metric(tapped.get()));
 ```
+
+### reactor.rx.Stream != java.util.stream.Stream
+
+A [Stream](http://projectreactor.io/stream/docs/api/reactor/rx/Stream.html) is a Reactive Streams Publisher implementing [Reactive Extensions](http://reactivex.io). With the Reactive Stream Subscription protocol, stream can push or be pulled, synchronously or asynchronously, in a bounded way. In fact synchronous Java 8 Streams usually incur less overhead especially when operating on primitive sequences. However and fundamentally, these streams do not support eventual results or **latency**.
 
 ## Promise
 
