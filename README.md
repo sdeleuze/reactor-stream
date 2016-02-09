@@ -91,6 +91,11 @@ String blockingResult = promise
     .get();
 ```
 
+## Scheduling
+
+```java
+```
+
 ## Broadcaster
 
 ```java
@@ -99,6 +104,23 @@ String blockingResult = promise
 ## The Backpressure Thing
 
 ```java
+Stream.merge(
+        Stream.just(1)
+            .repeat()
+            .publishOn(SchedulerGroup.io())
+            .onBackpressureDrop(System.out::println),
+        Stream.just(2)
+            .repeat()
+            .publishOn(SchedulerGroup.io())
+            .onBackpressureBlock(WaitStrategy.liteBlocking()),
+        Stream.just(3)
+            .repeat()
+            .publishOn(SchedulerGroup.io())
+            .onBackpressureBuffer(10)
+    )
+    .take(20, TimeUnit.SECONDS)
+    .capacity(32)
+    .consume(slowConsumer());
 ```
 
 ## An Efficient Asynchronous Pipeline
