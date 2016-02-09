@@ -2,7 +2,7 @@
 
 [![Join the chat at https://gitter.im/reactor/reactor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/reactor/reactor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-[Reactive Extensions](http://reactivex.io). With the Reactive Stream Subscription protocol, stream can push or be pulled, synchronously or asynchronously, in a bounded way. In fact Java 8 Streams over [Reactive Streams](http://reactive-streams.org) for the JVM.
+[Reactive Extensions](http://reactivex.io) over [Reactive Streams](http://reactive-streams.org) for the JVM.
 
 ## Getting it
 - Snapshot : **2.5.0.BUILD-SNAPSHOT**  ( Java 7+ required )
