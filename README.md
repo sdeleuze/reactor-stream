@@ -97,7 +97,7 @@ String blockingResult = promise
 
 Streams endure rounds of JMH testing with some nice success CPU or Memory-wise. This is the direct result of an interesting mix:
 - Reactor Stream makes the most of [reactor-core](https://github.com/reactor/reactor-core) scheduling and queuing capabilities. 
-- Its architecture is also fully aligned and combined with the [reactive-streams-commons](https://github.com/reactor/reactor-streams-commons) research effort. 
+- Its architecture is fully aligned and combined with the [reactive-streams-commons](https://github.com/reactor/reactor-streams-commons) research effort. 
 - Streams participate into the "Stream Fusion" optimization lifecycle, thus reducing further message-passing overhead.
 
 ## Reference
