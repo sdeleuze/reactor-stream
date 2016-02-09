@@ -1538,22 +1538,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final Stream<O> broadcast() {
 		Broadcaster<O> broadcaster = Broadcaster.create(getTimer());
-		return broadcastTo(broadcaster);
-	}
-
-	/**
-	 * Subscribe the passed subscriber, only creating once necessary upstream Subscriptions and returning itself. Mostly
-	 * used by other broadcast actions which transform any Stream into a publish-subscribe Stream (every subscribers see
-	 * all values). <p>
-	 *
-	 * @param subscriber the subscriber to subscribe to this stream and return
-	 * @param <E> the hydrated generic type for the passed argument, allowing for method chaining
-	 *
-	 * @return {@param subscriber}
-	 */
-	public final <E extends Subscriber<? super O>> E broadcastTo(E subscriber) {
-		subscribe(subscriber);
-		return subscriber;
+		return subscribeWith(broadcaster);
 	}
 
 	/**
