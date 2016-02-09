@@ -30,11 +30,9 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import org.reactivestreams.Processor;
@@ -51,7 +49,6 @@ import reactor.core.publisher.SchedulerGroup;
 import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Introspectable;
-import reactor.core.subscriber.BaseSubscriber;
 import reactor.core.subscriber.BlockingIterable;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.subscriber.SubscriberWithContext;
@@ -122,76 +119,6 @@ import reactor.rx.subscriber.ManualSubscriber;
  */
 public abstract class Stream<O> implements Publisher<O>, Backpressurable, Introspectable {
 
-	/**
-	 *
-	 */
-	public static final BiFunction JOIN_BIFUNCTION = new BiFunction<Object, Object, List>() {
-		@Override
-		public List<?> apply(Object t1, Object t2) {
-			return Arrays.asList(t1, t2);
-		}
-	};
-	static final BooleanSupplier ALWAYS_BOOLEAN_SUPPLIER = new BooleanSupplier() {
-		@Override
-		public boolean getAsBoolean() {
-			return true;
-		}
-	};
-	static final Predicate ALWAYS_PREDICATE = new Predicate() {
-		@Override
-		public boolean test(Object o) {
-			return true;
-		}
-	};
-	static final Consumer   NOOP               = new Consumer() {
-		@Override
-		public void accept(Object o) {
-
-		}
-	};
-	static final Function HASHCODE_EXTRACTOR  = new Function<Object, Integer>() {
-		@Override
-		public Integer apply(Object t1) {
-			return t1.hashCode();
-		}
-	};
-	static final Supplier LIST_SUPPLIER = new Supplier() {
-		@Override
-		public Object get() {
-			return new ArrayList<>();
-		}
-	};
-	static final Supplier   SET_SUPPLIER       = new Supplier() {
-		@Override
-		public Object get() {
-			return new HashSet<>();
-		}
-	};
-	static final Function   TIMESTAMP_OPERATOR = new Function<Object, Tuple2<Long, ?>>() {
-		@Override
-		public Tuple2<Long, ?> apply(Object o) {
-			return Tuple.of(System.currentTimeMillis(), o);
-		}
-	};
-	static final Stream   NEVER             = from(Flux.never());
-	static final Function IDENTITY_FUNCTION = new Function() {
-		@Override
-		public Object apply(Object o) {
-			return o;
-		}
-	};
-	private static final BiFunction TUPLE2_BIFUNCTION  = new BiFunction() {
-		@Override
-		public Tuple2 apply(Object t1, Object t2) {
-			return Tuple.of(t1, t2);
-		}
-	};
-	private static final Function JOIN_FUNCTION = new Function<Object[], Object>() {
-		@Override
-		public Object apply(Object[] objects) {
-			return Arrays.asList(objects);
-		}
-	};
 
 	/**
 	 * Select the fastest source who won the "ambiguous" race and emitted first onNext or onComplete or onError
@@ -228,62 +155,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return from(Flux.amb(sources));
 	}
 
-	/**
-	 * Wait 30 Seconds until a terminal signal from the passed publisher has been emitted.
-	 * If the terminal signal is an error, it will propagate to the caller.
-	 * Effectively this is making sure a stream has completed before the return of this call.
-	 * It is usually used in controlled environment such as tests.
-	 *
-	 * @param publisher the publisher to listen for terminal signals
-	 */
-	public static void await(Publisher<?> publisher) throws InterruptedException {
-		await(publisher, 30000, TimeUnit.MILLISECONDS);
-	}
-
-	/**
-	 * Wait {code timeout} in {@code unit} until a terminal signal from the passed publisher has been emitted.
-	 * If the terminal signal is an error, it will propagate to the caller.
-	 * Effectively this is making sure a stream has completed before the return of this call.
-	 * It is usually used in controlled environment such as tests.
-	 *
-	 * @param publisher the publisher to listen for terminal signals
-	 * @param timeout   the maximum wait time in unit
-	 * @param unit      the TimeUnit to use for the timeout
-	 */
-	public static void await(Publisher<?> publisher, long timeout, TimeUnit unit) throws InterruptedException {
-		final AtomicReference<Throwable> exception = new AtomicReference<>();
-
-		final CountDownLatch latch = new CountDownLatch(1);
-		publisher.subscribe(new BaseSubscriber<Object>() {
-			Subscription s;
-
-			@Override
-			public void onComplete() {
-				s = null;
-				latch.countDown();
-			}
-
-			@Override
-			public void onError(Throwable throwable) {
-				s = null;
-				exception.set(throwable);
-				latch.countDown();
-			}
-
-			@Override
-			public void onSubscribe(Subscription subscription) {
-				s = subscription;
-				subscription.request(Long.MAX_VALUE);
-			}
-		});
-
-		latch.await(timeout, unit);
-		if (exception.get() != null) {
-			InterruptedException ie = new InterruptedException();
-			Exceptions.addCause(ie, exception.get());
-			throw ie;
-		}
-	}
 
 	/**
 	 * Build a {@literal Stream} whose data are generated by the combination of the most recent published values from
@@ -4743,6 +4614,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @since 2.5
 	 */
+	@SuppressWarnings("unchecked")
 	public final <T2> Stream<Tuple2<O, T2>> zipWith(final Publisher<? extends T2> publisher) {
 		return StreamSource.wrap(Flux.<O, T2, Tuple2<O, T2>>zip(this, publisher, TUPLE2_BIFUNCTION));
 	}
@@ -4773,4 +4645,71 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamZipIterable<>(this, iterable, (BiFunction<O, T2, Tuple2<O, T2>>)TUPLE2_BIFUNCTION);
 	}
 
+	static final BiFunction JOIN_BIFUNCTION = new BiFunction<Object, Object, List>() {
+		@Override
+		public List<?> apply(Object t1, Object t2) {
+			return Arrays.asList(t1, t2);
+		}
+	};
+	static final BooleanSupplier ALWAYS_BOOLEAN_SUPPLIER = new BooleanSupplier() {
+		@Override
+		public boolean getAsBoolean() {
+			return true;
+		}
+	};
+	static final Predicate ALWAYS_PREDICATE = new Predicate() {
+		@Override
+		public boolean test(Object o) {
+			return true;
+		}
+	};
+	static final Consumer   NOOP               = new Consumer() {
+		@Override
+		public void accept(Object o) {
+
+		}
+	};
+	static final Function HASHCODE_EXTRACTOR  = new Function<Object, Integer>() {
+		@Override
+		public Integer apply(Object t1) {
+			return t1.hashCode();
+		}
+	};
+	static final Supplier LIST_SUPPLIER = new Supplier() {
+		@Override
+		public Object get() {
+			return new ArrayList<>();
+		}
+	};
+	static final Supplier   SET_SUPPLIER       = new Supplier() {
+		@Override
+		public Object get() {
+			return new HashSet<>();
+		}
+	};
+	static final Function   TIMESTAMP_OPERATOR = new Function<Object, Tuple2<Long, ?>>() {
+		@Override
+		public Tuple2<Long, ?> apply(Object o) {
+			return Tuple.of(System.currentTimeMillis(), o);
+		}
+	};
+	static final Stream   NEVER             = from(Flux.never());
+	static final Function IDENTITY_FUNCTION = new Function() {
+		@Override
+		public Object apply(Object o) {
+			return o;
+		}
+	};
+	static final BiFunction TUPLE2_BIFUNCTION  = new BiFunction() {
+		@Override
+		public Tuple2 apply(Object t1, Object t2) {
+			return Tuple.of(t1, t2);
+		}
+	};
+	static final Function JOIN_FUNCTION = new Function<Object[], Object>() {
+		@Override
+		public Object apply(Object[] objects) {
+			return Arrays.asList(objects);
+		}
+	};
 }

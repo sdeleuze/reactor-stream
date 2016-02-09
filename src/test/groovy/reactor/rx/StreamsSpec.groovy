@@ -89,11 +89,11 @@ class StreamsSpec extends Specification {
 
 		when:
 			'the error is retrieved after 2 sec'
-		Stream.await(stream.dispatchOn(asyncGroup).timeout(2, TimeUnit.SECONDS).next())
+		stream.dispatchOn(asyncGroup).timeout(2, TimeUnit.SECONDS).next().get()
 
 		then:
 			'an error has been thrown'
-			thrown InterruptedException
+			thrown RuntimeException
 	}
 
 	def 'A deferred Stream with an initial value makes that value available later'() {
@@ -2880,7 +2880,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'take to the first 2 elements'
-		Stream.await(stream.take(2, TimeUnit.SECONDS))
+		stream.take(2, TimeUnit.SECONDS).after().get()
 
 		then:
 			'the second is the last available'
