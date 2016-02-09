@@ -1774,7 +1774,7 @@ class StreamsSpec extends Specification {
 			'a source stream with a given globalTimer'
 
 			def res = 0l
-			def c = Stream.delay(1)
+			def c = Mono.delay(1)
 			def timeStart = System.currentTimeMillis()
 
 		when:
@@ -2661,7 +2661,7 @@ class StreamsSpec extends Specification {
 			  attempts.log('zipWith').zipWith(Stream.range(1, 3), { t1, t2 -> t2 }).flatMap { i ->
 					println "delay retry by " + i + " second(s)"
 				  println attempts.debug()
-					Stream.delay(i)
+				Mono.delay(i)
 				}
 			}.subscribeWith(new TestSubscriber<>())
 			println value.debug()
@@ -2725,7 +2725,7 @@ class StreamsSpec extends Specification {
 			}.log('repeat').repeatWhen { attempts ->
 				attempts.zipWith(Stream.range(1, 3)) { t1, t2 -> t2 }.flatMap { i ->
 					println "delay repeat by " + i + " second(s)"
-				  Stream.delay(i)
+				  Mono.delay(i)
 				}
 			}.log('test').subscribe()
 	  sleep 10000
@@ -2748,7 +2748,7 @@ class StreamsSpec extends Specification {
 			}.repeatWhen { attempts ->
 				attempts.log('repeat').takeWhile{ println it; it == 0L }.flatMap { i ->
 					println "delay repeat by 1 second"
-				  Stream.delay(1)
+				  Mono.delay(1)
 				}
 			}.log('test').subscribe()
 	  sleep 10000

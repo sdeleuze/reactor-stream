@@ -542,7 +542,7 @@ public class StreamTests extends AbstractReactorTest {
 				                                               System.out.println("failures: " + failures + " successes:" + successes);
 				                                               circuitSwitcher.onNext(openCircuit);
 				                                               successes.set(0);
-				                                               Stream.delay(1)
+				                                               Mono.delay(1)
 				                                                     .subscribe(Subscribers.consumer(ignore -> circuitSwitcher.onNext(
 						                                                     closeCircuit)));
 			                                               }

@@ -646,39 +646,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param delay the timespan in SECONDS to wait before emitting 0l and complete signals
-	 * @return a new {@link Stream}
-	 */
-	public static Mono<Long> delay(long delay) {
-		return Mono.delay(delay, TimeUnit.SECONDS, Timer.globalOrNew());
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
-	 * @param unit  the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Mono<Long> delay(long delay, TimeUnit unit) {
-		return Mono.delay(delay, unit, Timer.globalOrNew());
-	}
-
-	/**
-	 * Build a {@literal Stream} that will only emit 0l after the time delay and then complete.
-	 *
-	 * @param timer the timer to run on
-	 * @param delay the timespan in [unit] to wait before emitting 0l and complete signals
-	 * @param unit  the time unit
-	 * @return a new {@link Stream}
-	 */
-	public static Mono<Long> delay(Timer timer, long delay, TimeUnit unit) {
-		return Mono.delay(delay, unit, timer);
-	}
-
-	/**
 	 * Build a {@literal Stream} that will only emit a complete signal to any new subscriber.
 	 *
 	 * @return a new {@link Stream}
