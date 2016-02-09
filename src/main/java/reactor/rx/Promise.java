@@ -46,12 +46,20 @@ import reactor.fn.Supplier;
  * getting} or {@link #await() awaiting} the value, consumers can be registered to the outbound stream or via
  * , consumers can be registered to be notified of {@link #doOnError(Consumer) notified an error}, {@link
  * #doOnSuccess(Consumer) a value}, or {@link #doOnTerminate(BiConsumer)} both}. <p> A promise also provides methods for
- * composing actions with the future value much like a {@link Stream}. However, where a {@link
- * Stream} can process many values, a {@code Promise} processes only one value or error.
+ * composing actions as a {@link Mono}. Multi-subscribe is allowed.
+ *
+ * <p>
+ * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/mono.png" alt="">
+ * <p>
+ *
+ * Unlike {@link Mono} alone, which represents the read-only side of an eventual value, the {@link Promise} is
+ * read-write and one can fulfill a promise anytime with {@link #onNext(Object)}, {@link #onComplete()} or {@link #onError(Throwable)}. In fact it is a pub-sub {@link Processor}
+ * with one value at most.
+ *
+ * Once a promise has been resolved, newer subscribers will benefit from the cached result.
  *
  * @param <O> the type of the value that will be made available
  *
- * @author Jon Brisbin
  * @author Stephane Maldini
  * @see <a href="https://github.com/promises-aplus/promises-spec">Promises/A+ specification</a>
  */
@@ -79,6 +87,10 @@ public class Promise<O> extends Mono<O>
 	/**
 	 * Create synchronous {@link Promise} and use the given error to complete the {@link Promise} immediately.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/error.png" alt="">
+	 * <p>
+	 *
 	 * @param error the error to complete the {@link Promise} with
 	 * @param <T> the type of the value
 	 *
@@ -90,6 +102,10 @@ public class Promise<O> extends Mono<O>
 
 	/**
 	 * Create a {@link Promise} and use the given error to complete the {@link Promise} immediately.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/error.png" alt="">
+	 * <p>
 	 *
 	 * @param error the error to complete the {@link Promise} with
 	 * @param timer the {@link Timer} to use by default for scheduled operations
@@ -103,6 +119,10 @@ public class Promise<O> extends Mono<O>
 
 	/**
 	 * Transform a publisher into a Promise thus subscribing to the passed source.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/from1.png" alt="">
+	 * <p>
 	 *
 	 * @param source the data source
 	 * @param <T> the type of the value
@@ -126,7 +146,7 @@ public class Promise<O> extends Mono<O>
 	}
 
 	/**
-	 * Create a synchronous {@link Promise}.
+	 * Create a synchronous {@link Promise} that will eagerly request 1 on {@link #onSubscribe(Subscription)}.
 	 *
 	 * @param <T> type of the expected value
 	 *
@@ -137,7 +157,7 @@ public class Promise<O> extends Mono<O>
 	}
 
 	/**
-	 * Create a `{@link Promise}.
+	 * Create a `{@link Promise} that will eagerly request 1 on {@link #onSubscribe(Subscription)}.
 	 *
 	 * @param timer the {@link Timer} to use by default for scheduled operations
 	 * @param <T> type of the expected value
@@ -176,6 +196,10 @@ public class Promise<O> extends Mono<O>
 	/**
 	 * Create a {@link Promise} already completed without any data.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/empty.png" alt="">
+	 * <p>
+	 *
 	 * @return A {@link Promise} that is completed
 	 */
 	@SuppressWarnings("unchecked")
@@ -185,6 +209,10 @@ public class Promise<O> extends Mono<O>
 
 	/**
 	 * Create a {@link Promise} using the given value to complete the {@link Promise} immediately.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/just.png" alt="">
+	 * <p>
 	 *
 	 * @param value the value to complete the {@link Promise} with
 	 * @param <T> the type of the value
@@ -197,6 +225,12 @@ public class Promise<O> extends Mono<O>
 
 	/**
 	 * Create a {@link Promise} using the given value to complete the {@link Promise} immediately.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/empty.png" alt="">
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/just.png" alt="">
+	 * <p>
 	 *
 	 * @param value the value to complete the {@link Promise} with
 	 * @param timer the {@link Timer} to use by default for scheduled operations
@@ -550,7 +584,8 @@ public class Promise<O> extends Mono<O>
 	}
 
 	/**
-	 * @return
+	 * @return a scalar or dynamic {@link Stream} of this {@link Promise} depending on whether it has been fulfilled
+	 * or not.
 	 */
 	@SuppressWarnings("unchecked")
 	public Stream<O> stream() {

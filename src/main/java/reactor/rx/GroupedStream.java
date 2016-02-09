@@ -18,11 +18,11 @@ package reactor.rx;
 import reactor.core.state.Groupable;
 
 /**
- * The Stream will complete or error whever the parent groupBy action terminates itself.
- * <p>
+ * The Stream implements {@link Groupable} and deliver its reactive API in addition to the key context.
+ *
  * Create such stream with the provided factory, E.g.:
  * {@code
- * stream.groupBy(data -> data.id).consume(partitionedStream -> partitionedStream.consume())
+ * stream.groupBy(data -> data.id).consume((GroupedStream<Long, String> partitionedStream)-> partitionedStream.consume())
  * }
  *
  * @author Stephane Maldini
