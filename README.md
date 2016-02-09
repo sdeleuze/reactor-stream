@@ -58,18 +58,24 @@ promise
     .doOnTerminate((success, error) -> doSomeCleanup())
     .subscribe();
 
-promise
+SchedulerGroup.io().accept(() -> promise.onNext("hello!"));
+
+String blockingResult = promise
     .map(otherService::transform)
     .doOnSuccess(otherService::notify)
     .doOnError(otherService::error)
-    .subscribe();
-    
-SchedulerGroup.io().accept(() -> promise.onNext("hello!"));
+    .get();
 ```
 
 ## Broadcaster
 
+```java
+```
+
 ## The Backpressure Thing
+
+```java
+```
 
 ## Reference
 http://projectreactor.io/stream/docs/reference/
