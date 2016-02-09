@@ -36,8 +36,10 @@ Stream
     .doOnNext(System.out::println)
     .window(50, TimeUnit.MILLISECONDS)
     .flatMap(Stream::count)
-    .filter(c -> c == 0)
-    .takeUntil(Mono.delay(3))
+    .groupBy(c -> c % 2 == 0)
+    .flatMap(group -> 
+        group.takeUntil(Mono.delay(group.key() == 0 ? 1 : 3))
+    )
     .delaySubscription(Mono.delay(1))
     .retryWhen(errors -> errors.zipWith(Stream.range(1, 3)))
     .capacity(128)
