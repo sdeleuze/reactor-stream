@@ -50,9 +50,7 @@ A Reactive Streams Processor extending [reactor-core](http://github.com/reactor/
 
 ```java
 Promise<String> p = Promise.prepare();
-p
-    .then(someService::notify)
-    .subscribe();
+p.then(someService::notify).subscribe();
 
 SchedulerGroup
     .io()
