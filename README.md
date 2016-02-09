@@ -93,7 +93,7 @@ String blockingResult = promise
 ```java
 ```
 
-## An Efficient asynchronous pipeline
+## An Efficient Asynchronous Pipeline
 
 Streams endure rounds of JMH testing with some nice success CPU or Memory-wise. This is the direct result of an interesting mix:
 - Reactor Stream makes the most of [reactor-core](https://github.com/reactor/reactor-core) scheduling and queuing capabilities. 
