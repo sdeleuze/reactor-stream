@@ -63,7 +63,7 @@ Stream.interval(1).consume(n -> someService.metric(tapped.get()));
 
 ### reactor.rx.Stream != java.util.stream.Stream
 
-A [Stream](http://projectreactor.io/stream/docs/api/reactor/rx/Stream.html) is a Reactive Streams Publisher implementing [Reactive Extensions](http://reactivex.io). With the Reactive Stream Subscription protocol, stream can push or be pulled, synchronously or asynchronously, in a bounded way. In fact synchronous Java 8 Streams usually incur less overhead especially when operating on primitive sequences. However and fundamentally, these streams do not support eventual results or **latency**.
+A [Reactor Stream](http://projectreactor.io/stream/docs/api/reactor/rx/Stream.html) is a Reactive Streams Publisher implementing [Reactive Extensions](http://reactivex.io). With the Reactive Stream Subscription protocol, stream can push or be pulled, synchronously or asynchronously, in a bounded way. In fact synchronous Java 8 Streams usually incur less overhead especially when operating on primitive sequences. However and fundamentally, these streams do not support eventual results or **latency**.
 
 ## Promise
 
