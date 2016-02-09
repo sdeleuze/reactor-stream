@@ -131,6 +131,7 @@ Streams endure rounds of JMH testing with some nice success CPU or Memory-wise. 
 - Its architecture is fully aligned and combined with the [reactive-streams-commons](https://github.com/reactor/reactor-streams-commons) research effort. 
 - Streams participate into the "Stream Fusion" optimization lifecycle, thus reducing further message-passing overhead.
 
+-------------------------------------
 ## Reference
 http://projectreactor.io/stream/docs/reference/
 
