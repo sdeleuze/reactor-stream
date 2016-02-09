@@ -125,7 +125,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/amb.png" alt="">
-	 * <p> <p>
+	 * <p>
 	 *
 	 * @param sources The competing source publishers
 	 * @param <T> The source type of the data sequence
@@ -142,7 +142,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/amb.png" alt="">
-	 * <p> <p>
+	 * <p>
 	 *
 	 * @param sources The competing source publishers
 	 * @param <T> The source type of the data sequence
@@ -1753,10 +1753,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Bind the stream to a given {@param elements} volume of in-flight data: - A {@link Subscriber} will request up to
 	 * the defined volume upstream. - a {@link Subscriber} will track the pending requests and fire up to {@param
 	 * elements} when the previous volume has been processed. - A {@link StreamBatch} and any other size-bound action
-	 * will be limited to the defined volume. <p> <p> A stream capacity can't be superior to the underlying dispatcher
+	 * will be limited to the defined volume. <p> A stream capacity can't be superior to the underlying dispatcher
 	 * capacity: if the {@param elements} overflow the dispatcher backlog size, the capacity will be aligned
 	 * automatically to fit it. RingBufferDispatcher will for instance take to a power of 2 size up to {@literal
-	 * Integer.MAX_VALUE}, where a Stream can be sized up to {@literal Long.MAX_VALUE} in flight data. <p> <p> When the
+	 * Integer.MAX_VALUE}, where a Stream can be sized up to {@literal Long.MAX_VALUE} in flight data. <p> When the
 	 * stream receives more elements than requested, incoming data is eventually staged in a {@link
 	 * Subscription}. The subscription can react differently according to the implementation in-use,
 	 * the default strategy is as following: - The first-level of pair compositions Stream->Subscriber will overflow
@@ -2024,7 +2024,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * The passed {code requestMapper} function will receive the {@link Stream} of the last N requested elements
 	 * -starting with the capacity defined for the stream- when the N elements have been consumed. It will return a
 	 * {@link Publisher} of long signals S that will instruct the consumer to request S more elements, possibly altering
-	 * the "batch" size if wished. <p> <p> For a passive version that observe and forward incoming data see {@link
+	 * the "batch" size if wished. <p> For a passive version that observe and forward incoming data see {@link
 	 * #doOnNext(reactor.fn.Consumer)}
 	 *
 	 * @param consumer the consumer to invoke on each value

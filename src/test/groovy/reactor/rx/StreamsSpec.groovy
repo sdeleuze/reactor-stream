@@ -18,6 +18,7 @@ package reactor.rx
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription
 import reactor.core.publisher.EmitterProcessor
+import reactor.core.publisher.Mono
 import reactor.core.publisher.SchedulerGroup
 import reactor.core.subscriber.SubscriberWithContext
 import reactor.core.test.TestSubscriber
