@@ -39,6 +39,7 @@ Stream
     .filter(c -> c == 0)
     .takeUntil(Mono.delay(3))
     .delaySubscription(Mono.delay(1))
+    .retryWhen(errors -> errors.zipWith(Stream.range(1, 3)))
     .capacity(128)
     .consume(someMetrics::updateCounter);
 ```
@@ -91,6 +92,13 @@ String blockingResult = promise
 
 ```java
 ```
+
+## In a quest for Efficiency
+
+Streams endure rounds of JMH testing with some nice success CPU or Memory-wise. This is the direct result of an interesting mix:
+- Reactor Stream makes the most of [reactor-core](https://github.com/reactor/reactor-core) scheduling capabilities. 
+- Its architecture is also fully aligned and combined with the [reactive-streams-commons](https://github.com/reactor/reactor-streams-commons) research effort. 
+- Streams participate into the "Stream Fusion" optimization lifecycle, thus reducing further message-passing overhead.
 
 ## Reference
 http://projectreactor.io/stream/docs/reference/
