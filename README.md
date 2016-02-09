@@ -43,6 +43,23 @@ Stream
     .consume(someMetrics::updateCounter);
 ```
 
+RxJava Observable/Single, Java 8 CompletableFuture and Java 9 Flow Publishers can be converted to Stream directly. Using the conventional "[as](http://projectreactor.io/core/docs/api/reactor/core/publisher/Flux.html#as-reactor.fn.Function-)" operator, Reactive Stream Publisher implementations can easily convert too.
+```java
+StreamTap<Tuple2<Integer, Long>> tapped = Stream
+                                    .convert(Observable.range(1, 100_000_000))
+                                    .doOnNext(System.out::println)
+                                    .tap();
+tapped
+    .zipWith(
+        Flux.interval(1)
+            .as(Stream::from)
+            .take(100)
+    )
+    .consume(System.out::println);
+    
+Stream.interval(1).consume(n -> someService.metric(tapped.get()));
+```
+
 ## Promise
 
 A Reactive Streams Processor extending [reactor-core](http://github.com/reactor/reactor-core) Mono and supporting "hot/deferred fulfilling".
