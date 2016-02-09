@@ -43,7 +43,7 @@ public class FizzBuzzTests extends AbstractReactorTest {
 		final Timer timer = new Timer();
 		AtomicLong globalCounter = new AtomicLong();
 
-		InterruptableSubscriber<?> c = Stream.createWith((demand, subscriber) -> {
+		InterruptableSubscriber<?> c = Stream.generate((demand, subscriber) -> {
 			System.out.println("demand is " + demand);
 			if (!subscriber.isCancelled()) {
 				for (int i = 0; i < demand; i++) {
@@ -90,7 +90,7 @@ public class FizzBuzzTests extends AbstractReactorTest {
 		Stream<String> stream = Stream.fromProcessor(ring.start());
 
 		Stream<String> stream2 = stream
-				.zipWith(Stream.createWith((d, s) -> {
+				.zipWith(Stream.generate((d, s) -> {
 			  for (int i = 0; i < d; i++) {
 				  if(!s.isCancelled()) {
 					  s.onNext(System.currentTimeMillis());

@@ -138,7 +138,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 			final Random random = new Random();
 
 			return Stream
-			  .<Integer>createWith((n, s) -> s.onNext(random.nextInt()))
+			  .<Integer>generate((n, s) -> s.onNext(random.nextInt()))
 			  .log("random-publisher")
 			  .map(Math::abs);
 		}

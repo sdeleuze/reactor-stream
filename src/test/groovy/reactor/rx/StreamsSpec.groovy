@@ -250,7 +250,7 @@ class StreamsSpec extends Specification {
 		given:
 			String test = ""
 			'a composable with an initial value'
-			def stream = Stream.<String> createWith{ n, s -> s.onNext test }
+			def stream = Stream.<String> generate{ n, s -> s.onNext test }
 
 		when:
 			'the value is retrieved'
@@ -264,7 +264,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'nothing is provided'
-		Stream.<String> createWith(null)
+		Stream.<String> generate(null)
 
 		then:
 			"error is thrown"
@@ -1672,7 +1672,7 @@ class StreamsSpec extends Specification {
 	def 'Creating Stream from publisher factory'() {
 		given:
 			'a source stream with a given publisher'
-			def s = Stream.createWith(
+			def s = Stream.generate(
 					{ long n, SubscriberWithContext<String, Void> sub ->
 						(1..3).each {
 							sub.onNext("test$it")

@@ -260,7 +260,7 @@ h|Stream.defer(*Supplier<Publisher<T>>*)
 |T
 2+|A lazy Publisher access using the level of indirection provided by `Supplier.get()` every time `Stream.subscribe(Subscriber)` is called.
 
-h|Stream.createWith(*BiConsumer<Long,SubscriberWithContext<T, C>*, _Function<Subscriber<T>,C>, Consumer<C>_)
+h|Stream.generate(*BiConsumer<Long,SubscriberWithContext<T, C>*, _Function<Subscriber<T>,C>, Consumer<C>_)
 |T
 2+|A Stream generator with explicit callbacks for each `Subscriber` request, start and stop events. similar to `Stream.create(Publisher)` minus the boilerplate for common use.
 
@@ -392,14 +392,14 @@ Where to go from here? There are plenty of use cases that can benefit from a cus
 Reactor offers some reusable components to avoid the boilerplate checking you would have to do without extending exsiting Stream or `PushSubscription`
 
 * Extending `PushSubscription` instead of implementing `Subscription` directly to benefit from terminal state (PushSubscription.isComplete())
-* Using `Flux.create(args)` or `Stream.createWith(args)` to use Functional consumers for every lifecycle step
+* Using `Flux.create(args)` or `Stream.generate(args)` to use Functional consumers for every lifecycle step
 (requested, stopped, started).
 * Extending `Stream` instead of implementing `Publisher` directly to benefit from composition API
 
-.Stream.createWith, an alternative to create() minus some boilerplate
+.Stream.generate, an alternative to create() minus some boilerplate
 [source,java]
 ----
-final Stream<String> stream = Stream.createWith(
+final Stream<String> stream = Stream.generate(
   (demand, sub) -> { // <1>
       sub.context(); // <2>
       if (demand >= 2L && !sub.isCancelled()) {
@@ -1647,7 +1647,7 @@ a|
 [source,java]
 ----
 return Stream
-  .createWith(
+  .generate(
     (demand, sub) -> {
       ResultSet rs = sub.context();
       long cursor = 0l;
@@ -1684,7 +1684,7 @@ stream
 ****
 * Yes it's more verbose…
 * …But now we stream result by result from the query (could have used pagination with SQL limits as well).
-* `Stream.createWith` is a `Flux` which intercepts requests, start and stop.
+* `Stream.generate` is a `Flux` which intercepts requests, start and stop.
 ** The request consumer gives precisely how many elements a subscriber is ready to receive.
 ** The request consumer receives a `SubscriberWithContext` delegating to the real `Subscriber`, it gives access to shared context and cancel status.
 ** We send at most as many individual _Result_ as demanded

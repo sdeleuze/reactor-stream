@@ -584,9 +584,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a Stream
 	 * @since 2.0.2
 	 */
-	public static <T> Stream<T> createWith(BiConsumer<Long, SubscriberWithContext<T, Void>> requestConsumer) {
+	public static <T> Stream<T> generate(BiConsumer<Long, SubscriberWithContext<T, Void>> requestConsumer) {
 		if (requestConsumer == null) throw new IllegalArgumentException("Supplier must be provided");
-		return createWith(requestConsumer, null, null);
+		return generate(requestConsumer, null, null);
 	}
 
 	/**
@@ -602,9 +602,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a Stream
 	 * @since 2.0.2
 	 */
-	public static <T, C> Stream<T> createWith(BiConsumer<Long, SubscriberWithContext<T, C>> requestConsumer,
+	public static <T, C> Stream<T> generate(BiConsumer<Long, SubscriberWithContext<T, C>> requestConsumer,
 	                                          Function<Subscriber<? super T>, C> contextFactory) {
-		return createWith(requestConsumer, contextFactory, null);
+		return generate(requestConsumer, contextFactory, null);
 	}
 
 	/**
@@ -624,7 +624,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a fresh Reactive Streams publisher ready to be subscribed
 	 * @since 2.0.2
 	 */
-	public static <T, C> Stream<T> createWith(BiConsumer<Long, SubscriberWithContext<T, C>> requestConsumer,
+	public static <T, C> Stream<T> generate(BiConsumer<Long, SubscriberWithContext<T, C>> requestConsumer,
 	                                          Function<Subscriber<? super T>, C> contextFactory,
 	                                          Consumer<C> shutdownConsumer) {
 		return from(Flux.generate(requestConsumer, contextFactory, shutdownConsumer));
