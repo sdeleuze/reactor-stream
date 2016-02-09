@@ -29,6 +29,7 @@ A Reactive Streams Publisher implementing the most common Reactive Extensions an
 
 [<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" width="500">](http://projectreactor.io/stream/docs/api/reactor/rx/Stream.html)
 
+Stream in action :
 ```java
 Stream
     .range(1, 100_000_000)
@@ -48,13 +49,22 @@ A Reactive Streams Processor extending [reactor-core](http://github.com/reactor/
 
 [<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/mono.png" width="500">](http://projectreactor.io/stream/docs/api/reactor/rx/Promise.html)
 
+Fulfilling promise from any context:
 ```java
-Promise<String> p = Promise.prepare();
-p.then(someService::notify).subscribe();
+Promise<String> promise = Promise.prepare();
+promise
+    .doOnSuccess(someService::notify)
+    .doOnError(someService::error)
+    .doOnTerminate((success, error) -> doSomeCleanup())
+    .subscribe();
 
-SchedulerGroup
-    .io()
-    .accept(() -> p.onNext("hello!"));
+promise
+    .map(otherService::transform)
+    .doOnSuccess(otherService::notify)
+    .doOnError(otherService::error)
+    .subscribe();
+    
+SchedulerGroup.io().accept(() -> promise.onNext("hello!"));
 ```
 
 ## Broadcaster
