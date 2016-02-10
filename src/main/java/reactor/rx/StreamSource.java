@@ -16,6 +16,8 @@
 
 package reactor.rx;
 
+import java.util.Objects;
+
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.Fuseable;
@@ -58,7 +60,7 @@ public class StreamSource<I, O> extends Stream<O>
 
 
 	public StreamSource(Publisher<? extends I> source) {
-		this.source = source;
+		this.source = Objects.requireNonNull(source);
 	}
 
 	@Override
