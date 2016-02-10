@@ -128,6 +128,7 @@ project.tasks.withType(Test).all {
   scanForTestClasses = false
   include '**/*Tests.*'
   include '**/*Spec.*'
+  include '**/*Test.*'
   exclude '**/*Abstract*.*'
 }
 
