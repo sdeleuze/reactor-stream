@@ -15,12 +15,17 @@
  */
 package reactor.rx;
 
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.MultiProducer;
+import reactor.core.flow.Producer;
+import reactor.core.flow.Receiver;
 import reactor.core.util.BackpressureUtils;
 import reactor.fn.Consumer;
 
@@ -35,7 +40,8 @@ import reactor.fn.Consumer;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamRefCount<T> extends Stream<T> {
+final class StreamRefCount<T> extends Stream<T>
+		implements Receiver, Loopback {
 	
 	final ConnectableStream<? extends T> source;
 	
@@ -74,8 +80,23 @@ final class StreamRefCount<T> extends Stream<T> {
 			break;
 		}
 	}
-	
-	static final class State<T> implements Consumer<Runnable> {
+
+	@Override
+	public Object connectedInput() {
+		return null;
+	}
+
+	@Override
+	public Object connectedOutput() {
+		return connection;
+	}
+
+	@Override
+	public Object upstream() {
+		return source;
+	}
+
+	static final class State<T> implements Consumer<Runnable>, MultiProducer, Receiver {
 		
 		final int n;
 		
@@ -147,8 +168,23 @@ final class StreamRefCount<T> extends Stream<T> {
 				DISCONNECT.getAndSet(this, DISCONNECTED);
 			}
 		}
-		
-		static final class InnerSubscriber<T> implements Subscriber<T>, Subscription {
+
+		@Override
+		public Iterator<?> downstreams() {
+			return null;
+		}
+
+		@Override
+		public long downstreamCount() {
+			return subscribers;
+		}
+
+		@Override
+		public Object upstream() {
+			return parent;
+		}
+
+		static final class InnerSubscriber<T> implements Subscriber<T>, Subscription, Receiver, Producer, Loopback {
 
 			final Subscriber<? super T> actual;
 			
@@ -195,6 +231,26 @@ final class StreamRefCount<T> extends Stream<T> {
 			public void cancel() {
 				s.cancel();
 				parent.innerCancelled();
+			}
+
+			@Override
+			public Object downstream() {
+				return actual;
+			}
+
+			@Override
+			public Object upstream() {
+				return s;
+			}
+
+			@Override
+			public Object connectedInput() {
+				return null;
+			}
+
+			@Override
+			public Object connectedOutput() {
+				return s;
 			}
 		}
 	}

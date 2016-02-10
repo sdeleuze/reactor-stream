@@ -1,20 +1,7 @@
-/*
- * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package reactor.rx;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
@@ -26,6 +13,15 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Fuseable;
+import reactor.core.flow.Loopback;
+import reactor.core.flow.MultiProducer;
+import reactor.core.flow.Receiver;
+import reactor.core.state.Backpressurable;
+import reactor.core.state.Cancellable;
+import reactor.core.state.Completable;
+import reactor.core.state.Failurable;
+import reactor.core.state.Introspectable;
+import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
 import reactor.fn.Consumer;
@@ -41,8 +37,9 @@ import reactor.fn.Supplier;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamPublish<T> extends ConnectableStream<T> {
-	/** The source observable. */
+final class StreamPublish<T> extends ConnectableStream<T>
+		implements Receiver, Loopback, Backpressurable {
+	/** The source publisher. */
 	final Publisher<? extends T> source;
 	
 	/** The size of the prefetch buffer. */
@@ -66,7 +63,7 @@ final class StreamPublish<T> extends ConnectableStream<T> {
 
 	@Override
 	public void connect(Consumer<? super Runnable> cancelSupport) {
-		boolean doConnect = false;
+		boolean doConnect;
 		State<T> s;
 		for (;;) {
 			s = connection;
@@ -114,8 +111,34 @@ final class StreamPublish<T> extends ConnectableStream<T> {
 			}
 		}
 	}
+
+	@Override
+	public long getPending() {
+		return -1L;
+	}
+
+	@Override
+	public long getCapacity() {
+		return prefetch;
+	}
+
+	@Override
+	public Object connectedInput() {
+		return null;
+	}
+
+	@Override
+	public Object connectedOutput() {
+		return connection;
+	}
+
+	@Override
+	public Object upstream() {
+		return source;
+	}
 	
-	static final class State<T> implements Subscriber<T>, Runnable {
+	static final class State<T> implements Subscriber<T>, Runnable, Receiver, MultiProducer, Backpressurable,
+										   Completable, Cancellable, Failurable {
 
 		final int prefetch;
 		
@@ -338,7 +361,8 @@ final class StreamPublish<T> extends ConnectableStream<T> {
 			}
 		}
 
-		boolean isTerminated() {
+		@Override
+		public boolean isTerminated() {
 			return subscribers == TERMINATED;
 		}
 		
@@ -480,9 +504,49 @@ final class StreamPublish<T> extends ConnectableStream<T> {
 			}
 			return false;
 		}
+
+		@Override
+		public long getCapacity() {
+			return prefetch;
+		}
+
+		@Override
+		public long getPending() {
+			return queue.size();
+		}
+
+		@Override
+		public boolean isCancelled() {
+			return cancelled;
+		}
+
+		@Override
+		public boolean isStarted() {
+			return !cancelled && !done && s != null;
+		}
+
+		@Override
+		public Throwable getError() {
+			return error;
+		}
+
+		@Override
+		public Iterator<?> downstreams() {
+			return Arrays.asList(subscribers).iterator();
+		}
+
+		@Override
+		public long downstreamCount() {
+			return subscribers.length;
+		}
+
+		@Override
+		public Object upstream() {
+			return s;
+		}
 	}
 	
-	static final class InnerSubscription<T> implements Subscription {
+	static final class InnerSubscription<T> implements Subscription, Introspectable, Receiver, Requestable, Cancellable {
 		
 		final Subscriber<? super T> actual;
 		
@@ -522,11 +586,32 @@ final class StreamPublish<T> extends ConnectableStream<T> {
 				}
 			}
 		}
-		
-		boolean isCancelled() {
+
+		@Override
+		public boolean isCancelled() {
 			return cancelled != 0;
 		}
-		
+
+		@Override
+		public int getMode() {
+			return INNER;
+		}
+
+		@Override
+		public String getName() {
+			return InnerSubscription.class.getSimpleName();
+		}
+
+		@Override
+		public Object upstream() {
+			return parent;
+		}
+
+		@Override
+		public long requestedFromDownstream() {
+			return requested;
+		}
+
 		void produced(long n) {
 			REQUESTED.addAndGet(this, -n);
 		}

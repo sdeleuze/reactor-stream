@@ -31,39 +31,11 @@ import reactor.fn.Consumer;
 public abstract class ConnectableStream<T> extends Stream<T> {
 
 	/**
-	 * Connects this Publisher to its source and sends a Runnable to a callback that
-	 * can be used for disconnecting.
-	 * <p>The call should be idempotent in respect of connecting the first
-	 * and subsequent times. In addition the disconnection should be also tied
-	 * to a particular connection (so two different connection can't disconnect the other).
-	 * 
-	 * @param cancelSupport the callback is called with a Runnable instance that can
-	 * be called to disconnect the source, even synchronously.
-	 */
-	public abstract void connect(Consumer<? super Runnable> cancelSupport);
-	
-	/**
-	 * Connect this Publisher to its source and return a Runnable that
-	 * can be used for disconnecting.
-	 * @return the Runnable that allows disconnecting the connection after.
-	 */
-	public final Runnable connect() {
-		final Runnable[] out = { null };
-		connect(new Consumer<Runnable>() {
-			@Override
-			public void accept(Runnable r) {
-				out[0] = r;
-			}
-		});
-		return out[0];
-	}
-
-	/**
 	 *
 	 * @return
 	 */
-	public final Stream<T> refCount() {
-		return refCount(1);
+	public final Stream<T> autoConnect() {
+		return autoConnect(1);
 	}
 
 	/**
@@ -71,18 +43,6 @@ public abstract class ConnectableStream<T> extends Stream<T> {
 	 * @param minSubscribers
 	 * @return
 	 */
-	public final Stream<T> refCount(int minSubscribers) {
-		return new StreamRefCount<>(this, minSubscribers);
-	}
-
-	/**
-	 *
-	 * @return
-	 */
-	public final Stream<T> autoConnect() {
-		return autoConnect(1);
-	}
-	
 	public final Stream<T> autoConnect(int minSubscribers) {
 		return autoConnect(minSubscribers, NOOP_DISCONNECT);
 	}
@@ -99,6 +59,51 @@ public abstract class ConnectableStream<T> extends Stream<T> {
 			return this;
 		}
 		return new StreamAutoConnect<>(this, minSubscribers, cancelSupport);
+	}
+
+	/**
+	 * Connect this Publisher to its source and return a Runnable that
+	 * can be used for disconnecting.
+	 * @return the Runnable that allows disconnecting the connection after.
+	 */
+	public final Runnable connect() {
+		Runnable[] out = { null };
+		connect(new Consumer<Runnable>() {
+			@Override
+			public void accept(Runnable r) {
+				out[0] = r;
+			}
+		});
+		return out[0];
+	}
+
+	/**
+	 * Connects this Publisher to its source and sends a Runnable to a callback that
+	 * can be used for disconnecting.
+	 * <p>The call should be idempotent in respect of connecting the first
+	 * and subsequent times. In addition the disconnection should be also tied
+	 * to a particular connection (so two different connection can't disconnect the other).
+	 *
+	 * @param cancelSupport the callback is called with a Runnable instance that can
+	 * be called to disconnect the source, even synchronously.
+	 */
+	public abstract void connect(Consumer<? super Runnable> cancelSupport);
+
+	/**
+	 *
+	 * @param minSubscribers
+	 * @return
+	 */
+	public final Stream<T> refCount(int minSubscribers) {
+		return new StreamRefCount<>(this, minSubscribers);
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	public final Stream<T> refCount() {
+		return refCount(1);
 	}
 
 	static final Consumer<Runnable> NOOP_DISCONNECT = new Consumer<Runnable>() {

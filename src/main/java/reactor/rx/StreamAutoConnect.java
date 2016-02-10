@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import org.reactivestreams.Subscriber;
+import reactor.core.flow.Receiver;
 import reactor.fn.Consumer;
 
 /**
@@ -32,7 +33,8 @@ import reactor.fn.Consumer;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamAutoConnect<T> extends Stream<T> {
+final class StreamAutoConnect<T> extends Stream<T>
+		implements Receiver {
 
 	final ConnectableStream<? extends T> source;
 
@@ -60,5 +62,10 @@ final class StreamAutoConnect<T> extends Stream<T> {
 		if (remaining > 0 && REMAINING.decrementAndGet(this) == 0) {
 			source.connect(cancelSupport);
 		}
+	}
+
+	@Override
+	public Object upstream() {
+		return source;
 	}
 }
