@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.rx;
+package reactor.rx.scenarios;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -63,6 +63,10 @@ import reactor.core.util.Logger;
 import reactor.fn.Consumer;
 import reactor.fn.Function;
 import reactor.fn.tuple.Tuple;
+import reactor.rx.Broadcaster;
+import reactor.rx.Promise;
+import reactor.rx.Stream;
+import reactor.rx.StreamProcessor;
 import reactor.rx.subscriber.InterruptableSubscriber;
 
 import static org.hamcrest.CoreMatchers.equalTo;

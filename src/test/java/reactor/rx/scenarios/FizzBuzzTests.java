@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.rx;
+package reactor.rx.scenarios;
 
 import java.util.List;
 import java.util.Timer;
@@ -25,6 +25,8 @@ import org.junit.Test;
 import reactor.AbstractReactorTest;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.util.Assert;
+import reactor.rx.Promise;
+import reactor.rx.Stream;
 import reactor.rx.subscriber.InterruptableSubscriber;
 
 /**

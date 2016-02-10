@@ -3320,7 +3320,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 1.1, 2.0, 2.5
 	 */
 	public final Mono<O> reduce(final BiFunction<O, O, O> fn) {
-		return scan(fn).last();
+		return new MonoAggregate<>(this, fn);
 	}
 
 	/**

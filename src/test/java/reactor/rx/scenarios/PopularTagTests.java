@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package reactor.rx;
+package reactor.rx.scenarios;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +23,7 @@ import org.junit.Test;
 import reactor.AbstractReactorTest;
 import reactor.core.util.Logger;
 import reactor.fn.tuple.Tuple;
+import reactor.rx.Stream;
 import reactor.rx.subscriber.InterruptableSubscriber;
 
 import static java.util.concurrent.TimeUnit.SECONDS;

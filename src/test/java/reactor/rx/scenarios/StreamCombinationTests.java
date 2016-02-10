@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor.rx;
+package reactor.rx.scenarios;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +36,7 @@ import reactor.core.publisher.SchedulerGroup;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
+import reactor.rx.Stream;
 import reactor.rx.subscriber.InterruptableSubscriber;
 
 /**
