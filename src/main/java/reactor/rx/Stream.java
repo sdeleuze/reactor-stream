@@ -125,7 +125,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/amb.png" alt="">
-	 * <p>
+	 * <p> <p>
 	 *
 	 * @param sources The competing source publishers
 	 * @param <T> The source type of the data sequence
@@ -137,12 +137,11 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 /**
 	 * Select the fastest source who won the "ambiguous" race and emitted first onNext or onComplete or onError
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/amb.png" alt="">
-	 * <p>
+	 * <p> <p>
 	 *
 	 * @param sources The competing source publishers
 	 * @param <T> The source type of the data sequence
@@ -437,13 +436,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/concatinner.png" alt="">
 	 * <p>
-	 * @param concatdPublishers The {@link Publisher} of {@link Publisher} to concat
+	 * @param sources The {@link Publisher} of {@link Publisher} to concat
 	 * @param <T> The source type of the data sequence
 	 *
 	 * @return a new {@link Stream} concatenating all inner sources sequences until complete or error
 	 */
-	public static <T> Stream<T> concat(Publisher<? extends Publisher<? extends T>> concatdPublishers) {
-		return from(Flux.concat(concatdPublishers));
+	public static <T> Stream<T> concat(Publisher<? extends Publisher<? extends T>> sources) {
+		return from(Flux.concat(sources));
 	}
 
 	/**
@@ -553,27 +552,64 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @see Flux#create(Consumer)
+	 * Create a {@link Stream} reacting on each available {@link Subscriber} read derived with the passed {@link
+	 * Consumer}. If a previous request is still running, avoid recursion and extend the previous request iterations.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/generateforeach.png" alt="">
+	 * <p>
+	 * @param requestConsumer A {@link Consumer} invoked when available read with the target subscriber
+	 * @param <T> The type of the data sequence
+	 *
+	 * @return a new {@link Stream}
 	 */
-	public static <T> Stream<T> create(Consumer<SubscriberWithContext<T, Void>> request) {
-		return from(Flux.create(request));
+	public static <T> Stream<T> create(Consumer<SubscriberWithContext<T, Void>> requestConsumer) {
+		return from(Flux.create(requestConsumer));
 	}
 
 	/**
-	 * @see Flux#create(Consumer, Function)
+	 * Create a {@link Stream} reacting on each available {@link Subscriber} read derived with the passed {@link
+	 * Consumer}. If a previous request is still running, avoid recursion and extend the previous request iterations.
+	 * The argument {@code contextFactory} is executed once by new subscriber to generate a context shared by every
+	 * request calls.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/generateforeach.png" alt="">
+	 * <p>
+	 * @param requestConsumer A {@link Consumer} invoked when available read with the target subscriber
+	 * @param contextFactory A {@link Function} called for every new subscriber returning an immutable context (IO
+	 * connection...)
+	 * @param <T> The type of the data sequence
+	 * @param <C> The type of contextual information to be read by the requestConsumer
+	 *
+	 * @return a new {@link Stream}
 	 */
-	public static <T, C> Stream<T> create(Consumer<SubscriberWithContext<T, C>> request,
-			Function<Subscriber<? super T>, C> onSubscribe) {
-		return from(Flux.create(request, onSubscribe));
+	public static <T, C> Stream<T> create(Consumer<SubscriberWithContext<T, C>> requestConsumer,
+			Function<Subscriber<? super T>, C> contextFactory) {
+		return from(Flux.create(requestConsumer, contextFactory));
 	}
 
 	/**
-	 * @see Flux#create(Consumer, Function, Consumer)
+	 * Create a {@link Stream} reacting on each available {@link Subscriber} read derived with the passed {@link
+	 * Consumer}. If a previous request is still running, avoid recursion and extend the previous request iterations.
+	 * The argument {@code contextFactory} is executed once by new subscriber to generate a context shared by every
+	 * request calls. The argument {@code shutdownConsumer} is executed once by subscriber termination event (cancel,
+	 * onComplete, onError).
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/generateforeach.png" alt="">
+	 * <p>
+	 * @param requestConsumer A {@link Consumer} invoked when available read with the target subscriber
+	 * @param contextFactory A {@link Function} called once for every new subscriber returning an immutable context (IO
+	 * connection...)
+	 * @param shutdownConsumer A {@link Consumer} called once everytime a subscriber terminates: cancel, onComplete(),
+	 * onError()
+	 * @param <T> The type of the data sequence
+	 * @param <C> The type of contextual information to be read by the requestConsumer
+	 *
+	 * @return a new {@link Stream}
 	 */
-	public static <T, C> Stream<T> create(Consumer<SubscriberWithContext<T, C>> request,
-			Function<Subscriber<? super T>, C> onSubscribe,
-			Consumer<C> onTerminate) {
-		return from(Flux.create(request, onSubscribe, onTerminate));
+	public static <T, C> Stream<T> create(Consumer<SubscriberWithContext<T, C>> requestConsumer,
+			Function<Subscriber<? super T>, C> contextFactory,
+			Consumer<C> shutdownConsumer) {
+		return from(Flux.create(requestConsumer, contextFactory, shutdownConsumer));
 	}
 
 	/**
@@ -646,9 +682,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} that will only emit a complete signal to any new subscriber.
+	 * Create a {@link Stream} that completes without emitting any item.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/empty.png" alt="">
+	 * <p>
+	 * @param <T> the reified type of the target {@link Subscriber}
 	 *
-	 * @return a new {@link Stream}
+	 * @return an empty {@link Stream}
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Stream<T> empty() {
@@ -656,12 +696,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} that will only emit an error signal to any new subscriber.
+	 * Create a {@link Stream} that completes with the specified error.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/error.png" alt="">
+	 * <p>
+	 * @param error the error to signal to each {@link Subscriber}
+	 * @param <O> the reified type of the target {@link Subscriber}
 	 *
 	 * @return a new failed {@link Stream}
 	 */
-	public static <O> Stream<O> error(Throwable throwable) {
-		return new StreamError<O>(throwable);
+	public static <O> Stream<O> error(Throwable error) {
+		return new StreamError<O>(error);
 	}
 
 	/**
@@ -1432,11 +1477,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Ignore the sequence and return onComplete
-	 *
-	 * @return {@literal new Stream}
-	 *
-	 * @see Mono#empty(Publisher)
+	 * Return a {@code Mono<Void>} that completes when this {@link Stream} completes.
+	 * This will actively ignore the sequence and only replay completion or error signals.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/after.png" alt="">
+	 * <p>
+	 * @return a new {@link Mono}
 	 */
 	public final Mono<Void> after() {
 		return Mono.empty(this);
@@ -1472,25 +1518,29 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Select the first emitting Publisher between this and the given publisher. The "loosing" one will be cancelled
-	 * while the winning one will emit normally to the returned Stream.
+	 * Emit from the fastest first sequence between this publisher and the given publisher
 	 *
-	 * @return the ambiguous stream
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/amb.png" alt="">
+	 * <p>
+	 * @param other the {@link Publisher} to race with
 	 *
-	 * @since 2.5
+	 * @return the fastest sequence
 	 */
-	public final Stream<O> ambWith(final Publisher<? extends O> publisher) {
-		return StreamSource.wrap(Flux.amb(this, publisher));
+	public final Stream<O> ambWith(final Publisher<? extends O> other) {
+		return StreamSource.wrap(Flux.amb(this, other));
 	}
 
 	/**
+	 * Immediately apply the given transformation to this {@link Stream} in order to generate a target {@link Publisher} type.
 	 *
 	 * {@code stream.as(Mono::from).subscribe(Subscribers.unbounded()) }
 	 *
-	 * @param transformer
-	 * @param <P>
+	 * @param transformer the {@link Function} to immediately map this {@link Stream} into a target {@link Publisher}
+	 * instance.
+	 * @param <P> the returned {@link Publisher} sequence type
 	 *
-	 * @return
+	 * @return a new {@link Stream}
 	 */
 	public final <V, P extends Publisher<V>> P as(Function<? super Stream<O>, P> transformer) {
 		return transformer.apply(this);
@@ -1750,34 +1800,22 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Bind the stream to a given {@param elements} volume of in-flight data: - A {@link Subscriber} will request up to
-	 * the defined volume upstream. - a {@link Subscriber} will track the pending requests and fire up to {@param
-	 * elements} when the previous volume has been processed. - A {@link StreamBatch} and any other size-bound action
-	 * will be limited to the defined volume. <p> A stream capacity can't be superior to the underlying dispatcher
-	 * capacity: if the {@param elements} overflow the dispatcher backlog size, the capacity will be aligned
-	 * automatically to fit it. RingBufferDispatcher will for instance take to a power of 2 size up to {@literal
-	 * Integer.MAX_VALUE}, where a Stream can be sized up to {@literal Long.MAX_VALUE} in flight data. <p> When the
-	 * stream receives more elements than requested, incoming data is eventually staged in a {@link
-	 * Subscription}. The subscription can react differently according to the implementation in-use,
-	 * the default strategy is as following: - The first-level of pair compositions Stream->Subscriber will overflow
-	 * data in a {@link Queue}, ready to be polled when the action fire the pending requests. - The following
-	 * pairs of Subscriber->Subscriber will synchronously pass data - Any pair of Stream->Subscriber or
-	 * Subscriber->Subscriber will behave as with the root Stream->Action pair rule. - {@link #onBackpressureBuffer()} force
-	 * this staging behavior, with a possibilty to pass a {@link reactor.core.queue .PersistentQueue}
+	 * Hint {@link Subscriber} to this {@link Stream} a preferred available capacity should be used.
+	 * {@link #toIterable()} can for instance use introspect this value to supply an appropriate queueing strategy.
 	 *
-	 * @param elements maximum number of in-flight data
+	 * @param capacity the maximum capacity (in flight onNext) the return {@link Publisher} should expose
 	 *
-	 * @return a backpressure capable stream
+	 * @return a bounded {@link Stream}
 	 */
-	public Stream<O> capacity(final long elements) {
-		if (elements == getCapacity()) {
+	public Stream<O> capacity(final long capacity) {
+		if (capacity == getCapacity()) {
 			return this;
 		}
 
 		return new StreamSource<O, O>(this) {
 			@Override
 			public long getCapacity() {
-				return elements;
+				return capacity;
 			}
 
 			@Override
@@ -1815,18 +1853,18 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@code Stream<O,V>} and pass
-	 * it into another {@code Stream}. The produced stream will emit the data from all transformed streams in order.
+	 * Like {@link #flatMap(Function)}, but concatenate emissions instead of merging (no interleave).
 	 *
-	 * @param fn the transformation function
-	 * @param <V> the type of the return value of the transformation function
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/concatmap.png" alt="">
+	 * <p>
+	 * @param mapper the function to transform this sequence of O into concated sequences of V
+	 * @param <V> the produced concated type
 	 *
-	 * @return a new {@link Stream} containing the transformed values
-	 *
-	 * @since 1.1, 2.0
+	 * @return a new {@link Stream}
 	 */
-	public final <V> Stream<V> concatMap(final Function<? super O, Publisher<? extends V>> fn) {
-		return new StreamConcatMap<>(this, fn, QueueSupplier.<O>xs(), PlatformDependent.XS_BUFFER_SIZE,
+	public final <V> Stream<V> concatMap(final Function<? super O, Publisher<? extends V>> mapper) {
+		return new StreamConcatMap<>(this, mapper, QueueSupplier.<O>xs(), PlatformDependent.XS_BUFFER_SIZE,
 				StreamConcatMap.ErrorMode.IMMEDIATE);
 	}
 
@@ -1847,16 +1885,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Pass all the nested {@link Publisher} values from this current upstream and then on complete consume from the
-	 * passed publisher.
+	 * Concatenate emissions of this {@link Stream} with the provided {@link Publisher} (no interleave).
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/concat.png" alt="">
+	 * <p>
+	 * @param other the {@link Publisher} sequence to concat after this {@link Stream}
 	 *
-	 * @return the merged stream
-	 *
-	 * @since 2.0
+	 * @return a new {@link Stream}
 	 */
 	@SuppressWarnings("unchecked")
-	public final Stream<O> concatWith(final Publisher<? extends O> publisher) {
-		return new StreamConcatArray<>(this, publisher);
+	public final Stream<O> concatWith(final Publisher<? extends O> other) {
+		return new StreamConcatArray<>(this, other);
 	}
 
 	/**
@@ -2049,27 +2088,25 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Print a debugged form of the root action relative to this one. The output will be an acyclic directed graph of
-	 * composed actions.
+	 * Introspect this {@link Stream} graph
 	 *
-	 * @since 2.0
+	 * @return {@link ReactiveStateUtils} {@literal Graph} representation of the operational flow
 	 */
-	@SuppressWarnings("unchecked")
 	public ReactiveStateUtils.Graph debug() {
 		return ReactiveStateUtils.scan(this);
 	}
 
 	/**
-	 * Create an operation that returns the passed value if the Stream has completed without any emitted signals.
+	 * Provide a default unique value if this sequence is completed without any data
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/defaultifempty.png" alt="">
+	 * <p>
+	 * @param defaultV the alternate value if this sequence is empty
 	 *
-	 * @param defaultValue the value to forward if the stream is empty
-	 *
-	 * @return {@literal new Stream}
-	 *
-	 * @since 2.5
+	 * @return a new {@link Stream}
 	 */
-	public final Stream<O> defaultIfEmpty(final O defaultValue) {
-		return new StreamDefaultIfEmpty<>(this, defaultValue);
+	public final Stream<O> defaultIfEmpty(final O defaultV) {
+		return new StreamDefaultIfEmpty<>(this, defaultV);
 	}
 
 	/**
@@ -2134,9 +2171,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @see Flux#dispatchOn
+	 * Run onNext, onComplete and onError on a supplied
+	 * {@link Consumer} {@link Runnable} scheduler factory like {@link SchedulerGroup}.
 	 *
-	 * @return a new dispatched {@link Stream}
+	 * <p>
+	 * Typically used for fast publisher, slow consumer(s) scenarios.
+	 * It naturally combines with {@link SchedulerGroup#single} and {@link SchedulerGroup#async} which implement
+	 * fast async event loops.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/dispatchon.png" alt="">
+	 * <p>
+	 * {@code flux.dispatchOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
+	 *
+	 * @param scheduler a checked factory for {@link Consumer} of {@link Runnable}
+	 *
+	 * @return a {@link Stream} consuming asynchronously
 	 */
 	public final Stream<O> dispatchOn(final Callable<? extends Consumer<Runnable>> scheduler) {
 		return StreamSource.wrap(Flux.dispatchOn(this, scheduler, true,
@@ -2199,67 +2248,67 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a {@link Runnable} to this {@code Stream} that will observe after onError or onComplete has been emitted
+	 * Triggered after the {@link Stream} terminates, either by completing downstream successfully or with an error.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/doafterterminate.png" alt="">
+	 * <p>
+	 * @param afterTerminate the callback to call after {@link Subscriber#onComplete} or {@link Subscriber#onError}
 	 *
-	 * @param consumer the consumer to invoke after terminate
-	 *
-	 * @return {@literal new Stream}
-	 *
-	 * @since 2.5
+	 * @return a new unaltered {@link Stream}
 	 */
-	public final Stream<O> doAfterTerminate(final Runnable consumer) {
+	public final Stream<O> doAfterTerminate(final Runnable afterTerminate) {
 		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, null, null, null, consumer, null, null);
+			return new StreamPeekFuseable<>(this, null, null, null, null, afterTerminate, null, null);
 		}
-		return new StreamPeek<>(this, null, null, null, null, consumer, null, null);
+		return new StreamPeek<>(this, null, null, null, null, afterTerminate, null, null);
 	}
 
 	/**
-	 * Attach a {@link Runnable} to this {@code Stream} that will observe any cancel signal
+	 * Triggered when the {@link Stream} is cancelled.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/dooncancel.png" alt="">
+	 * <p>
+	 * @param onCancel the callback to call on {@link Subscription#cancel}
 	 *
-	 * @param runnable the runnable to invoke on cancel
-	 *
-	 * @return {@literal a new stream}
-	 *
-	 * @since 2.0, 2.5
+	 * @return a new unaltered {@link Stream}
 	 */
-	public final Stream<O> doOnCancel(final Runnable runnable) {
+	public final Stream<O> doOnCancel(final Runnable onCancel) {
 		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, null, null, null, null, null, runnable);
+			return new StreamPeekFuseable<>(this, null, null, null, null, null, null, onCancel);
 		}
-		return new StreamPeek<>(this, null, null, null, null, null, null, runnable);
+		return new StreamPeek<>(this, null, null, null, null, null, null, onCancel);
 	}
 
 	/**
-	 * Attach a {@link Runnable} to this {@code Stream} that will observe any complete signal
+	 * Triggered when the {@link Stream} completes successfully.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/dooncomplete.png" alt="">
+	 * <p>
+	 * @param onComplete the callback to call on {@link Subscriber#onComplete}
 	 *
-	 * @param consumer the consumer to invoke on complete
-	 *
-	 * @return {@literal a new stream}
-	 *
-	 * @since 2.0, 2.5
+	 * @return a new unaltered {@link Stream}
 	 */
-	public final Stream<O> doOnComplete(final Runnable consumer) {
+	public final Stream<O> doOnComplete(final Runnable onComplete) {
 		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, null, null, consumer, null, null, null);
+			return new StreamPeekFuseable<>(this, null, null, null, onComplete, null, null, null);
 		}
-		return new StreamPeek<>(this, null, null, null, consumer, null, null, null);
+		return new StreamPeek<>(this, null, null, null, onComplete, null, null, null);
 	}
 
 	/**
-	 * Attach a {@link Consumer} to this {@code Stream} that will observe any error signal
+	 * Triggered when the {@link Stream} completes with an error.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/doonerror.png" alt="">
+	 * <p>
+	 * @param onError the callback to call on {@link Subscriber#onError}
 	 *
-	 * @param consumer the runnable to invoke on cancel
-	 *
-	 * @return {@literal a new stream}
-	 *
-	 * @since 2.0, 2.5
+	 * @return a new unaltered {@link Stream}
 	 */
-	public final Stream<O> doOnError(final Consumer<Throwable> consumer) {
+	public final Stream<O> doOnError(final Consumer<Throwable> onError) {
 		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, null, consumer, null, null, null, null);
+			return new StreamPeekFuseable<>(this, null, null, onError, null, null, null, null);
 		}
-		return new StreamPeek<>(this, null, null, consumer, null, null, null, null);
+		return new StreamPeek<>(this, null, null, onError, null, null, null, null);
 	}
 
 	/**
@@ -2279,19 +2328,19 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a {@link Consumer} to this {@code Stream} that will observe any values accepted by this {@code Stream}.
+	 * Triggered when the {@link Stream} emits an item.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/doonnext.png" alt="">
+	 * <p>
+	 * @param onNext the callback to call on {@link Subscriber#onNext}
 	 *
-	 * @param consumer the consumer to invoke on each value
-	 *
-	 * @return {@literal new Stream}
-	 *
-	 * @since 2.0, 2.5
+	 * @return a new unaltered {@link Stream}
 	 */
-	public final Stream<O> doOnNext(final Consumer<? super O> consumer) {
+	public final Stream<O> doOnNext(final Consumer<? super O> onNext) {
 		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, consumer, null, null, null, null, null);
+			return new StreamPeekFuseable<>(this, null, onNext, null, null, null, null, null);
 		}
-		return new StreamPeek<>(this, null, consumer, null, null, null, null, null);
+		return new StreamPeek<>(this, null, onNext, null, null, null, null, null);
 	}
 
 	/**
@@ -2311,35 +2360,35 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a {@link Consumer} to this {@code Stream} that will observe any onSubscribe signal
+	 * Triggered when the {@link Stream} is subscribed.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/doonsubscribe.png" alt="">
+	 * <p>
+	 * @param onSubscribe the callback to call on {@link Subscriber#onSubscribe}
 	 *
-	 * @param consumer the consumer to invoke on onSubscribe
-	 *
-	 * @return {@literal a new stream}
-	 *
-	 * @since 2.0
+	 * @return a new unaltered {@link Stream}
 	 */
-	public final Stream<O> doOnSubscribe(final Consumer<? super Subscription> consumer) {
+	public final Stream<O> doOnSubscribe(final Consumer<? super Subscription> onSubscribe) {
 		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, consumer, null, null, null, null, null, null);
+			return new StreamPeekFuseable<>(this, onSubscribe, null, null, null, null, null, null);
 		}
-		return new StreamPeek<>(this, consumer, null, null, null, null, null, null);
+		return new StreamPeek<>(this, onSubscribe, null, null, null, null, null, null);
 	}
 
 	/**
-	 * Attach a {@link Consumer} to this {@code Stream} that will observe before onError or onComplete emission
+	 * Triggered when the {@link Stream} terminates, either by completing successfully or with an error.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/doonterminate.png" alt="">
+	 * <p>
+	 * @param onTerminate the callback to call on {@link Subscriber#onComplete} or {@link Subscriber#onError}
 	 *
-	 * @param consumer the consumer to invoke before terminate
-	 *
-	 * @return {@literal new Stream}
-	 *
-	 * @since 2.5
+	 * @return a new unaltered {@link Stream}
 	 */
-	public final Stream<O> doOnTerminate(final Runnable consumer) {
+	public final Stream<O> doOnTerminate(final Runnable onTerminate) {
 		if (this instanceof Fuseable) {
-			return new StreamPeekFuseable<>(this, null, null, null, consumer, null, null, null);
+			return new StreamPeekFuseable<>(this, null, null, null, onTerminate, null, null, null);
 		}
-		return new StreamPeek<>(this, null, null, null, consumer, null, null, null);
+		return new StreamPeek<>(this, null, null, null, onTerminate, null, null, null);
 	}
 
 	/**
@@ -2490,19 +2539,19 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@code Stream<O,V>} and pass
-	 * it into another {@code Stream}.
+	 * Transform the items emitted by this {@link Flux} into Publishers, then flatten the emissions from those by
+	 * merging them into a single {@link Flux}, so that they may interleave.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/flatmap.png" alt="">
+	 * <p>
+	 * @param mapper the {@link Function} to transform input sequence into N sequences {@link Publisher}
+	 * @param <R> the merged output sequence type
 	 *
-	 * @param fn the transformation function
-	 * @param <V> the type of the return value of the transformation function
-	 *
-	 * @return a new {@link Stream} containing the transformed values
-	 *
-	 * @since 1.1, 2.0
+	 * @return a new {@link Flux}
 	 */
-	public final <V> Stream<V> flatMap(final Function<? super O, ? extends Publisher<? extends V>> fn) {
+	public final <V> Stream<V> flatMap(final Function<? super O, ? extends Publisher<? extends V>> mapper) {
 		return StreamSource.wrap(Flux.flatMap(this,
-				fn,
+				mapper,
 				PlatformDependent.SMALL_BUFFER_SIZE,
 				PlatformDependent.XS_BUFFER_SIZE,
 				false));
