@@ -2972,7 +2972,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			Function<? super O, ? extends V> valueMapper) {
 		return new StreamGroupBy<>(this, keyMapper, valueMapper,
 				QueueSupplier.<GroupedStream<K, V>>small(),
-				SpscLinkedArrayQueue.unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE),
+				SpscLinkedArrayQueue.<V>unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE),
 				PlatformDependent.SMALL_BUFFER_SIZE);
 	}
 
