@@ -13,191 +13,299 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package reactor.rx;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.flow.Fuseable;
 import reactor.core.flow.MultiProducer;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
-import reactor.core.publisher.EmitterProcessor;
-import reactor.core.publisher.FluxProcessor;
-import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Cancellable;
 import reactor.core.state.Completable;
-import reactor.core.timer.Timer;
-import reactor.core.util.Assert;
+import reactor.core.state.Failurable;
+import reactor.core.state.Prefetchable;
+import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
+import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.core.util.PlatformDependent;
 import reactor.fn.Function;
-import reactor.rx.subscriber.SubscriberWithDemand;
+import reactor.fn.Supplier;
 
 /**
- * Manage a dynamic registry of substreams for a given key extracted from the incoming data. Each non-existing key will
- * result in a new stream to be signaled
- * @since 2.0, 2.5
+ * Groups upstream items into their own Publisher sequence based on a key selector.
+ *
+ * @param <T> the source value type
+ * @param <K> the key value type
+ * @param <V> the group item value type
  */
-final class StreamGroupBy<T, K> extends StreamSource<T, GroupedStream<K, T>> {
 
-	private final Function<? super T, ? extends K> fn;
-	private final Timer                            timer;
+/**
+ * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
+ * @since 2.5
+ */
+final class StreamGroupBy<T, K, V> extends StreamSource<T, GroupedStream<K, V>>
+implements Fuseable, Backpressurable  {
 
-	public StreamGroupBy(Publisher<T> source, Function<? super T, ? extends K> fn, Timer timer) {
+	final Function<? super T, ? extends K> keySelector;
+	
+	final Function<? super T, ? extends V> valueSelector;
+	
+	final Supplier<? extends Queue<V>> groupQueueSupplier;
+
+	final Supplier<? extends Queue<GroupedStream<K, V>>> mainQueueSupplier;
+
+	final int prefetch;
+
+	public StreamGroupBy(
+			Publisher<? extends T> source, 
+			Function<? super T, ? extends K> keySelector,
+			Function<? super T, ? extends V> valueSelector,
+			Supplier<? extends Queue<GroupedStream<K, V>>> mainQueueSupplier, 
+			Supplier<? extends Queue<V>> groupQueueSupplier, 
+			int prefetch) {
 		super(source);
-		this.fn = fn;
-		this.timer = timer;
+		if (prefetch <= 0) {
+			throw new IllegalArgumentException("prefetch > 0 required but it was " + prefetch);
+		}
+		this.keySelector = Objects.requireNonNull(keySelector, "keySelector");
+		this.valueSelector = Objects.requireNonNull(valueSelector, "valueSelector");
+		this.mainQueueSupplier = Objects.requireNonNull(mainQueueSupplier, "mainQueueSupplier");
+		this.groupQueueSupplier = Objects.requireNonNull(groupQueueSupplier, "groupQueueSupplier");
+		this.prefetch = prefetch;
 	}
-
+	
 	@Override
-	public Subscriber<? super T> apply(Subscriber<? super GroupedStream<K, T>> subscriber) {
-		return new GroupByAction<>(subscriber, timer, fn);
+	public void subscribe(Subscriber<? super GroupedStream<K, V>> s) {
+		Queue<GroupedStream<K, V>> q;
+		
+		try {
+			q = mainQueueSupplier.get();
+		} catch (Throwable ex) {
+			Exceptions.throwIfFatal(ex);
+			EmptySubscription.error(s, ex);
+			return;
+		}
+		
+		if (q == null) {
+			EmptySubscription.error(s, new NullPointerException("The mainQueueSupplier returned a null queue"));
+			return;
+		}
+		
+		source.subscribe(new GroupByMain<>(s, q, groupQueueSupplier, prefetch, keySelector, valueSelector));
 	}
+	
+	static final class GroupByMain<T, K, V> implements Subscriber<T>, 
+	QueueSubscription<GroupedStream<K, V>>, MultiProducer, Backpressurable, Producer, Requestable,
+																Failurable, Cancellable, Completable, Receiver {
 
-	static final class GroupedEmitter<T, K> extends GroupedStream<K, T>
-			implements Subscription, Subscriber<T>, Receiver, Completable, Producer, Cancellable {
+		final Function<? super T, ? extends K> keySelector;
+		
+		final Function<? super T, ? extends V> valueSelector;
+		
+		final Subscriber<? super GroupedStream<K, V>> actual;
 
-		private final GroupByAction<T, K> parent;
-		private final FluxProcessor<T, T> processor;
-		//private  Subscriber<? super T> processor;
+		final Queue<GroupedStream<K, V>> queue;
+		
+		final Supplier<? extends Queue<V>> groupQueueSupplier;
 
-		@SuppressWarnings("unused")
-		private volatile       int                                       terminated = 0;
+		final int prefetch;
+		
+		final ConcurrentMap<K, UnicastGroupedStream<K, V>> groupMap; 
+		
+		volatile int wip;
 		@SuppressWarnings("rawtypes")
-		protected static final AtomicIntegerFieldUpdater<GroupedEmitter> TERMINATED =
-				AtomicIntegerFieldUpdater.newUpdater(GroupedEmitter.class, "terminated");
-
-		@SuppressWarnings("unused")
-		private volatile       long                                   requested = 0L;
+		static final AtomicIntegerFieldUpdater<GroupByMain> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(GroupByMain.class, "wip");
+		
+		volatile long requested;
 		@SuppressWarnings("rawtypes")
-		protected static final AtomicLongFieldUpdater<GroupedEmitter> REQUESTED =
-				AtomicLongFieldUpdater.newUpdater(GroupedEmitter.class, "requested");
-
-		@SuppressWarnings("unused")
-		private volatile     int                                       running = 0;
-		private static final AtomicIntegerFieldUpdater<GroupedEmitter> RUNNING =
-				AtomicIntegerFieldUpdater.newUpdater(GroupedEmitter.class, "running");
-
+		static final AtomicLongFieldUpdater<GroupByMain> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(GroupByMain.class, "requested");
+		
 		volatile boolean done;
-		volatile boolean cancelled;
-
 		volatile Throwable error;
+		@SuppressWarnings("rawtypes")
+		static final AtomicReferenceFieldUpdater<GroupByMain, Throwable> ERROR =
+				AtomicReferenceFieldUpdater.newUpdater(GroupByMain.class, Throwable.class, "error");
+		
+		volatile int cancelled;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<GroupByMain> CANCELLED =
+				AtomicIntegerFieldUpdater.newUpdater(GroupByMain.class, "cancelled");
+		
+		volatile int groupCount;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<GroupByMain> GROUP_COUNT =
+				AtomicIntegerFieldUpdater.newUpdater(GroupByMain.class, "groupCount");
 
-		private volatile Queue<T> buffer;
-
-		public GroupedEmitter(K key, GroupByAction<T, K> parent) {
-			super(key);
-			this.parent = parent;
-			this.processor = EmitterProcessor.replay(PlatformDependent.SMALL_BUFFER_SIZE, Integer.MAX_VALUE, true);
-		}
-
-
-		Queue<T> getBuffer() {
-		Queue<T> q = buffer;
-			if (q == null) {
-				q = QueueSupplier.<T>small().get();
-				buffer = q;
-			}
-			return q;
-		}
-
-		@Override
-		public void request(long n) {
-			BackpressureUtils.getAndAdd(REQUESTED, this, n);
-			if (RUNNING.getAndIncrement(this) == 0) {
-				drainRequests();
-			}
-		}
-
-		@Override
-		public void cancel() {
-			if (TERMINATED.compareAndSet(this, 0, 1)) {
-				cancelled = true;
-				removeGroup();
-			}
-		}
-
-		@Override
-		public int getMode() {
-			return INNER;
-		}
-
-		void start() {
-			processor.onSubscribe(this);
-		}
-
-		@Override
-		public void subscribe(final Subscriber<? super T> subscriber) {
-			processor.subscribe(subscriber);
+		Subscription s;
+		
+		volatile boolean enableAsyncFusion;
+		
+		public GroupByMain(
+				Subscriber<? super GroupedStream<K, V>> actual,
+				Queue<GroupedStream<K, V>> queue, 
+				Supplier<? extends Queue<V>> groupQueueSupplier, 
+				int prefetch,
+				Function<? super T, ? extends K> keySelector,
+				Function<? super T, ? extends V> valueSelector
+				) {
+			this.actual = actual;
+			this.queue = queue;
+			this.groupQueueSupplier = groupQueueSupplier;
+			this.prefetch = prefetch;
+			this.groupMap = new ConcurrentHashMap<>();
+			this.keySelector = keySelector;
+			this.valueSelector = valueSelector;
+			GROUP_COUNT.lazySet(this, 1);
 		}
 
 		@Override
 		public void onSubscribe(Subscription s) {
-			//IGNORE
+			if (BackpressureUtils.validate(this.s, s)) {
+				this.s = s;
+				actual.onSubscribe(this);
+				s.request(prefetch);
+			}
 		}
-
+		
 		@Override
 		public void onNext(T t) {
-			Queue<T> buffer = this.buffer;
-			if ((buffer == null || buffer.isEmpty()) && BackpressureUtils.getAndSub(REQUESTED, this, 1L) != 0L) {
-				processor.onNext(t);
-				parent.updateRemaining(1L);
-			}
-			else {
-				GroupByAction.BUFFERED.incrementAndGet(parent);
-				getBuffer().add(t);
-				if (RUNNING.getAndIncrement(this) == 0) {
-					drainRequests();
+			K key;
+			V value;
+			
+			try {
+				key = keySelector.apply(t);
+				value = valueSelector.apply(t);
+			} catch (Throwable ex) {
+				Exceptions.throwIfFatal(ex);
+				s.cancel();
+				
+				Exceptions.addThrowable(ERROR, this, ex);
+				done = true;
+				if (enableAsyncFusion) {
+					signalAsyncError();
+				} else {
+					drain();
 				}
+				return;
+			}
+			if (key == null) {
+				NullPointerException ex = new NullPointerException("The keySelector returned a null value");
+				s.cancel();
+				Exceptions.addThrowable(ERROR, this, ex);
+				done = true;
+				if (enableAsyncFusion) {
+					signalAsyncError();
+				} else {
+					drain();
+				}
+				return;
+			}
+			if (value == null) {
+				NullPointerException ex = new NullPointerException("The valueSelector returned a null value");
+				s.cancel();
+				Exceptions.addThrowable(ERROR, this, ex);
+				done = true;
+				if (enableAsyncFusion) {
+					signalAsyncError();
+				} else {
+					drain();
+				}
+				return;
+			}
+			
+			UnicastGroupedStream<K, V> g = groupMap.get(key);
+			
+			if (g == null) {
+				// if the main is cancelled, don't create new groups
+				if (cancelled == 0) {
+					Queue<V> q;
+					
+					try {
+						q = groupQueueSupplier.get();
+					} catch (Throwable ex) {
+						Exceptions.throwIfFatal(ex);
+						s.cancel();
+						
+						Exceptions.addThrowable(ERROR, this, ex);
+						done = true;
+						if (enableAsyncFusion) {
+							signalAsyncError();
+						} else {
+							drain();
+						}
+						return;
+					}
+					
+					GROUP_COUNT.getAndIncrement(this);
+					g = new UnicastGroupedStream<>(key, q, this, prefetch);
+					g.onNext(value);
+					groupMap.put(key, g);
+					
+					queue.offer(g);
+					if (enableAsyncFusion) {
+						actual.onNext(null);
+					} else {
+						drain();
+					}
+				}
+			} else {
+				g.onNext(value);
 			}
 		}
-
+		
 		@Override
 		public void onError(Throwable t) {
-			if (TERMINATED.compareAndSet(this, 0, 1)) {
+			if (Exceptions.addThrowable(ERROR, this, t)) {
 				done = true;
-				error = t;
-				removeGroup();
-				if (RUNNING.getAndIncrement(this) == 0) {
-					drainRequests();
-				}
+				drain();
+			} else {
+				Exceptions.onErrorDropped(t);
 			}
 		}
-
+		
 		@Override
 		public void onComplete() {
-			if (TERMINATED.compareAndSet(this, 0, 1)) {
-				done = true;
-				removeGroup();
-				if (RUNNING.getAndIncrement(this) == 0) {
-					drainRequests();
-				}
+			done = true;
+			if (enableAsyncFusion) {
+				signalAsyncComplete();
+			} else {
+				drain();
 			}
 		}
 
 		@Override
 		public long getCapacity() {
-			return PlatformDependent.SMALL_BUFFER_SIZE;
+			return prefetch;
 		}
 
 		@Override
-		public boolean isCancelled() {
-			return cancelled;
+		public long getPending() {
+			return queue.size();
 		}
 
 		@Override
 		public boolean isStarted() {
-			return !cancelled;
+			return s != null && cancelled != 1 && !done;
+		}
+
+		@Override
+		public boolean isCancelled() {
+			return cancelled == 1;
 		}
 
 		@Override
@@ -206,13 +314,706 @@ final class StreamGroupBy<T, K> extends StreamSource<T, GroupedStream<K, T>> {
 		}
 
 		@Override
-		public long getPending() {
-			return buffer != null ? buffer.size() : -1L;
+		public Throwable getError() {
+			return error;
+		}
+
+		@Override
+		public Iterator<?> downstreams() {
+			return groupMap.values().iterator();
+		}
+
+		@Override
+		public long downstreamCount() {
+			return GROUP_COUNT.get(this);
 		}
 
 		@Override
 		public Object downstream() {
-			return processor;
+			return actual;
+		}
+
+		@Override
+		public Object upstream() {
+			return s;
+		}
+
+		@Override
+		public long requestedFromDownstream() {
+			return requested;
+		}
+
+		void signalAsyncComplete() {
+			groupCount = 0;
+			for (UnicastGroupedStream<K, V> g : groupMap.values()) {
+				g.onComplete();
+			}
+			actual.onComplete();
+			groupMap.clear();
+		}
+
+		void signalAsyncError() {
+			Throwable e = Exceptions.terminate(ERROR, this);
+			groupCount = 0;
+			for (UnicastGroupedStream<K, V> g : groupMap.values()) {
+				g.onError(e);
+			}
+			actual.onError(e);
+			groupMap.clear();
+		}
+		
+		@Override
+		public void request(long n) {
+			if (BackpressureUtils.validate(n)) {
+				if (enableAsyncFusion) {
+					actual.onNext(null);
+				} else {
+					BackpressureUtils.addAndGet(REQUESTED, this, n);
+					drain();
+				}
+			}
+		}
+		
+		@Override
+		public void cancel() {
+			if (CANCELLED.compareAndSet(this, 0, 1)) {
+				if (GROUP_COUNT.decrementAndGet(this) == 0) {
+					s.cancel();
+				} else {
+					if (!enableAsyncFusion) {
+						if (WIP.getAndIncrement(this) == 0) {
+							// remove queued up but unobservable groups from the mapping
+							GroupedStream<K, V> g;
+							while ((g = queue.poll()) != null) {
+								((UnicastGroupedStream<K, V>)g).cancel();
+							}
+							
+							if (WIP.decrementAndGet(this) == 0) {
+								return;
+							}
+							
+							drainLoop();
+						}
+					}
+				}
+			}
+		}
+		
+		void groupTerminated(K key) {
+			if (groupCount == 0) {
+				return;
+			}
+			groupMap.remove(key);
+			if (GROUP_COUNT.decrementAndGet(this) == 0) {
+				s.cancel();
+			}
+		}
+		
+		void drain() {
+			if (WIP.getAndIncrement(this) != 0) {
+				return;
+			}
+			drainLoop();
+		}
+		void drainLoop() {
+			
+			int missed = 1;
+			
+			Subscriber<? super GroupedStream<K, V>> a = actual;
+			Queue<GroupedStream<K, V>> q = queue;
+			
+			for (;;) {
+				
+				long r = requested;
+				long e = 0L;
+				
+				while (e != r) {
+					boolean d = done;
+					GroupedStream<K, V> v = q.poll();
+					boolean empty = v == null;
+					
+					if (checkTerminated(d, empty, a, q)) {
+						return;
+					}
+					
+					if (empty) {
+						break;
+					}
+					
+					a.onNext(v);
+					
+					e++;
+				}
+				
+				if (e == r) {
+					if (checkTerminated(done, q.isEmpty(), a, q)) {
+						return;
+					}
+				}
+				
+				if (e != 0L) {
+					
+					s.request(e);
+					
+					if (r != Long.MAX_VALUE) {
+						REQUESTED.addAndGet(this, -e);
+					}
+				}
+				
+				missed = WIP.addAndGet(this, -missed);
+				if (missed == 0) {
+					break;
+				}
+			}
+		}
+		
+		boolean checkTerminated(boolean d, boolean empty, Subscriber<?> a, Queue<GroupedStream<K, V>> q) {
+			if (d) {
+				Throwable e = error;
+				if (e != null && e != Exceptions.TERMINATED) {
+					queue.clear();
+					signalAsyncError();
+					return true;
+				} else
+				if (empty) {
+					signalAsyncComplete();
+					return true;
+				}
+			}
+			
+			return false;
+		}
+
+		@Override
+		public GroupedStream<K, V> poll() {
+			return queue.poll();
+		}
+
+		@Override
+		public GroupedStream<K, V> peek() {
+			return queue.peek();
+		}
+
+		@Override
+		public boolean add(GroupedStream<K, V> t) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean offer(GroupedStream<K, V> t) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public GroupedStream<K, V> remove() {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public GroupedStream<K, V> element() {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public int size() {
+			return queue.size();
+		}
+
+		@Override
+		public boolean contains(Object o) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public Iterator<GroupedStream<K, V>> iterator() {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public Object[] toArray() {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public <T1> T1[] toArray(T1[] a) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean remove(Object o) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean containsAll(Collection<?> c) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean addAll(Collection<? extends GroupedStream<K, V>> c) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean removeAll(Collection<?> c) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean retainAll(Collection<?> c) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return queue.isEmpty();
+		}
+
+		@Override
+		public void clear() {
+			queue.clear();
+		}
+
+		@Override
+		public int requestFusion(int requestedMode) {
+			if (requestedMode == Fuseable.ANY || requestedMode == Fuseable.ASYNC) {
+				enableAsyncFusion = true;
+				return Fuseable.ASYNC;
+			}
+			return Fuseable.NONE;
+		}
+		
+		@Override
+		public void drop() {
+			queue.poll();
+		}
+		
+		void requestInner(long n) {
+			s.request(n);
+		}
+	}
+	
+	static final class UnicastGroupedStream<K, V> extends GroupedStream<K, V> 
+	implements Fuseable, QueueSubscription<V>,
+			   Producer, Receiver, Failurable, Completable, Prefetchable, Cancellable, Requestable, Backpressurable {
+		final K key;
+		
+		final int limit;
+
+		@Override
+		public K key() {
+			return key;
+		}
+		
+		final Queue<V> queue;
+		
+		volatile GroupByMain<?, K, V> parent;
+		@SuppressWarnings("rawtypes")
+		static final AtomicReferenceFieldUpdater<UnicastGroupedStream, GroupByMain> PARENT =
+				AtomicReferenceFieldUpdater.newUpdater(UnicastGroupedStream.class, GroupByMain.class, "parent");
+		
+		volatile boolean done;
+		Throwable error;
+		
+		volatile Subscriber<? super V> actual;
+		@SuppressWarnings("rawtypes")
+		static final AtomicReferenceFieldUpdater<UnicastGroupedStream, Subscriber> ACTUAL =
+				AtomicReferenceFieldUpdater.newUpdater(UnicastGroupedStream.class, Subscriber.class, "actual");
+		
+		volatile boolean cancelled;
+		
+		volatile int once;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<UnicastGroupedStream> ONCE =
+				AtomicIntegerFieldUpdater.newUpdater(UnicastGroupedStream.class, "once");
+
+		volatile int wip;
+		@SuppressWarnings("rawtypes")
+		static final AtomicIntegerFieldUpdater<UnicastGroupedStream> WIP =
+				AtomicIntegerFieldUpdater.newUpdater(UnicastGroupedStream.class, "wip");
+
+		volatile long requested;
+		@SuppressWarnings("rawtypes")
+		static final AtomicLongFieldUpdater<UnicastGroupedStream> REQUESTED =
+				AtomicLongFieldUpdater.newUpdater(UnicastGroupedStream.class, "requested");
+		
+		volatile boolean enableOperatorFusion;
+
+		int produced;
+		
+		public UnicastGroupedStream(K key, Queue<V> queue, GroupByMain<?, K, V> parent, int prefetch) {
+			this.key = key;
+			this.queue = queue;
+			this.parent = parent;
+			this.limit = prefetch - (prefetch >> 2);
+		}
+		
+		void doTerminate() {
+			GroupByMain<?, K, V> r = parent;
+			if (r != null && PARENT.compareAndSet(this, r, null)) {
+				r.groupTerminated(key);
+			}
+		}
+		
+		void drain() {
+			if (WIP.getAndIncrement(this) != 0) {
+				return;
+			}
+			
+			int missed = 1;
+			
+			final Queue<V> q = queue;
+			Subscriber<? super V> a = actual;
+			
+			
+			for (;;) {
+
+				if (a != null) {
+					long r = requested;
+					long e = 0L;
+					
+					while (r != e) {
+						boolean d = done;
+						
+						V t = q.poll();
+						boolean empty = t == null;
+						
+						if (checkTerminated(d, empty, a, q)) {
+							return;
+						}
+						
+						if (empty) {
+							break;
+						}
+						
+						a.onNext(t);
+						
+						e++;
+					}
+					
+					if (r == e) {
+						if (checkTerminated(done, q.isEmpty(), a, q)) {
+							return;
+						}
+					}
+					
+					if (e != 0) {
+						GroupByMain<?, K, V> main = parent;
+						if (main != null) {
+							main.requestInner(e);
+						}
+						if (r != Long.MAX_VALUE) {
+							REQUESTED.addAndGet(this, -e);
+						}
+					}
+				}
+				
+				missed = WIP.addAndGet(this, -missed);
+				if (missed == 0) {
+					break;
+				}
+				
+				if (a == null) {
+					a = actual;
+				}
+			}
+		}
+		
+		boolean checkTerminated(boolean d, boolean empty, Subscriber<?> a, Queue<?> q) {
+			if (cancelled) {
+				q.clear();
+				actual = null;
+				return true;
+			}
+			if (d && empty) {
+				Throwable e = error;
+				actual = null;
+				if (e != null) {
+					a.onError(e);
+				} else {
+					a.onComplete();
+				}
+				return true;
+			}
+			
+			return false;
+		}
+		
+		public void onNext(V t) {
+			if (done || cancelled) {
+				return;
+			}
+			
+			if (!queue.offer(t)) {
+				error = new IllegalStateException("The queue is full");
+				done = true;
+			}
+			if (enableOperatorFusion) {
+				Subscriber<? super V> a = actual;
+				if (a != null) {
+					a.onNext(null); // in op-fusion, onNext(null) is the indicator of more data
+				}
+			} else {
+				drain();
+			}
+		}
+		
+		public void onError(Throwable t) {
+			if (done || cancelled) {
+				return;
+			}
+			
+			error = t;
+			done = true;
+
+			doTerminate();
+			
+			if (enableOperatorFusion) {
+				Subscriber<? super V> a = actual;
+				if (a != null) {
+					a.onError(t);
+				}
+			} else {
+				drain();
+			}
+		}
+		
+		public void onComplete() {
+			if (done || cancelled) {
+				return;
+			}
+			
+			done = true;
+
+			doTerminate();
+			
+			if (enableOperatorFusion) {
+				Subscriber<? super V> a = actual;
+				if (a != null) {
+					a.onComplete();
+				}
+			} else {
+				drain();
+			}
+		}
+		
+		@Override
+		public void subscribe(Subscriber<? super V> s) {
+			if (once == 0 && ONCE.compareAndSet(this, 0, 1)) {
+				
+				s.onSubscribe(this);
+				actual = s;
+				if (cancelled) {
+					actual = null;
+				} else {
+					if (enableOperatorFusion) {
+						if (done) {
+							Throwable e = error;
+							if (e != null) {
+								s.onError(e);
+							} else {
+								s.onComplete();
+							}
+						} else {
+							s.onNext(null);
+						}
+					} else {
+						drain();
+					}
+				}
+			} else {
+				s.onError(new IllegalStateException("This processor allows only a single Subscriber"));
+			}
+		}
+
+		@Override
+		public int getMode() {
+			return INNER;
+		}
+
+		@Override
+		public void request(long n) {
+			if (BackpressureUtils.validate(n)) {
+				if (enableOperatorFusion) {
+					Subscriber<? super V> a = actual;
+					if (a != null) {
+						a.onNext(null); // in op-fusion, onNext(null) is the indicator of more data
+					}
+				} else {
+					BackpressureUtils.addAndGet(REQUESTED, this, n);
+					drain();
+				}
+			}
+		}
+		
+		@Override
+		public void cancel() {
+			if (cancelled) {
+				return;
+			}
+			cancelled = true;
+
+			doTerminate();
+
+			if (!enableOperatorFusion) {
+				if (WIP.getAndIncrement(this) == 0) {
+					queue.clear();
+				}
+			}
+		}
+		
+		@Override
+		public V poll() {
+			V v = queue.poll();
+			if (v != null) {
+				produced++;
+			} else {
+				int p = produced;
+				if (p != 0) {
+					produced = 0;
+					GroupByMain<?, K, V> main = parent;
+					if (main != null) {
+						main.requestInner(p);
+					}
+				}
+			}
+			return v;
+		}
+
+		@Override
+		public V peek() {
+			return queue.peek();
+		}
+
+		@Override
+		public boolean add(V t) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean offer(V t) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public V remove() {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public V element() {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public int size() {
+			return queue.size();
+		}
+
+		@Override
+		public boolean contains(Object o) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public Iterator<V> iterator() {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public Object[] toArray() {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public <T1> T1[] toArray(T1[] a) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean remove(Object o) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean containsAll(Collection<?> c) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean addAll(Collection<? extends V> c) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean removeAll(Collection<?> c) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean retainAll(Collection<?> c) {
+			throw new UnsupportedOperationException("Operators should not use this method!");
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return queue.isEmpty();
+		}
+
+		@Override
+		public void clear() {
+			queue.clear();
+		}
+
+		@Override
+		public int requestFusion(int requestedMode) {
+			if ((requestedMode & Fuseable.ASYNC) != 0) {
+				enableOperatorFusion = true;
+				return Fuseable.ASYNC;
+			}
+			return Fuseable.NONE;
+		}
+		
+		@Override
+		public void drop() {
+			queue.poll();
+			int p = produced + 1;
+			if (p == limit) {
+				produced = 0;
+				GroupByMain<?, K, V> main = parent;
+				if (main != null) {
+					main.requestInner(p);
+				}
+			} else {
+				produced = p;
+			}
+		}
+
+		@Override
+		public boolean isCancelled() {
+			return cancelled;
+		}
+
+
+
+		@Override
+		public boolean isStarted() {
+			return once == 1 && !done && !cancelled;
+		}
+
+		@Override
+		public boolean isTerminated() {
+			return done;
+		}
+
+		@Override
+		public Throwable getError() {
+			return error;
+		}
+
+		@Override
+		public Object downstream() {
+			return actual;
 		}
 
 		@Override
@@ -221,259 +1022,30 @@ final class StreamGroupBy<T, K> extends StreamSource<T, GroupedStream<K, T>> {
 		}
 
 		@Override
-		public Timer getTimer() {
-			return parent.timer;
-		}
-
-		void removeGroup() {
-			GroupedEmitter<T, K> g = parent.groupByMap.remove(key());
-			if (g != null) {
-				Queue<T> buffer = g.buffer;
-				int size = buffer != null ? buffer.size() : -1;
-				if (size > 0) {
-					GroupByAction.BUFFERED.addAndGet(parent, -size);
-					parent.checkGroupsCompleted();
-					parent.updateRemaining(size);
-					return;
-				}
-				parent.checkGroupsCompleted();
-			}
-		}
-
-		void drainRequests() {
-			int missed = 1;
-			long r, produced;
-			T v;
-			Queue<T> buffer;
-			boolean done;
-			for (; ; ) {
-				done = this.done;
-				buffer = this.buffer;
-				r = requested;
-				produced = 0L;
-
-				for (; ; ) {
-
-					if (r == 0L || buffer == null) {
-						break;
-					}
-
-					if (cancelled) {
-						return;
-					}
-
-					v = buffer.poll();
-
-					if (v != null) {
-						processor.onNext(v);
-						produced++;
-						if (r != Long.MAX_VALUE) {
-							r--;
-						}
-					}
-					else {
-						break;
-					}
-				}
-
-				if (cancelled) {
-					return;
-				}
-
-				if (done) {
-					if (error != null) {
-						processor.onError(error);
-						return;
-					}
-					else if (buffer == null || buffer.isEmpty()) {
-						processor.onComplete();
-						return;
-					}
-				}
-
-				if (produced > 0L) {
-					GroupByAction.BUFFERED.addAndGet(parent, -produced);
-					REQUESTED.addAndGet(this, -produced);
-					if (!done) {
-						parent.updateRemaining(produced);
-					}
-				}
-
-				missed = RUNNING.addAndGet(this, -missed);
-				if (missed == 0) {
-					break;
-				}
-			}
-		}
-
-		@Override
-		public String toString() {
-			return "GroupedEmitter{" +
-					"key=" + key() +
-					", buffered=" + parent.buffered +
-					", requested=" + requested +
-					'}';
-		}
-	}
-
-	static final class GroupByAction<T, K> extends SubscriberWithDemand<T, GroupedStream<K, T>>
-			implements MultiProducer, Backpressurable {
-
-		private final Function<? super T, ? extends K> fn;
-
-		private final Timer timer;
-		private final int   limit;
-		private final ConcurrentHashMap<K, GroupedEmitter<T, K>> groupByMap = new ConcurrentHashMap<>();
-
-		@SuppressWarnings("unused")
-		private volatile long                                  buffered         = 0L;
-		static final     AtomicLongFieldUpdater<GroupByAction>    BUFFERED          =
-				AtomicLongFieldUpdater.newUpdater(GroupByAction.class, "buffered");
-		@SuppressWarnings("unused")
-
-		private volatile int                                      actualComplete    = 0;
-		static final     AtomicIntegerFieldUpdater<GroupByAction> ACTUAL_COMPLETED  =
-				AtomicIntegerFieldUpdater.newUpdater(GroupByAction.class, "actualComplete");
-		@SuppressWarnings("unused")
-
-		//include self in total ready cancelled groups
-		private volatile int                                      cancellableGroups = 1;
-		static final     AtomicIntegerFieldUpdater<GroupByAction> CANCELLED_GROUPS  =
-				AtomicIntegerFieldUpdater.newUpdater(GroupByAction.class, "cancellableGroups");
-
-		public GroupByAction(Subscriber<? super GroupedStream<K, T>> actual,
-				Timer timer,
-				Function<? super T, ? extends K> fn) {
-			super(actual);
-			Assert.notNull(fn, "Key mapping function cannot be null.");
-			this.fn = fn;
-			this.timer = timer;
-			this.limit = PlatformDependent.SMALL_BUFFER_SIZE / 2;
-		}
-
-		public Map<K, GroupedEmitter<T, K>> groupByMap() {
-			return groupByMap;
-		}
-
-		@Override
-		protected void doNext(final T value) {
-			final K key = fn.apply(value);
-
-			GroupedEmitter<T, K> child = groupByMap.get(key);
-			if (child == null) {
-				child = new GroupedEmitter<>(key, this);
-
-				GroupedEmitter<T, K> p;
-
-				for (;;) {
-					int cancelled = cancellableGroups;
-					if (cancelled <= 0) {
-						Exceptions.onNextDropped(value);
-					}
-					if (CANCELLED_GROUPS.compareAndSet(this, cancelled, cancelled + 1)) {
-						p = groupByMap.putIfAbsent(key, child);
-						break;
-					}
-				}
-
-				if (p != null) {
-					child = p;
-				}
-				else {
-					child.start();
-					subscriber.onNext(child);
-					child.onNext(value);
-					return;
-				}
-			}
-
-			child.onNext(value);
-		}
-
-		protected final void updateRemaining(long n) {
-			long remaining = REQUESTED.addAndGet(this, -n);
-			long buffered = BUFFERED.get(this);
-			if (remaining < limit) {
-				long toRequest = PlatformDependent.SMALL_BUFFER_SIZE - buffered;
-				if (toRequest > 0 && REQUESTED.compareAndSet(this, remaining, remaining + toRequest)) {
-					requestMore(toRequest);
-				}
-			}
-		}
-
-		@Override
-		protected final void doRequested(long b, long n) {
-			if (b == 0) {
-				requestMore(n);
-			}
-		}
-
-		@Override
-		public Iterator<?> downstreams() {
-			return groupByMap().values().iterator();
-		}
-
-		@Override
-		public long downstreamCount() {
-			return groupByMap.size();
-		}
-
-		@Override
-		protected void doCancel() {
-			if(CANCELLED_GROUPS.decrementAndGet(this) == 0){
-				super.doCancel();
-			}
-		}
-
-		@Override
-		protected void checkedError(Throwable ev) {
-			for (GroupedEmitter<T, K> stream : groupByMap.values()) {
-				stream.onError(ev);
-			}
-			subscriber.onError(ev);
-		}
-
-		@Override
-		protected void checkedComplete() {
-			for (GroupedEmitter<T, K> stream : groupByMap.values()) {
-				stream.onComplete();
-			}
-
-			if (groupByMap.isEmpty() &&
-					ACTUAL_COMPLETED.compareAndSet(this, 0, 1)) {
-				subscriber.onComplete();
-			}
-		}
-
-		void checkGroupsCompleted(){
-			if(CANCELLED_GROUPS.decrementAndGet(this) == 0){
-				super.doCancel();
-			}
-			else if (isCompleted() &&
-					groupByMap.isEmpty() &&
-					ACTUAL_COMPLETED.compareAndSet(this, 0, 1)) {
-				subscriber.onComplete();
-			}
+		public long getCapacity() {
+			GroupByMain<?, ?, ?> parent = this.parent;
+			return parent != null ? parent.prefetch : -1L;
 		}
 
 		@Override
 		public long getPending() {
-			return BUFFERED.get(this);
+			return queue == null || done ? -1L : queue.size();
 		}
 
 		@Override
-		public String toString() {
-			return "GroupByAction{" +
-					"limit=" + limit +
-					", groupByMap=" + groupByMap +
-					", buffered=" + buffered +
-					", actualComplete=" + actualComplete +
-					", cancellableGroups=" + cancellableGroups +
-					", requested=" + requestedFromDownstream() +
-					", capacity=" + getCapacity() +
-					'}';
+		public long requestedFromDownstream() {
+			return requested;
 		}
+
+		@Override
+		public long expectedFromUpstream() {
+			return produced;
+		}
+
+		@Override
+		public long limit() {
+			return limit;
+		}
+
 	}
-
-
 }

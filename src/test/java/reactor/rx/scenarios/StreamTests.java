@@ -791,7 +791,7 @@ public class StreamTests extends AbstractReactorTest {
 		Map<Integer, Integer> batchesDistribution = new ConcurrentHashMap<>();
 		batchingStreamDef
 		                 .partition(PARALLEL_STREAMS)
-		                 .consume(substream -> substream.dispatchOn(asyncGroup)
+		                 .consume(substream -> substream.hide().dispatchOn(asyncGroup)
 		                                                .buffer(BATCH_SIZE, TIMEOUT, TimeUnit.MILLISECONDS)
 		                                                .consume(items -> {
 			                                                batchesDistribution.compute(items.size(),

@@ -18,30 +18,11 @@ package reactor.rx;
 import reactor.core.state.Groupable;
 
 /**
- * The Stream implements {@link Groupable} and deliver its reactive API in addition to the key context.
+ * Represents a sequence of events with an associated key.
  *
- * Create such stream with the provided factory, E.g.:
- * {@code
- * stream.groupBy(data -> data.id).consume((GroupedStream<Long, String> partitionedStream)-> partitionedStream.consume())
- * }
- *
- * @author Stephane Maldini
+ * @param <K> the key type
+ * @param <V> the value type
  */
-public abstract class GroupedStream<K, T> extends Stream<T> implements Groupable<K> {
-	private final K key;
+public abstract class GroupedStream<K, V> extends Stream<V> implements Groupable<K> {
 
-	protected GroupedStream(K key) {
-		this.key = key;
-	}
-
-	public final K key() {
-		return key;
-	}
-
-	@Override
-	public String toString() {
-		return super.toString() + "{" +
-		  "key=" + key +
-		  '}';
-	}
 }

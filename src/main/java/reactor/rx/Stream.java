@@ -50,9 +50,9 @@ import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.BlockingIterable;
+import reactor.core.subscriber.ConsumerSubscriber;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.subscriber.SubscriberWithContext;
-import reactor.core.subscriber.Subscribers;
 import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;
@@ -2404,7 +2404,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final <E extends Throwable> Stream<O> doOnValueError(final Class<E> exceptionType,
 			final BiConsumer<Object, ? super E> onError) {
-		return new StreamErrorWithValue<>(this, exceptionType, onError);
+		Objects.requireNonNull(exceptionType, "Error type must be provided");
+		Objects.requireNonNull(onError, "Error callback must be provided");
+		return doOnError(new Consumer<Throwable>() {
+			@Override
+			public void accept(Throwable cause) {
+				if (exceptionType.isAssignableFrom(cause.getClass())) {
+					onError.accept(Exceptions.getFinalValueCause(cause), (E) cause);
+				}
+			}
+		});
 	}
 
 	/**
@@ -2545,7 +2554,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/flatmap.png" alt="">
 	 * <p>
 	 * @param mapper the {@link Function} to transform input sequence into N sequences {@link Publisher}
-	 * @param <R> the merged output sequence type
+	 * @param <V> the merged output sequence type
 	 *
 	 * @return a new {@link Flux}
 	 */
@@ -2866,7 +2875,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		final List<Publisher<? extends V>> publisherList = new ArrayList<>(concurrency);
 
 		for (int i = 0; i < concurrency; i++) {
-			pub = fn.apply(new GroupedStream<Integer, O>(i) {
+			final int index = i;
+			pub = fn.apply(new GroupedStream<Integer, O>() {
+
+				@Override
+				public Integer key() {
+					return index;
+				}
+
 				@Override
 				public long getCapacity() {
 					return Stream.this.getCapacity();
@@ -2925,6 +2941,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return Timer.globalOrNull();
 	}
 
+
 	/**
 	 * Re-route incoming values into a dynamically created {@link Stream} for each unique key evaluated by the {param
 	 * keyMapper}.
@@ -2935,8 +2952,28 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @since 2.0
 	 */
+	@SuppressWarnings("unchecked")
 	public final <K> Stream<GroupedStream<K, O>> groupBy(final Function<? super O, ? extends K> keyMapper) {
-		return new StreamGroupBy<>(this, keyMapper, getTimer());
+		return groupBy(keyMapper, (Function<O, O>)IDENTITY_FUNCTION);
+	}
+
+	/**
+	 * Re-route incoming values into a dynamically created {@link Stream} for each unique key evaluated by the {param
+	 * keyMapper}.
+	 *
+	 * @param keyMapper the key mapping function that evaluates an incoming data and returns a key.
+	 * @param valueMapper the value mapping function that evaluates an incoming data and returns a value.
+	 *
+	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
+	 *
+	 * @since 2.5
+	 */
+	public final <K, V> Stream<GroupedStream<K, V>> groupBy(Function<? super O, ? extends K> keyMapper,
+			Function<? super O, ? extends V> valueMapper) {
+		return new StreamGroupBy<>(this, keyMapper, valueMapper,
+				QueueSupplier.<GroupedStream<K, V>>small(),
+				SpscLinkedArrayQueue.unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE),
+				PlatformDependent.SMALL_BUFFER_SIZE);
 	}
 
 	/**
@@ -2944,6 +2981,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final Mono<Boolean> hasElements() {
 		return new MonoHasElements<>(this);
+	}
+
+	/**
+	 * @return
+	 */
+	public final Stream<O> hide() {
+		return new StreamHide<>(this);
 	}
 
 	/**
@@ -3342,6 +3386,22 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 *
+	 * @return
+	 */
+	public final ConnectableStream<O> publish() {
+		return publish(PlatformDependent.SMALL_BUFFER_SIZE);
+	}
+
+	/**
+	 *
+	 * @param prefetch
+	 * @return
+	 */
+	public final ConnectableStream<O> publish(int prefetch) {
+		return new StreamPublish<>(this, prefetch, QueueSupplier.<O>get(prefetch));
+	}
+	/**
 	 * @see Flux#publishOn
 	 *
 	 * @return a new dispatched {@link Stream}
@@ -3369,6 +3429,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 1.1, 2.0, 2.5
 	 */
 	public final Mono<O> reduce(final BiFunction<O, O, O> fn) {
+		if(this instanceof Supplier){
+			return MonoSource.wrap(this);
+		}
 		return new MonoAggregate<>(this, fn);
 	}
 
@@ -3384,6 +3447,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 1.1, 2.0, 2.5
 	 */
 	public final <A> Mono<A> reduce(final A initial, BiFunction<A, ? super O, A> fn) {
+
 		return reduceWith(new Supplier<A>() {
 			@Override
 			public A get() {
@@ -3836,8 +3900,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Start the chain and request unbounded demand.
 	 */
-	public final void subscribe() {
-		subscribe(Subscribers.unbounded());
+	public final Runnable subscribe() {
+		ConsumerSubscriber<O> s = new ConsumerSubscriber<>();
+		subscribe(s);
+		return s;
 	}
 
 	/**

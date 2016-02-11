@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2011-2016 Pivotal Software Inc, All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package reactor.rx;
 
 import org.reactivestreams.Publisher;
@@ -40,7 +25,6 @@ import reactor.fn.LongConsumer;
 
 /**
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
- *
  * @since 2.5
  */
 final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable, StreamPeekHelper<T> {
@@ -59,20 +43,15 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 	final Runnable onCancelCall;
 
-	public StreamPeekFuseable(Publisher<? extends T> source,
-			Consumer<? super Subscription> onSubscribeCall,
-			Consumer<? super T> onNextCall,
-			Consumer<? super Throwable> onErrorCall,
-			Runnable onCompleteCall,
-			Runnable onAfterTerminateCall,
-			LongConsumer onRequestCall,
-			Runnable onCancelCall) {
+	public StreamPeekFuseable(Publisher<? extends T> source, Consumer<? super Subscription> onSubscribeCall,
+						 Consumer<? super T> onNextCall, Consumer<? super Throwable> onErrorCall, Runnable
+						   onCompleteCall,
+						 Runnable onAfterTerminateCall, LongConsumer onRequestCall, Runnable onCancelCall) {
 		super(source);
 		if (!(source instanceof Fuseable)) {
-			throw new IllegalArgumentException(
-					"The source must implement the Fuseable interface for this operator to work");
+			throw new IllegalArgumentException("The source must implement the Fuseable interface for this operator to work");
 		}
-
+		
 		this.onSubscribeCall = onSubscribeCall;
 		this.onNextCall = onNextCall;
 		this.onErrorCall = onErrorCall;
@@ -85,14 +64,15 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 	@Override
 	public void subscribe(Subscriber<? super T> s) {
 		if (s instanceof ConditionalSubscriber) {
-			source.subscribe(new PeekFuseableConditionalSubscriber<>((ConditionalSubscriber<? super T>) s, this));
+			source.subscribe(new PeekFuseableConditionalSubscriber<>((ConditionalSubscriber<? super T>)s, this));
 			return;
 		}
 		source.subscribe(new PeekFuseableSubscriber<>(s, this));
 	}
 
-	static final class PeekFuseableSubscriber<T> extends SynchronousSubscription<T>
-			implements Subscriber<T>, Receiver, Producer {
+	static final class PeekFuseableSubscriber<T> 
+	extends SynchronousSubscription<T>
+	implements Subscriber<T>, Receiver, Producer {
 
 		final Subscriber<? super T> actual;
 
@@ -109,10 +89,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void request(long n) {
-			if (parent.onRequestCall() != null) {
+			if(parent.onRequestCall() != null) {
 				try {
-					parent.onRequestCall()
-					      .accept(n);
+					parent.onRequestCall().accept(n);
 				}
 				catch (Throwable e) {
 					cancel();
@@ -125,10 +104,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void cancel() {
-			if (parent.onCancelCall() != null) {
+			if(parent.onCancelCall() != null) {
 				try {
-					parent.onCancelCall()
-					      .run();
+					parent.onCancelCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
@@ -143,10 +121,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 		@SuppressWarnings("unchecked")
 		@Override
 		public void onSubscribe(Subscription s) {
-			if (parent.onSubscribeCall() != null) {
+			if(parent.onSubscribeCall() != null) {
 				try {
-					parent.onSubscribeCall()
-					      .accept(s);
+					parent.onSubscribeCall().accept(s);
 				}
 				catch (Throwable e) {
 					s.cancel();
@@ -155,7 +132,7 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 					return;
 				}
 			}
-			this.s = (QueueSubscription<T>) s;
+			this.s = (QueueSubscription<T>)s;
 			actual.onSubscribe(this);
 		}
 
@@ -164,8 +141,7 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 			if (sourceMode == NONE) {
 				if (parent.onNextCall() != null) {
 					try {
-						parent.onNextCall()
-						      .accept(t);
+						parent.onNextCall().accept(t);
 					}
 					catch (Throwable e) {
 						cancel();
@@ -175,34 +151,31 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 					}
 				}
 				actual.onNext(t);
-			}
-			else if (sourceMode == ASYNC) {
+			} else 
+			if (sourceMode == ASYNC) {
 				actual.onNext(null);
 			}
 		}
 
 		@Override
 		public void onError(Throwable t) {
-			if (parent.onErrorCall() != null) {
+			if(parent.onErrorCall() != null) {
 				Exceptions.throwIfFatal(t);
-				parent.onErrorCall()
-				      .accept(t);
+				parent.onErrorCall().accept(t);
 			}
 
 			actual.onError(t);
 
-			if (parent.onAfterTerminateCall() != null) {
+			if(parent.onAfterTerminateCall() != null) {
 				try {
-					parent.onAfterTerminateCall()
-					      .run();
+					parent.onAfterTerminateCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
 					Throwable _e = Exceptions.unwrap(e);
 					e.addSuppressed(Exceptions.unwrap(t));
-					if (parent.onErrorCall() != null) {
-						parent.onErrorCall()
-						      .accept(_e);
+					if(parent.onErrorCall() != null) {
+						parent.onErrorCall().accept(_e);
 					}
 					actual.onError(_e);
 				}
@@ -211,10 +184,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void onComplete() {
-			if (parent.onCompleteCall() != null) {
+			if(parent.onCompleteCall() != null) {
 				try {
-					parent.onCompleteCall()
-					      .run();
+					parent.onCompleteCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
@@ -225,17 +197,15 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 			actual.onComplete();
 
-			if (parent.onAfterTerminateCall() != null) {
+			if(parent.onAfterTerminateCall() != null) {
 				try {
-					parent.onAfterTerminateCall()
-					      .run();
+					parent.onAfterTerminateCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
 					Throwable _e = Exceptions.unwrap(e);
-					if (parent.onErrorCall() != null) {
-						parent.onErrorCall()
-						      .accept(_e);
+					if(parent.onErrorCall() != null) {
+						parent.onErrorCall().accept(_e);
 					}
 					actual.onError(_e);
 				}
@@ -251,13 +221,12 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 		public Object upstream() {
 			return s;
 		}
-
+		
 		@Override
 		public T poll() {
 			T v = s.poll();
 			if (v != null && parent.onNextCall() != null) {
-				parent.onNextCall()
-				      .accept(v);
+				parent.onNextCall().accept(v);
 			}
 			if (v == null && sourceMode == SYNC) {
 				Runnable call = parent.onCompleteCall();
@@ -276,8 +245,7 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 		public T peek() {
 			T v = s.peek();
 			if (v != null && parent.onNextCall() != null) {
-				parent.onNextCall()
-				      .accept(v);
+				parent.onNextCall().accept(v);
 			}
 			if (v == null && sourceMode == SYNC) {
 				Runnable call = parent.onCompleteCall();
@@ -304,11 +272,17 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public int requestFusion(int requestedMode) {
-			int m = s.requestFusion(requestedMode);
-			if (m != Fuseable.NONE) {
-				sourceMode =
-						m == Fuseable.SYNC ? SYNC : ((requestedMode & Fuseable.THREAD_BARRIER) != 0 ? NONE : ASYNC);
+			int m;
+			if ((requestedMode & Fuseable.THREAD_BARRIER) != 0) {
+				if ((requestedMode & Fuseable.SYNC) != 0) {
+					m = s.requestFusion(Fuseable.SYNC);
+				} else {
+					m = Fuseable.NONE;
+				}
+			} else {
+				m = s.requestFusion(requestedMode);
 			}
+			sourceMode = m;
 			return m;
 		}
 
@@ -316,15 +290,16 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 		public void drop() {
 			s.drop();
 		}
-
+		
 		@Override
 		public int size() {
 			return s.size();
 		}
 	}
 
-	static final class PeekFuseableConditionalSubscriber<T> extends SynchronousSubscription<T>
-			implements ConditionalSubscriber<T>, Receiver, Producer {
+	static final class PeekFuseableConditionalSubscriber<T> 
+	extends SynchronousSubscription<T>
+	implements ConditionalSubscriber<T>, Receiver, Producer {
 
 		final ConditionalSubscriber<? super T> actual;
 
@@ -341,10 +316,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void request(long n) {
-			if (parent.onRequestCall() != null) {
+			if(parent.onRequestCall() != null) {
 				try {
-					parent.onRequestCall()
-					      .accept(n);
+					parent.onRequestCall().accept(n);
 				}
 				catch (Throwable e) {
 					cancel();
@@ -357,10 +331,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void cancel() {
-			if (parent.onCancelCall() != null) {
+			if(parent.onCancelCall() != null) {
 				try {
-					parent.onCancelCall()
-					      .run();
+					parent.onCancelCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
@@ -375,10 +348,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 		@SuppressWarnings("unchecked")
 		@Override
 		public void onSubscribe(Subscription s) {
-			if (parent.onSubscribeCall() != null) {
+			if(parent.onSubscribeCall() != null) {
 				try {
-					parent.onSubscribeCall()
-					      .accept(s);
+					parent.onSubscribeCall().accept(s);
 				}
 				catch (Throwable e) {
 					s.cancel();
@@ -387,7 +359,7 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 					return;
 				}
 			}
-			this.s = (QueueSubscription<T>) s;
+			this.s = (QueueSubscription<T>)s;
 			actual.onSubscribe(this);
 		}
 
@@ -396,8 +368,7 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 			if (sourceMode == NONE) {
 				if (parent.onNextCall() != null) {
 					try {
-						parent.onNextCall()
-						      .accept(t);
+						parent.onNextCall().accept(t);
 					}
 					catch (Throwable e) {
 						cancel();
@@ -407,19 +378,18 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 					}
 				}
 				actual.onNext(t);
-			}
-			else if (sourceMode == ASYNC) {
+			} else 
+			if (sourceMode == ASYNC) {
 				actual.onNext(null);
 			}
 		}
-
+		
 		@Override
 		public boolean tryOnNext(T t) {
 			if (sourceMode == NONE) {
 				if (parent.onNextCall() != null) {
 					try {
-						parent.onNextCall()
-						      .accept(t);
+						parent.onNextCall().accept(t);
 					}
 					catch (Throwable e) {
 						cancel();
@@ -429,35 +399,33 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 					}
 				}
 				return actual.tryOnNext(t);
-			}
-			else if (sourceMode == ASYNC) {
+			} else 
+			if (sourceMode == ASYNC) {
 				actual.onNext(null);
 			}
 			return true;
 		}
+		
 
 		@Override
 		public void onError(Throwable t) {
-			if (parent.onErrorCall() != null) {
+			if(parent.onErrorCall() != null) {
 				Exceptions.throwIfFatal(t);
-				parent.onErrorCall()
-				      .accept(t);
+				parent.onErrorCall().accept(t);
 			}
 
 			actual.onError(t);
 
-			if (parent.onAfterTerminateCall() != null) {
+			if(parent.onAfterTerminateCall() != null) {
 				try {
-					parent.onAfterTerminateCall()
-					      .run();
+					parent.onAfterTerminateCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
 					Throwable _e = Exceptions.unwrap(e);
 					e.addSuppressed(Exceptions.unwrap(t));
-					if (parent.onErrorCall() != null) {
-						parent.onErrorCall()
-						      .accept(_e);
+					if(parent.onErrorCall() != null) {
+						parent.onErrorCall().accept(_e);
 					}
 					actual.onError(_e);
 				}
@@ -466,10 +434,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void onComplete() {
-			if (parent.onCompleteCall() != null) {
+			if(parent.onCompleteCall() != null) {
 				try {
-					parent.onCompleteCall()
-					      .run();
+					parent.onCompleteCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
@@ -480,17 +447,15 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 			actual.onComplete();
 
-			if (parent.onAfterTerminateCall() != null) {
+			if(parent.onAfterTerminateCall() != null) {
 				try {
-					parent.onAfterTerminateCall()
-					      .run();
+					parent.onAfterTerminateCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
 					Throwable _e = Exceptions.unwrap(e);
-					if (parent.onErrorCall() != null) {
-						parent.onErrorCall()
-						      .accept(_e);
+					if(parent.onErrorCall() != null) {
+						parent.onErrorCall().accept(_e);
 					}
 					actual.onError(_e);
 				}
@@ -506,19 +471,16 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 		public Object upstream() {
 			return s;
 		}
-
+		
 		@Override
 		public T poll() {
 			T v = s.poll();
 			if (v != null && parent.onNextCall() != null) {
-				parent.onNextCall()
-				      .accept(v);
+				parent.onNextCall().accept(v);
 			}
 			if (v == null && sourceMode == SYNC) {
-				parent.onCompleteCall()
-				      .run();
-				parent.onAfterTerminateCall()
-				      .run();
+				parent.onCompleteCall().run();
+				parent.onAfterTerminateCall().run();
 			}
 			return v;
 		}
@@ -527,14 +489,11 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 		public T peek() {
 			T v = s.peek();
 			if (v != null && parent.onNextCall() != null) {
-				parent.onNextCall()
-				      .accept(v);
+				parent.onNextCall().accept(v);
 			}
 			if (v == null && sourceMode == SYNC) {
-				parent.onCompleteCall()
-				      .run();
-				parent.onAfterTerminateCall()
-				      .run();
+				parent.onCompleteCall().run();
+				parent.onAfterTerminateCall().run();
 			}
 			return v;
 		}
@@ -553,8 +512,7 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 		public int requestFusion(int requestedMode) {
 			int m = s.requestFusion(requestedMode);
 			if (m != Fuseable.NONE) {
-				sourceMode =
-						m == Fuseable.SYNC ? SYNC : ((requestedMode & Fuseable.THREAD_BARRIER) != 0 ? NONE : ASYNC);
+				sourceMode = m == Fuseable.SYNC ? SYNC : ((requestedMode & Fuseable.THREAD_BARRIER) != 0 ? NONE : ASYNC);
 			}
 			return m;
 		}
@@ -563,7 +521,7 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 		public void drop() {
 			s.drop();
 		}
-
+		
 		@Override
 		public int size() {
 			return s.size();
@@ -605,8 +563,7 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 		return onCancelCall;
 	}
 
-	static final class PeekConditionalSubscriber<T>
-			implements ConditionalSubscriber<T>, Subscription, Receiver, Producer {
+	static final class PeekConditionalSubscriber<T> implements ConditionalSubscriber<T>, Subscription, Receiver, Producer {
 
 		final ConditionalSubscriber<? super T> actual;
 
@@ -621,10 +578,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void request(long n) {
-			if (parent.onRequestCall() != null) {
+			if(parent.onRequestCall() != null) {
 				try {
-					parent.onRequestCall()
-					      .accept(n);
+					parent.onRequestCall().accept(n);
 				}
 				catch (Throwable e) {
 					cancel();
@@ -637,10 +593,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void cancel() {
-			if (parent.onCancelCall() != null) {
+			if(parent.onCancelCall() != null) {
 				try {
-					parent.onCancelCall()
-					      .run();
+					parent.onCancelCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
@@ -654,10 +609,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void onSubscribe(Subscription s) {
-			if (parent.onSubscribeCall() != null) {
+			if(parent.onSubscribeCall() != null) {
 				try {
-					parent.onSubscribeCall()
-					      .accept(s);
+					parent.onSubscribeCall().accept(s);
 				}
 				catch (Throwable e) {
 					s.cancel();
@@ -672,10 +626,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void onNext(T t) {
-			if (parent.onNextCall() != null) {
+			if(parent.onNextCall() != null) {
 				try {
-					parent.onNextCall()
-					      .accept(t);
+					parent.onNextCall().accept(t);
 				}
 				catch (Throwable e) {
 					cancel();
@@ -689,10 +642,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public boolean tryOnNext(T t) {
-			if (parent.onNextCall() != null) {
+			if(parent.onNextCall() != null) {
 				try {
-					parent.onNextCall()
-					      .accept(t);
+					parent.onNextCall().accept(t);
 				}
 				catch (Throwable e) {
 					cancel();
@@ -706,26 +658,23 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void onError(Throwable t) {
-			if (parent.onErrorCall() != null) {
+			if(parent.onErrorCall() != null) {
 				Exceptions.throwIfFatal(t);
-				parent.onErrorCall()
-				      .accept(t);
+				parent.onErrorCall().accept(t);
 			}
 
 			actual.onError(t);
 
-			if (parent.onAfterTerminateCall() != null) {
+			if(parent.onAfterTerminateCall() != null) {
 				try {
-					parent.onAfterTerminateCall()
-					      .run();
+					parent.onAfterTerminateCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
 					Throwable _e = Exceptions.unwrap(e);
 					e.addSuppressed(Exceptions.unwrap(t));
-					if (parent.onErrorCall() != null) {
-						parent.onErrorCall()
-						      .accept(_e);
+					if(parent.onErrorCall() != null) {
+						parent.onErrorCall().accept(_e);
 					}
 					actual.onError(_e);
 				}
@@ -734,10 +683,9 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 		@Override
 		public void onComplete() {
-			if (parent.onCompleteCall() != null) {
+			if(parent.onCompleteCall() != null) {
 				try {
-					parent.onCompleteCall()
-					      .run();
+					parent.onCompleteCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
@@ -748,17 +696,15 @@ final class StreamPeekFuseable<T> extends StreamSource<T, T> implements Fuseable
 
 			actual.onComplete();
 
-			if (parent.onAfterTerminateCall() != null) {
+			if(parent.onAfterTerminateCall() != null) {
 				try {
-					parent.onAfterTerminateCall()
-					      .run();
+					parent.onAfterTerminateCall().run();
 				}
 				catch (Throwable e) {
 					Exceptions.throwIfFatal(e);
 					Throwable _e = Exceptions.unwrap(e);
-					if (parent.onErrorCall() != null) {
-						parent.onErrorCall()
-						      .accept(_e);
+					if(parent.onErrorCall() != null) {
+						parent.onErrorCall().accept(_e);
 					}
 					actual.onError(_e);
 				}

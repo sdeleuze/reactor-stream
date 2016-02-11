@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *	   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -294,10 +294,17 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 		
 		@Override
 		public int requestFusion(int requestedMode) {
-			int m = s.requestFusion(requestedMode);
-			if (m != Fuseable.NONE) {
-				sourceMode = m == Fuseable.SYNC ? SYNC : ASYNC;
+			int m;
+			if ((requestedMode & Fuseable.THREAD_BARRIER) != 0) {
+				if ((requestedMode & Fuseable.SYNC) != 0) {
+					m = s.requestFusion(Fuseable.SYNC);
+				} else {
+					m = Fuseable.NONE;
+				}
+			} else {
+				m = s.requestFusion(requestedMode);
 			}
+			sourceMode = m;
 			return m;
 		}
 		
@@ -320,13 +327,6 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 		
 		int sourceMode;
 
-		/** Running with regular, arbitrary source. */
-		static final int NORMAL = 0;
-		/** Running with a source that implements SynchronousSource. */
-		static final int SYNC = 1;
-		/** Running with a source that implements AsynchronousSource. */
-		static final int ASYNC = 2;
-		
 		public FilterFuseableConditionalSubscriber(ConditionalSubscriber<? super T> actual, Predicate<? super T> predicate) {
 			this.actual = actual;
 			this.predicate = predicate;
@@ -540,10 +540,17 @@ final class StreamFilterFuseable<T> extends StreamSource<T, T>
 		
 		@Override
 		public int requestFusion(int requestedMode) {
-			int m = s.requestFusion(requestedMode);
-			if (m != Fuseable.NONE) {
-				sourceMode = m == Fuseable.SYNC ? SYNC : ASYNC;
+			int m;
+			if ((requestedMode & Fuseable.THREAD_BARRIER) != 0) {
+				if ((requestedMode & Fuseable.SYNC) != 0) {
+					m = s.requestFusion(Fuseable.SYNC);
+				} else {
+					m = Fuseable.NONE;
+				}
+			} else {
+				m = s.requestFusion(requestedMode);
 			}
+			sourceMode = m;
 			return m;
 		}
 	}

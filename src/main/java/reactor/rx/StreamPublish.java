@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Queue;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -227,7 +226,9 @@ final class StreamPublish<T> extends ConnectableStream<T>
 		@Override
 		public void onNext(T t) {
 			if (done) {
-				Exceptions.onNextDropped(t);
+				if(t != null) {
+					Exceptions.onNextDropped(t);
+				}
 				return;
 			}
 			if (sourceMode == Fuseable.ASYNC) {
@@ -282,9 +283,8 @@ final class StreamPublish<T> extends ConnectableStream<T>
 		
 		void disconnectAction() {
 			queue.clear();
-			CancellationException ex = new CancellationException("Disconnected");
 			for (InnerSubscription<T> inner : terminate()) {
-				inner.actual.onError(ex);
+				inner.actual.onError(Exceptions.CancelException.INSTANCE);
 			}
 		}
 		

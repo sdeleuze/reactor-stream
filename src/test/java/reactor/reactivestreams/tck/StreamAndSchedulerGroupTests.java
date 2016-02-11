@@ -52,7 +52,8 @@ public class StreamAndSchedulerGroupTests extends AbstractStreamVerification {
 		return FluxProcessor.blackbox(Broadcaster.<Integer>create(true), p ->
 
 				p.dispatchOn(sharedGroup)
-		                  .partition(2)
+				 .log("grouped")
+				 .partition(2)
 		                  .flatMap(stream -> stream.dispatchOn(asyncGroup)
 		                                           .doOnNext(this::monitorThreadUse)
 		                                           .scan((prev, next) -> next)

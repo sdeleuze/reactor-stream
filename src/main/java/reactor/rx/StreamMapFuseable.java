@@ -111,7 +111,7 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 			}
 
 			int m = sourceMode;
-
+			
 			if (m == NONE) {
 				R v;
 	
@@ -132,7 +132,8 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 				}
 	
 				actual.onNext(v);
-			} else if (m == ASYNC) {
+			} else
+			if (m == ASYNC) {
 				actual.onNext(null);
 			}
 		}
@@ -239,11 +240,17 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 
 		@Override
 		public int requestFusion(int requestedMode) {
-			int m = s.requestFusion(requestedMode);
-			if (m != Fuseable.NONE) {
-				sourceMode =
-						m == Fuseable.SYNC ? SYNC : ((requestedMode & Fuseable.THREAD_BARRIER) != 0 ? NONE : ASYNC);
+			int m;
+			if ((requestedMode & Fuseable.THREAD_BARRIER) != 0) {
+				if ((requestedMode & Fuseable.SYNC) != 0) {
+					m = s.requestFusion(Fuseable.SYNC);
+				} else {
+					m = Fuseable.NONE;
+				}
+			} else {
+				m = s.requestFusion(requestedMode);
 			}
+			sourceMode = m;
 			return m;
 		}
 
@@ -458,11 +465,17 @@ final class StreamMapFuseable<T, R> extends StreamSource<T, R>
 
 		@Override
 		public int requestFusion(int requestedMode) {
-			int m = s.requestFusion(requestedMode);
-			if (m != Fuseable.NONE) {
-				sourceMode =
-						m == Fuseable.SYNC ? SYNC : ((requestedMode & Fuseable.THREAD_BARRIER) != 0 ? NONE : ASYNC);
+			int m;
+			if ((requestedMode & Fuseable.THREAD_BARRIER) != 0) {
+				if ((requestedMode & Fuseable.SYNC) != 0) {
+					m = s.requestFusion(Fuseable.SYNC);
+				} else {
+					m = Fuseable.NONE;
+				}
+			} else {
+				m = s.requestFusion(requestedMode);
 			}
+			sourceMode = m;
 			return m;
 		}
 
