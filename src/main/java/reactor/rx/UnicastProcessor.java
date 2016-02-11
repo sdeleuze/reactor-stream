@@ -194,12 +194,21 @@ final class UnicastProcessor<T>
 			return;
 		}
 
+		Subscriber<? super T> a = actual;
 		if (!queue.offer(t)) {
-			error = new IllegalStateException("The queue is full");
+			IllegalStateException ex = new IllegalStateException("The queue is full");
+			error = ex;
 			done = true;
+
+			doTerminate();
+			if (enableOperatorFusion) {
+				a.onError(ex);
+			} else {
+				drain();
+			}
+			return;
 		}
 		if (enableOperatorFusion) {
-			Subscriber<? super T> a = actual;
 			if (a != null) {
 				a.onNext(null); // in op-fusion, onNext(null) is the indicator of more data
 			}
