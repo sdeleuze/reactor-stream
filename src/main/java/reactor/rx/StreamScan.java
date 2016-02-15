@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *	   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -96,6 +96,8 @@ final class StreamScan<T, R> extends StreamSource<T, R> {
 		static final AtomicLongFieldUpdater<ScanSubscriber> REQUESTED =
 		  AtomicLongFieldUpdater.newUpdater(ScanSubscriber.class, "requested");
 
+		long produced;
+		
 		public ScanSubscriber(Subscriber<? super R> actual, BiFunction<R, ? super T, R> accumulator,
 									   R initialValue) {
 			this.actual = actual;
@@ -121,11 +123,9 @@ final class StreamScan<T, R> extends StreamSource<T, R> {
 
 			R r = value;
 
+			produced++;
+			
 			actual.onNext(r);
-
-			if (requested != Long.MAX_VALUE) {
-				REQUESTED.decrementAndGet(this);
-			}
 
 			try {
 				r = accumulator.apply(r, t);
@@ -165,10 +165,14 @@ final class StreamScan<T, R> extends StreamSource<T, R> {
 			done = true;
 
 			R v = value;
+			
+			long p = produced;
+			long r = requested;
+			if (r != Long.MAX_VALUE && p != 0L) {
+				r = REQUESTED.addAndGet(this, -p);
+			}
 
 			for (; ; ) {
-				long r = requested;
-
 				// if any request amount is still available, emit the value and complete
 				if ((r & REQUESTED_MASK) != 0L) {
 					actual.onNext(v);
@@ -179,13 +183,15 @@ final class StreamScan<T, R> extends StreamSource<T, R> {
 				if (REQUESTED.compareAndSet(this, 0, COMPLETED_MASK)) {
 					return;
 				}
+				
+				r = requested;
 			}
 		}
 
 		@Override
 		public void request(long n) {
 			if (BackpressureUtils.validate(n)) {
-				for (; ; ) {
+				for (;;) {
 
 					long r = requested;
 
@@ -227,7 +233,7 @@ final class StreamScan<T, R> extends StreamSource<T, R> {
 
 		@Override
 		public long requestedFromDownstream() {
-			return requested;
+			return requested - produced;
 		}
 
 		@Override
