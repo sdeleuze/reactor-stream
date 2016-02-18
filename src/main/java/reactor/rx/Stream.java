@@ -1070,13 +1070,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a Synchronous {@literal Action} whose data are emitted by the most recent {@link Subscriber#onNext(Object)}
-	 * signaled publisher.
-	 * The stream will complete once both the publishers source and the last switched to publisher have completed.
+	 * Build a {@link StreamProcessor} whose data are emitted by the most recent emitted {@link Publisher}.
+	 * The {@link Stream} will complete once both the publishers source and the last switched to {@link Publisher} have
+	 * completed.
 	 *
-	 * @param <T> type of the value
-	 * @return a {@link StreamProcessor} accepting publishers and producing inner data T
-	 * @since 2.0
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/switchonnext.png" alt="">
+	 *
+	 * @param <T> the produced type
+	 * @return a {@link StreamProcessor} accepting publishers and producing T
+	 * @since 2.0, 2.5
 	 */
 	public static <T> StreamProcessor<Publisher<? extends T>, T> switchOnNext() {
 		Processor<Publisher<? extends T>, Publisher<? extends T>> emitter = EmitterProcessor.replay();
@@ -1086,13 +1089,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a Synchronous {@literal Stream} whose data are emitted by the most recent passed publisher.
-	 * The stream will complete once both the publishers source and the last switched to publisher have completed.
+	 * Build a {@link StreamProcessor} whose data are emitted by the most recent emitted {@link Publisher}.
+	 * The {@link Stream} will complete once both the publishers source and the last switched to {@link Publisher} have
+	 * completed.
 	 *
-	 * @param mergedPublishers The publisher of upstream {@link Publisher} to subscribe to.
-	 * @param <T>              type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/switchonnext.png" alt="">
+	 *
+	 * @param mergedPublishers The {@link Publisher} of switching {@link Publisher} to subscribe to.
+	 * @param <T> the produced type
+	 * @return a {@link StreamProcessor} accepting publishers and producing T
+	 * @since 2.0, 2.5
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Stream<T> switchOnNext(
@@ -1118,7 +1125,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param resourceCleanup invoked on completion
 	 * @param <T> emitted type
 	 * @param <D> resource type
-	 * @returna new Stream
+	 * @return new Stream
 	 */
 	public static <T, D> Stream<T> using(Callable<? extends D> resourceSupplier, Function<? super D, ? extends
 			Publisher<? extends T>> sourceSupplier, Consumer<? super D> resourceCleanup) {
