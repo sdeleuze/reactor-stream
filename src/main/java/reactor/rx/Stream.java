@@ -955,7 +955,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
 	 *
 	 * @param sources the {@link Iterable} to iterate on {@link Publisher#subscribe(Subscriber)}
-	 * @param <O> the produced type
+	 * @param <T> the produced type
 	 *
 	 * @return a zipped {@link Stream} as {@link List}
 	 */
@@ -1049,12 +1049,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} that will only emit a sequence of int within the specified range and then
-	 * complete.
+	 * Build a {@literal Stream} that will only emit a sequence of incrementing integer from {@code start} to {@code
+	 * start + count} then complete.
 	 *
-	 * @param start the starting value to be emitted
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/range.png" alt="">
+	 *
+	 * @param start the first integer to be emit
 	 * @param count   the number ot times to emit an increment including the first value
-	 * @return a new {@link Stream}
+	 * @return a ranged {@link Stream}
 	 */
 	public static Stream<Integer> range(int start, int count) {
 		if(count == 1){
