@@ -1597,17 +1597,18 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Collect incoming values into a {@link List} that will be moved into the returned {@code Stream} every time the
-	 * passed boundary publisher emits an item. Complete will flush any remaining items.
+	 * Collect incoming values into multiple {@link List} delimited by the given {@link Publisher} signals.
 	 *
-	 * @param boundarySupplier the factory to provide a publisher to subscribe to on start for emiting and starting a
-	 * new buffer
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/bufferboundary.png" alt="">
+	 *
+	 * @param other the other {@link Publisher}  to subscribe to for emiting and recycling receiving bucket
 	 *
 	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
 	 */
 	@SuppressWarnings("unchecked")
-	public final Stream<List<O>> buffer(final Publisher<?> boundarySupplier) {
-		return new StreamBufferBoundary<>(this, boundarySupplier, LIST_SUPPLIER);
+	public final Stream<List<O>> buffer(final Publisher<?> other) {
+		return new StreamBufferBoundary<>(this, other, LIST_SUPPLIER);
 	}
 
 	/**
