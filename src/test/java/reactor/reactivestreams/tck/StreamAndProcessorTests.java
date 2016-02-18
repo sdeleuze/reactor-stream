@@ -63,7 +63,8 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 		                                                                                          combinator))
 		                                                                .doOnNext(this::monitorThreadUse))
 		                                     .doOnNext(array -> cumulatedJoin.getAndIncrement())
-		                                     .process(TopicProcessor.create("stream-raw-join", bufferSize))
+		                                     .subscribeWith(TopicProcessor.create("stream-raw-join", bufferSize))
+		                                     .as(Stream::from)
 		                                     .doOnError(Throwable.class, Throwable::printStackTrace));
 	}
 

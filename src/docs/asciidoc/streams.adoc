@@ -572,7 +572,8 @@ c.cancel(); //force this consumer to stop receiving data
 image::images/wiringup.png[The 2 Pipelines wired, width=650, align="center", link="images/wiringup.png"]
 
 ==== Publish/Subscribe
-For *Fan-Out* to subscribers from a unified pipeline, `Stream.process(Processor)`, `Stream.multicast()`, `Stream.broadcastOn()` and `Stream.broadcastTo()` can be used.
+For *Fan-Out* to subscribers from a unified pipeline, `Stream.subscribeWith(Subscribe)`, `Stream.multicast()`, `Stream
+.broadcastOn()` and `Stream.broadcastTo()` can be used.
 
 .Sharing an upstream pipeline and wiring up 2 downstream pipelines
 [source, java]
@@ -665,10 +666,6 @@ h|broadcastTo(*Subscriber<T>*)
 |Subscriber<T>
 2+|An alternative to `Stream.subscribe` which allows method chaining since the returned instance is the same as the passed argument.
 
-h|process(*Processor<T, O>*)
-|Stream<O>
-2+|Similar to multicast() but accept any given `Processor<T, O>`. A perfect place to introduce <<core-processor.adoc#core-processor, Core Processors>> !
-
 
 |===
 
@@ -711,7 +708,9 @@ These operations are called `Actions`, and they will not <<streams.adoc#wireup,w
 * `Actions` are `onSubscribe()` in declarative order (left to right), so `stream.actionA().actionB()` will execute actionA first then actionB.
 ** `onSubscribe()` runs on the parent `Publisher` thread context which can be altered by `publishOn(Dispatcher)` for instance.
 * `Actions` `subscribe()` in inverse declarative order (right to left). Whenever `subscribe` is excplicitely called at the end of the pipeline, `subscribe()` propagates backward.
-** `subscribe()` synchronously propagates back which might affect stack size use. If that becomes an issue, use a delegate `Processor` that runs `subscribe()` on a `Environment.tailRecurse()` dispatcher. Then `process()` it at any point of the chain.
+** `subscribe()` synchronously propagates back which might affect stack size use. If that becomes an issue, use a
+delegate `Processor` that runs `subscribe()` on a `Environment.tailRecurse()` dispatcher. Then `subscribeWith()` it at
+any point of the chain.
 ****
 
 ==== Observe
@@ -920,7 +919,7 @@ The only request executed possibly running on the dispatcher assigned in `publis
 ----
 Stream
   .range(1, 100)
-  .process(TopicProcessor.create()) // <2>
+  .subscribeWith(TopicProcessor.create()) // <2>
   .publishOn(SchedulerGroup.io()) // <1>
   .capacity(1); // <3>
   .consume(); // <4>
@@ -1246,9 +1245,6 @@ h|adaptiveConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Stream<Lo
 
 _adaptiveConsumeOn_
 |Similar to `batchConsume` but will request the computed sequence of demand `Long`. It can be used to insert flow-control such as `Stream.timer()` to delay demand.  The `AdaptiveConsumerAction` will subscribe to the produced sequence and immediately forwards `onNext(Long)` to the upstream `request(long)`.
-
-h|process(*Processor<T, ?>*)
-|Any `Processor` can also take care of transforming the demand or buffer. It is worth checking into the behavior of the specific `Processor` implementation in use.
 
 h|_All_ filter(_arguments_), take(_arguments_), takeWhile(_arguments_)...
 |All limit operations can be used to proactively limit the volume of a `Stream`.
@@ -2015,10 +2011,6 @@ h|_All_ window(_arguments_)
 |Stream<T>
 2+|<<streams.adoc#streams-microbatching, Windows>> are actually for cutting partitions over time, size or coordinated with external signals.
 
-
-h|process(XXXWorkProcessor)
-|T
-2+|Since a WorkQueueProcessor distributes the signals to each subscribe, it is an efficient alternative to `partition()` when it's just about scaling-up, not routing.
 
 |===
 

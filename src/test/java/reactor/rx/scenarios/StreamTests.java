@@ -978,8 +978,8 @@ public class StreamTests extends AbstractReactorTest {
 		                             //.requestWhen(requests -> requests.dispatchOn(Environment.cachedDispatcher()))
 		                             .buffer(2)
 		                             .map(pairs -> new Point(pairs.get(0), pairs.get(1)))
-		                             .process(TopicProcessor.create(pool,
-				                              32)); //.multicast(); works because no async boundary
+		                             .subscribeWith(TopicProcessor.create(pool, 32))
+		                             .as(Stream::from); //.multicast(); works because no async boundary
 
 		Stream<InnerSample> innerSamples = points.log("inner-1")
 		                                         .filter(Point::isInner)

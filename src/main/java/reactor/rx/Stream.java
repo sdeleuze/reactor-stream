@@ -732,7 +732,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/from.png" alt="">
 	 *
-	 * @param publisher the {@link Publisher} to decorate the Stream subscriber
+	 * @param publisher the {@link Publisher} to decorate the {@link Stream} subscriber
 	 * @param <T>       the type of values passing through the {@literal Stream}
 	 * @return a {@link Stream} view of the passed {@link Publisher}
 	 */
@@ -811,7 +811,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/from.png" alt="">
 	 *
-	 * @param processor the {@link Processor} to decorate with the Stream API
+	 * @param processor the {@link Processor} to decorate with the {@link Stream} API
 	 * @param <I>       the type of values observed by the receiving subscriber
 	 * @param <O>       the type of values passing through the sending {@literal Stream}
 	 * @return a new {@link Stream}
@@ -1117,15 +1117,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * if the sequence terminates or the Subscriber cancels.
 	 * <p>
 	 * Eager resource cleanup happens just before the source termination and exceptions
-	 * raised by the cleanup Consumer may override the terminal even. Non-eager
-	 * cleanup will drop any exception.
+	 * raised by the cleanup Consumer may override the terminal even.
 	 *
-	 * @param resourceSupplier a Callable that is called on subscribe
-	 * @param sourceSupplier a publisher factory derived from the supplied resource
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/using.png" alt="">
+	 *
+	 * @param resourceSupplier a {@link Callable} that is called on subscribe
+	 * @param sourceSupplier a {@link Publisher} factory derived from the supplied resource
 	 * @param resourceCleanup invoked on completion
 	 * @param <T> emitted type
 	 * @param <D> resource type
-	 * @return new Stream
+	 * @return new {@link Stream}
 	 */
 	public static <T, D> Stream<T> using(Callable<? extends D> resourceSupplier, Function<? super D, ? extends
 			Publisher<? extends T>> sourceSupplier, Consumer<? super D> resourceCleanup) {
@@ -1139,14 +1141,18 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Publisher derived from the same resource and makes sure the resource is released
 	 * if the sequence terminates or the Subscriber cancels.
 	 * <p>
-	 * Eager resource cleanup happens just before the source termination and exceptions
-	 * raised by the cleanup Consumer may override the terminal even. Non-eager
-	 * cleanup will drop any exception.
+	 * <ul>
+	 * <li>Eager resource cleanup happens just before the source termination and exceptions
+	 * raised by the cleanup Consumer may override the terminal even.</li>
+	 * <li>Non-eager cleanup will drop any exception.</li>
+	 * </ul>
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/using.png" alt="">
 	 *
-	 * @param resourceSupplier a Callable that is called on subscribe
-	 * @param sourceSupplier a publisher factory derived from the supplied resource
+	 * @param resourceSupplier a {@link Callable} that is called on subscribe
+	 * @param sourceSupplier a {@link Publisher} factory derived from the supplied resource
 	 * @param resourceCleanup invoked on completion
-	 * @param eager
+	 * @param eager true to clean before terminating downstream subscribers
 	 * @param <T> emitted type
 	 * @param <D> resource type
 	 * @return new Stream
@@ -1810,7 +1816,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Cast the current Stream flowing data type into a target class type.
+	 * Cast the current {@link Stream} flowing data type into a target class type.
 	 *
 	 * @param <E> the {@link Stream} output type
 	 *
@@ -3017,7 +3023,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Defer the subscription of a {@link Processor} to the actual pipeline. Terminal operations such as {@link
-	 * #consume(reactor.fn.Consumer)} will start the subscription chain. It will listen for current Stream signals and
+	 * #consume(reactor.fn.Consumer)} will start the subscription chain. It will listen for current {@link Stream} signals and
 	 * will be eventually producing signals as well (subscribe,error, complete,next). <p> The action is returned for
 	 * functional-style chaining.
 	 *
@@ -3237,7 +3243,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a No-Op Stream that only serves the purpose of blocking incoming values if not enough demand is signaled
+	 * Attach a No-Op {@link Stream} that only serves the purpose of blocking incoming values if not enough demand is signaled
 	 * downstream. A blocking capable stream will prevent underlying dispatcher to be saturated and behave in an
 	 * uncontrolled fashion while focusing on low latency with an eager demand upstream.
 	 *
@@ -3250,7 +3256,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a No-Op Stream that only serves the purpose of blocking incoming values if not enough demand is signaled
+	 * Attach a No-Op {@link Stream} that only serves the purpose of blocking incoming values if not enough demand is signaled
 	 * downstream. A blocking capable stream will prevent underlying dispatcher to be saturated and behave in an
 	 * uncontrolled fashion while focusing on low latency with an eager demand upstream.
 	 *
@@ -3263,7 +3269,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a No-Op Stream that only serves the purpose of buffering incoming values if not enough demand is signaled
+	 * Attach a No-Op {@link Stream} that only serves the purpose of buffering incoming values if not enough demand is signaled
 	 * downstream. A buffering capable stream will prevent underlying dispatcher to be saturated (and sometimes
 	 * blocking).
 	 *
@@ -3276,7 +3282,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a No-Op Stream that only serves the purpose of buffering incoming values if not enough demand is signaled
+	 * Attach a No-Op {@link Stream} that only serves the purpose of buffering incoming values if not enough demand is signaled
 	 * downstream. A buffering capable stream will prevent underlying dispatcher to be saturated (and sometimes
 	 * blocking).
 	 *
@@ -3303,10 +3309,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a No-Op Stream that only serves the purpose of dropping incoming values if not enough demand is signaled
+	 * Attach a No-Op {@link Stream} that only serves the purpose of dropping incoming values if not enough demand is signaled
 	 * downstream. A dropping stream will prevent underlying dispatcher to be saturated (and sometimes blocking).
 	 *
-	 * @return a dropping stream
+	 * @return a dropping {@link Stream}
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -3315,10 +3321,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a No-Op Stream that only serves the purpose of dropping incoming values if not enough demand is signaled
+	 * Attach a No-Op {@link Stream} that only serves the purpose of dropping incoming values if not enough demand is signaled
 	 * downstream. A dropping stream will prevent underlying dispatcher to be saturated (and sometimes blocking).
 	 *
-	 * @return a dropping stream
+	 * @return a dropping {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -3327,11 +3333,11 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a No-Op Stream that only serves the purpose of buffering incoming values if not enough demand is signaled
+	 * Attach a No-Op {@link Stream} that only serves the purpose of buffering incoming values if not enough demand is signaled
 	 * downstream. A buffering capable stream will prevent underlying dispatcher to be saturated (and sometimes
 	 * blocking).
 	 *
-	 * @return a buffered stream
+	 * @return a buffered {@link Stream}
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -3410,19 +3416,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 				return bucket < 0 ? bucket + buckets : bucket;
 			}
 		});
-	}
-
-	/**
-	 * FIXME Doc
-	 */
-	@SuppressWarnings("unchecked")
-	public final <E> Stream<E> process(final Processor<O, E> processor) {
-		subscribe(processor);
-		if (Stream.class.isAssignableFrom(processor.getClass())) {
-			return (Stream<E>) processor;
-		}
-
-		return StreamSource.wrap(processor);
 	}
 
 	/**
@@ -3778,7 +3771,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Scan the values passing through this {@code Stream} into an object {@code A}. The given initial object will be
-	 * passed to the function's {@link Tuple2} argument. Behave like Reduce but triggers downstream Stream for every
+	 * passed to the function's {@link Tuple2} argument. Behave like Reduce but triggers downstream {@link Stream} for every
 	 * transformation.
 	 *
 	 * @param initial the initial argument to pass to the reduce function
@@ -4523,9 +4516,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Make this Stream subscribers unbounded
+	 * Make this {@link Stream} subscribers unbounded
 	 *
-	 * @return Stream with capacity set to max
+	 * @return {@link Stream} with capacity set to max
 	 *
 	 * @see #capacity(long)
 	 */

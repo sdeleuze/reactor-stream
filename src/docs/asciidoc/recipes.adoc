@@ -101,7 +101,7 @@ Stream.from(fileStream)
 [source, java]
 ----
 final String filename = "settings.gradle";
-Publisher<String> fileStream = Flux.create(
+Flux<String> fileStream = Flux.create(
 	(n, sub) -> { // <1>
 		String line;
 		final BufferedReader inputStream = sub.context() // <2>
@@ -126,9 +126,9 @@ Publisher<String> fileStream = Flux.create(
 	inputStream -> inputStream.close() // <6>
 );
 
-Streams
-	.wrap(fileStream)
-	.process(TopicProcessor.create())
+fileStream
+	.subscribeWith(TopicProcessor.create())
+	.as(Stream::from)
 	.capacity(4L)
 	.consume(
 		System.out::println,
