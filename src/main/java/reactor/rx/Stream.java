@@ -931,7 +931,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * produced by the passed combinator function of the
 	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/join.png" alt="">
 	 *
 	 * @param sources the {@link Publisher} array to iterate on {@link Publisher#subscribe(Subscriber)}
 	 * @param <T> the source collected type
@@ -952,7 +952,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * The {@link Iterable#iterator()} will be called on each {@link Publisher#subscribe(Subscriber)}.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/join.png" alt="">
 	 *
 	 * @param sources the {@link Iterable} to iterate on {@link Publisher#subscribe(Subscriber)}
 	 * @param <T> the produced type
@@ -1487,9 +1487,19 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @param predicate
 	 *
-	 * @return
+	 * Emits a single boolean true if all values of this sequence match
+	 * the {@link Predicate}.
+	 * <p>
+	 * The implementation uses short-circuit logic and completes with false if
+	 * the predicate doesn't match a value.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/all.png" alt="">
+	 *
+	 * @param predicate the {@link Predicate} to match all emitted items
+	 *
+	 * @return a {@link Mono} of all evaluations
 	 */
 	public final Mono<Boolean> all(Predicate<? super O> predicate) {
 		return new MonoAll<>(this, predicate);
