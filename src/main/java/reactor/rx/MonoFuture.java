@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Mono;
 import reactor.core.subscriber.DeferredScalarSubscriber;
 
 
@@ -28,7 +29,7 @@ import reactor.core.subscriber.DeferredScalarSubscriber;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class StreamFuture<T> extends Stream<T> {
+final class MonoFuture<T> extends Mono<T> {
 	
 	final Future<? extends T> future;
 	
@@ -36,13 +37,13 @@ final class StreamFuture<T> extends Stream<T> {
 	
 	final TimeUnit unit;
 
-	public StreamFuture(Future<? extends T> future) {
+	public MonoFuture(Future<? extends T> future) {
 		this.future = future;
 		this.timeout = 0L;
 		this.unit = null;
 	}
 
-	public StreamFuture(Future<? extends T> future, long timeout, TimeUnit unit) {
+	public MonoFuture(Future<? extends T> future, long timeout, TimeUnit unit) {
 		this.future = future;
 		this.timeout = timeout;
 		this.unit = unit;

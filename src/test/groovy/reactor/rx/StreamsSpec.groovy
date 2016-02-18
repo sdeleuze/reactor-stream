@@ -1907,7 +1907,7 @@ class StreamsSpec extends Specification {
 				'hello future'
 			} as Callable<String>)
 
-			def s = Stream.fromFuture(future)
+			def s = Stream.fromFuture(future).as{ Stream.from(it) }
 
 		when:
 			'consume it'
@@ -1935,7 +1935,7 @@ class StreamsSpec extends Specification {
 				'hello future too long'
 			} as Callable<String>)
 
-			s = Stream.fromFuture(future, 100, TimeUnit.MILLISECONDS).dispatchOn(asyncGroup)
+			s = Stream.fromFuture(future, 100, TimeUnit.MILLISECONDS).dispatchOn(asyncGroup).as{ Stream.from(it) }
 			nexts = []
 			errors = []
 

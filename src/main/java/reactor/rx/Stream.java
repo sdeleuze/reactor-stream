@@ -765,25 +765,31 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} that will only emit the result of the future and then complete.
-	 * The future will be polled for an unbounded amount of time.
+	 * Build a {@link Mono} that will only emit the result of the future and then complete.
+	 * The future will be polled for an unbounded amount of time on request().
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/fromfuture.png" alt="">
 	 *
 	 * @param future the future to poll value from
-	 * @return a new {@link Stream}
+	 * @return a new {@link Mono}
 	 */
-	public static <T> Stream<T> fromFuture(Future<? extends T> future) {
-		return new StreamFuture<T>(future);
+	public static <T> Mono<T> fromFuture(Future<? extends T> future) {
+		return new MonoFuture<T>(future);
 	}
 
 	/**
-	 * Build a {@literal Stream} that will only emit the result of the future and then complete.
-	 * The future will be polled for an unbounded amount of time.
+	 * Build a {@link Mono} that will only emit the result of the future and then complete.
+	 * The future will be polled for a given amount of time on request() then onError if failed to return.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/fromfuture.png" alt="">
 	 *
 	 * @param future the future to poll value from
-	 * @return a new {@link Stream}
+	 * @return a new {@link Mono}
 	 */
-	public static <T> Stream<T> fromFuture(Future<? extends T> future, long time, TimeUnit unit) {
-		return new StreamFuture<>(future, time, unit);
+	public static <T> Mono<T> fromFuture(Future<? extends T> future, long time, TimeUnit unit) {
+		return new MonoFuture<>(future, time, unit);
 	}
 
 	/**
@@ -819,43 +825,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whom data is sourced by each element of the passed queue on subscription request.
-	 * <p>
-	 *
-	 * @param values The values to {@code onNext()}
-	 * @param <T> type of the values
-	 *
-	 * @return a {@link Stream} based on the given values
-	 */
-	public static <T> Stream<T> fromQueue(final Queue<? extends T> values) {
-		return fromIterable(new Iterable<T>() {
-
-			final Iterator<T> it = new Iterator<T>() {
-				@Override
-				public boolean hasNext() {
-					return !values.isEmpty();
-				}
-
-				@Override
-				public T next() {
-					return values.poll();
-				}
-
-				@Override
-				public void remove() {
-
-				}
-			};
-
-			@Override
-
-			public Iterator<T> iterator() {
-				return it;
-			}
-		});
-	}
-
-	/**
 	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after on each period from the subscribe
 	 * call.
 	 * It will never complete until cancelled.
@@ -864,7 +833,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Long> interval(long period) {
-		return interval(Timer.globalOrNew(), -1l, period, TimeUnit.SECONDS);
+		return interval(Timer.globalOrNew(), -1L, period, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -877,7 +846,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Long> interval(Timer timer, long period) {
-		return interval(timer, -1l, period, TimeUnit.SECONDS);
+		return interval(timer, -1L, period, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -914,7 +883,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Long> interval(long period, TimeUnit unit) {
-		return interval(Timer.globalOrNew(), -1l, period, unit);
+		return interval(Timer.globalOrNew(), -1L, period, unit);
 	}
 
 	/**
@@ -927,7 +896,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Long> interval(Timer timer, long period, TimeUnit unit) {
-		return interval(timer, -1l, period, unit);
+		return interval(timer, -1L, period, unit);
 	}
 
 	/**
@@ -958,14 +927,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a Synchronous {@literal Stream} whose data are aggregated from the passed publishers
-	 * (1 element consumed for each merged publisher. resulting in an array of size of {@param mergedPublishers}.
-
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * produced by the passed combinator function of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
 	 *
-	 * @param sources The upstreams {@link Publisher} to subscribe to.
-	 * @param <T>     type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0
+	 * @param sources the {@link Publisher} array to iterate on {@link Publisher#subscribe(Subscriber)}
+	 * @param <T> the source collected type
+	 *
+	 * @return a zipped {@link Stream} as {@link List}
 	 */
 	@SuppressWarnings({"unchecked", "varargs"})
 	@SafeVarargs
@@ -974,14 +945,19 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a Synchronous {@literal Stream} whose data are aggregated from the passed publishers
-	 * (1 element consumed for each merged publisher. resulting in an array of size of {@param mergedPublishers}.
-
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * produced by the passed combinator function of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
 	 *
-	 * @param sources The list of upstream {@link Publisher} to subscribe to.
-	 * @param <T>     type of the value
-	 * @return a {@link Stream} based on the produced value
-	 * @since 2.0
+	 * The {@link Iterable#iterator()} will be called on each {@link Publisher#subscribe(Subscriber)}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 *
+	 * @param sources the {@link Iterable} to iterate on {@link Publisher#subscribe(Subscriber)}
+	 * @param <O> the produced type
+	 *
+	 * @return a zipped {@link Stream} as {@link List}
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Stream<List<T>> join(Iterable<? extends Publisher<?>> sources) {
@@ -1018,19 +994,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	@SuppressWarnings({"unchecked", "varargs"})
 	public static <T> Stream<T> just(T... values) {
 		return from(Flux.fromArray(Objects.requireNonNull(values)));
-	}
-
-	/**
-	 *
-	 * @param publisher
-	 * @param operator
-	 * @param <I>
-	 * @param <O>
-	 * @return
-	 */
-	public static <I, O> Stream<O> lift(final Publisher<I> publisher,
-			Function<Subscriber<? super O>, Subscriber<? super I>> operator) {
-		return new StreamSource.Operator<>(publisher, operator);
 	}
 
 	/**
@@ -1754,7 +1717,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		}).flatMap(new Function<PriorityQueue<O>, Publisher<? extends O>>() {
 			@Override
 			public Publisher<? extends O> apply(PriorityQueue<O> os) {
-				return fromQueue(os);
+				return fromIterable(os);
 			}
 		}));
 	}
@@ -3016,7 +2979,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public <V> Stream<V> lift(final Function<Subscriber<? super V>, Subscriber<? super O>> operator) {
-		return lift(this, operator);
+		return new StreamSource.Operator<>(this, operator);
 	}
 
 	/**
