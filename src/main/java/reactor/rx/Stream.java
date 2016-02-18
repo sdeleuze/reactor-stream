@@ -1719,8 +1719,31 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			}
 		}).flatMap(new Function<PriorityQueue<O>, Publisher<? extends O>>() {
 			@Override
-			public Publisher<? extends O> apply(PriorityQueue<O> os) {
-				return fromIterable(os);
+			public Publisher<? extends O> apply(final PriorityQueue<O> os) {
+				return fromIterable(new Iterable<O>() {
+
+					final Iterator<O> it = new Iterator<O>() {
+						@Override
+						public boolean hasNext() {
+							return !os.isEmpty();
+						}
+
+						@Override
+						public O next() {
+							return os.poll();
+						}
+
+						@Override
+						public void remove() {
+
+						}
+					};
+
+					@Override
+					public Iterator<O> iterator() {
+						return it;
+					}
+				});
 			}
 		}));
 	}
