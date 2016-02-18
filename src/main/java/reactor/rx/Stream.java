@@ -1467,22 +1467,27 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Return a {@code Stream<V>} that completes when this {@link Mono} completes.
+	 * Return a {@code Stream<V>} that emits the sequence of the supplied {@link Publisher} when this {@link Stream}
+	 * onComplete or onError.
+	 * If an error occur, append after the supplied {@link Publisher} is terminated.
 	 *
-	 * @param sourceSupplier
-	 * @param <V>
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/afters.png" alt="">
 	 *
-	 * @return
+	 * @param afterSupplier a {@link Supplier} of {@link Publisher} to emit from after termination
+	 * @param <V> the supplied produced type
+	 *
+	 * @return a new {@link Stream} emitting eventually from the supplied {@link Publisher}
 	 */
 	@SuppressWarnings("unchecked")
-	public final <V> Stream<V> after(final Supplier<? extends Publisher<V>> sourceSupplier) {
+	public final <V> Stream<V> after(final Supplier<? extends Publisher<V>> afterSupplier) {
 		return StreamSource.wrap(Flux.flatMap(
 				Flux.mapSignal(after(), null, new Function<Throwable, Publisher<V>>() {
 					@Override
 					public Publisher<V> apply(Throwable throwable) {
-						return concat(sourceSupplier.get(), Stream.<V>error(throwable));
+						return concat(afterSupplier.get(), Stream.<V>error(throwable));
 					}
-				}, sourceSupplier),
+				}, afterSupplier),
 				IDENTITY_FUNCTION, PlatformDependent.SMALL_BUFFER_SIZE, 32, false));
 	}
 
@@ -1571,12 +1576,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * <p>
 	 * When Skip > Max Size : dropping buffers
+	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffersizeskip.png" alt="">
 	 * <p>
 	 * When Skip < Max Size : overlapping buffers
+	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffersizeskipover.png" alt="">
 	 * <p>
 	 * When Skip == Max Size : exact buffers
+	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffersize.png" alt="">
 	 * @param skip the number of items to skip before creating a new bucket
 	 * @param maxSize the max collected size
