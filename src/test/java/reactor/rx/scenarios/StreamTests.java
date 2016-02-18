@@ -197,17 +197,17 @@ public class StreamTests extends AbstractReactorTest {
 	@Test
 	public void testStreamBatchesResults() {
 		Stream<String> stream = Stream.just("1", "2", "3", "4", "5");
-		Stream<List<Integer>> s = stream.map(STRING_2_INTEGER)
-		                                .buffer();
+		Mono<List<Integer>> s = stream.map(STRING_2_INTEGER)
+		                                .toList();
 
 		final AtomicInteger batchCount = new AtomicInteger();
 		final AtomicInteger count = new AtomicInteger();
-		s.consume(is -> {
+		s.subscribe(Subscribers.consumer(is -> {
 			batchCount.incrementAndGet();
 			for (int i : is) {
 				count.addAndGet(i);
 			}
-		});
+		}));
 
 		assertThat("batchCount is 3", batchCount.get(), is(1));
 		assertThat("count is 15", count.get(), is(15));

@@ -1536,26 +1536,70 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 
 	/**
-	 * Collect incoming values into a {@link List} that will be pushed into the returned {@code Stream} every
-	 * time {@link #getCapacity()} has been reached, or flush is triggered.
+	 * Collect incoming values into a {@link List} that will be pushed into the returned {@link Stream} on complete
+	 * only.
 	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffer.png" alt="">
+	 *
+	 * @return a new {@link Stream} of at most one {@link List}
 	 */
 	public final Stream<List<O>> buffer() {
 		return buffer(Integer.MAX_VALUE);
 	}
 
 	/**
-	 * Collect incoming values into multiple {@link List} buckets that will be pushed into the returned {@code Stream}
-	 * every time {@link #getCapacity()} has been reached.
+	 * Collect incoming values into multiple {@link List} buckets that will be pushed into the returned {@link Stream}
+	 * when the given max size is reached or onComplete is received.
 	 *
-	 * @param maxSize the collected size
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffersize.png" alt="">
 	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
+	 * @param maxSize the maximum collected size
+	 *
+	 * @return a new {@link Stream} of {@link List}
 	 */
 	@SuppressWarnings("unchecked")
 	public final Stream<List<O>> buffer(final int maxSize) {
 		return new StreamBuffer<>(this, maxSize, (Supplier<List<O>>) LIST_SUPPLIER);
+	}
+
+	/**
+	 * Collect incoming values into multiple {@link List} that will be pushed into the returned {@link Stream} when
+	 * the given max size is reached or onComplete is received. A new container {@link List} will be created every
+	 * given skip count.
+	 *
+	 * <p>
+	 * When Skip > Max Size : dropping buffers
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffersizeskip.png" alt="">
+	 * <p>
+	 * When Skip < Max Size : overlapping buffers
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffersizeskipover.png" alt="">
+	 * <p>
+	 * When Skip == Max Size : exact buffers
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffersize.png" alt="">
+	 * @param skip the number of items to skip before creating a new bucket
+	 * @param maxSize the max collected size
+	 *
+	 * @return a new {@link Stream} of possibly overlapped or gapped {@link List}
+	 */
+	@SuppressWarnings("unchecked")
+	public final Stream<List<O>> buffer(final int maxSize, final int skip) {
+		return new StreamBuffer<>(this, maxSize, skip, LIST_SUPPLIER);
+	}
+
+	/**
+	 * Collect incoming values into a {@link List} that will be moved into the returned {@code Stream} every time the
+	 * passed boundary publisher emits an item. Complete will flush any remaining items.
+	 *
+	 * @param boundarySupplier the factory to provide a publisher to subscribe to on start for emiting and starting a
+	 * new buffer
+	 *
+	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
+	 */
+	@SuppressWarnings("unchecked")
+	public final Stream<List<O>> buffer(final Publisher<?> boundarySupplier) {
+		return new StreamBufferBoundary<>(this, boundarySupplier, LIST_SUPPLIER);
 	}
 
 	/**
@@ -1575,34 +1619,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 		return new StreamBufferStartEnd<>(this, bucketOpening, boundarySupplier, LIST_SUPPLIER,
 				QueueSupplier.<List<O>>xs());
-	}
-
-	/**
-	 * Collect incoming values into a {@link List} that will be moved into the returned {@code Stream} every time the
-	 * passed boundary publisher emits an item. Complete will flush any remaining items.
-	 *
-	 * @param boundarySupplier the factory to provide a publisher to subscribe to on start for emiting and starting a
-	 * new buffer
-	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
-	 */
-	@SuppressWarnings("unchecked")
-	public final Stream<List<O>> buffer(final Publisher<?> boundarySupplier) {
-		return new StreamBufferBoundary<>(this, boundarySupplier, LIST_SUPPLIER);
-	}
-
-	/**
-	 * Collect incoming values into a {@link List} that will be pushed into the returned {@code Stream} every time
-	 * {@code maxSize} has been reached by any of them. Complete signal will flush any remaining buckets.
-	 *
-	 * @param skip the number of items to skip before creating a new bucket
-	 * @param maxSize the collected size
-	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
-	 */
-	@SuppressWarnings("unchecked")
-	public final Stream<List<O>> buffer(final int maxSize, final int skip) {
-		return new StreamBuffer<>(this, maxSize, skip, LIST_SUPPLIER);
 	}
 
 	/**

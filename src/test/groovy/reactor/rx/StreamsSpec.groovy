@@ -1049,7 +1049,7 @@ class StreamsSpec extends Specification {
 
 		then:
 			'the res is passed on'
-			res.await() == [2, 4, 6, 8]
+			res.get() == [2, 4, 6, 8]
 	}
 
 	def "When a filter function throws an exception, the filtered composable accepts the error"() {
