@@ -732,7 +732,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> Stream<T> from(final Publisher<T> publisher) {
+	public static <T> Stream<T> from(final Publisher<? extends T> publisher) {
 		if (publisher instanceof Stream) {
 			return (Stream<T>) publisher;
 		}
@@ -1546,17 +1546,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return transformer.apply(this);
 	}
 
-	/**
-	 * Subscribe a new {@link Broadcaster} and return it for future subscribers interactions. Effectively it turns any
-	 * stream into an Hot Stream where subscribers will only values from the time T when they subscribe to the returned
-	 * stream. Complete and Error signals are however retained. <p>
-	 *
-	 * @return a new {@literal stream} whose values are broadcasted to all subscribers
-	 */
-	public final Stream<O> broadcast() {
-		Broadcaster<O> broadcaster = Broadcaster.create(getTimer());
-		return subscribeWith(broadcaster);
-	}
 
 	/**
 	 * Collect incoming values into a {@link List} that will be pushed into the returned {@code Stream} every
@@ -3162,6 +3151,70 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 */
 	public final Stream<O> mergeWith(final Publisher<? extends O> publisher) {
 		return StreamSource.wrap(Flux.merge(this, publisher));
+	}
+
+
+	/**
+	 *
+	 *
+	 * @return a new {@literal stream} whose values are broadcasted to all subscribers
+	 */
+	public final ConnectableStream<O> multicast() {
+		return publish();
+	}
+
+	/**
+	 *
+	 * @param processor
+	 * @return
+	 */
+	public final ConnectableStream<O> multicast(final Processor<? super O, ? extends O> processor) {
+		return multicast(new Supplier<Processor<? super O, ? extends O>>() {
+			@Override
+			public Processor<? super O, ? extends O> get() {
+				return processor;
+			}
+		});
+	}
+
+	/**
+	 *
+	 * @param processorSupplier
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public final ConnectableStream<O> multicast(
+			Supplier<? extends Processor<? super O, ? extends O>> processorSupplier) {
+		return multicast(processorSupplier, IDENTITY_FUNCTION);
+	}
+
+	/**
+	 *
+	 * @param processor
+	 * @param selector
+	 * @param <U>
+	 * @return
+	 */
+	public final <U> ConnectableStream<U> multicast(final Processor<? super O, ? extends O>
+			processor, Function<Stream<O>, ? extends Publisher<? extends U>> selector) {
+		return multicast(new Supplier<Processor<? super O, ? extends O>>() {
+			@Override
+			public Processor<? super O, ? extends O> get() {
+				return processor;
+			}
+		}, selector);
+	}
+
+	/**
+	 *
+	 * @param processorSupplier
+	 * @param selector
+	 * @param <U>
+	 * @return
+	 */
+	public final <U> ConnectableStream<U> multicast(Supplier<? extends Processor<? super O, ? extends O>>
+			processorSupplier, Function<Stream<O>, ? extends Publisher<? extends U>> selector) {
+		return new StreamMulticast<>(this, processorSupplier, selector);
 	}
 
 	/**

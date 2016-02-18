@@ -979,7 +979,7 @@ public class StreamTests extends AbstractReactorTest {
 		                             .buffer(2)
 		                             .map(pairs -> new Point(pairs.get(0), pairs.get(1)))
 		                             .process(TopicProcessor.create(pool,
-				                              32)); //.broadcast(); works because no async boundary
+				                              32)); //.multicast(); works because no async boundary
 
 		Stream<InnerSample> innerSamples = points.log("inner-1")
 		                                         .filter(Point::isInner)

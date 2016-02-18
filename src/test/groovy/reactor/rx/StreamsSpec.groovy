@@ -68,7 +68,7 @@ class StreamsSpec extends Specification {
 	def 'A deferred Stream with an initial value makes that value available once if broadcasted'() {
 		given:
 			'a composable with an initial value'
-			def stream = Stream.just('test').broadcast()
+			def stream = Stream.just('test').multicast().autoConnect()
 
 		when:
 			'the value is retrieved'
@@ -126,7 +126,8 @@ class StreamsSpec extends Specification {
 			def e = null
 			def latch = new CountDownLatch(1)
 			def stream = Stream.fromIterable([1, 2, 3])
-					.broadcast()
+					.multicast()
+					.autoConnect()
 					.doOnError(Throwable) { e = it }
 					.doOnComplete { latch.countDown() }
 

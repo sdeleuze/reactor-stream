@@ -536,7 +536,7 @@ For Asynchronous broadcasting, always consider a <<core-processor.adoc#core-proc
 [[wireup]]
 === Wiring up a Stream
 
-Streams operations -- except for a few exceptions like terminal actions and `broadcast()` -- will never directly subscribe. Instead they will lazily prepare for subscribe.
+Streams operations -- except for a few exceptions like terminal actions and `multicast()` -- will never directly subscribe. Instead they will lazily prepare for subscribe.
 This is usually called *lift* in Functional programming.
 
 That basically means the Reactor `Stream` user will explicitely call `Stream.subscribe(Subscriber)` or, alternativly, *terminal* actions such as `Stream.consume(Consumer)` to materialize all the registered operations.
@@ -572,7 +572,7 @@ c.cancel(); //force this consumer to stop receiving data
 image::images/wiringup.png[The 2 Pipelines wired, width=650, align="center", link="images/wiringup.png"]
 
 ==== Publish/Subscribe
-For *Fan-Out* to subscribers from a unified pipeline, `Stream.process(Processor)`, `Stream.broadcast()`, `Stream.broadcastOn()` and `Stream.broadcastTo()` can be used.
+For *Fan-Out* to subscribers from a unified pipeline, `Stream.process(Processor)`, `Stream.multicast()`, `Stream.broadcastOn()` and `Stream.broadcastTo()` can be used.
 
 .Sharing an upstream pipeline and wiring up 2 downstream pipelines
 [source, java]
@@ -585,7 +585,7 @@ import reactor.rx.Stream;
 Stream<String> stream = Stream.just("a","b","c","d","e","f","g","h");
 
 //prepare a shared pipeline
-Stream<String> sharedStream = stream.doOnNext(System.out::println).broadcast();
+Stream<String> sharedStream = stream.doOnNext(System.out::println).multicast();
 
 //prepare two unique pipelines
 Stream<String> actionChain1 = sharedStream.map(String::toUpperCase).filter(w -> w.equals("C"));
@@ -654,7 +654,7 @@ h|cache()
 2+|Turn any Stream into a *Cold* Stream, able to replay all the sequence of signals individually for each Subscriber.
 Due to the unbounded nature of the action, you should probably use it only with small(ish) sequences.
 
-h|broadcast()
+h|multicast()
 
 broadcastOn(Environment, Dispatcher)
 |Stream<T>
@@ -667,7 +667,7 @@ h|broadcastTo(*Subscriber<T>*)
 
 h|process(*Processor<T, O>*)
 |Stream<O>
-2+|Similar to broadcast() but accept any given `Processor<T, O>`. A perfect place to introduce <<core-processor.adoc#core-processor, Core Processors>> !
+2+|Similar to multicast() but accept any given `Processor<T, O>`. A perfect place to introduce <<core-processor.adoc#core-processor, Core Processors>> !
 
 
 |===
