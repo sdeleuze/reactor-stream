@@ -643,22 +643,23 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a {@link Stream} reacting on requests with the passed {@link BiConsumer}.
-	 * The argument {@code contextFactory} is executed once by new subscriber to generate a context shared by every
-	 * request calls.
-	 * The argument {@code shutdownConsumer} is executed once by subscriber termination event (cancel, onComplete,
+	 * Create a {@link Stream} reacting on requests with the passed {@link BiConsumer}. The argument {@code
+	 * contextFactory} is executed once by new subscriber to generate a context shared by every request calls. The
+	 * argument {@code shutdownConsumer} is executed once by subscriber termination event (cancel, onComplete,
 	 * onError).
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/generate.png" alt="">
-	 *
-	 * @param requestConsumer  A {@link BiConsumer} with left argument request and right argument target subscriber
-	 * @param contextFactory   A {@link Function} called once for every new subscriber returning an immutable context
-	 *                         (IO connection...)
+	 * <p>
+	 * @param requestConsumer A {@link BiConsumer} with left argument request and right argument target subscriber
+	 * @param contextFactory A {@link Function} called once for every new subscriber returning an immutable context (IO
+	 * connection...)
 	 * @param shutdownConsumer A {@link Consumer} called once everytime a subscriber terminates: cancel, onComplete(),
-	 *                         onError()
-	 * @param <T>              The type of the data sequence
-	 * @param <C>              The type of contextual information to be read by the requestConsumer
-	 * @return a fresh Reactive Streams publisher ready to be subscribed
+	 * onError()
+	 * @param <T> The type of the data sequence
+	 * @param <C> The type of contextual information to be read by the requestConsumer
+	 *
+	 * @return a fresh Reactive {@link Stream} publisher ready to be subscribed
+	 *
 	 * @since 2.0.2
 	 */
 	public static <T, C> Stream<T> generate(BiConsumer<Long, SubscriberWithContext<T, C>> requestConsumer,
@@ -752,7 +753,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whom data is sourced by each element of the passed array on subscription request.
+	 * Create a {@link Stream} that emits the items contained in the provided {@link Iterable}.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/fromarray.png" alt="">
 	 *
@@ -793,16 +794,18 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whom data is sourced by each element of the passed iterable on subscription request.
+	 * Create a {@link Stream} that emits the items contained in the provided {@link Iterable}.
+	 * A new iterator will be created for each subscriber.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/fromiterable.png" alt="">
+	 * <p>
+	 * @param it the {@link Iterable} to read data from
+	 * @param <T> the {@link Iterable} type to stream
 	 *
-	 * @param values The values to {@code onNext()}
-	 * @param <T>    type of the values
-	 * @return a {@link Stream} based on the given values
+	 * @return a new {@link Stream}
 	 */
-	public static <T> Stream<T> fromIterable(Iterable<? extends T> values) {
-		return new StreamIterable<>(values);
+	public static <T> Stream<T> fromIterable(Iterable<? extends T> it) {
+		return new StreamIterable<>(it);
 	}
 
 	/**
@@ -825,12 +828,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after on each period from the subscribe
-	 * call.
-	 * It will never complete until cancelled.
+	 * Create a new {@link Stream} that emits an ever incrementing long starting with 0 every N seconds on
+	 * the given timer. If demand is not produced in time, an onError will be signalled. The {@link Stream} will never
+	 * complete.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/interval.png" alt="">
+	 * <p>
+	 * @param period The number of seconds to wait before the next increment
 	 *
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Stream}
+	 * @return a new timed {@link Stream}
 	 */
 	public static Stream<Long> interval(long period) {
 		return interval(Timer.globalOrNew(), -1L, period, TimeUnit.SECONDS);
@@ -875,12 +881,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
-	 * It will never complete until cancelled.
+	 * Create a new {@link Stream} that emits an ever incrementing long starting with 0 every N period of time unit on
+	 * the global timer. If demand is not produced in time, an onError will be signalled. The {@link Stream} will never
+	 * complete.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/interval.png" alt="">
+	 * <p>
+	 * @param period The the time relative to given unit to wait before the next increment
+	 * @param unit The unit of time
 	 *
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
-	 * @return a new {@link Stream}
+	 * @return a new timed {@link Stream}
 	 */
 	public static Stream<Long> interval(long period, TimeUnit unit) {
 		return interval(Timer.globalOrNew(), -1L, period, unit);
@@ -982,13 +992,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whom data is sourced by each element of the passed iterable on subscription
-	 * request.
+	 * Create a new {@link Stream} that emits the specified items and then complete.
 	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/justn.png" alt="">
+	 * <p>
+	 * @param data the consecutive data objects to emit
+	 * @param <T> the emitted data type
 	 *
-	 * @param values The values to {@code onNext()}
-	 * @param <T>    type of the values
-	 * @return a {@link Stream} based on the given values
+	 * @return a new {@link Stream}
 	 */
 	@SafeVarargs
 	@SuppressWarnings({"unchecked", "varargs"})
@@ -997,17 +1008,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a Synchronous {@literal Stream} whose data are generated by the passed publishers.
-
+	 * Merge emitted {@link Publisher} sequences from the passed {@link Iterable} into an interleaved merged sequence.
+	 * {@link Iterable#iterator()} will be called for each {@link Publisher#subscribe}.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/merge.png" alt="">
+	 * <p>
+	 * @param sources the {@link Iterable} to lazily iterate on {@link Publisher#subscribe(Subscriber)}
+	 * @param <T> The source type of the data sequence
 	 *
-	 * @param mergedPublishers The list of upstream {@link Publisher} to subscribe to.
-	 * @param <T>              type of the value
-	 * @return a {@link Stream} based on the produced value
+	 * @return a fresh Reactive {@link Stream} publisher ready to be subscribed
 	 * @since 2.0
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> Stream<T> merge(Iterable<? extends Publisher<? extends T>> mergedPublishers) {
-		return from(Flux.merge(mergedPublishers));
+	public static <T> Stream<T> merge(Iterable<? extends Publisher<? extends T>> sources) {
+		return from(Flux.merge(sources));
 	}
 
 	/**
@@ -1024,12 +1038,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
+	 * Merge emitted {@link Publisher} sequences from the passed {@link Publisher} array into an interleaved merged
+	 * sequence.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/merge.png" alt="">
+	 * <p>
+	 * @param sources the {@link Publisher} array to iterate on {@link Publisher#subscribe(Subscriber)}
+	 * @param <T> The source type of the data sequence
 	 *
-	 * @param sources The upstreams {@link Publisher} to subscribe to.
-	 * @param <T>     type of the value
-	 * @return a {@link Stream} based on the produced value
+	 * @return a fresh Reactive {@link Stream} publisher ready to be subscribed
 	 * @since 2.0, 2.5
 	 */
 	@SafeVarargs
@@ -1039,9 +1056,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} that will never emit anything.
+	 * Create a {@link Stream} that will never signal any data, error or completion signal.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/never.png" alt="">
+	 * <p>
+	 * @param <T> the {@link Subscriber} type target
 	 *
-	 * @return a new {@link Stream}
+	 * @return a never completing {@link Stream}
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Stream<T> never() {
@@ -1163,25 +1184,39 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @see Flux#yield(Consumer)
-	 * @return a new {@link Stream}
+	 * Create a {@link Stream} reacting on subscribe with the passed {@link Consumer}. The argument {@code
+	 * sessionConsumer} is executed once by new subscriber to generate a {@link SignalEmitter} context ready to accept
+	 * signals.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/yield.png" alt="">
+	 * <p>
+	 * @param sessionConsumer A {@link Consumer} called once everytime a subscriber subscribes
+	 * @param <T> The type of the data sequence
+	 *
+	 * @return a fresh Reactive {@link Stream} publisher ready to be subscribed
 	 */
 	public static <T> Stream<T> yield(Consumer<? super SignalEmitter<T>> sessionConsumer) {
 		return from(Flux.yield(sessionConsumer));
 	}
 
 	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * produced by the passed combinator function of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zip.png" alt="">
+	 * <p>
 	 *
-	 * @param source1    The first upstream {@link Publisher} to subscribe to.
-	 * @param source2    The second upstream {@link Publisher} to subscribe to.
+	 * @param source1 The first upstream {@link Publisher} to subscribe to.
+	 * @param source2 The second upstream {@link Publisher} to subscribe to.
 	 * @param combinator The aggregate function that will receive a unique value from each upstream and return the
-	 *                   value to signal downstream
-	 * @param <T1>       type of the value from source1
-	 * @param <T2>       type of the value from source2
-	 * @param <V>        The produced output after transformation by {@param combinator}
-	 * @return a {@link Stream} based on the produced value
+	 * value to signal downstream
+	 * @param <T1> type of the value from source1
+	 * @param <T2> type of the value from source2
+	 * @param <V> The produced output after transformation by the combinator
+	 *
+	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.0
 	 */
 	public static <T1, T2, V> Stream<V> zip(Publisher<? extends T1> source1,
@@ -1191,15 +1226,18 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 * <p>
+	 * @param source1 The first upstream {@link Publisher} to subscribe to.
+	 * @param source2 The second upstream {@link Publisher} to subscribe to.
+	 * @param <T1> type of the value from source1
+	 * @param <T2> type of the value from source2
 	 *
-	 * @param source1    The first upstream {@link Publisher} to subscribe to.
-	 * @param source2    The second upstream {@link Publisher} to subscribe to.
-	 *                   value to signal downstream
-	 * @param <T1>       type of the value from source1
-	 * @param <T2>       type of the value from source2
-	 * @return a {@link Stream} based on the produced value
+	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.0
 	 */
 	@SuppressWarnings("unchecked")
@@ -1209,16 +1247,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 * <p>
+	 * @param source1 The first upstream {@link Publisher} to subscribe to.
+	 * @param source2 The second upstream {@link Publisher} to subscribe to.
+	 * @param source3 The third upstream {@link Publisher} to subscribe to.
+	 * @param <T1> type of the value from source1
+	 * @param <T2> type of the value from source2
+	 * @param <T3> type of the value from source3
 	 *
-	 * @param source1    The first upstream {@link Publisher} to subscribe to.
-	 * @param source2    The second upstream {@link Publisher} to subscribe to.
-	 * @param source3    The third upstream {@link Publisher} to subscribe to.
-	 * @param <T1>       type of the value from source1
-	 * @param <T2>       type of the value from source2
-	 * @param <T3>       type of the value from source3
-	 * @return a {@link Stream} based on the produced value
+	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
@@ -1229,18 +1271,22 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 * <p>
+	 * @param source1 The first upstream {@link Publisher} to subscribe to.
+	 * @param source2 The second upstream {@link Publisher} to subscribe to.
+	 * @param source3 The third upstream {@link Publisher} to subscribe to.
+	 * @param source4 The fourth upstream {@link Publisher} to subscribe to.
+	 * @param <T1> type of the value from source1
+	 * @param <T2> type of the value from source2
+	 * @param <T3> type of the value from source3
+	 * @param <T4> type of the value from source4
 	 *
-	 * @param source1    The first upstream {@link Publisher} to subscribe to.
-	 * @param source2    The second upstream {@link Publisher} to subscribe to.
-	 * @param source3    The third upstream {@link Publisher} to subscribe to.
-	 * @param source4    The fourth upstream {@link Publisher} to subscribe to.
-	 * @param <T1>       type of the value from source1
-	 * @param <T2>       type of the value from source2
-	 * @param <T3>       type of the value from source3
-	 * @param <T4>       type of the value from source4
-	 * @return a {@link Stream} based on the produced value
+	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
@@ -1252,19 +1298,23 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 * <p>
+	 * @param source1 The first upstream {@link Publisher} to subscribe to.
+	 * @param source2 The second upstream {@link Publisher} to subscribe to.
+	 * @param source3 The third upstream {@link Publisher} to subscribe to.
+	 * @param source4 The fourth upstream {@link Publisher} to subscribe to.
+	 * @param <T1> type of the value from source1
+	 * @param <T2> type of the value from source2
+	 * @param <T3> type of the value from source3
+	 * @param <T4> type of the value from source4
+	 * @param <T5> type of the value from source5
 	 *
-	 * @param source1    The first upstream {@link Publisher} to subscribe to.
-	 * @param source2    The second upstream {@link Publisher} to subscribe to.
-	 * @param source3    The third upstream {@link Publisher} to subscribe to.
-	 * @param source4    The fourth upstream {@link Publisher} to subscribe to.
-	 * @param <T1>       type of the value from source1
-	 * @param <T2>       type of the value from source2
-	 * @param <T3>       type of the value from source3
-	 * @param <T4>       type of the value from source4
-	 * @param <T5>       type of the value from source5
-	 * @return a {@link Stream} based on the produced value
+	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
@@ -1277,22 +1327,26 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 * <p>
+	 * @param source1 The first upstream {@link Publisher} to subscribe to.
+	 * @param source2 The second upstream {@link Publisher} to subscribe to.
+	 * @param source3 The third upstream {@link Publisher} to subscribe to.
+	 * @param source4 The fourth upstream {@link Publisher} to subscribe to.
+	 * @param source5 The fifth upstream {@link Publisher} to subscribe to.
+	 * @param source6 The sixth upstream {@link Publisher} to subscribe to.
+	 * @param <T1> type of the value from source1
+	 * @param <T2> type of the value from source2
+	 * @param <T3> type of the value from source3
+	 * @param <T4> type of the value from source4
+	 * @param <T5> type of the value from source5
+	 * @param <T6> type of the value from source6
 	 *
-	 * @param source1    The first upstream {@link Publisher} to subscribe to.
-	 * @param source2    The second upstream {@link Publisher} to subscribe to.
-	 * @param source3    The third upstream {@link Publisher} to subscribe to.
-	 * @param source4    The fourth upstream {@link Publisher} to subscribe to.
-	 * @param source5    The fifth upstream {@link Publisher} to subscribe to.
-	 * @param source6    The sixth upstream {@link Publisher} to subscribe to.
-	 * @param <T1>       type of the value from source1
-	 * @param <T2>       type of the value from source2
-	 * @param <T3>       type of the value from source3
-	 * @param <T4>       type of the value from source4
-	 * @param <T5>       type of the value from source5
-	 * @param <T6>       type of the value from source6
-	 * @return a {@link Stream} based on the produced value
+	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.5
 	 */
 	public static <T1, T2, T3, T4, T5, T6> Stream<Tuple6<T1, T2, T3, T4, T5, T6>> zip(Publisher<? extends T1> source1,
@@ -1305,9 +1359,11 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
-	 *
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 * <p>
 	 * @param source1    The first upstream {@link Publisher} to subscribe to.
 	 * @param source2    The second upstream {@link Publisher} to subscribe to.
 	 * @param source3    The third upstream {@link Publisher} to subscribe to.
@@ -1323,6 +1379,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T6>       type of the value from source6
 	 * @param <T7>       type of the value from source7
 	 * @return a {@link Stream} based on the produced value
+	 *
 	 * @since 2.5
 	 */
 	public static <T1, T2, T3, T4, T5, T6, T7> Stream<Tuple7<T1, T2, T3, T4, T5, T6, T7>> zip(
@@ -1339,9 +1396,11 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
-	 *
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 * <p>
 	 * @param source1    The first upstream {@link Publisher} to subscribe to.
 	 * @param source2    The second upstream {@link Publisher} to subscribe to.
 	 * @param source3    The third upstream {@link Publisher} to subscribe to.
@@ -1359,6 +1418,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T7>       type of the value from source7
 	 * @param <T8>       type of the value from source7
 	 * @return a {@link Stream} based on the produced value
+	 *
 	 * @since 2.5
 	 */
 	public static <T1, T2, T3, T4, T5, T6, T7, T8> Stream<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>> zip(
@@ -1376,15 +1436,23 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * produced by the passed combinator function of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
 	 *
-	 * @param sources    The list of upstream {@link Publisher} to subscribe to.
-	 * @param combinator The aggregate function that will receive a unique value from each upstream and return the
-	 *                   value to signal downstream
-	 * @param <V>        The produced output after transformation by {@param combinator}
+	 * The {@link Iterable#iterator()} will be called on each {@link Publisher#subscribe(Subscriber)}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zip.png" alt="">
+	 *
+	 * @param sources the {@link Iterable} to iterate on {@link Publisher#subscribe(Subscriber)}
+	 * @param combinator The aggregate function that will receive a unique value from each upstream and return the value
+	 * to signal downstream
+	 * @param <V> the combined produced type
 	 * @param <TUPLE>    The type of tuple to use that must match source Publishers type
-	 * @return a {@link Stream} based on the produced value
+	 *
+	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.0
 	 */
 	public static <TUPLE extends Tuple, V> Stream<V> zip(Iterable<? extends Publisher<?>> sources,
@@ -1399,12 +1467,18 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@literal Stream} whose data are generated by the passed publishers.
-
-	 *
-	 * @param sources    The list of upstream {@link Publisher} to subscribe to.
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * of the most recent items emitted by each source until any of them completes. Errors will immediately be
+	 * forwarded.
+	 * The {@link Iterable#iterator()} will be called on each {@link Publisher#subscribe(Subscriber)}.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 * <p>
+	 * @param sources the {@link Iterable} to iterate on {@link Publisher#subscribe(Subscriber)}
 	 * @param <TUPLE>    The type of tuple to use that must match source Publishers type
-	 * @return a {@link Stream} based on the produced value
+	 *
+	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
@@ -1421,6 +1495,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *                   value to signal downstream
 	 * @param <V>        The produced output after transformation by {@param combinator}
 	 * @return a {@link Stream} based on the produced value
+	 *
 	 * @since 2.0
 	 */
 	public static <TUPLE extends Tuple, V> Stream<V> zip(
@@ -1444,6 +1519,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param sources    The publisher of upstream {@link Publisher} to subscribe to.
 	 * @return a {@link Stream} based on the produced value
+	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
@@ -2268,7 +2344,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/dispatchon.png" alt="">
 	 * <p>
-	 * {@code flux.dispatchOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
+	 * {@code stream.dispatchOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param scheduler a checked factory for {@link Consumer} of {@link Runnable}
 	 *
@@ -2636,15 +2712,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Transform the items emitted by this {@link Flux} into Publishers, then flatten the emissions from those by
-	 * merging them into a single {@link Flux}, so that they may interleave.
+	 * Transform the items emitted by this {@link Stream} into Publishers, then flatten the emissions from those by
+	 * merging them into a single {@link Stream}, so that they may interleave.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/flatmap.png" alt="">
 	 * <p>
 	 * @param mapper the {@link Function} to transform input sequence into N sequences {@link Publisher}
 	 * @param <V> the merged output sequence type
 	 *
-	 * @return a new {@link Flux}
+	 * @return a new {@link Stream}
 	 */
 	public final <V> Stream<V> flatMap(final Function<? super O, ? extends Publisher<? extends V>> mapper) {
 		return StreamSource.wrap(Flux.flatMap(this,
@@ -2693,15 +2769,18 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Transform the signals emitted by this {@link Flux} into Publishers, then flatten the emissions from those by
-	 * merging them into a single {@link Flux}, so that they may interleave.
+	 * Transform the signals emitted by this {@link Stream} into Publishers, then flatten the emissions from those by
+	 * merging them into a single {@link Stream}, so that they may interleave.
+	 * OnError will be transformed into completion signal after its mapping callback has been applied.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/flatmaps.png" alt="">
+	 * <p>
+	 * @param mapperOnNext the {@link Function} to call on next data and returning a sequence to merge
+	 * @param mapperOnError the {@link Function} to call on error signal and returning a sequence to merge
+	 * @param mapperOnComplete the {@link Function} to call on complete signal and returning a sequence to merge
+	 * @param <R> the output {@link Publisher} type target
 	 *
-	 * @param mapperOnNext
-	 * @param mapperOnError
-	 * @param mapperOnComplete
-	 * @param <R>
-	 *
-	 * @return
+	 * @return a new {@link Stream}
 	 */
 	@SuppressWarnings("unchecked")
 	public final <R> Stream<R> flatMap(Function<? super O, ? extends Publisher<? extends R>> mapperOnNext,
@@ -3112,11 +3191,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @see {@link Flux#lift(Function)}
+	 * Create a {@link Stream} intercepting all source signals with the returned Subscriber that might choose to pass them
+	 * alone to the provided Subscriber (given to the returned {@code subscribe(Subscriber)}.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/lift.png" alt="">
+	 * <p>
+	 * @param lifter the function accepting the target {@link Subscriber} and returning the {@link Subscriber}
+	 * exposed this sequence
+	 * @param <V> the output operator type
+	 *
+	 * @return a new {@link Stream}
 	 * @since 2.5
 	 */
-	public <V> Stream<V> lift(final Function<Subscriber<? super V>, Subscriber<? super O>> operator) {
-		return new StreamSource.Operator<>(this, operator);
+	public <V> Stream<V> lift(final Function<Subscriber<? super V>, Subscriber<? super O>> lifter) {
+		return new StreamSource.Operator<>(this, lifter);
 	}
 
 	/**
@@ -3145,9 +3233,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a {@link reactor.core.util.Logger} to this {@code Stream} that will observe any signal emitted.
+	 * Observe all Reactive Streams signals and use {@link Logger} support to handle trace implementation. Default will
+	 * use {@link Level#INFO} and java.util.logging. If SLF4J is available, it will be used instead.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/log.png" alt="">
+	 * <p>
+	 * The default log category will be "reactor.core.publisher.FluxLog".
 	 *
-	 * @return {@literal new Stream}
+	 * @return a new unaltered {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -3156,11 +3249,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a {@link reactor.core.util.Logger} to this {@code Stream} that will observe any signal emitted.
+	 * Observe all Reactive Streams signals and use {@link Logger} support to handle trace implementation. Default will
+	 * use {@link Level#INFO} and java.util.logging. If SLF4J is available, it will be used instead.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/log.png" alt="">
+	 * <p>
+	 * @param category to be mapped into logger configuration (e.g. org.springframework.reactor).
 	 *
-	 * @param category The logger name
-	 *
-	 * @return {@literal new Stream}
+	 * @return a new unaltered {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -3183,13 +3279,22 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a {@link reactor.core.util.Logger} to this {@code Stream} that will observe any signal emitted.
+	 * Observe Reactive Streams signals matching the passed flags {@code options} and use {@link Logger} support to
+	 * handle trace
+	 * implementation. Default will
+	 * use the passed {@link Level} and java.util.logging. If SLF4J is available, it will be used instead.
 	 *
-	 * @param category The logger name
-	 * @param level The logger level
-	 * @param options the bitwise checked flags for observed signals
+	 * Options allow fine grained filtering of the traced signal, for instance to only capture onNext and onError:
+	 * <pre>
+	 *     stream.log("category", Level.INFO, Logger.ON_NEXT | LOGGER.ON_ERROR)
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/log.png" alt="">
+	 * <p>
+	 * @param category to be mapped into logger configuration (e.g. org.springframework.reactor).
+	 * @param level the level to enforce for this tracing Flux
+	 * @param options a flag option that can be mapped with {@link Logger#ON_NEXT} etc.
 	 *
-	 * @return {@literal new Stream}
+	 * @return a new unaltered {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -3198,19 +3303,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@code V} and pass it into
-	 * another {@code Stream}.
+	 * Transform the items emitted by this {@link Stream} by applying a function to each item.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/map.png" alt="">
+	 * <p>
+	 * @param mapper the transforming {@link Function}
+	 * @param <V> the transformed type
 	 *
-	 * @param fn the transformation function
-	 * @param <V> the type of the return value of the transformation function
-	 *
-	 * @return a new {@link Stream} containing the transformed values
+	 * @return a new {@link Stream}
 	 */
-	public final <V> Stream<V> map(final Function<? super O, ? extends V> fn) {
+	public final <V> Stream<V> map(final Function<? super O, ? extends V> mapper) {
 		if (this instanceof Fuseable) {
-			return new StreamMapFuseable<>(this, fn);
+			return new StreamMapFuseable<>(this, mapper);
 		}
-		return new StreamMap<>(this, fn);
+		return new StreamMap<>(this, mapper);
 	}
 
 	/**
@@ -3242,9 +3348,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Pass all the nested {@link Publisher} values from this current upstream and from the passed publisher.
+	 * Merge emissions of this {@link Stream} with the provided {@link Publisher}, so that they may interleave.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/merge.png" alt="">
+	 * <p>
+	 * @param other the {@link Publisher} to merge with
 	 *
-	 * @return the merged stream
+	 * @return a new {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -3328,9 +3438,11 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Return the promise of the next triggered signal. A promise is a container that will capture only once the first
-	 * arriving error|next|complete signal to this {@link Stream}. It is useful to coordinate on single data streams or
-	 * await for any signal.
+	 * Emit only the first item emitted by this {@link Stream}.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/next.png" alt="">
+	 * <p>
+	 * If the sequence emits more than 1 data, emit {@link ArrayIndexOutOfBoundsException}.
 	 *
 	 * @return a new {@link Mono}
 	 *
@@ -3459,10 +3571,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Subscribe to a returned fallback publisher when any error occurs.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onerrorresumewith.png" alt="">
+	 * <p>
+	 * @param fallback the {@link Function} mapping the error to a new {@link Publisher} sequence
 	 *
-	 * @param fallback the error handler for each error
-	 *
-	 * @return {@literal new Stream}
+	 * @return a new {@link Stream}
 	 */
 	public final Stream<O> onErrorResumeWith(final Function<Throwable, ? extends Publisher<? extends O>> fallback) {
 		return StreamSource.wrap(Flux.onErrorResumeWith(this, fallback));
@@ -3541,12 +3655,24 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamPublish<>(this, prefetch, QueueSupplier.<O>get(prefetch));
 	}
 	/**
-	 * @see Flux#publishOn
+	 * Run subscribe, onSubscribe and request on a supplied
+	 * {@link Consumer} {@link Runnable} factory like {@link SchedulerGroup}.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/publishon.png" alt="">
+	 * <p>
+	 * <p>
+	 * Typically used for slow publisher e.g., blocking IO, fast consumer(s) scenarios.
+	 * It naturally combines with {@link SchedulerGroup#io} which implements work-queue thread dispatching.
 	 *
-	 * @return a new dispatched {@link Stream}
+	 * <p>
+	 * {@code stream.publishOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
+	 *
+	 * @param schedulerFactory a checked factory for {@link Consumer} of {@link Runnable}
+	 *
+	 * @return a {@link Stream} publishing asynchronously
 	 */
-	public final Stream<O> publishOn(final Callable<? extends Consumer<Runnable>> scheduler) {
-		return StreamSource.wrap(Flux.publishOn(this, scheduler));
+	public final Stream<O> publishOn(final Callable<? extends Consumer<Runnable>> schedulerFactory) {
+		return StreamSource.wrap(Flux.publishOn(this, schedulerFactory));
 	}
 
 	/**
@@ -4038,6 +4164,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Start the chain and request unbounded demand.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/unbounded.png" alt="">
+	 * <p>
+	 *
+	 * @return a {@link Runnable} task to execute to dispose and cancel the underlying {@link Subscription}
 	 */
 	public final Runnable subscribe() {
 		ConsumerSubscriber<O> s = new ConsumerSubscriber<>();
@@ -4047,12 +4179,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 *
+	 * A chaining {@link Publisher#subscribe(Subscriber)} alternative to inline composition type conversion to a hot
+	 * emitter (e.g. reactor FluxProcessor Broadcaster and Promise or rxjava Subject).
+	 *
 	 * {@code stream.subscribeWith(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
 	 *
-	 * @param subscriber
-	 * @param <E>
+	 * @param subscriber the {@link Subscriber} to subscribe and return
+	 * @param <E> the reified type from the input/output subscriber
 	 *
-	 * @return this subscriber
+	 * @return the passed {@link Subscriber}
 	 */
 	public final <E extends Subscriber<? super O>> E subscribeWith(E subscriber) {
 		subscribe(subscriber);
@@ -4060,11 +4195,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create an operation that returns the passed sequence if the Stream has completed without any emitted signals.
+	 * Provide an alternative if this sequence is completed without any data
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/switchifempty.png" alt="">
+	 * <p>
+	 * @param alternate the alternate publisher if this sequence is empty
 	 *
-	 * @param fallback an alternate stream if empty
-	 *
-	 * @return {@literal new Stream}
+	 * @return a new {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -4089,11 +4226,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Subscribe to a fallback publisher when any error occurs.
+	 * Subscribe to the given fallback {@link Publisher} if an error is observed on this {@link Stream}
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/switchonerror.png" alt="">
+	 * <p>
 	 *
-	 * @param fallback the error handler for each error
+	 * @param fallback the alternate {@link Publisher}
 	 *
-	 * @return {@literal new Stream}
+	 * @return a new {@link Stream}
 	 */
 	public final Stream<O> switchOnError(final Publisher<? extends O> fallback) {
 		return StreamSource.wrap(Flux.onErrorResumeWith(this, new Function<Throwable, Publisher<? extends O>>() {
@@ -4422,27 +4562,39 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Transform this {@link Stream} into a lazy {@link Iterable} blocking on next calls.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/toiterable.png" alt="">
+	 * <p>
 	 *
-	 * @return
+	 * @return a blocking {@link Iterable}
 	 */
 	public final Iterable<O> toIterable() {
 		return toIterable(getCapacity());
 	}
 
 	/**
+	 * Transform this {@link Stream} into a lazy {@link Iterable} blocking on next calls.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/toiterablen.png" alt="">
+	 * <p>
 	 *
-	 * @return
+	 * @return a blocking {@link Iterable}
 	 */
 	public final Iterable<O> toIterable(long batchSize) {
 		return toIterable(batchSize, null);
 	}
 
 	/**
+	 * Transform this {@link Stream} into a lazy {@link Iterable} blocking on next calls.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/toiterablen.png" alt="">
+	 * <p>
 	 *
-	 * @return
+	 * @return a blocking {@link Iterable}
 	 */
 	public final Iterable<O> toIterable(final long batchSize, Supplier<Queue<O>> queueProvider) {
 		final Supplier<Queue<O>> provider;
@@ -4800,29 +4952,43 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Pass with the passed {@link Publisher} values to a new {@link Stream} until one of them complete. The result will
-	 * be produced by the zipper transformation from a tuple of each upstream most recent emitted data.
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * produced by the passed combinator from the most recent items emitted by each source until any of them
+	 * completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zip.png" alt="">
+	 * <p>
+	 * @param source2 The second upstream {@link Publisher} to subscribe to.
+	 * @param combinator The aggregate function that will receive a unique value from each upstream and return the value
+	 * to signal downstream
+	 * @param <T2> type of the value from source2
+	 * @param <V> The produced output after transformation by the combinator
 	 *
-	 * @return the zipped stream
+	 * @return a zipped {@link Stream}
 	 *
 	 * @since 2.0
 	 */
-	public final <T2, V> Stream<V> zipWith(final Publisher<? extends T2> publisher,
-			final BiFunction<? super O, ? super T2, ? extends V> zipper) {
-		return StreamSource.wrap(Flux.zip(this, publisher, zipper));
+	public final <T2, V> Stream<V> zipWith(final Publisher<? extends T2> source2,
+			final BiFunction<? super O, ? super T2, ? extends V> combinator) {
+		return StreamSource.wrap(Flux.zip(this, source2, combinator));
 	}
 
 	/**
-	 * Pass with the passed {@link Publisher} values to a new {@link Stream} until one of them complete. The result will
-	 * be produced by the zipper transformation from a tuple of each upstream most recent emitted data.
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipt.png" alt="">
+	 * <p>
+	 * @param source2 The second upstream {@link Publisher} to subscribe to.
+	 * @param <T2> type of the value from source2
 	 *
-	 * @return the zipped stream
+	 * @return a zipped {@link Stream}
 	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
-	public final <T2> Stream<Tuple2<O, T2>> zipWith(final Publisher<? extends T2> publisher) {
-		return StreamSource.wrap(Flux.<O, T2, Tuple2<O, T2>>zip(this, publisher, TUPLE2_BIFUNCTION));
+	public final <T2> Stream<Tuple2<O, T2>> zipWith(final Publisher<? extends T2> source2) {
+		return StreamSource.wrap(Flux.<O, T2, Tuple2<O, T2>>zip(this, source2, TUPLE2_BIFUNCTION));
 	}
 
 	/**
