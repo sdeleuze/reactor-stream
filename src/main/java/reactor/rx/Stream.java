@@ -1529,7 +1529,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Return a {@link Stream<V>} that emits the sequence of the supplied {@link Publisher} when this {@link Stream}
+	 * Return a {@link Stream} that emits the sequence of the supplied {@link Publisher} when this {@link Stream}
 	 * onComplete or onError.
 	 * If an error occur, append after the supplied {@link Publisher} is terminated.
 	 *
@@ -2168,7 +2168,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param consumer the consumer to invoke on each value
 	 *
-	 * @return a new {@link InterruptableSubscriber} to dispose the {@link Subscription}
+	 * @return a new {@link ManualSubscriber} to request and dispose the {@link Subscription}
 	 */
 	public final  ManualSubscriber<O> consumeLater(final Consumer<? super O> consumer) {
 		return consumeLater(consumer, null, null);
@@ -2186,7 +2186,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param consumer the consumer to invoke on each next signal
 	 * @param errorConsumer the consumer to invoke on each error signal
 	 *
-	 * @return a new {@link InterruptableSubscriber} to dispose the {@link Subscription}
+	 * @return a new {@link ManualSubscriber} to request and dispose the {@link Subscription}
 	 */
 	public final  ManualSubscriber<O> consumeLater(final Consumer<? super O> consumer,
 			Consumer<? super Throwable> errorConsumer) {
@@ -2205,7 +2205,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param errorConsumer the consumer to invoke on each error signal
 	 * @param completeConsumer the consumer to invoke on complete signal
 	 *
-	 * @return a new {@link InterruptableSubscriber} to dispose the {@link Subscription}
+	 * @return a new {@link ManualSubscriber} to request and dispose the {@link Subscription}
 	 */
 	public final  ManualSubscriber<O> consumeLater(final Consumer<? super O> consumer,
 			Consumer<? super Throwable> errorConsumer,
@@ -2214,16 +2214,22 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a {@link Consumer} to this {@link Stream} that will consume any values accepted by this {@link Stream}. As
-	 * such this a terminal action to be placed on a stream flow. It will also eagerly prefetch upstream publisher. <p>
-	 * The passed {code requestMapper} function will receive the {@link Stream} of the last N requested elements
-	 * -starting with the capacity defined for the stream- when the N elements have been consumed. It will return a
-	 * {@link Publisher} of long signals S that will instruct the consumer to request S more elements. <p> For a passive
-	 * version that observe and forward incoming data see {@link #doOnNext(reactor.fn.Consumer)}
+	 *
+	 * Subscribe a {@link Consumer} to this {@link Stream} that will wait for the returned {@link Publisher} to emit
+	 * a {@link Long} demand. The demand {@link Function} factory will be given a {@link Stream} of requests starting
+	 * with {@literal 0} then emitting the N - 1 request. The request sequence can be composed and deferred to
+	 * produce a throttling effect.
+	 * <ul>
+	 * <li>If this {@link Stream} terminates, the request sequence will be terminated too.</li>
+	 * <li>If the request {@link Publisher} terminates, the consuming {@link Subscription} will be cancelled.</li>
+	 * </ul>
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consumewhen.png" alt="">
+	 *
 	 *
 	 * @param consumer the consumer to invoke on each value
 	 *
-	 * @return a new {@link InterruptableSubscriber} interface to operate on the materialized upstream
+	 * @return a new {@link InterruptableSubscriber} to dispose the {@link Subscription}
 	 */
 	@SuppressWarnings("unchecked")
 	public final InterruptableSubscriber<O> consumeWhen(final Consumer<? super O> consumer,
@@ -2238,17 +2244,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a {@link Consumer} to this {@link Stream} that will consume any values accepted by this {@link Stream}. As
-	 * such this a terminal action to be placed on a stream flow. It will also eagerly prefetch upstream publisher. <p>
-	 * The passed {code requestMapper} function will receive the {@link Stream} of the last N requested elements
-	 * -starting with the capacity defined for the stream- when the N elements have been consumed. It will return a
-	 * {@link Publisher} of long signals S that will instruct the consumer to request S more elements, possibly altering
-	 * the "batch" size if wished. <p> For a passive version that observe and forward incoming data see {@link
-	 * #doOnNext(reactor.fn.Consumer)}
+	 * Subscribe a {@link Consumer} to this {@link Stream} that will wait for the returned {@link Function} to produce
+	 * a {@link Long} demand. The {@link Function} will be given an input request starting
+	 * with {@literal 0} then the N - 1 produced request. This can be used to audo-adapt a request volume to some
+	 * latency condition.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consumewhenrequest.png" alt="">
 	 *
 	 * @param consumer the consumer to invoke on each value
 	 *
-	 * @return a new {@link InterruptableSubscriber} interface to operate on the materialized upstream
+	 * @return a new {@link InterruptableSubscriber} to dispose the {@link Subscription}
 	 */
 	public final InterruptableSubscriber<O> consumeWithRequest(final Consumer<? super O> consumer,
 			final Function<Long, ? extends Long> requestMapper) {
@@ -2261,7 +2267,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Count accepted events for each batch and pass each accumulated long to the {@param stream}.
+	 * Counts the number of values in this {@link Stream}.
+	 * The count will be emitted when onComplete is observed.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/count.png" alt="">
+	 *
+	 * @return a new {@link Mono} of {@link Long} count
 	 */
 	public final Mono<Long> count() {
 		return new MonoCount<>(this);
@@ -2326,8 +2338,11 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Delays the subscription to the main source until another Publisher
+	 * signals a value or completes.
+	 *
 	 * @param subscriptionDelay
-	 * @param <U>
+	 * @param <U> the other source type
 	 *
 	 * @return
 	 *
