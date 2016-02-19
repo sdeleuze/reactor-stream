@@ -838,20 +838,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new timed {@link Stream}
 	 */
 	public static Stream<Long> interval(long period) {
-		return interval(Timer.globalOrNew(), -1L, period, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@link Stream} that will emit ever increasing counter from 0 after on each period from the subscribe
-	 * call.
-	 * It will never complete until cancelled.
-	 *
-	 * @param timer  the timer to run on
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> interval(Timer timer, long period) {
-		return interval(timer, -1L, period, TimeUnit.SECONDS);
+		return interval(-1L, period, TimeUnit.SECONDS, Timer.globalOrNew());
 	}
 
 	/**
@@ -863,20 +850,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Long> interval(long delay, long period) {
-		return interval(Timer.globalOrNew(), delay, period, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Build a {@link Stream} that will emit ever increasing counter from 0 after the time delay on each period.
-	 * It will never complete until cancelled.
-	 *
-	 * @param timer  the timer to run on
-	 * @param delay  the timespan in SECONDS to wait before emitting 0l
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Stream}
-	 */
-	public static Stream<Long> interval(Timer timer, long delay, long period) {
-		return interval(timer, delay, period, TimeUnit.SECONDS);
+		return interval(delay, period, TimeUnit.SECONDS, Timer.globalOrNew());
 	}
 
 	/**
@@ -892,20 +866,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new timed {@link Stream}
 	 */
 	public static Stream<Long> interval(long period, TimeUnit unit) {
-		return interval(Timer.globalOrNew(), -1L, period, unit);
+		return interval(-1L, period, unit, Timer.globalOrNew());
 	}
 
 	/**
 	 * Build a {@link Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
 	 * It will never complete until cancelled.
 	 *
-	 * @param timer  the timer to run on
 	 * @param period the period in [unit] before each following increment
 	 * @param unit   the time unit
+	 * @param timer  the timer to run on
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> interval(Timer timer, long period, TimeUnit unit) {
-		return interval(timer, -1L, period, unit);
+	public static Stream<Long> interval(long period, TimeUnit unit, Timer timer) {
+		return interval(-1L, period, unit, timer);
 	}
 
 	/**
@@ -918,20 +892,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream}
 	 */
 	public static Stream<Long> interval(long delay, long period, TimeUnit unit) {
-		return interval(Timer.globalOrNew(), delay, period, unit);
+		return interval(delay, period, unit, Timer.globalOrNew());
 	}
 
 	/**
 	 * Build a {@link Stream} that will emit ever increasing counter from 0 after the time delay on each period.
 	 * It will never complete until cancelled.
 	 *
-	 * @param timer  the timer to run on
 	 * @param delay  the timespan in [unit] to wait before emitting 0l
 	 * @param period the period in [unit] before each following increment
 	 * @param unit   the time unit
+	 * @param timer  the timer to run on
 	 * @return a new {@link Stream}
 	 */
-	public static Stream<Long> interval(Timer timer, long delay, long period, TimeUnit unit) {
+	public static Stream<Long> interval(long delay, long period, TimeUnit unit, Timer timer) {
 		return new StreamInterval(TimeUnit.MILLISECONDS.convert(delay, unit), period, unit, timer);
 	}
 
@@ -1752,7 +1726,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a new {@link Stream} of {@link List} delimited by the given period
 	 */
 	public final Stream<List<O>> buffer(long timespan, TimeUnit unit, Timer timer) {
-		return buffer(interval(timer, timespan, unit));
+		return buffer(interval(timespan, unit, timer));
 	}
 
 	/**
@@ -1816,7 +1790,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		if (timespan == timeshift) {
 			return buffer(timespan, unit, timer);
 		}
-		return buffer(interval(timer, 0L, timeshift, unit), new Function<Long, Publisher<Long>>() {
+		return buffer(interval(0L, timeshift, unit, timer), new Function<Long, Publisher<Long>>() {
 			@Override
 			public Publisher<Long> apply(Long aLong) {
 				return Mono.delay(timespan, unit, timer);
@@ -4871,7 +4845,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<Stream<O>> window(long timespan, TimeUnit unit) {
 		Timer t = getTimer();
 		if(t == null) t = Timer.global();
-		return window(interval(t, timespan, unit));
+		return window(interval(timespan, unit, t));
 	}
 
 	/**
@@ -4910,7 +4884,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		if(t == null) t = Timer.global();
 		final Timer timer = t;
 
-		return window(interval(timer, 0L, timeshift, unit), new Function<Long, Publisher<Long>>() {
+		return window(interval(0L, timeshift, unit, timer), new Function<Long, Publisher<Long>>() {
 			@Override
 			public Publisher<Long> apply(Long aLong) {
 				return Mono.delay(timespan, unit, timer);
