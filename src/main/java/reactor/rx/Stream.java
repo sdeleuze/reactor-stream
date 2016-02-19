@@ -659,6 +659,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <C> The type of contextual information to be read by the requestConsumer
 	 *
 	 * @return a fresh Reactive {@link Stream} publisher ready to be subscribed
+	 *
 	 * @since 2.0.2
 	 */
 	public static <T, C> Stream<T> generate(BiConsumer<Long, SubscriberWithContext<T, C>> requestConsumer,
@@ -1215,6 +1216,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <V> The produced output after transformation by the combinator
 	 *
 	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.0
 	 */
 	public static <T1, T2, V> Stream<V> zip(Publisher<? extends T1> source1,
@@ -1235,6 +1237,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T2> type of the value from source2
 	 *
 	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.0
 	 */
 	@SuppressWarnings("unchecked")
@@ -1257,6 +1260,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T3> type of the value from source3
 	 *
 	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
@@ -1282,6 +1286,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T4> type of the value from source4
 	 *
 	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
@@ -1309,6 +1314,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T5> type of the value from source5
 	 *
 	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
@@ -1340,6 +1346,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T6> type of the value from source6
 	 *
 	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.5
 	 */
 	public static <T1, T2, T3, T4, T5, T6> Stream<Tuple6<T1, T2, T3, T4, T5, T6>> zip(Publisher<? extends T1> source1,
@@ -1372,6 +1379,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T6>       type of the value from source6
 	 * @param <T7>       type of the value from source7
 	 * @return a {@link Stream} based on the produced value
+	 *
 	 * @since 2.5
 	 */
 	public static <T1, T2, T3, T4, T5, T6, T7> Stream<Tuple7<T1, T2, T3, T4, T5, T6, T7>> zip(
@@ -1410,6 +1418,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T7>       type of the value from source7
 	 * @param <T8>       type of the value from source7
 	 * @return a {@link Stream} based on the produced value
+	 *
 	 * @since 2.5
 	 */
 	public static <T1, T2, T3, T4, T5, T6, T7, T8> Stream<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>> zip(
@@ -1443,6 +1452,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <TUPLE>    The type of tuple to use that must match source Publishers type
 	 *
 	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.0
 	 */
 	public static <TUPLE extends Tuple, V> Stream<V> zip(Iterable<? extends Publisher<?>> sources,
@@ -1468,6 +1478,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <TUPLE>    The type of tuple to use that must match source Publishers type
 	 *
 	 * @return a zipped {@link Stream}
+	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
@@ -1484,6 +1495,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *                   value to signal downstream
 	 * @param <V>        The produced output after transformation by {@param combinator}
 	 * @return a {@link Stream} based on the produced value
+	 *
 	 * @since 2.0
 	 */
 	public static <TUPLE extends Tuple, V> Stream<V> zip(
@@ -1507,6 +1519,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param sources    The publisher of upstream {@link Publisher} to subscribe to.
 	 * @return a {@link Stream} based on the produced value
+	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
