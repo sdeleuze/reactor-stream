@@ -1647,25 +1647,33 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Collect incoming values into a {@link List} that will be pushed into the returned {@code Stream} every timespan.
+	 * Collect incoming values into multiple {@link List} that will be pushed into the returned {@link Stream} every
+	 * timespan.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespan.png" alt="">
 	 *
 	 * @param timespan the period in unit to use to release a buffered list
 	 * @param unit the time unit
 	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
+	 * @return a new {@link Stream} of {@link List} delimited by the given period
 	 */
 	public final Stream<List<O>> buffer(long timespan, TimeUnit unit) {
 		return buffer(timespan, unit, getTimer());
 	}
 
 	/**
-	 * Collect incoming values into a {@link List} that will be pushed into the returned {@code Stream} every timespan.
+	 * Collect incoming values into multiple {@link List} that will be pushed into the returned {@link Stream} every
+	 * timespan.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespan.png" alt="">
 	 *
 	 * @param timespan the period in unit to use to release a buffered list
 	 * @param unit the time unit
-	 * @param timer the Timer to run on
+	 * @param timer the {@link Timer} to schedule on
 	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
+	 * @return a new {@link Stream} of {@link List} delimited by the given period
 	 */
 	public final Stream<List<O>> buffer(long timespan, TimeUnit unit, Timer timer) {
 		return buffer(interval(timer, timespan, unit));
@@ -1674,6 +1682,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Collect incoming values into multiple {@link List} buckets created every {@code timeshift }that will be pushed
 	 * into the returned {@code Stream} every timespan. Complete signal will flush any remaining buckets.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimeshift.png" alt="">
+
 	 *
 	 * @param timespan the period in unit to use to release buffered lists
 	 * @param timeshift the period in unit to use to create a new bucket
