@@ -2463,9 +2463,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that filters out consecutive equals values.
+	 * Filters out subsequent and repeated elements.
 	 *
-	 * @return a new {@link Stream} whose values are the last value of each batch
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/distinctuntilchanged.png" alt="">
+
+	 *
+	 * @return a new {@link Stream} with conflated repeated elementsuntilchanged
 	 *
 	 * @since 2.0
 	 */
@@ -2475,11 +2479,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that filters out consecutive values having equal keys computed by function
+	 * Filters out subsequent and repeated elements provided a matching extracted key.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/distinctuntilchangedk.png" alt="">
+
 	 *
 	 * @param keySelector function to compute comparison key for each element
 	 *
-	 * @return a new {@link Stream} whose values are the last value of each batch
+	 * @return a new {@link Stream} with conflated repeated elements given a comparison key
 	 *
 	 * @since 2.0
 	 */
@@ -2552,8 +2560,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign an error handler to exceptions of the given type. Will not stop error propagation, use doOnError(class,
-	 * publisher), retry, ignoreError or recover to actively deal with the error
+	 * Triggered when the {@link Stream} completes with an error matching the given exception type.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/doonerrorw.png" alt="">
 	 *
 	 * @param exceptionType the type of exceptions to handle
 	 * @param onError the error handler for each error
@@ -2633,15 +2642,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign an error handler that will pass eventual associated values and exceptions of the given type. Will not stop
-	 * error propagation, use doOnError(class, publisher), retry, ignoreError or recover to actively deal with the
-	 * error.
+	 * Triggered when the {@link Stream} completes with an error matching the given exception type.
+	 * Provide a non null second argument to the {@link BiConsumer} if the captured {@link Exception} wraps a final
+	 * cause value.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/doonerrorv.png" alt="">
 	 *
 	 * @param exceptionType the type of exceptions to handle
 	 * @param onError the error handler for each error
 	 * @param <E> type of the error to handle
 	 *
-	 * @return {@link Stream}
+	 * @return a new unaltered {@link Stream}
 	 */
 	public final <E extends Throwable> Stream<O> doOnValueError(final Class<E> exceptionType,
 			final BiConsumer<Object, ? super E> onError) {
@@ -2649,6 +2660,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		Objects.requireNonNull(onError, "Error callback must be provided");
 		return doOnError(new Consumer<Throwable>() {
 			@Override
+			@SuppressWarnings("unchecked")
 			public void accept(Throwable cause) {
 				if (exceptionType.isAssignableFrom(cause.getClass())) {
 					onError.accept(Exceptions.getFinalValueCause(cause), (E) cause);
