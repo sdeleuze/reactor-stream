@@ -2158,13 +2158,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Subscribe a {@link Consumer} to this {@link Stream} that will wait for interaction to start consuming the
-	 * sequence.
-	 * <p>
-	 * For a passive version that observe and forward incoming data see {@link #doOnNext(reactor.fn.Consumer)}
+	 * Subscribe
+	 * {@link Consumer} to this {@link Stream} that will wait for interaction via {@link ManualSubscriber#request} to
+	 * start consuming the sequence.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consume.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consumelater.png" alt="">
 	 *
 	 * @param consumer the consumer to invoke on each value
 	 *
@@ -2175,14 +2174,18 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach 2 {@link Consumer} to this {@link Stream} that will consume any values signaled by this {@link Stream}. As
-	 * such this a terminal action to be placed on a stream flow. Any Error signal will be consumed by the error
-	 * consumer. It will also eagerly prefetch upstream publisher. <p>
+	 * Subscribe a
+	 * {@link Consumer} to this {@link Stream} that will wait for interaction via {@link ManualSubscriber#request} to
+	 * start consuming the sequence.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consumelatererror.png" alt="">
+	 *
 	 *
 	 * @param consumer the consumer to invoke on each next signal
 	 * @param errorConsumer the consumer to invoke on each error signal
 	 *
-	 * @return a new {@link InterruptableSubscriber} interface to operate on the materialized upstream
+	 * @return a new {@link InterruptableSubscriber} to dispose the {@link Subscription}
 	 */
 	public final  ManualSubscriber<O> consumeLater(final Consumer<? super O> consumer,
 			Consumer<? super Throwable> errorConsumer) {
@@ -2190,23 +2193,23 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach 3 {@link Consumer} to this {@link Stream} that will consume any values signaled by this {@link Stream}. As
-	 * such this a terminal action to be placed on a stream flow. Any Error signal will be consumed by the error
-	 * consumer. The Complete signal will be consumed by the complete consumer. Only error and complete signal will be
-	 * signaled downstream. It will also eagerly prefetch upstream publisher. <p>
+	 * Subscribe
+	 * {@link Consumer} to this {@link Stream} that will wait for interaction via {@link ManualSubscriber#request} to
+	 * start consuming the sequence.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consumelatercomplete.png" alt="">
 	 *
 	 * @param consumer the consumer to invoke on each value
 	 * @param errorConsumer the consumer to invoke on each error signal
 	 * @param completeConsumer the consumer to invoke on complete signal
 	 *
-	 * @return {@literal new Stream}
+	 * @return a new {@link InterruptableSubscriber} to dispose the {@link Subscription}
 	 */
 	public final  ManualSubscriber<O> consumeLater(final Consumer<? super O> consumer,
 			Consumer<? super Throwable> errorConsumer,
 			Runnable completeConsumer) {
-		ManualSubscriber<O> consumerAction = InterruptableSubscriber.bindLater(this, consumer,
-				errorConsumer, completeConsumer);
-		return consumerAction;
+		return InterruptableSubscriber.bindLater(this, consumer, errorConsumer, completeConsumer);
 	}
 
 	/**
@@ -4166,9 +4169,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Defer a Controls operations ready to be requested.
+	 * Subscribe
+	 * {@link Consumer} to this {@link Stream} that will wait for interaction via {@link ManualSubscriber#request} to
+	 * start consuming the sequence.
 	 *
-	 * @return the consuming action
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/subscribelater.png" alt="">
+	 *
+	 * @return a new {@link ManualSubscriber} to request and dispose the {@link Subscription}
 	 */
 	public ManualSubscriber<O> subscribeLater() {
 		return consumeLater(null);
