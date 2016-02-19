@@ -1944,13 +1944,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Cache last {@link PlatformDependent#SMALL_BUFFER_SIZE} signal to this {@code Stream} and release them on request that
-	 * will observe any values accepted by this {@code Stream}.
+	 * Turn this {@link Stream} into a hot source and cache last emitted signals for further {@link Subscriber}.
+	 * Will retain up to {@link PlatformDependent#SMALL_BUFFER_SIZE} onNext signals. Completion and Error will also be
+	 * replayed.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/cache.png" alt="">
 	 *
-	 * @return {@literal new Stream}
+	 * @return a new cachable {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -1959,22 +1960,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Cache all signal to this {@code Stream} and release them on request that will observe any values accepted by this
-	 * {@code Stream}.
+	 * Turn this {@link Stream} into a hot source and cache last emitted signals for further {@link Subscriber}.
+	 * Will retain up to the given history size onNext signals. Completion and Error will also be
+	 * replayed.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/cache.png" alt="">
 	 *
-	 * @param last number of events retained in history
+	 * @param history number of events retained in history excluding complete and error
 	 *
-	 * @return {@literal new Stream}
+	 * @return a new cachable {@link Stream}
 	 *
 	 * @since 2.5
 	 */
-	public final Stream<O> cache(int last) {
-		Processor<O, O> emitter = EmitterProcessor.replay(last);
-		subscribe(emitter);
-		return new StreamProcessor<>(emitter, emitter);
+	public final Stream<O> cache(int history) {
+		return multicast(EmitterProcessor.replay(history)).autoConnect();
 	}
 
 	/**
