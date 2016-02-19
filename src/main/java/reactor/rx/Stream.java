@@ -1753,11 +1753,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Collect incoming values into a {@link List} that will be pushed into the returned {@code Stream} every timespan
 	 * OR maxSize items.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespansize.png" alt="">
+
+	 *
 	 * @param maxSize the max collected size
-	 * @param timespan the period in unit to use to release a buffered list
+	 * @param timespan the timeout in unit to use to release a buffered list
 	 * @param unit the time unit
 	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
+	 * @return a new {@link Stream} of {@link List} delimited by given size or a given period timeout
 	 */
 	public final Stream<List<O>> buffer(int maxSize, long timespan, TimeUnit unit) {
 		return buffer(maxSize, timespan, unit, getTimer());
@@ -1767,12 +1771,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Collect incoming values into a {@link List} that will be pushed into the returned {@code Stream} every timespan
 	 * OR maxSize items
 	 *
-	 * @param maxSize the max collected size
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
-	 * @param timer the Timer to run on
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespansize.png" alt="">
+
 	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
+	 * @param maxSize the max collected size
+	 * @param timespan the timeout in unit to use to release a buffered list
+	 * @param unit the time unit
+	 * @param timer the {@link Timer} to run on
+	 *
+	 * @return a new {@link Stream} of {@link List} delimited by given size or a given period timeout
 	 */
 	public final Stream<List<O>> buffer(final int maxSize,
 			final long timespan,
