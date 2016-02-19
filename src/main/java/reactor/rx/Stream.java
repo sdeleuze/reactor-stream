@@ -2292,7 +2292,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Provide a default unique value if this sequence is completed without any data
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/defaultifempty.png" alt="">
-	 * <p>
+	 *
 	 * @param defaultV the alternate value if this sequence is empty
 	 *
 	 * @return a new {@link Stream}
@@ -2302,9 +2302,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @param seconds
+	 * Delays the {@link Stream#subscribe(Subscriber) subscription} to this {@link Stream} source until a period
+	 * given a number of seconds elapses.
 	 *
-	 * @return
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delaysubscription.png" alt="">
+	 *
+	 * @param seconds period to delay {@link #subscribe(Subscriber)} call
+	 *
+	 * @return a delayed {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -2313,10 +2319,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @param delay
-	 * @param unit
+	 * Delays the {@link Stream#subscribe(Subscriber) subscription} to this {@link Stream} source until the given
+	 * period elapses.
 	 *
-	 * @return
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delaysubscription.png" alt="">
+	 *
+	 * @param delay period in given unit before subscribing this {@link Stream}
+	 * @param unit unit of time
+	 *
+	 * @return a delayed {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -2325,11 +2337,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @param delay
-	 * @param unit
-	 * @param timer
+	 * Delays the {@link Stream#subscribe(Subscriber) subscription} to this {@link Stream} source until a period
+	 * given a number of seconds elapses.
 	 *
-	 * @return
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delaysubscription.png" alt="">
+	 *
+	 * @param delay period in given unit before subscribing this {@link Stream}
+	 * @param unit unit of time
+	 * @param timer a {@link Timer} instance
+	 *
+	 * @return a delayed {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -2341,10 +2359,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Delays the subscription to the main source until another Publisher
 	 * signals a value or completes.
 	 *
-	 * @param subscriptionDelay
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delaysubscriptionp.png" alt="">
+	 *
+	 * @param subscriptionDelay a
+	 * {@link Publisher} to signal by next or complete this {@link Stream#subscribe(Subscriber}
 	 * @param <U> the other source type
 	 *
-	 * @return
+	 * @return a delayed {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -2388,9 +2410,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @see Flux#dispatchOn
+	 * Run onNext, onComplete and onError on a supplied {@link ExecutorService}.
 	 *
-	 * @return a new dispatched {@link Stream}
+	 * <p>
+	 * Typically used for fast publisher, slow consumer(s) scenarios.
+	 * It naturally combines with {@link SchedulerGroup#single} and {@link SchedulerGroup#async} which implement
+	 * fast async event loops.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/dispatchon.png" alt="">
+	 * <p>
+	 * {@code stream.dispatchOn(ForkJoinPool.commonPool()).subscribe(Subscribers.unbounded()) }
+	 *
+	 * @param scheduler a checked factory for {@link Consumer} of {@link Runnable}
+	 *
+	 * @return a {@link Stream} consuming asynchronously
 	 */
 	public final Stream<O> dispatchOn(final ExecutorService executorService) {
 		return dispatchOn(new ExecutorServiceScheduler(executorService));
