@@ -1612,24 +1612,37 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Collect incoming values into a {@link List} that will be moved into the returned {@code Stream} every time the
-	 * passed boundary publisher emits an item. Complete will flush any remaining items.
+	 * Collect incoming values into multiple {@link List} delimited by the given {@link Publisher} signals.
+	 * Each {@link List} bucket will last until the mapped {@link Publisher} receiving the boundary signal emits.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffercloseopen.png" alt="">
+	 * When Open signal is strictly not overlapping Close signal : dropping buffers
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/bufferopenclose.png" alt="">
+	 * <p>
+	 * When Open signal is strictly more frequent than Close signal : overlapping buffers
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/bufferopencloseover.png" alt="">
+	 * <p>
+	 * When Open signal is exactly coordinated with Close signal : exact buffers
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/bufferboundary.png" alt="">
 	 *
-	 * @param bucketOpening the publisher to subscribe to on start for creating new buffer on next or complete signals.
-	 * @param boundarySupplier the factory to provide a publisher to subscribe to when a buffer has been started
+	 * @param bucketOpening the {@link Publisher} to subscribe to for creating new receiving bucket
+	 * signals.
+	 * @param closeSupplier the {@link Supplier} to provide a {@link Publisher} to subscribe to for emitting relative
+	 * bucket.
 	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
+	 * @return a new
+	 * {@link Stream} of {@link List} delimited by an opening {@link Publisher} and a relative closing {@link Publisher}
 	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
 	public final <U, V> Stream<List<O>> buffer(final Publisher<U> bucketOpening,
-			final Function<? super U, ? extends Publisher<V>> boundarySupplier) {
+			final Function<? super U, ? extends Publisher<V>> closeSupplier) {
 
-		return new StreamBufferStartEnd<>(this, bucketOpening, boundarySupplier, LIST_SUPPLIER,
+		return new StreamBufferStartEnd<>(this, bucketOpening, closeSupplier, LIST_SUPPLIER,
 				QueueSupplier.<List<O>>xs());
 	}
 
