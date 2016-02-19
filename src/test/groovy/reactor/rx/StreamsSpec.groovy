@@ -539,7 +539,7 @@ class StreamsSpec extends Specification {
 			'a composable with a registered consumer of RuntimeExceptions'
 			Stream composable = Broadcaster.<Integer> create()
 			def errors = 0
-			def tail = composable.doOnError(RuntimeException) { errors++ }.consume()
+			def tail = composable.doOnError(RuntimeException) { errors++ }.subscribe()
 			println tail.debug()
 
 		when:
@@ -553,7 +553,7 @@ class StreamsSpec extends Specification {
 
 		when:
 			'A new error consumer is subscribed'
-		Stream.error(new RuntimeException()).doOnError(RuntimeException) { errors++ }.consume()
+		Stream.error(new RuntimeException()).doOnError(RuntimeException) { errors++ }.subscribe()
 
 		then:
 			'it is called since publisher is in error state'
@@ -1014,7 +1014,7 @@ class StreamsSpec extends Specification {
 			def source = Broadcaster.<Integer> create()
 			Stream mapped = source.map { if (it == 1) throw new RuntimeException() else 'na' }
 			def errors = 0
-			mapped.doOnError(Exception) { errors++ }.consume()
+			mapped.doOnError(Exception) { errors++ }.subscribe()
 
 		when:
 			'the source accepts a value'
@@ -1058,7 +1058,7 @@ class StreamsSpec extends Specification {
 			def source = Broadcaster.<Integer> create()
 			Stream filtered = source.filter { if (it == 1) throw new RuntimeException() else true }
 			def errors = 0
-			filtered.doOnError(Exception) { errors++ }.consume()
+			filtered.doOnError(Exception) { errors++ }.subscribe()
 
 		when:
 			'the source accepts a value'
@@ -2698,7 +2698,7 @@ class StreamsSpec extends Specification {
 			'using repeat() to ignore complete and resubscribe'
 			stream = Broadcaster.create()
 			i = 0
-			stream.take(3).log().repeat().doOnNext { i++ }.consume()
+			stream.take(3).log().repeat().doOnNext { i++ }.subscribe()
 
 			stream.onNext('test')
 			stream.onNext('test2')

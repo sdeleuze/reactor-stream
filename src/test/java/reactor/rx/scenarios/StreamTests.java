@@ -998,7 +998,7 @@ public class StreamTests extends AbstractReactorTest {
 		      .log("result")
 		      .map(s -> System.out.printf("After %8d samples π is approximated as %.5f", s.totalSamples, s.pi()))
 		      .take(10000)
-		      .consume();
+		      .subscribe();
 
 		System.in.read();
 	}
@@ -1130,7 +1130,7 @@ public class StreamTests extends AbstractReactorTest {
 			       return Stream.range(1, (int) numBatches)
 			                    .map(x -> batchSize);
 		       }))
-		      .consume();
+		      .subscribe();
 	}
 
 	@Test
@@ -1246,7 +1246,7 @@ public class StreamTests extends AbstractReactorTest {
 			       ref.set(obj);
 			       phaser.arrive();
 		       })
-		      .consume();
+		      .subscribe();
 
 		phaser.awaitAdvanceInterruptibly(phaser.arrive(), 1, TimeUnit.SECONDS);
 		Assert.assertNotNull(ref.get());
@@ -1281,7 +1281,7 @@ public class StreamTests extends AbstractReactorTest {
 			                      times.add(localTime + elapsedMillis);
 			                      barrier.arrive();
 		                      })
-		                                           .consume();
+		                                           .subscribe();
 
 		barrier.awaitAdvanceInterruptibly(barrier.arrive(), tasks * delayMS + 1000, TimeUnit.MILLISECONDS);
 		ctrl.cancel();

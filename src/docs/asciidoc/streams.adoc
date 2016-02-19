@@ -442,7 +442,7 @@ sink.onNext("Hello World!"); // <4>
 ----
 <1> Create a `Broadcaster` using the default, shared `RingBufferDispatcher` as the `Dispatcher`.
 <2> Transform the input using a commonly-found convention: the map() method.
-<3> `.consume()` is a "terminal" operation, which means it produces demand in Reactive Streams parlance.
+<3> `.subscribe()` is a "terminal" operation, which means it produces demand in Reactive Streams parlance.
 <4> Publish a value into the pipeline, which will cause the tasks to be invoked.
 
 [IMPORTANT]
@@ -862,7 +862,7 @@ h|Stream.toBlockingQueue()
 |Subscribe to the `Stream` and return an iterable blocking `Queue<T>` accumulating all `onNext` signals. `CompletableBlockingQueue.isTerminated()` can be used as a condition to exit a blocking `poll()` loop.
 
 h|Wiring up Synchronous Streams
-|It's not specific to any API, but if the current Stream is dispatched on a `SynchronousDispatcher`, it is actually blocking when a *terminal* action is starting, such as `consume()`.
+|It's not specific to any API, but if the current Stream is dispatched on a `SynchronousDispatcher`, it is actually blocking when a *terminal* action is starting, such as `subscribe()`.
 
 |===
 
@@ -885,7 +885,7 @@ Various `Stream` factories, the `Broadcaster`, the `Stream.dispatchOn`  and the 
 ** `request` and `cancel` will run on the dispatcher as well if in its context already. Otherwise, it will execute after the current dispatch ends.
 * The `Stream.publishOn` action will be executing *onSubscribe* only on the passed dispatcher.
 ** Since the only time the passed `Dispatcher` is called is *onSubscribe*, any dispatcher can be used including the concurrent ones such as `WorkQueueDispatcher`.
-** The first `request` might still execute in the *onSubscribe* thread, for instance, with `Stream.consume()` actions.
+** The first `request` might still execute in the *onSubscribe* thread, for instance, with `Stream.subscribe()` actions.
 * Attaching a `Processor` via `Stream.process` for instance can affect the thread too. The `Processor` such as `TopicProcessor` will run the `Subscribers` on its managed threads.
 ** `request` and `cancel` will run on the processor as well if in its context already.
 ** `WorkQueueProcessor` will only dispatch *onNext* signals to one `Subscriber` at most unless it has canceled in-flight (replay to a new Subscriber).
@@ -902,7 +902,7 @@ Stream
   .range(1, 100)
   .dispatchOn(Environment.SchedulerGroup.single()) // <2>
   .publishOn(SchedulerGroup.io()) // <1>
-  .consume(); // <3>
+  .subscribe(); // <3>
 ----
 <1> Assign an *onSubscribe* work queue dispatcher.
 <2> Assign a signal *onNext, onError, onComplete* dispatcher.
@@ -922,7 +922,7 @@ Stream
   .subscribeWith(TopicProcessor.create()) // <2>
   .publishOn(SchedulerGroup.io()) // <1>
   .capacity(1); // <3>
-  .consume(); // <4>
+  .subscribe(); // <4>
 ----
 <1> Assign an *onSubscribe* work queue dispatcher. Note that it is placed after process as the publishOn will run on the ringBuffer thread on subscriber and we want to alter it to the work dispatcher.
 <2> Assign an async signal *onNext, onError, onComplete* processor. Similar to `dispatchOn` behavior.
@@ -1164,17 +1164,17 @@ Stream.just(1,2,3,4,5)
   .buffer(3) // <1>
   //onOverflowBuffer()
   .capacity(2) // <2>
-  .consume()
+  .subscribe()
 
 
 Stream.just(1,2,3,4,5)
   .dispatchOn(dispatcher1) // <3>
   //onOverflowBuffer()
   .dispatchOn(dispatcher2) // <4>
-  .consume()
+  .subscribe()
 ----
 <1> The buffer operation set capacity(3)
-<2> consume() or any downstream action is set with capacity(2), an implicit onOverflowBuffer() is added
+<2> subscribe() or any downstream action is set with capacity(2), an implicit onOverflowBuffer() is added
 <3> A first action running on dispatcher1
 <4> A second action running on a different dispatcher2, an implicit onOverflowBuffer() is added
 
@@ -1965,7 +1965,7 @@ Stream
     )
     .dispatchOn(Environment.SchedulerGroup.single()) // <5>
     .log("join")
-    .consume();
+    .subscribe();
 ----
 <1> Create at most two streams (odd/even) keyed by 0 or 1 and forward the `onNext(T)` to the matching one.
 <2> Add one of the pooled dispatchers for the two emitted `Stream` by previous `GroupByAction`. Effectively this is scaling up a stream by using 2 partitions assigned with their own dispatcher. `FlatMap` will merge the result returned by both partitions, running on one of the two threads, but never concurrently.

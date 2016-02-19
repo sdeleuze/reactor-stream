@@ -50,7 +50,6 @@ import reactor.core.queue.QueueSupplier;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Introspectable;
 import reactor.core.subscriber.BlockingIterable;
-import reactor.core.subscriber.ConsumerSubscriber;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.subscriber.SubscriberWithContext;
 import reactor.core.timer.Timer;
@@ -2004,11 +2003,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Cast the current {@link Stream} flowing data type into a target class type.
+	 * Cast the current {@link Stream} produced type into a target produced type.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/cast.png" alt="">
 	 *
 	 * @param <E> the {@link Stream} output type
 	 *
-	 * @return the current {link Stream} instance casted
+	 * @return a casted {link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -2018,7 +2020,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Collect the stream sequence with the given collector with the supplied container
+	 * Collect the {@link Stream} sequence with the given collector and supplied container on subscribe.
+	 * The collected result will be emitted when this sequence completes.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/collect.png" alt="">
+
 	 *
 	 * @param <E> the {@link Stream} collected container type
 	 *
@@ -2031,15 +2038,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Like {@link #flatMap(Function)}, but concatenate emissions instead of merging (no interleave).
+	 * Bind dynamic sequences given this input sequence like {@link #flatMap(Function)}, but preserve
+	 * ordering and concatenate emissions instead of merging (no interleave).
+	 * Errors will immediately short circuit current concat backlog.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/concatmap.png" alt="">
 	 * <p>
-	 * @param mapper the function to transform this sequence of O into concated sequences of V
-	 * @param <V> the produced concated type
+	 * @param mapper the function to transform this sequence of O into concatenated sequences of V
+	 * @param <V> the produced concatenated type
 	 *
-	 * @return a new {@link Stream}
+	 * @return a new concatenated {@link Stream}
 	 */
 	public final <V> Stream<V> concatMap(final Function<? super O, Publisher<? extends V>> mapper) {
 		return new StreamConcatMap<>(this, mapper, QueueSupplier.<O>xs(), PlatformDependent.XS_BUFFER_SIZE,
@@ -2047,18 +2056,24 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@code Stream<O,V>} and pass
-	 * it into another {@code Stream}. The produced stream will emit the data from all transformed streams in order.
+	 * Bind dynamic sequences given this input sequence like {@link #flatMap(Function)}, but preserve
+	 * ordering and concatenate emissions instead of merging (no interleave).
 	 *
-	 * @param fn the transformation function
-	 * @param <V> the type of the return value of the transformation function
+	 * Errors will be delayed after the current concat backlog.
 	 *
-	 * @return a new {@link Stream} containing the transformed values
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/concatmap.png" alt="">
+	 * <p>
+	 *
+	 * @param mapper the function to transform this sequence of O into concatenated sequences of V
+	 * @param <V> the produced concatenated type
+	 *
+	 * @return a new concatenated {@link Stream}
 	 *
 	 * @since 2.5
 	 */
-	public final <V> Stream<V> concatMapDelayError(final Function<? super O, Publisher<? extends V>> fn) {
-		return new StreamConcatMap<>(this, fn, QueueSupplier.<O>xs(), PlatformDependent.XS_BUFFER_SIZE,
+	public final <V> Stream<V> concatMapDelayError(final Function<? super O, Publisher<? extends V>> mapper) {
+		return new StreamConcatMap<>(this, mapper, QueueSupplier.<O>xs(), PlatformDependent.XS_BUFFER_SIZE,
 				StreamConcatMap.ErrorMode.END);
 	}
 
@@ -2074,17 +2089,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	@SuppressWarnings("unchecked")
 	public final Stream<O> concatWith(final Publisher<? extends O> other) {
 		return new StreamConcatArray<>(this, other);
-	}
-
-	/**
-	 * Instruct the stream to request the produced subscription indefinitely. If the dispatcher is asynchronous
-	 * (RingBufferDispatcher for instance), it will proceed the request asynchronously as well.
-	 *
-	 * @return the consuming action
-	 */
-	@SuppressWarnings("unchecked")
-	public InterruptableSubscriber<O> consume() {
-		return consume(NOOP);
 	}
 
 	/**
@@ -4159,10 +4163,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/unbounded.png" alt="">
 	 * <p>
 	 *
-	 * @return a {@link Runnable} task to execute to dispose and cancel the underlying {@link Subscription}
+	 * @return a {@link InterruptableSubscriber} to dispose and cancel the underlying {@link Subscription}
 	 */
-	public final Runnable subscribe() {
-		ConsumerSubscriber<O> s = new ConsumerSubscriber<>();
+	public final InterruptableSubscriber<O> subscribe() {
+		InterruptableSubscriber<O> s = new InterruptableSubscriber<>(null, null, null);
 		subscribe(s);
 		return s;
 	}
@@ -5023,12 +5027,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		@Override
 		public boolean test(Object o) {
 			return true;
-		}
-	};
-	static final Consumer   NOOP               = new Consumer() {
-		@Override
-		public void accept(Object o) {
-
 		}
 	};
 	static final Function HASHCODE_EXTRACTOR  = new Function<Object, Integer>() {
