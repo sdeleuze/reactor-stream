@@ -902,7 +902,7 @@ public class StreamTests extends AbstractReactorTest {
 			final String source = "ASYNC_TEST " + i;
 
 			Stream.just(source)
-			      .liftProcessor(() -> FluxProcessor.blackbox(Broadcaster.<String>create(),
+			      .multicast(() -> FluxProcessor.blackbox(Broadcaster.<String>create(),
 					       operationStream -> operationStream.dispatchOn(asyncGroup)
 					                                         .throttleRequest(100)
 					                                         .map(s -> s + " MODIFIED")
@@ -910,6 +910,7 @@ public class StreamTests extends AbstractReactorTest {
 						                                         latch.countDown();
 						                                         return s;
 					                                         })))
+			      .autoConnect()
 			      .take(2, TimeUnit.SECONDS)
 			      .log("parallelStream")
 			      .consume(System.out::println);

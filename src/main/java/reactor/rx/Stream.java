@@ -996,7 +996,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/justn.png" alt="">
 	 * <p>
-	 * @param data the consecutive data objects to emit
+	 * @param values the consecutive data objects to emit
 	 * @param <T> the emitted data type
 	 *
 	 * @return a new {@link Stream}
@@ -1849,7 +1849,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespansize.png" alt="">
-
 	 *
 	 * @param maxSize the max collected size
 	 * @param timespan the timeout in unit to use to release a buffered list
@@ -1866,10 +1865,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Stage incoming values into a {@link java.util.PriorityQueue<O>} that will be re-ordered and signaled to the
-	 * returned fresh {@link Mono}. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
+	 * Stage incoming values into a {@link java.util.PriorityQueue} that will be re-ordered and signaled to the
+	 * returned {@link Stream} when sequence is complete. PriorityQueue will use the {@link Comparable} interface from
+	 * an incoming data signal. Due to it's unbounded nature (must accumulate in priority queue before emitting all
+	 * sequence), this operator should not be used on hot or large volume sequences.
 	 *
-	 * @return a new {@link Mono} whose values re-ordered using a PriorityQueue.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffersort.png" alt="">
+	 *
+	 * @return a new {@link Stream} whose values re-ordered using a {@link PriorityQueue}.
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -1878,12 +1882,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Stage incoming values into a {@link java.util.PriorityQueue<O>} that will be re-ordered and signaled to the
-	 * returned fresh {@link Mono}. PriorityQueue will use the {@link Comparable<O>} interface from an incoming data signal.
+	 * Stage incoming values into a {@link java.util.PriorityQueue} that will be re-ordered and signaled to the
+	 * returned fresh {@link Mono}. PriorityQueue will use the {@link Comparable} interface from an incoming data signal.
+	 *  Due to it's unbounded nature (must accumulate in priority queue before emitting all
+	 * sequence), this operator should not be used on hot or large volume sequences.
 	 *
-	 * @param comparator A {@link Comparator<O>} to evaluate incoming data
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffersort.png" alt="">
 	 *
-	 * @return a new {@link Mono} whose values re-ordered using a PriorityQueue.
+	 * @param comparator A {@link Comparator} to evaluate incoming data
+	 *
+	 * @return a new {@link Stream} whose values re-ordered using a {@link PriorityQueue}.
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -1938,6 +1947,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Cache last {@link PlatformDependent#SMALL_BUFFER_SIZE} signal to this {@code Stream} and release them on request that
 	 * will observe any values accepted by this {@code Stream}.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/cache.png" alt="">
+	 *
 	 * @return {@literal new Stream}
 	 *
 	 * @since 2.0
@@ -1949,6 +1961,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Cache all signal to this {@code Stream} and release them on request that will observe any values accepted by this
 	 * {@code Stream}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/cache.png" alt="">
 	 *
 	 * @param last number of events retained in history
 	 *
@@ -3208,31 +3223,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Defer the subscription of a {@link Processor} to the actual pipeline. Terminal operations such as {@link
-	 * #consume(reactor.fn.Consumer)} will start the subscription chain. It will listen for current {@link Stream} signals and
-	 * will be eventually producing signals as well (subscribe,error, complete,next). <p> The action is returned for
-	 * functional-style chaining.
-	 *
-	 * @param <V> the {@link Stream} output type
-	 * @param processorSupplier the function to map a provided dispatcher to a fresh Action to subscribe.
-	 *
-	 * @return the passed action
-	 *
-	 * @see {@link Publisher#subscribe(Subscriber)}
-	 * @since 2.0
-	 */
-	public <V> Stream<V> liftProcessor(final Supplier<? extends Processor<O, V>> processorSupplier) {
-		return lift(new Function<Subscriber<? super V>, Subscriber<? super O>>() {
-			@Override
-			public Subscriber<? super O> apply(Subscriber<? super V> subscriber) {
-				Processor<O, V> processor = processorSupplier.get();
-				processor.subscribe(subscriber);
-				return processor;
-			}
-		});
-	}
-
-	/**
 	 * Observe all Reactive Streams signals and use {@link Logger} support to handle trace implementation. Default will
 	 * use {@link Level#INFO} and java.util.logging. If SLF4J is available, it will be used instead.
 	 * <p>
@@ -3358,8 +3348,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @since 2.0
 	 */
-	public final Stream<O> mergeWith(final Publisher<? extends O> publisher) {
-		return StreamSource.wrap(Flux.merge(this, publisher));
+	public final Stream<O> mergeWith(final Publisher<? extends O> other) {
+		return StreamSource.wrap(Flux.merge(this, other));
 	}
 
 
@@ -4205,8 +4195,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @since 2.5
 	 */
-	public final Stream<O> switchIfEmpty(final Publisher<? extends O> fallback) {
-		return new StreamSwitchIfEmpty<>(this, fallback);
+	public final Stream<O> switchIfEmpty(final Publisher<? extends O> alternate) {
+		return new StreamSwitchIfEmpty<>(this, alternate);
 	}
 
 	/**
