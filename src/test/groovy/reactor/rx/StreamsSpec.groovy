@@ -105,7 +105,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the value is not retrieved'
 			def value = ""
-			def controls = stream.doOnNext { value = it }.log().consumeLater()
+			def controls = stream.doOnNext { value = it }.log().subscribeLater()
 
 		then:
 			'it is not available'
@@ -134,7 +134,7 @@ class StreamsSpec extends Specification {
 		when:
 			'cumulated request of Long MAX'
 			long test = Long.MAX_VALUE / 2l
-			def controls = stream.consumeLater()
+			def controls = stream.subscribeLater()
 			controls.request(test)
 			controls.request(test)
 			controls.request(1)
@@ -2296,7 +2296,7 @@ class StreamsSpec extends Specification {
 
 			def value = null
 			def tail = source.log("drop").onBackpressureDrop().doOnNext { value = it }.log('overflow-drop-test')
-					.consumeLater()
+					.subscribeLater()
 
 			tail.request(5)
 			println tail.debug()

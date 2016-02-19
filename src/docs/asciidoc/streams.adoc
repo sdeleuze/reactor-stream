@@ -622,7 +622,7 @@ _consumeOn_
 |Control
 2+|Call `subscribe` with a `ConsumerAction` which interacts with each passed `Consumer`, each time the interest signal is detected. It will `request(Stream.capacity())` to the received `Subscription`, which is `Long.MAX_VALUE` by default, which results in unbounded consuming. The `publishOn` and `consumeOn` alternatives provide for signalling `onSubscribe` using the passed `Dispatcher`. Returns a `Control` component to cancel the materialized `Stream`, if necessary. Note that `ConsumeAction` takes care of unbounded recursion if the `onNext(T)` signal triggers a blocking request.
 
-h|consumeLater()
+h|subscribeLater()
 |Control
 2+|Similar to `consume` but does not fire an initial `Subscription.request(long)`. The returned `Control` can be used to `request(long)` anytime.
 
