@@ -124,7 +124,7 @@ public class StreamProcessor<E, O> extends Stream<O> implements Processor<E, O>,
 	@Override
 	public long getCapacity() {
 		return Backpressurable.class.isAssignableFrom(publisher.getClass()) ?
-				((Backpressurable) publisher).getCapacity() : Long.MAX_VALUE;
+				((Backpressurable) publisher).getCapacity() : -1L;
 	}
 
 	@Override

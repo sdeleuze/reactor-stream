@@ -2094,7 +2094,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final InterruptableSubscriber<O> consume(final Consumer<? super O> consumer) {
 		long c = Math.min(Integer.MAX_VALUE, getCapacity());
 		InterruptableSubscriber<O> consumerAction;
-		if (c == Integer.MAX_VALUE) {
+		if (c == Integer.MAX_VALUE || c == -1L) {
 			consumerAction = new InterruptableSubscriber<>(consumer, null, null);
 		}
 		else {
@@ -2146,7 +2146,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		long c = Math.min(Integer.MAX_VALUE, getCapacity());
 
 		InterruptableSubscriber<O> consumerAction;
-		if (c == Integer.MAX_VALUE) {
+		if (c == Integer.MAX_VALUE || c == -1L) {
 			consumerAction = new InterruptableSubscriber<O>(consumer, errorConsumer, completeConsumer);
 		}
 		else {
@@ -2375,11 +2375,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Transform the incoming onSubscribe, onNext, onError and onComplete signals into {@link reactor.rx
-	 * .Signal}. Since the error is materialized as a {@code Signal}, the propagation will be stopped. Complete signal
-	 * will first emit a {@code Signal.complete()} and then effectively complete the stream.
+	 * A "phantom-operator" working only if this
+	 * {@link Stream} is a emits onNext, onError or onComplete {@link Signal}. The relative {@link Subscriber}
+	 * callback will be invoked, error {@link Signal} will trigger onError and complete {@link Signal} will trigger
+	 * onComplete.
 	 *
-	 * @return {@literal new Stream}
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/dematerialize.png" alt="">
+	 *
+	 * @return a dematerialized {@link Stream}
 	 */
 	@SuppressWarnings("unchecked")
 	public final <X> Stream<X> dematerialize() {
@@ -2421,7 +2425,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * {@code stream.dispatchOn(ForkJoinPool.commonPool()).subscribe(Subscribers.unbounded()) }
 	 *
-	 * @param scheduler a checked factory for {@link Consumer} of {@link Runnable}
+	 * @param executorService an {@link ExecutorService}
 	 *
 	 * @return a {@link Stream} consuming asynchronously
 	 */
@@ -2430,7 +2434,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that filters in only unique values.
+	 * For each {@link Subscriber}, tracks this {@link Stream} values that have been seen and
+	 * filters out duplicates.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/distinct.png" alt="">
 	 *
 	 * @return a new {@link Stream} with unique values
 	 */
@@ -2440,7 +2447,11 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that filters in only values having distinct keys computed by function
+	 * For each {@link Subscriber}, tracks this {@link Stream} values that have been seen and
+	 * filters out duplicates given the extracted key.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/distinctk.png" alt="">
 	 *
 	 * @param keySelector function to compute comparison key for each element
 	 *
@@ -2547,7 +2558,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param onError the error handler for each error
 	 * @param <E> type of the error to handle
 	 *
-	 * @return {@literal new Stream}
+	 * @return a new unaltered {@link Stream}
 	 * @since 2.0, 2.5
 	 */
 	public final <E extends Throwable> Stream<O> doOnError(final Class<E> exceptionType,
@@ -2629,7 +2640,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param onError the error handler for each error
 	 * @param <E> type of the error to handle
 	 *
-	 * @return {@literal new Stream}
+	 * @return {@link Stream}
 	 */
 	public final <E extends Throwable> Stream<O> doOnValueError(final Class<E> exceptionType,
 			final BiConsumer<Object, ? super E> onError) {
@@ -3144,7 +3155,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	@Override
 	public long getCapacity() {
-		return Long.MAX_VALUE;
+		return -1L;
 	}
 
 	@Override
@@ -3223,7 +3234,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @return {@literal new Stream}
+	 * @return {@link Stream}
 	 *
 	 * @see Mono#ignoreElements)
 	 */
@@ -3310,7 +3321,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param category The logger name
 	 * @param options the bitwise checked flags for observed signals
 	 *
-	 * @return {@literal new Stream}
+	 * @return {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -3364,7 +3375,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * .Signal}. Since the error is materialized as a {@code Signal}, the propagation will be stopped. Complete signal
 	 * will first emit a {@code Signal.complete()} and then effectively complete the stream.
 	 *
-	 * @return {@literal new Stream}
+	 * @return {@link Stream}
 	 */
 	public final Stream<Signal<O>> materialize() {
 		return new StreamMaterialize<>(this);
@@ -3627,7 +3638,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param fallback the error handler for each error
 	 *
-	 * @return {@literal new Stream}
+	 * @return {@link Stream}
 	 */
 	public final Stream<O> onErrorReturn(final O fallback) {
 		return switchOnError(just(fallback));
@@ -4625,7 +4636,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a blocking {@link Iterable}
 	 */
 	public final Iterable<O> toIterable() {
-		return toIterable(getCapacity());
+		long c = getCapacity();
+		return toIterable(c == -1L ? Long.MAX_VALUE : c);
 	}
 
 	/**
@@ -4891,6 +4903,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			final Function<? super U, ? extends Publisher<V>> boundarySupplier) {
 
 		long c = getCapacity();
+		c = c == -1L ? Long.MAX_VALUE : c;
 		/*if(c > 1 && c < 10_000_000){
 			return new StreamWindowBeginEnd<>(this,
 					bucketOpening,

@@ -74,13 +74,13 @@ public class StreamSource<I, O> extends Stream<O>
 	@Override
 	public long getCapacity() {
 		return Backpressurable.class.isAssignableFrom(source.getClass()) ? ((Backpressurable) source).getCapacity() :
-				Long.MAX_VALUE;
+				-1L;
 	}
 
 	@Override
 	public long getPending() {
 		return Backpressurable.class.isAssignableFrom(source.getClass()) ? ((Backpressurable) source).getPending() :
-				Long.MAX_VALUE;
+				-1L;
 	}
 
 	@Override
