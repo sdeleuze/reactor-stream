@@ -1604,7 +1604,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param other the other {@link Publisher}  to subscribe to for emiting and recycling receiving bucket
 	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
+	 * @return a new {@link Stream} of {@link List} delimited by a {@link Publisher}
 	 */
 	@SuppressWarnings("unchecked")
 	public final Stream<List<O>> buffer(final Publisher<?> other) {
@@ -1614,6 +1614,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Collect incoming values into a {@link List} that will be moved into the returned {@code Stream} every time the
 	 * passed boundary publisher emits an item. Complete will flush any remaining items.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffercloseopen.png" alt="">
 	 *
 	 * @param bucketOpening the publisher to subscribe to on start for creating new buffer on next or complete signals.
 	 * @param boundarySupplier the factory to provide a publisher to subscribe to when a buffer has been started
@@ -2371,11 +2374,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Attach a {@link LongConsumer} to this {@code Stream} that will observe any request to this {@code Stream}.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/doonrequest.png" alt="">
+	 *
 	 * @param consumer the consumer to invoke on each request
 	 *
-	 * @return {@literal new Stream}
-	 *
-	 * @since 2.5
+	 * @return a new unaltered {@link Stream}
 	 */
 	public final Stream<O> doOnRequest(final LongConsumer consumer) {
 		if (this instanceof Fuseable) {
