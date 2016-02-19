@@ -2344,7 +2344,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/dispatchon.png" alt="">
 	 * <p>
-	 * {@code flux.dispatchOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
+	 * {@code stream.dispatchOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param scheduler a checked factory for {@link Consumer} of {@link Runnable}
 	 *
@@ -3286,7 +3286,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * Options allow fine grained filtering of the traced signal, for instance to only capture onNext and onError:
 	 * <pre>
-	 *     flux.log("category", Level.INFO, Logger.ON_NEXT | LOGGER.ON_ERROR)
+	 *     stream.log("category", Level.INFO, Logger.ON_NEXT | LOGGER.ON_ERROR)
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/log.png" alt="">
 	 * <p>
@@ -3665,7 +3665,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * It naturally combines with {@link SchedulerGroup#io} which implements work-queue thread dispatching.
 	 *
 	 * <p>
-	 * {@code flux.publishOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
+	 * {@code stream.publishOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param schedulerFactory a checked factory for {@link Consumer} of {@link Runnable}
 	 *
