@@ -1613,7 +1613,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Collect incoming values into multiple {@link List} delimited by the given {@link Publisher} signals.
-	 * Each {@link List} bucket will last until the mapped {@link Publisher} receiving the boundary signal emits.
+	 * Each {@link List} bucket will last until the mapped {@link Publisher} receiving the boundary signal emits,
+	 * thus releasing the bucket to the returned {@link Stream}.
 	 *
 	 * <p>
 	 * When Open signal is strictly not overlapping Close signal : dropping buffers
@@ -1680,33 +1681,58 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Collect incoming values into multiple {@link List} buckets created every {@code timeshift }that will be pushed
-	 * into the returned {@code Stream} every timespan. Complete signal will flush any remaining buckets.
+	 * Collect incoming values into multiple {@link List} delimited by the given {@code timeshift} period.
+	 * Each {@link List} bucket will last until the {@code timespan} has elapsed,
+	 * thus releasing the bucket to the returned {@link Stream}.
 	 *
 	 * <p>
+	 * When timeshift > timestamp : dropping buffers
+	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimeshift.png" alt="">
-
+	 * <p>
+	 * When timeshift < timestamp : overlapping buffers
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimeshiftover.png" alt="">
+	 * <p>
+	 * When timeshift == timestamp : exact buffers
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespan.png" alt="">
 	 *
 	 * @param timespan the period in unit to use to release buffered lists
 	 * @param timeshift the period in unit to use to create a new bucket
 	 * @param unit the time unit
 	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
+	 * @return a new {@link Stream} of {@link List} delimited by the given period timeshift and sized by timespan
 	 */
 	public final Stream<List<O>> buffer(final long timespan, final long timeshift, final TimeUnit unit) {
 		return buffer(timespan, timeshift, unit, getTimer());
 	}
 
 	/**
-	 * Collect incoming values into multiple {@link List} buckets created every {@code timeshift }that will be pushed
-	 * into the returned {@code Stream} every timespan. Complete signal will flush any remaining buckets.
+	 * Collect incoming values into multiple {@link List} delimited by the given {@code timeshift} period.
+	 * Each {@link List} bucket will last until the {@code timespan} has elapsed,
+	 * thus releasing the bucket to the returned {@link Stream}.
+	 *
+	 * <p>
+	 * When timeshift > timestamp : dropping buffers
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimeshift.png" alt="">
+	 * <p>
+	 * When timeshift < timestamp : overlapping buffers
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimeshiftover.png" alt="">
+	 * <p>
+	 * When timeshift == timestamp : exact buffers
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespan.png" alt="">
 	 *
 	 * @param timespan the period in unit to use to release buffered lists
 	 * @param timeshift the period in unit to use to create a new bucket
 	 * @param unit the time unit
-	 * @param timer the Timer to run on
+	 * @param timer the {@link Timer} to run on
 	 *
-	 * @return a new {@link Stream} whose values are a {@link List} of all values in this batch
+	 * @return a new {@link Stream} of {@link List} delimited by the given period timeshift and sized by timespan
+
 	 */
 	public final Stream<List<O>> buffer(final long timespan,
 			final long timeshift,
