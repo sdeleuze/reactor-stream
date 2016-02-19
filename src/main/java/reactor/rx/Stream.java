@@ -2436,6 +2436,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * For each {@link Subscriber}, tracks this {@link Stream} values that have been seen and
 	 * filters out duplicates.
+	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/distinct.png" alt="">
 	 *
