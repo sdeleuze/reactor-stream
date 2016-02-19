@@ -4965,6 +4965,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <V> The produced output after transformation by the combinator
 	 *
 	 * @return a zipped {@link Stream}
+	 *
+	 * @since 2.0
 	 */
 	public final <T2, V> Stream<V> zipWith(final Publisher<? extends T2> source2,
 			final BiFunction<? super O, ? super T2, ? extends V> combinator) {
