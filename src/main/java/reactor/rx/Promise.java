@@ -42,7 +42,8 @@ import reactor.fn.Consumer;
 import reactor.fn.Supplier;
 
 /**
- * A {@code Promise} is a stateful event container that accepts a single value or error. In addition to {@link #peek()
+ * A {@code Promise} is a {@link Mono} extension that implements {@link Processor} of 0..1 stateful semantics. In
+ * addition to {@link #peek()
  * getting} or {@link #await() awaiting} the value, consumers can be registered to the outbound stream or via
  * , consumers can be registered to be notified of {@link #doOnError(Consumer) notified an error}, {@link
  * #doOnSuccess(Consumer) a value}, or {@link #doOnTerminate(BiConsumer)} both}. <p> A promise also provides methods for

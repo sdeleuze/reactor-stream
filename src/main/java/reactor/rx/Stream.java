@@ -2108,7 +2108,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Subscribe {@link Consumer} to this {@link Stream} that will consume all the
 	 * sequence.  If {@link Stream#getCapacity()} returns an integer value, the {@link Subscriber} will use it as a
 	 * prefetch strategy: first request N, then when 25% of N is left to be received on onNext, request N x 0.75. <p>
-	 * For a passive version that observe and forward incoming data see {@link #doOnNext(reactor.fn.Consumer)}
+	 * For a passive version that observe and forward incoming data see
+	 * {@link #doOnNext(reactor.fn.Consumer)} and {@link #doOnError(reactor.fn.Consumer)}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consumeerror.png" alt="">
