@@ -1973,7 +1973,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public final Stream<O> cache(int history) {
-		return multicast(EmitterProcessor.replay(history)).autoConnect();
+		return multicast(EmitterProcessor.<O>replay(history)).autoConnect();
 	}
 
 	/**
