@@ -3513,12 +3513,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p> The {@link Processor} will not be specifically reusable and multi-connect might not work as expected
 	 * depending on the {@link Processor}.
 	 *
+	 * <p> The selector will be applied once per {@link Subscriber} and can be used to blackbox pre-processing.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multicastp.png" alt="">
 	 *
 	 * @param processor the {@link Processor} reference to subscribe to this {@link Stream} and share.
-	 * @param selector
-	 * @param <U>
+	 * @param selector a {@link Function} receiving a {@link Stream} derived from the supplied {@link Processor} and
+	 * returning the end {@link Publisher} subscribed by a unique {@link Subscriber}
+	 * @param <U> produced type from the given selector
 	 *
 	 * @return a new {@link ConnectableStream} whose values are broadcasted to supported subscribers once connected via {@link Processor}
 	 * 
@@ -3546,14 +3548,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *  focuses on subscribe lifecycle.
 	 *
 	 * This will effectively turn any type of sequence into a hot sequence by sharing a single {@link Subscription}.
+	 * <p> The selector will be applied once per {@link Subscriber} and can be used to blackbox pre-processing.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multicastp.png" alt="">
 	 *
 	 * @param processorSupplier the {@link Processor} {@link Supplier} to call, subscribe to this {@link Stream} and
 	 * share.
-	 * @param selector
-	 * @param <U>
+	 * @param selector a {@link Function} receiving a {@link Stream} derived from the supplied {@link Processor} and
+	 * returning the end {@link Publisher} subscribed by a unique {@link Subscriber}
+	 * @param <U> produced type from the given selector
 	 *
 	 * @return a new {@link ConnectableStream} whose values are broadcasted to supported subscribers once connected via {@link Processor}
 	 *
@@ -3565,16 +3569,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream} and pass
-	 * it into another {@link Stream}.
+	 * Make this
+	 * {@link Stream} subscribed N concurrency times for each child {@link Subscriber}. In effect, if this {@link Stream}
+	 * is a cold replayable source, duplicate sequences will be emitted to the passed {@link GroupedStream} partition
+	 * . If this {@link Stream} is a hot sequence, {@link GroupedStream} partitions might observe different values, e
+	 * .g. subscribing to a {@link reactor.core.publisher.WorkQueueProcessor}.
+	 * <p>Each partition is merged back using {@link #flatMap flatMap} and the result sequence might be interleaved.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multiplex.png" alt="">
 	 *
-	 * @param fn the transformation function
+	 * @param fn the indexed via
+	 * {@link GroupedStream#key()} sequence transformation to be merged in the returned {@link Sream}
 	 * @param <V> the type of the return value of the transformation function
 	 *
-	 * @return a new {@link Stream} containing the transformed values
+	 * @return a merged {@link Stream} produced from N concurrency sequences
 	 *
 	 * @since 2.5
 	 */
