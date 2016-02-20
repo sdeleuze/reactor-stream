@@ -20,12 +20,10 @@ import reactor.fn.Consumer;
 /**
  * The abstract base class for connectable publishers that let subscribers pile up
  * before they connect to their data source.
- * 
- * @param <T> the input and output value type
- */
-
-/**
+ *
  * @see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>
+ * @param <T> the input and output value type
+ *
  * @since 2.5
  */
 public abstract class ConnectableStream<T> extends Stream<T> {

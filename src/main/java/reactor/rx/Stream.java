@@ -3265,8 +3265,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @return a zipped {@link Stream} as {@link List}
 	 */
 	@SuppressWarnings("unchecked")
-	public final <T> Stream<List<T>> joinWith(Publisher<T> publisher) {
-		return zipWith(publisher, (BiFunction<Object, Object, List<T>>) JOIN_BIFUNCTION);
+	public final <T> Stream<List<T>> joinWith(Publisher<T> other) {
+		return zipWith(other, (BiFunction<Object, Object, List<T>>) JOIN_BIFUNCTION);
 	}
 
 	/**
@@ -3425,9 +3425,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Prepare a {@link ConnectableStream} which shares this {@link Stream} sequence and dispatches values to 
+	 * subscribers in a backpressure-aware manner. Prefetch will default to {@link PlatformDependent#SMALL_BUFFER_SIZE}.
+	 * This will effectively turn any type of sequence into a hot sequence.
+	 * 
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multicast.png" alt="">
 	 *
+	 * @return a new {@link ConnectableStream} whose values are broadcasted to all subscribers once connected
 	 *
-	 * @return a new {@literal stream} whose values are broadcasted to all subscribers
+	 * @since 2.5
 	 */
 	public final ConnectableStream<O> multicast() {
 		return publish();
@@ -3436,7 +3443,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 *
 	 * @param processor
-	 * @return
+	 *
+	 * @return a new {@link ConnectableStream} whose values are broadcasted to all subscribers once connected
+	 *
+	 * @since 2.5
 	 */
 	public final ConnectableStream<O> multicast(final Processor<? super O, ? extends O> processor) {
 		return multicast(new Supplier<Processor<? super O, ? extends O>>() {
@@ -3450,7 +3460,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 *
 	 * @param processorSupplier
-	 * @return
+	 *
+	 * @return a new {@link ConnectableStream} whose values are broadcasted to all subscribers once connected
+	 *
+	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
 	public final ConnectableStream<O> multicast(
@@ -3463,7 +3476,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param processor
 	 * @param selector
 	 * @param <U>
-	 * @return
+	 *
+	 * @return a new {@link ConnectableStream} whose values are broadcasted to all subscribers once connected
+	 * 
+	 * @since 2.5
 	 */
 	public final <U> ConnectableStream<U> multicast(final Processor<? super O, ? extends O>
 			processor, Function<Stream<O>, ? extends Publisher<? extends U>> selector) {
@@ -3480,7 +3496,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param processorSupplier
 	 * @param selector
 	 * @param <U>
-	 * @return
+	 *
+	 * @return a new {@link ConnectableStream} whose values are broadcasted to all subscribers once connected
+	 *
+	 * @since 2.5
 	 */
 	public final <U> ConnectableStream<U> multicast(Supplier<? extends Processor<? super O, ? extends O>>
 			processorSupplier, Function<Stream<O>, ? extends Publisher<? extends U>> selector) {
@@ -3756,17 +3775,28 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 *
-	 * @return
+	 * Prepare a {@link ConnectableStream} which shares this {@link Stream} sequence and dispatches values to 
+	 * subscribers in a backpressure-aware manner. Prefetch will default to {@link PlatformDependent#SMALL_BUFFER_SIZE}.
+	 * This will effectively turn any type of sequence into a hot sequence.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/publish.png" alt="">
+	 * 
+	 * @return a new {@link ConnectableStream}
 	 */
 	public final ConnectableStream<O> publish() {
 		return publish(PlatformDependent.SMALL_BUFFER_SIZE);
 	}
 
 	/**
+	 * Prepare a {@link ConnectableStream} which shares this {@link Stream} sequence and dispatches values to 
+	 * subscribers in a backpressure-aware manner. This will effectively turn any type of sequence into a hot sequence.
 	 *
-	 * @param prefetch
-	 * @return
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/publish.png" alt="">
+	 * 
+	 * @param prefetch bounded requested demand
+	 * 
+	 * @return a new {@link ConnectableStream}
 	 */
 	public final ConnectableStream<O> publish(int prefetch) {
 		return new StreamPublish<>(this, prefetch, QueueSupplier.<O>get(prefetch));

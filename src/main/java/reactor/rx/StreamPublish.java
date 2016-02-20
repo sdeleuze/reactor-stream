@@ -27,8 +27,8 @@ import reactor.fn.Consumer;
 import reactor.fn.Supplier;
 
 /**
- * A connectable observable which shares an underlying source and dispatches source values to subscribers in a backpressure-aware
- * manner. 
+ * A connectable {@link Stream} which shares an underlying source and dispatches source values to subscribers in a
+ * backpressure-aware manner.
  * @param <T> the value type
  */
 
