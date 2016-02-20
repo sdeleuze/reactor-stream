@@ -3396,11 +3396,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Transform the incoming onSubscribe, onNext, onError and onComplete signals into {@link reactor.rx
-	 * .Signal}. Since the error is materialized as a {@code Signal}, the propagation will be stopped. Complete signal
-	 * will first emit a {@code Signal.complete()} and then effectively complete the stream.
+	 * Transform the incoming onNext, onError and onComplete signals into {@link reactor.rx.Signal}.
+	 * Since the error is materialized as a {@code Signal}, the propagation will be stopped and onComplete will be
+	 * emitted. Complete signal will first emit a {@code Signal.complete()} and then effectively complete the stream.
 	 *
-	 * @return {@link Stream}
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/materialize.png" alt="">
+	 *
+	 * @return a {@link Stream} of materialized {@link Signal}
 	 */
 	public final Stream<Signal<O>> materialize() {
 		return new StreamMaterialize<>(this);
@@ -3410,7 +3413,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Merge emissions of this {@link Stream} with the provided {@link Publisher}, so that they may interleave.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/merge.png" alt="">
-	 * <p>
+	 *
 	 * @param other the {@link Publisher} to merge with
 	 *
 	 * @return a new {@link Stream}
