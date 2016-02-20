@@ -3428,6 +3428,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Prepare a {@link ConnectableStream} which shares this {@link Stream} sequence and dispatches values to 
 	 * subscribers in a backpressure-aware manner. Prefetch will default to {@link PlatformDependent#SMALL_BUFFER_SIZE}.
 	 * This will effectively turn any type of sequence into a hot sequence.
+	 *
+	 * <p>
+	 * Backpressure will be coordinated on {@link Subscription#request} and if any {@link Subscriber} is missing
+	 * demand (requested = 0), multicast will pause pushing/pulling.
 	 * 
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multicast.png" alt="">
@@ -3441,10 +3445,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Prepare a
+	 * {@link ConnectableStream} which subscribes this {@link Stream} sequence to the given {@link Processor}.
+	 * The {@link Processor} will be itself subscribed by child {@link Subscriber} when {@link ConnectableStream#connect()}
+	 *  is invoked manually or automatically via {@link ConnectableStream#autoConnect} and {@link ConnectableStream#refCount}.
+	 *  Note that some {@link Processor} do not support multi-subscribe, multicast is non opinionated in fact and
+	 *  focuses on subscribe lifecycle.
 	 *
-	 * @param processor
+	 * This will effectively turn any type of sequence into a hot sequence by sharing a single {@link Subscription}.
 	 *
-	 * @return a new {@link ConnectableStream} whose values are broadcasted to all subscribers once connected
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multicastp.png" alt="">
+	 *
+	 * @param processor the {@link Processor} reference to subscribe to this {@link Stream} and share.
+	 *
+	 * @return a new {@link ConnectableStream} whose values are broadcasted to supported subscribers once connected via {@link Processor}
 	 *
 	 * @since 2.5
 	 */
@@ -3458,10 +3473,23 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Prepare a
+	 * {@link ConnectableStream} which subscribes this {@link Stream} sequence to a supplied {@link Processor}
+	 * when
+	 * {@link ConnectableStream#connect()} is invoked manually or automatically via {@link ConnectableStream#autoConnect} and {@link ConnectableStream#refCount}.
+	 * The {@link Processor} will be itself subscribed by child {@link Subscriber}.
+	 *  Note that some {@link Processor} do not support multi-subscribe, multicast is non opinionated in fact and
+	 *  focuses on subscribe lifecycle.
 	 *
-	 * @param processorSupplier
+	 * This will effectively turn any type of sequence into a hot sequence by sharing a single {@link Subscription}.
 	 *
-	 * @return a new {@link ConnectableStream} whose values are broadcasted to all subscribers once connected
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multicastp.png" alt="">
+	 *
+	 * @param processorSupplier the {@link Processor} {@link Supplier} to call, subscribe to this {@link Stream} and
+	 * share.
+	 *
+	 * @return a new {@link ConnectableStream} whose values are broadcasted to supported subscribers once connected via {@link Processor}
 	 *
 	 * @since 2.5
 	 */
@@ -3472,12 +3500,23 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Prepare a
+	 * {@link ConnectableStream} which subscribes this {@link Stream} sequence to the given {@link Processor}.
+	 * The {@link Processor} will be itself subscribed by child {@link Subscriber} when {@link ConnectableStream#connect()}
+	 *  is invoked manually or automatically via {@link ConnectableStream#autoConnect} and {@link ConnectableStream#refCount}.
+	 *  Note that some {@link Processor} do not support multi-subscribe, multicast is non opinionated in fact and
+	 *  focuses on subscribe lifecycle.
 	 *
-	 * @param processor
+	 * This will effectively turn any type of sequence into a hot sequence by sharing a single {@link Subscription}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multicastp.png" alt="">
+	 *
+	 * @param processor the {@link Processor} reference to subscribe to this {@link Stream} and share.
 	 * @param selector
 	 * @param <U>
 	 *
-	 * @return a new {@link ConnectableStream} whose values are broadcasted to all subscribers once connected
+	 * @return a new {@link ConnectableStream} whose values are broadcasted to supported subscribers once connected via {@link Processor}
 	 * 
 	 * @since 2.5
 	 */
@@ -3493,11 +3532,26 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 *
-	 * @param processorSupplier
+	 /**
+	 * Prepare a
+	 * {@link ConnectableStream} which subscribes this {@link Stream} sequence to a supplied {@link Processor}
+	 * when
+	 * {@link ConnectableStream#connect()} is invoked manually or automatically via {@link ConnectableStream#autoConnect} and {@link ConnectableStream#refCount}.
+	 * The {@link Processor} will be itself subscribed by child {@link Subscriber}.
+	 *  Note that some {@link Processor} do not support multi-subscribe, multicast is non opinionated in fact and
+	 *  focuses on subscribe lifecycle.
+	 *
+	 * This will effectively turn any type of sequence into a hot sequence by sharing a single {@link Subscription}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multicastp.png" alt="">
+	 *
+	 * @param processorSupplier the {@link Processor} {@link Supplier} to call, subscribe to this {@link Stream} and
+	 * share.
 	 * @param selector
 	 * @param <U>
 	 *
-	 * @return a new {@link ConnectableStream} whose values are broadcasted to all subscribers once connected
+	 * @return a new {@link ConnectableStream} whose values are broadcasted to supported subscribers once connected via {@link Processor}
 	 *
 	 * @since 2.5
 	 */
@@ -3510,7 +3564,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream} and pass
 	 * it into another {@link Stream}.
 	 *
-	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multiplex.png" alt="">
 	 *
 	 * @param fn the transformation function
 	 * @param <V> the type of the return value of the transformation function
@@ -3565,6 +3620,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Create a new {@link Stream} whose only value will be the current instance of the {@link Stream}.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/nest.png" alt="">
+	 *
 	 * @return a new {@link Stream} whose only value will be the materialized current {@link Stream}
 	 *
 	 * @since 2.0
@@ -3592,6 +3650,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Attach a No-Op {@link Stream} that only serves the purpose of blocking incoming values if not enough demand is signaled
 	 * downstream. A blocking capable stream will prevent underlying dispatcher to be saturated and behave in an
 	 * uncontrolled fashion while focusing on low latency with an eager demand upstream.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressureblock.png" alt="">
 	 *
 	 * @return a blocking stream
 	 *
@@ -3606,6 +3666,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * downstream. A blocking capable stream will prevent underlying dispatcher to be saturated and behave in an
 	 * uncontrolled fashion while focusing on low latency with an eager demand upstream.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressureblock.png" alt="">
+	 *
 	 * @return a blocking stream
 	 *
 	 * @since 2.5
@@ -3619,6 +3682,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * downstream. A buffering capable stream will prevent underlying dispatcher to be saturated (and sometimes
 	 * blocking).
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressurebuffer.png" alt="">
+	 *
 	 * @return a buffered stream
 	 *
 	 * @since 2.0, 2.5
@@ -3631,6 +3697,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Attach a No-Op {@link Stream} that only serves the purpose of buffering incoming values if not enough demand is signaled
 	 * downstream. A buffering capable stream will prevent underlying dispatcher to be saturated (and sometimes
 	 * blocking).
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressurebuffer.png" alt="">
 	 *
 	 * @param size max buffer size
 	 *
@@ -3658,6 +3727,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Attach a No-Op {@link Stream} that only serves the purpose of dropping incoming values if not enough demand is signaled
 	 * downstream. A dropping stream will prevent underlying dispatcher to be saturated (and sometimes blocking).
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressuredrop.png" alt="">
+	 *
 	 * @return a dropping {@link Stream}
 	 *
 	 * @since 2.0, 2.5
@@ -3670,6 +3742,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Attach a No-Op {@link Stream} that only serves the purpose of dropping incoming values if not enough demand is signaled
 	 * downstream. A dropping stream will prevent underlying dispatcher to be saturated (and sometimes blocking).
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressuredrop.png" alt="">
+	 *
 	 * @return a dropping {@link Stream}
 	 *
 	 * @since 2.5
@@ -3679,9 +3754,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 *
 	 * Attach a No-Op {@link Stream} that only serves the purpose of buffering incoming values if not enough demand is signaled
 	 * downstream. A buffering capable stream will prevent underlying dispatcher to be saturated (and sometimes
 	 * blocking).
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressureerror.png" alt="">
 	 *
 	 * @return a buffered {@link Stream}
 	 *
@@ -3698,6 +3777,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * @return
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressurelatest.png" alt="">
 	 *
 	 * @since 2.5
 	 */
@@ -3720,6 +3802,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Produce a default value if any error occurs.
+	 *
+	 * Subscribe to a returned fallback publisher when any error occurs.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onerrorreturn.png" alt="">
 	 *
 	 * @param fallback the error handler for each error
 	 *
@@ -3779,6 +3865,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * subscribers in a backpressure-aware manner. Prefetch will default to {@link PlatformDependent#SMALL_BUFFER_SIZE}.
 	 * This will effectively turn any type of sequence into a hot sequence.
 	 * <p>
+	 * Backpressure will be coordinated on {@link Subscription#request} and if any {@link Subscriber} is missing
+	 * demand (requested = 0), multicast will pause pushing/pulling.
+	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/publish.png" alt="">
 	 * 
 	 * @return a new {@link ConnectableStream}
@@ -3790,7 +3879,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Prepare a {@link ConnectableStream} which shares this {@link Stream} sequence and dispatches values to 
 	 * subscribers in a backpressure-aware manner. This will effectively turn any type of sequence into a hot sequence.
-	 *
+	 * <p>
+	 * Backpressure will be coordinated on {@link Subscription#request} and if any {@link Subscriber} is missing
+	 * demand (requested = 0), multicast will pause pushing/pulling.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/publish.png" alt="">
 	 * 
