@@ -3453,6 +3453,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *  focuses on subscribe lifecycle.
 	 *
 	 * This will effectively turn any type of sequence into a hot sequence by sharing a single {@link Subscription}.
+	 * <p> The {@link Processor} will not be specifically reusable and multi-connect might not work as expected
+	 * depending on the {@link Processor}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multicastp.png" alt="">
@@ -3508,6 +3510,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *  focuses on subscribe lifecycle.
 	 *
 	 * This will effectively turn any type of sequence into a hot sequence by sharing a single {@link Subscription}.
+	 * <p> The {@link Processor} will not be specifically reusable and multi-connect might not work as expected
+	 * depending on the {@link Processor}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multicastp.png" alt="">
@@ -3623,7 +3627,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/nest.png" alt="">
 	 *
-	 * @return a new {@link Stream} whose only value will be the materialized current {@link Stream}
+	 * @return a new {@link Stream} whose only value will be the current {@link Stream}
 	 *
 	 * @since 2.0
 	 */
