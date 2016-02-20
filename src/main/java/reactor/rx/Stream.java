@@ -2894,6 +2894,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Assign the given {@link Function} to transform the incoming value {@code T} into n {@code Mono<T1>} and pass
 	 * the result as a combined {@code Tuple}.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/forkjoin.png" alt="">
+	 *
 	 * @param fn1 the transformation function
 	 * @param fn2 the transformation function
 	 * @param <T1> the type of the return value of the transformation function
@@ -2917,6 +2920,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Assign the given {@link Function} to transform the incoming value {@code T} into n {@code Mono<T1>} and pass
 	 * the result as a combined {@code Tuple}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/forkjoin.png" alt="">
 	 *
 	 * @param fn1 the transformation function
 	 * @param fn2 the transformation function
@@ -2944,6 +2950,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Assign the given {@link Function} to transform the incoming value {@code T} into n {@code Mono<T1>} and pass
 	 * the result as a combined {@code Tuple}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/forkjoin.png" alt="">
 	 *
 	 * @param fn1 the transformation function
 	 * @param fn2 the transformation function
@@ -2974,6 +2983,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Assign the given {@link Function} to transform the incoming value {@code T} into n {@code Mono<T1>} and pass
 	 * the result as a combined {@code Tuple}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/forkjoin.png" alt="">
 	 *
 	 * @param fn1 the transformation function
 	 * @param fn2 the transformation function
@@ -3007,6 +3019,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Assign the given {@link Function} to transform the incoming value {@code T} into n {@code Mono<T1>} and pass
 	 * the result as a combined {@code Tuple}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/forkjoin.png" alt="">
 	 *
 	 * @param fn1 the transformation function
 	 * @param fn2 the transformation function
@@ -3043,6 +3058,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Assign the given {@link Function} to transform the incoming value {@code T} into n {@code Mono<T1>} and pass
 	 * the result as a combined {@code Tuple}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/forkjoin.png" alt="">
 	 *
 	 * @param fn1 the transformation function
 	 * @param fn2 the transformation function
@@ -3082,6 +3100,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Assign the given {@link Function} to transform the incoming value {@code T} into n {@code Mono<T1>} and pass
 	 * the result as a combined {@code Tuple}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/forkjoin.png" alt="">
 	 *
 	 * @param fn1 the transformation function
 	 * @param fn2 the transformation function
@@ -3124,6 +3145,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream} and pass
 	 * it into another {@link Stream}.
+	 *
+	 *
 	 *
 	 * @param fn the transformation function
 	 * @param <V> the type of the return value of the transformation function
