@@ -1297,7 +1297,7 @@ h|Functional API or Factory method
 |
 
 h|Stream.flatMap(Function<T, Publisher<V>>)
-|An <<streams.adoc#stream-flatmap,Async transformation>> is a typed shortcut for `map(Function<T, Publisher<V>>).merge()`.
+|An <<streams.adoc#stream-flatmap,Async transformation>> is a typed shortcut for `merge(map(Function<T, Publisher<V>>))`.
 
 The mapping part produces a `Publisher<V>` eventually using the passed data `T`, a common pattern used in <<streams.adoc#streams-microservice, MicroService architecture>>.
 
@@ -1313,9 +1313,6 @@ h|Stream.merge(Publisher<T>, _Publisher<T> x7_)
 Stream.merge(Publisher<Publisher<T>>)
 
 Stream.mergeWith(Publisher<T>)
-
-Stream.merge()
-|Transform upstream sequence of `Publisher<T>` into a sequence of `T` by _safely_ subscribing in parallel to all of them. There is no ordering guaranteed, it is *interleaved* sequence of `T`. If the arguments are directly `Publisher<T>` like in `Stream.mergeWith(Publisher<T>)` or `Stream.merge(Publisher<T>, Publisher<T>)`, the `MergeAction` will subscribe to them directly and size more efficiently (known number of parallel upstreams). All merged `Publisher<T>` must complete before the `Subscriber<T>` can complete.
 
 h|Stream.concat(Publisher<T>, _Publisher<T> x7_)
 
@@ -1595,7 +1592,7 @@ return Stream.merge(
 2+a|
 
 ****
-* `Stream.merge()` is a non-blocking coordinating operation mixing the two queries in one
+* `Stream.merge(source1, source2)` is a non-blocking coordinating operation mixing the two queries in one
 * `buffer()` will aggregate all results until completion or error (which we timed previously)
 * `retryWhen(Function<Stream<Throwable>, Publisher<?>>` will keep re-subscribing if an error is propagated
 ** `zipWith` will combine errors with a number of tries up to 3 times

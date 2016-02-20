@@ -2782,7 +2782,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Evaluate each accepted value against the given {@link Predicate}. If the predicate test succeeds, the value is
-	 * passed into the new {@link Stream}. If the predicate test fails, the value is ignored.
+	 * passed into the new {@link Stream}. If the predicate test fails, the value is ignored and a request of 1 is 
+	 * emitted.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/filter.png" alt="">
@@ -2803,7 +2804,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * merging them into a single {@link Stream}, so that they may interleave.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/flatmap.png" alt="">
-	 * <p>
+	 *
 	 * @param mapper the {@link Function} to transform input sequence into N sequences {@link Publisher}
 	 * @param <V> the merged output sequence type
 	 *
@@ -2818,38 +2819,48 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream<O,V>} and pass
-	 * it into another {@link Stream}.
+	 * Transform the items emitted by this {@link Stream} into Publishers, then flatten the emissions from those by
+	 * merging them into a single {@link Stream}, so that they may interleave. The concurrency argument allows to
+	 * control how many merged {@link Publisher} can happen in parallel.
 	 *
-	 * @param fn the transformation function
-	 * @param <V> the type of the return value of the transformation function
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/flatmapc.png" alt="">
 	 *
-	 * @return a new {@link Stream} containing the transformed values
+	 * @param mapper the {@link Function} to transform input sequence into N sequences {@link Publisher}
+	 * @param concurrency the maximum in-flight elements from this {@link Stream} sequence
+	 * @param <V> the merged output sequence type
+	 *
+	 * @return a new {@link Stream}
 	 *
 	 * @since 2.5
 	 */
-	public final <V> Stream<V> flatMap(final Function<? super O, ? extends Publisher<? extends V>> fn, int
+	public final <V> Stream<V> flatMap(final Function<? super O, ? extends Publisher<? extends V>> mapper, int
 			concurrency) {
-		return flatMap(fn, concurrency, PlatformDependent.XS_BUFFER_SIZE);
+		return flatMap(mapper, concurrency, PlatformDependent.XS_BUFFER_SIZE);
 	}
 
 	/**
-	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream<O,V>} and pass
-	 * it into another {@link Stream}.
+	 * Transform the items emitted by this {@link Stream} into Publishers, then flatten the emissions from those by
+	 * merging them into a single {@link Stream}, so that they may interleave. The concurrency argument allows to
+	 * control how many merged {@link Publisher} can happen in parallel. The prefetch argument allows to give an
+	 * arbitrary prefetch size to the merged {@link Publisher}.
 	 *
-	 * @param fn the transformation function
-	 * @param concurrency
-	 * @param prefetch
-	 * @param <V> the type of the return value of the transformation function
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/flatmapc.png" alt="">
 	 *
-	 * @return a new {@link Stream} containing the transformed values
+	 * @param mapper the {@link Function} to transform input sequence into N sequences {@link Publisher}
+	 * @param concurrency the maximum in-flight elements from this {@link Stream} sequence
+	 * @param prefetch the maximum in-flight elements from each inner {@link Publisher} sequence
+	 * @param <V> the merged output sequence type
+	 *
+	 * @return a new {@link Stream}
 	 *
 	 * @since 2.5
 	 */
-	public final <V> Stream<V> flatMap(final Function<? super O, ? extends Publisher<? extends V>> fn, int
+	public final <V> Stream<V> flatMap(final Function<? super O, ? extends Publisher<? extends V>> mapper, int
 			concurrency, int prefetch) {
 		return StreamSource.wrap(Flux.flatMap(this,
-				fn,
+				mapper,
 				concurrency,
 				prefetch,
 				false));
@@ -3111,7 +3122,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream<O,V>} and pass
+	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream} and pass
 	 * it into another {@link Stream}.
 	 *
 	 * @param fn the transformation function
@@ -3238,7 +3249,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @return
+	 * Hides the identities of this {@link Stream} and its {@link Subscription}
+	 * as well.
+	 *
+	 * @return a new {@link Stream} defeating any {@link Publisher} / {@link Subscription} feature-detection
 	 */
 	public final Stream<O> hide() {
 		return new StreamHide<>(this);
@@ -3393,23 +3407,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Pass all the nested {@link Publisher} values to a new {@link Stream}. Dynamic merge requires use of reactive-pull
-	 * offered by default StreamSubscription. If merge hasn't getCapacity() to take new elements because its {@link
-	 * #getCapacity()(long)} instructed so, the subscription will buffer them.
-	 *
-	 * @param <V> the inner stream flowing data type that will be the produced signal.
-	 *
-	 * @return the merged stream
-	 *
-	 * @since 2.0
-	 */
-	@SuppressWarnings("unchecked")
-	public final <V> Stream<V> merge() {
-		final Stream<? extends Publisher<? extends V>> thiz = (Stream<? extends Publisher<? extends V>>) this;
-		return StreamSource.wrap(Flux.merge(thiz));
-	}
-
-	/**
 	 * Merge emissions of this {@link Stream} with the provided {@link Publisher}, so that they may interleave.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/merge.png" alt="">
@@ -3423,7 +3420,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<O> mergeWith(final Publisher<? extends O> other) {
 		return StreamSource.wrap(Flux.merge(this, other));
 	}
-
 
 	/**
 	 *
@@ -4296,7 +4292,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream<O,V>} and pass
+	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream} and pass
 	 * it into another {@link Stream}. The produced stream will emit the data from the most recent transformed stream.
 	 *
 	 * @param fn the transformation function
@@ -5011,32 +5007,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final <U, R> Stream<R> withLatestFrom(Publisher<? extends U> other, BiFunction<? super O, ? super U, ?
 			extends R > resultSelector){
 		return new StreamWithLatestFrom<>(this, other, resultSelector);
-	}
-
-	/**
-	 * Pass all the nested {@link Publisher} values to a new {@link Stream} until one of them complete. The result will
-	 * be produced by the zipper transformation from a tuple of each upstream most recent emitted data.
-	 *
-	 * @return the zipped stream
-	 *
-	 * @since 2.0
-	 */
-	@SuppressWarnings("unchecked")
-	public final <T2, V> Stream<V> zipWith(Iterable<? extends T2> iterable,
-			BiFunction<? super O, ? super T2, ? extends V> zipper) {
-		return zipWithIterable(iterable, zipper);
-	}
-
-	/**
-	 * Pass all the nested {@link Publisher} values to a new {@link Stream} until one of them complete. The result will
-	 * be produced by the zipper transformation from a tuple of each upstream most recent emitted data.
-	 *
-	 * @return the zipped stream
-	 *
-	 * @since 2.5
-	 */
-	public final <T2> Stream<Tuple2<O, T2>> zipWith(Iterable<? extends T2> iterable) {
-		return zipWithIterable(iterable);
 	}
 
 	/**

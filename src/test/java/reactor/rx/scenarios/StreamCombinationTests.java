@@ -244,7 +244,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		                              .collect(Collectors.toList());
 
 		LOG.info("range from 0 to " + list.size());
-		InterruptableSubscriber<?> tail = sensorOdd().zipWith(list, (t1, t2) -> (t1.toString() + " -- " + t2))
+		InterruptableSubscriber<?> tail = sensorOdd().zipWithIterable(list, (t1, t2) -> (t1.toString() + " -- " + t2))
 		                          .log("zipWithIterableTest")
 		                          .consume(i -> latch.countDown());
 
