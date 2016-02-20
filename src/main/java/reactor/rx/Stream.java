@@ -2674,6 +2674,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * {@link <T>} associated data. The timemillis corresponds to the elapsed time between the subscribe and the first
 	 * next signal OR between two next signals.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/elapsed.png" alt="">
+	 *
 	 * @return a new {@link Stream} that emits tuples of time elapsed in milliseconds and matching data
 	 *
 	 * @since 2.0
@@ -2684,95 +2687,72 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that emits an item at a specified index from a source {@link Stream}
+	 * Emits only the element at the given index position or {@link IndexOutOfBoundsException} if the sequence is shorter.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/elementat.png" alt="">
 	 *
 	 * @param index index of an item
 	 *
-	 * @return a source item at a specified index
+	 * @return a {@link Mono} of the item at a specified index
 	 */
 	public final Mono<O> elementAt(final int index) {
 		return new MonoElementAt<O>(this, index);
 	}
 
 	/**
-	 * Create a new {@link Stream} that emits an item at a specified index from a source {@link Stream} or default value
-	 * when index is out of bounds
+	 * Emits only the element at the given index position or signals a
+	 * default value if specified if the sequence is shorter.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/elementatd.png" alt="">
 	 *
 	 * @param index index of an item
 	 * @param defaultValue supply a default value if not found
 	 *
-	 * @return a source item at a specified index or a default value
+	 * @return a {@link Mono} of the item at a specified index or a default value
 	 */
 	public final Mono<O> elementAtOrDefault(final int index, final Supplier<? extends O> defaultValue) {
 		return new MonoElementAt<>(this, index, defaultValue);
 	}
 
 	/**
-	 * Create a new {@link Stream} whose values will be only the last value of each batch. Requires a {@code
-	 * getCapacity()}
+	 * Emits only the last value of each batch counted from this {@link Stream} sequence.
 	 *
-	 * @param batchSize the batch size to use
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/every.png" alt="">
+	 *
+	 * @param batchSize the batch size to count
 	 *
 	 * @return a new {@link Stream} whose values are the last value of each batch
 	 */
 	public final Stream<O> every(final int batchSize) {
-		return new StreamDebounce<O>(this, batchSize);
+		return new StreamEvery<O>(this, batchSize);
 	}
 
 	/**
-	 * Create a new {@link Stream} whose values will be only the last value of each batch.
+	 * Emits only the first value of each batch counted from this {@link Stream} sequence.
 	 *
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
-	 *
-	 * @return a new {@link Stream} whose values are the last value of each batch
-	 */
-	public final Stream<O> every(long timespan, TimeUnit unit) {
-		return every(Integer.MAX_VALUE, timespan, unit, getTimer());
-	}
-
-	/**
-	 * Create a new {@link Stream} whose values will be only the last value of each batch.
-	 *
-	 * @param maxSize the max counted size
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
-	 *
-	 * @return a new {@link Stream} whose values are the last value of each batch
-	 */
-	public final Stream<O> every(int maxSize, long timespan, TimeUnit unit) {
-		return every(maxSize, timespan, unit, getTimer());
-	}
-
-	/**
-	 * Create a new {@link Stream} whose values will be only the last value of each batch.
-	 *
-	 * @param maxSize the max counted size
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
-	 * @param timer the Timer to run on
-	 *
-	 * @return a new {@link Stream} whose values are the last value of each batch
-	 */
-	public final Stream<O> every(final int maxSize, final long timespan, final TimeUnit unit, final Timer timer) {
-		return new StreamDebounce<O>(this, false, maxSize, timespan, unit, timer);
-	}
-
-	/**
-	 * Create a new {@link Stream} whose values will be only the first value of each batch. <p> When a new batch is
-	 * triggered, the first value of that next batch will be pushed into this {@link Stream}.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/everyfirst.png" alt="">
 	 *
 	 * @param batchSize the batch size to use
 	 *
-	 * @return a new {@link Stream} whose values are the first value of each batch)
+	 * @return a new {@link Stream} whose values are the first value of each batch
 	 */
 	public final Stream<O> everyFirst(final int batchSize) {
-		return new StreamDebounce<O>(this, batchSize, true);
+		return new StreamEvery<O>(this, batchSize, true);
 	}
 
 	/**
-	 * Create a new {@link Stream} that emits <code>true</code> when any value satisfies a predicate and
-	 * <code>false</code> otherwise
+	 * Emits a single boolean true if any of the values of this {@link Stream} sequence match
+	 * the predicate.
+	 * <p>
+	 * The implementation uses short-circuit logic and completes with true if
+	 * the predicate matches a value.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/exists.png" alt="">
 	 *
 	 * @param predicate predicate tested upon values
 	 *
@@ -2788,6 +2768,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Evaluate each accepted value against the given {@link Predicate}. If the predicate test succeeds, the value is
 	 * passed into the new {@link Stream}. If the predicate test fails, the value is ignored.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/filter.png" alt="">
 	 *
 	 * @param p the {@link Predicate} to test values against
 	 *
@@ -3968,8 +3951,44 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @return a new {@link Stream} whose values are the  value of each batch
 	 */
+	public final Stream<O> sample(long timespan) {
+		return sample(timespan, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Create a new {@link Stream} whose values will be only the first value signalled after the next {@code other}
+	 * emission.
+	 *
+	 * @param other the sampler stream
+	 *
+	 * @return a new {@link Stream} whose values are the  value of each batch
+	 */
+	public final Stream<O> sample(long timespan, TimeUnit unit) {
+		return sample(interval(timespan, unit));
+	}
+
+	/**
+	 * Create a new {@link Stream} whose values will be only the first value signalled after the next {@code other}
+	 * emission.
+	 *
+	 * @param other the sampler stream
+	 *
+	 * @return a new {@link Stream} whose values are the  value of each batch
+	 */
 	public final <U> Stream<O> sample(Publisher<U> other) {
 		return new StreamSample<>(this, other);
+	}
+
+	/**
+	 * Create a new {@link Stream} whose values will be only the first value of each batch.
+	 *
+	 * @param timespan the period in unit to use to release a buffered list
+	 * @param unit the time unit
+	 *
+	 * @return a new {@link Stream} whose values are the first value of each batch
+	 */
+	public final Stream<O> sampleFirst(final long timespan) {
+		return sampleFirst(timespan, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -4002,32 +4021,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamThrottleFirst<>(this, sampler);
 	}
 
-	/**
-	 * Create a new {@link Stream} whose values will be only the first value of each batch.
-	 *
-	 * @param maxSize the max counted size
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
-	 *
-	 * @return a new {@link Stream} whose values are the first value of each batch
-	 */
-	public final Stream<O> sampleFirst(int maxSize, long timespan, TimeUnit unit) {
-		return sampleFirst(maxSize, timespan, unit, getTimer());
-	}
-
-	/**
-	 * Create a new {@link Stream} whose values will be only the first value of each batch.
-	 *
-	 * @param maxSize the max counted size
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
-	 * @param timer the Timer to run on
-	 *
-	 * @return a new {@link Stream} whose values are the first value of each batch
-	 */
-	public final Stream<O> sampleFirst(final int maxSize, final long timespan, final TimeUnit unit, final Timer timer) {
-		return new StreamDebounce<O>(this, true, maxSize, timespan, unit, timer);
-	}
 
 	/**
 	 * Emits the last value from upstream only if there were no newer values emitted

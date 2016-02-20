@@ -323,7 +323,7 @@ class StreamsSpec extends Specification {
 		when:
 			'the most recent value is retrieved'
 			def last = s
-					.every(2l, TimeUnit.SECONDS)
+					.sample(2l)
 					.publishOn(SchedulerGroup.io("work", 8, 4))
 					.dispatchOn(asyncGroup)
 					.log()

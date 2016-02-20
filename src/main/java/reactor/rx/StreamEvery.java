@@ -26,18 +26,14 @@ import reactor.core.timer.Timer;
  * @author Stephane Maldini
  * @since 2.0, 2.5
  */
-final class StreamDebounce<T> extends StreamBatch<T, T> {
+final class StreamEvery<T> extends StreamBatch<T, T> {
 
-	public StreamDebounce(Publisher<T> source, int maxSize) {
+	public StreamEvery(Publisher<T> source, int maxSize) {
 		this(source, maxSize, false);
 	}
 
-	public StreamDebounce(Publisher<T> source, int maxSize, boolean first) {
+	public StreamEvery(Publisher<T> source, int maxSize, boolean first) {
 		super(source, maxSize, !first, first, true);
-	}
-
-	public StreamDebounce(Publisher<T> source, boolean first, int maxSize, long timespan, TimeUnit unit, Timer timer) {
-		super(source, maxSize, !first, first, true, timespan, unit, timer);
 	}
 
 	@Override
