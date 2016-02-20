@@ -3580,10 +3580,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/multiplex.png" alt="">
 	 *
 	 * @param fn the indexed via
-	 * {@link GroupedStream#key()} sequence transformation to be merged in the returned {@link Sream}
+	 * {@link GroupedStream#key()} sequence transformation to be merged in the returned {@link Stream}
 	 * @param <V> the type of the return value of the transformation function
 	 *
-	 * @return a merged {@link Stream} produced from N concurrency sequences
+	 * @return a merged {@link Stream} produced from N concurrency transformed sequences
 	 *
 	 * @since 2.5
 	 */
@@ -3660,13 +3660,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a No-Op {@link Stream} that only serves the purpose of blocking incoming values if not enough demand is signaled
-	 * downstream. A blocking capable stream will prevent underlying dispatcher to be saturated and behave in an
-	 * uncontrolled fashion while focusing on low latency with an eager demand upstream.
+	 * Request an unbounded demand and block incoming values if not enough demand is signaled downstream.
+	 * <p> Blocking a synchronous {@link Stream} might lead to unexpected starvation of downstream request
+	 * replenishing or upstream hot event producer.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressureblock.png" alt="">
 	 *
-	 * @return a blocking stream
+	 * @return a blocking {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -3675,14 +3675,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a No-Op {@link Stream} that only serves the purpose of blocking incoming values if not enough demand is signaled
-	 * downstream. A blocking capable stream will prevent underlying dispatcher to be saturated and behave in an
-	 * uncontrolled fashion while focusing on low latency with an eager demand upstream.
+	 * Request an unbounded demand and block incoming values if not enough demand is signaled downstream.
+	 * <p> Blocking a synchronous {@link Stream} might lead to unexpected starvation of downstream request
+	 * replenishing or upstream hot event producer.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressureblock.png" alt="">
 	 *
-	 * @return a blocking stream
+	 * @param waitStrategy a {@link WaitStrategy} to trade off higher latency blocking wait for CPU resources
+	 * (spinning, yielding...)
+	 *
+	 * @return a blocking {@link Stream}
 	 *
 	 * @since 2.5
 	 */
