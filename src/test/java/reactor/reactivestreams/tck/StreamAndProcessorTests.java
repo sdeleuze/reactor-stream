@@ -50,18 +50,18 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 
 		BiFunction<Integer, String, Integer> combinator = (t1, t2) -> t1;
 		return FluxProcessor.create(p, Stream.fromProcessor(p)
-		                                     .forkJoin(2, stream -> stream.scan((prev, next) -> next)
-		                                                                .map(integer -> -integer)
-		                                                                .filter(integer -> integer <= 0)
-		                                                                .every(1)
-		                                                                .map(integer -> -integer)
-		                                                                .buffer(batch, 50, TimeUnit.MILLISECONDS)
-		                                                                .flatMap(Stream::fromIterable)
-		                                                                .doOnNext(array -> cumulated.getAndIncrement())
-		                                                                .flatMap(i -> Stream.zip(Stream.just(i),
+		                                     .multiplex(2, stream -> stream.scan((prev, next) -> next)
+		                                                                   .map(integer -> -integer)
+		                                                                   .filter(integer -> integer <= 0)
+		                                                                   .every(1)
+		                                                                   .map(integer -> -integer)
+		                                                                   .buffer(batch, 50, TimeUnit.MILLISECONDS)
+		                                                                   .flatMap(Stream::fromIterable)
+		                                                                   .doOnNext(array -> cumulated.getAndIncrement())
+		                                                                   .flatMap(i -> Stream.zip(Stream.just(i),
 		                                                                                          otherStream,
 		                                                                                          combinator))
-		                                                                .doOnNext(this::monitorThreadUse))
+		                                                                   .doOnNext(this::monitorThreadUse))
 		                                     .doOnNext(array -> cumulatedJoin.getAndIncrement())
 		                                     .subscribeWith(TopicProcessor.create("stream-raw-join", bufferSize))
 		                                     .as(Stream::from)

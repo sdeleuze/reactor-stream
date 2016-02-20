@@ -2378,7 +2378,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delaysubscriptionp.png" alt="">
 	 *
 	 * @param subscriptionDelay a
-	 * {@link Publisher} to signal by next or complete this {@link Stream#subscribe(Subscriber}
+	 * {@link Publisher} to signal by next or complete this {@link Stream#subscribe(Subscriber)}
 	 * @param <U> the other source type
 	 *
 	 * @return a delayed {@link Stream}
@@ -3142,62 +3142,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		});
 	}
 
-	/**
-	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream} and pass
-	 * it into another {@link Stream}.
-	 *
-	 *
-	 *
-	 * @param fn the transformation function
-	 * @param <V> the type of the return value of the transformation function
-	 *
-	 * @return a new {@link Stream} containing the transformed values
-	 *
-	 * @since 2.5
-	 */
-	public final <V> Stream<V> forkJoin(final int concurrency,
-			final Function<GroupedStream<Integer, O>, Publisher<V>> fn) {
-		Assert.isTrue(concurrency > 0, "Must subscribe once at least, concurrency set to " + concurrency);
-
-		Publisher<V> pub;
-		final List<Publisher<? extends V>> publisherList = new ArrayList<>(concurrency);
-
-		for (int i = 0; i < concurrency; i++) {
-			final int index = i;
-			pub = fn.apply(new GroupedStream<Integer, O>() {
-
-				@Override
-				public Integer key() {
-					return index;
-				}
-
-				@Override
-				public long getCapacity() {
-					return Stream.this.getCapacity();
-				}
-
-				@Override
-				public Timer getTimer() {
-					return Stream.this.getTimer();
-				}
-
-				@Override
-				public void subscribe(Subscriber<? super O> s) {
-					Stream.this.subscribe(s);
-				}
-			});
-
-			if (concurrency == 1) {
-				return from(pub);
-			}
-			else {
-				publisherList.add(pub);
-			}
-		}
-
-		return StreamSource.wrap(Flux.merge(publisherList));
-	}
-
 	@Override
 	public long getCapacity() {
 		return -1L;
@@ -3388,7 +3332,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *     stream.log("category", Level.INFO, Logger.ON_NEXT | LOGGER.ON_ERROR)
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/log.png" alt="">
-	 * <p>
+	 *
 	 * @param category to be mapped into logger configuration (e.g. org.springframework.reactor).
 	 * @param level the level to enforce for this tracing Flux
 	 * @param options a flag option that can be mapped with {@link Logger#ON_NEXT} etc.
@@ -3505,6 +3449,62 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final <U> ConnectableStream<U> multicast(Supplier<? extends Processor<? super O, ? extends O>>
 			processorSupplier, Function<Stream<O>, ? extends Publisher<? extends U>> selector) {
 		return new StreamMulticast<>(this, processorSupplier, selector);
+	}
+
+	/**
+	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream} and pass
+	 * it into another {@link Stream}.
+	 *
+	 *
+	 *
+	 * @param fn the transformation function
+	 * @param <V> the type of the return value of the transformation function
+	 *
+	 * @return a new {@link Stream} containing the transformed values
+	 *
+	 * @since 2.5
+	 */
+	public final <V> Stream<V> multiplex(final int concurrency,
+			final Function<GroupedStream<Integer, O>, Publisher<V>> fn) {
+		Assert.isTrue(concurrency > 0, "Must subscribe once at least, concurrency set to " + concurrency);
+
+		Publisher<V> pub;
+		final List<Publisher<? extends V>> publisherList = new ArrayList<>(concurrency);
+
+		for (int i = 0; i < concurrency; i++) {
+			final int index = i;
+			pub = fn.apply(new GroupedStream<Integer, O>() {
+
+				@Override
+				public Integer key() {
+					return index;
+				}
+
+				@Override
+				public long getCapacity() {
+					return Stream.this.getCapacity();
+				}
+
+				@Override
+				public Timer getTimer() {
+					return Stream.this.getTimer();
+				}
+
+				@Override
+				public void subscribe(Subscriber<? super O> s) {
+					Stream.this.subscribe(s);
+				}
+			});
+
+			if (concurrency == 1) {
+				return from(pub);
+			}
+			else {
+				publisherList.add(pub);
+			}
+		}
+
+		return StreamSource.wrap(Flux.merge(publisherList));
 	}
 
 	/**

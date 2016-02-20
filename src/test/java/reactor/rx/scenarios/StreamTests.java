@@ -1353,16 +1353,16 @@ public class StreamTests extends AbstractReactorTest {
 	 * Should work with {@link Processor} but it doesn't.
 	 */
 	//@Test
-	public void forkJoinUsingProcessors1000() throws Exception {
+	public void multiplexUsingProcessors1000() throws Exception {
 		for (int i = 0; i < 1000; i++) {
 			System.out.println("new test " + i);
-			forkJoinUsingProcessors();
+			multiplexUsingProcessors();
 			System.out.println();
 		}
 	}
 
 	@Test(timeout = TIMEOUT)
-	public void forkJoinUsingProcessors() throws Exception {
+	public void multiplexUsingProcessors() throws Exception {
 
 		final Stream<Integer> forkStream = Stream.just(1, 2, 3)
 		                                         .log("begin-computation");
@@ -1410,7 +1410,7 @@ public class StreamTests extends AbstractReactorTest {
 	 * </pre>
 	 */
 	@Test(timeout = TIMEOUT)
-	public void forkJoinUsingDispatchersAndSplit() throws Exception {
+	public void multiplexUsingDispatchersAndSplit() throws Exception {
 
 		final Broadcaster<Integer> forkBroadcaster = Broadcaster.create();
 
@@ -1474,7 +1474,7 @@ public class StreamTests extends AbstractReactorTest {
 		int successCount = 0;
 		try {
 			for (; ; ) {
-				forkJoinUsingDispatchersAndSplit();
+				multiplexUsingDispatchersAndSplit();
 				println("**** Success! ****");
 				successCount++;
 			}
