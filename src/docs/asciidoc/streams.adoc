@@ -447,7 +447,7 @@ sink.onNext("Hello World!"); // <4>
 
 [IMPORTANT]
 Hot Data Sources will never be replayed. Subscribers will only see data from the moment they have been passed to `Stream.subscribe(Subscriber)`.
-An exception applies for `BehaviorBroadcaster` (last emitted element is replayed); `Stream.timer()` and `Stream.period()` will also maintain unique timed cursors but will still ignore backpressure.
+An exception applies for `BehaviorBroadcaster` (last emitted element is replayed); `Mono.delay()` and `Stream.interval()` will also maintain unique timed cursors but will still ignore backpressure.
 
 [IMPORTANT]
 Subscribers will see new data N flowing through a Broadcaster every T+I^N^ *only* after they have subscribed at time T.
@@ -463,13 +463,13 @@ h|Factory
 
 3+|
 
-h|Stream.timer(*delay*, _unit, timer_)
+h|Mono.delay(*delay*, _unit, timer_)
 |N/A
 |Long
 3+|Start a Timer on `Stream.subscribe(Subscriber)` call and emit a single `onNext(0L)` then `onComplete()` once the delay is elapsed. Be sure to pass the optional argument `Timer` if there is no current active `Environment`.
 `Subscription.request(long)` will be ignored as no backpressure can apply to a scheduled emission.
 
-h|Stream.period(*period*, _unit, timer_)
+h|Stream.interval(*period*, _unit, timer_)
 |N/A
 |Long
 3+|Start a Timer on `Stream.subscribe(Subscriber)` call and every period of time emit `onNext(N)` where N is an incremented counter starting from 0. Be sure to pass the optional argument `Timer` if there is no current active `Environment`.
@@ -636,7 +636,7 @@ h|adaptiveConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Stream<Lo
 
 _adaptiveConsumeOn_
 |Control
-2+|Similar to `batchConsume` but will request the computed sequence of demand `Long`. It can be used to insert flow-control such as `Stream.timer()` to delay demand.
+2+|Similar to `batchConsume` but will request the computed sequence of demand `Long`. It can be used to insert flow-control such as `Mono.delay()` to delay demand.
 
 h|next()
 |Promise<T>
@@ -1244,7 +1244,7 @@ _batchConsumeOn_
 h|adaptiveConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Stream<Long>,Publisher<Long>>*),
 
 _adaptiveConsumeOn_
-|Similar to `batchConsume` but will request the computed sequence of demand `Long`. It can be used to insert flow-control such as `Stream.timer()` to delay demand.  The `AdaptiveConsumerAction` will subscribe to the produced sequence and immediately forwards `onNext(Long)` to the upstream `request(long)`.
+|Similar to `batchConsume` but will request the computed sequence of demand `Long`. It can be used to insert flow-control such as `Mono.delay()` to delay demand.  The `AdaptiveConsumerAction` will subscribe to the produced sequence and immediately forwards `onNext(Long)` to the upstream `request(long)`.
 
 h|_All_ filter(_arguments_), take(_arguments_), takeWhile(_arguments_)...
 |All limit operations can be used to proactively limit the volume of a `Stream`.
@@ -1584,7 +1584,7 @@ return Stream.merge(
 .retryWhen( errors ->
   errors
   .zipWith(Stream.range(1,3), t -> t.getT2())
-  .flatMap( tries -> Stream.timer(tries) )
+  .flatMap( tries -> Mono.delay(tries) )
 )
 .consume(System.out::println);
 ----
@@ -1597,7 +1597,7 @@ return Stream.merge(
 * `retryWhen(Function<Stream<Throwable>, Publisher<?>>` will keep re-subscribing if an error is propagated
 ** `zipWith` will combine errors with a number of tries up to 3 times
 ** `zipWith` only return the number of tries from the tuple
-** `flatMap` + `Stream.timer(long)` convert each try into a delayed signal (seconds by default)
+** `flatMap` + `Mono.delay(long)` convert each try into a delayed signal (seconds by default)
 ** Each time a signal is sent by this returned `Publisher`, cancel and subscribe again, until an `onComplete` or `onError` is sent.
 ** `flatMap` only completes if the internal timer AND the upstream have completed, so after the range of 3 or after errors sequence itself terminates.
 ****
@@ -1814,7 +1814,7 @@ return Stream.merge(
 .retryWhen( errors ->
   errors
   .zipWith(Stream.range(1,3), t -> t.getT2())
-  .flatMap( tries -> Stream.timer(tries) )
+  .flatMap( tries -> Mono.delay(tries) )
 )
 .consume(System.out::println);
 ----

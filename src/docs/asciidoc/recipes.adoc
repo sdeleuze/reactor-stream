@@ -183,9 +183,9 @@ Promise<List<String>> promise = // <5>
 					circuitSwitcher.onNext(openCircuit); // <9>
 					successes.set(0);
 
-					Streams
-						.timer(1)  // <10>
-						.consume(ignore -> circuitSwitcher.onNext(closeCircuit));
+					Mono
+						.delay(1)  // <10>
+						.subscribe(Subscribers.consumer(ignore -> circuitSwitcher.onNext(closeCircuit)));
 				}
 			})
 			.retry() // <11>

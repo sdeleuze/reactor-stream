@@ -4033,7 +4033,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * stream emits an error signal.
 	 *
 	 * @param backOffStream the function taking the error stream as an downstream and returning a new stream that
-	 * applies some backoff policy e.g. Stream.timer
+	 * applies some backoff policy e.g. Mono.delay
 	 *
 	 * @return a new fault-tolerant {@link Stream}
 	 *
@@ -4698,28 +4698,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign a Timer to be provided to this Stream Subscribers
-	 *
-	 * @param timer the timer
-	 *
-	 * @return a configured stream
-	 */
-	public Stream<O> timer(final Timer timer) {
-		return new StreamSource<O, O>(this) {
-			@Override
-			public String getName() {
-				return "timerSetup";
-			}
-
-			@Override
-			public Timer getTimer() {
-				return timer;
-			}
-		};
-
-	}
-
-	/**
 	 * Create a new {@link Stream} that accepts a {@link reactor.fn.tuple.Tuple2} of T1 {@link Long} system time in
 	 * millis and T2 {@link <T>} associated data
 	 *
@@ -4944,8 +4922,30 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @see #capacity(long)
 	 */
-	public final Stream<O> unbounded() {
+	public final Stream<O> useNoCapacity() {
 		return capacity(Long.MAX_VALUE);
+	}
+
+	/**
+	 * Assign a Timer to be provided to this Stream Subscribers
+	 *
+	 * @param timer the timer
+	 *
+	 * @return a configured stream
+	 */
+	public Stream<O> useTimer(final Timer timer) {
+		return new StreamSource<O, O>(this) {
+			@Override
+			public String getName() {
+				return "timerSetup";
+			}
+
+			@Override
+			public Timer getTimer() {
+				return timer;
+			}
+		};
+
 	}
 
 	/**
