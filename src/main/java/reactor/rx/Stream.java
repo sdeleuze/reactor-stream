@@ -859,7 +859,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * complete.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/interval.png" alt="">
-	 * <p>
+	 *
 	 * @param period The the time relative to given unit to wait before the next increment
 	 * @param unit The unit of time
 	 *
@@ -870,40 +870,55 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Build a {@link Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
-	 * It will never complete until cancelled.
+	 * Create a new {@link Stream} that emits an ever incrementing long starting with 0 every N period of time unit on
+	 * the given timer. If demand is not produced in time, an onError will be signalled. The {@link Stream} will never
+	 * complete.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/interval.png" alt="">
 	 *
 	 * @param period the period in [unit] before each following increment
 	 * @param unit   the time unit
-	 * @param timer  the timer to run on
-	 * @return a new {@link Stream}
+	 * @param timer  the {@link Timer} to schedule on
+	 *
+	 * @return a new timed {@link Stream}
 	 */
 	public static Stream<Long> interval(long period, TimeUnit unit, Timer timer) {
 		return interval(-1L, period, unit, timer);
 	}
 
 	/**
-	 * Build a {@link Stream} that will emit ever increasing counter from 0 after the subscribe call on each period.
-	 * It will never complete until cancelled.
+	 * Create a new {@link Stream} that emits an ever incrementing long starting with 0 every N period of time unit on
+	 * a global timer. If demand is not produced in time, an onError will be signalled. The {@link Stream} will never
+	 * complete.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/intervald.png" alt="">
 	 *
 	 * @param delay  the timespan in [unit] to wait before emitting 0l
 	 * @param period the period in [unit] before each following increment
 	 * @param unit   the time unit
-	 * @return a new {@link Stream}
+	 *
+	 * @return a new timed {@link Stream}
 	 */
 	public static Stream<Long> interval(long delay, long period, TimeUnit unit) {
 		return interval(delay, period, unit, Timer.globalOrNew());
 	}
 
 	/**
-	 * Build a {@link Stream} that will emit ever increasing counter from 0 after the time delay on each period.
-	 * It will never complete until cancelled.
+	 * Create a new {@link Stream} that emits an ever incrementing long starting with 0 every N period of time unit on
+	 * the given timer. If demand is not produced in time, an onError will be signalled. The {@link Stream} will never
+	 * complete.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/intervald.png" alt="">
 	 *
 	 * @param delay  the timespan in [unit] to wait before emitting 0l
 	 * @param period the period in [unit] before each following increment
 	 * @param unit   the time unit
-	 * @param timer  the timer to run on
-	 * @return a new {@link Stream}
+	 * @param timer  the {@link Timer} to schedule on
+	 *
+	 * @return a new timed {@link Stream}
 	 */
 	public static Stream<Long> interval(long delay, long period, TimeUnit unit, Timer timer) {
 		return new StreamInterval(TimeUnit.MILLISECONDS.convert(delay, unit), period, unit, timer);
