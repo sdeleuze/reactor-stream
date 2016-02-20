@@ -926,7 +926,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
-	 * produced by the passed combinator function of the
+	 * produced by the
 	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/join.png" alt="">
@@ -944,7 +944,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
-	 * produced by the passed combinator function of the
+	 * produced by the
 	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
 	 *
 	 * The {@link Iterable#iterator()} will be called on each {@link Publisher#subscribe(Subscriber)}.
@@ -2484,7 +2484,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/distinctuntilchanged.png" alt="">
 
 	 *
-	 * @return a new {@link Stream} with conflated repeated elementsuntilchanged
+	 * @return a new {@link Stream} with conflated repeated elements
 	 *
 	 * @since 2.0
 	 */
@@ -3175,12 +3175,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 
 	/**
-	 * Re-route incoming values into a dynamically created {@link Stream} for each unique key evaluated by the {param
-	 * keyMapper}.
+	 * Re-route this sequence into dynamically created {@link Stream} for each unique key evaluated by the given
+	 * key mapper.
 	 *
-	 * @param keyMapper the key mapping function that evaluates an incoming data and returns a key.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/groupby.png" alt="">
 	 *
-	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
+	 * @param keyMapper the key mapping {@link Function} that evaluates an incoming data and returns a key.
+	 *
+	 * @return a {@link Stream} of {@link GroupedStream} grouped sequences
 	 *
 	 * @since 2.0
 	 */
@@ -3190,13 +3193,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Re-route incoming values into a dynamically created {@link Stream} for each unique key evaluated by the {param
-	 * keyMapper}.
+	 * Re-route this sequence into dynamically created {@link Stream} for each unique key evaluated by the given
+	 * key mapper. It will use the given value mapper to extract the element to route.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/groupby.png" alt="">
 	 *
 	 * @param keyMapper the key mapping function that evaluates an incoming data and returns a key.
-	 * @param valueMapper the value mapping function that evaluates an incoming data and returns a value.
+	 * @param valueMapper the value mapping function that evaluates which data to extract for re-routing.
 	 *
-	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
+	 * @return a {@link Stream} of {@link GroupedStream} grouped sequences
 	 *
 	 * @since 2.5
 	 */
@@ -3209,7 +3215,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @return
+	 * Emits a single boolean true if this {@link Stream} sequence has at least one element.
+	 * <p>
+	 * The implementation uses short-circuit logic and completes with true on onNext.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/haselements.png" alt="">
+	 *
+	 * @return a new {@link Stream} with <code>true</code> if any value is emitted and <code>false</code>
+	 * otherwise
 	 */
 	public final Mono<Boolean> hasElements() {
 		return new MonoHasElements<>(this);
@@ -3226,21 +3240,29 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @return {@link Stream}
+	 * Ignores onNext signals (dropping them) and only reacts on termination.
 	 *
-	 * @see Mono#ignoreElements)
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/ignoreelements.png" alt="">
+	 * <p>
+	 *
+	 * @return a new completable {@link Mono}.
 	 */
 	public final Mono<O> ignoreElements() {
 		return Mono.ignoreElements(this);
 	}
 
 	/**
-	 * Pass all the nested {@link Publisher} values to a new {@link Stream} until one of them complete. The result will
-	 * be produced with a list of each upstream most recent emitted data.
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * produced in an indexed {@link List} by the most recent items emitted by each source until any of them completes.
+	 * Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/join.png" alt="">
 	 *
-	 * @return the zipped and joined stream
+	 * @param other the index [1] {@link Publisher} to zip with
+	 * @param <T> the source collected type
 	 *
-	 * @since 2.0
+	 * @return a zipped {@link Stream} as {@link List}
 	 */
 	@SuppressWarnings("unchecked")
 	public final <T> Stream<List<T>> joinWith(Publisher<T> publisher) {
@@ -3249,6 +3271,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Create a new {@link Stream} that will signal the last element observed before complete signal.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/last.png" alt="">
 	 *
 	 * @return a new limited {@link Stream}
 	 *
@@ -3308,12 +3333,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a {@link reactor.core.util.Logger} to this {@link Stream} that will observe any signal emitted.
+	 * Observe Reactive Streams signals matching the passed flags {@code options} and use {@link Logger} support to
+	 * handle trace
+	 * implementation. Default will use java.util.logging. If SLF4J is available, it will be used instead.
 	 *
-	 * @param category The logger name
-	 * @param options the bitwise checked flags for observed signals
+	 * Options allow fine grained filtering of the traced signal, for instance to only capture onNext and onError:
+	 * <pre>
+	 *     stream.log("category", Logger.ON_NEXT | LOGGER.ON_ERROR)
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/log.png" alt="">
 	 *
-	 * @return {@link Stream}
+	 * @param category to be mapped into logger configuration (e.g. org.springframework.reactor).
+	 * @param options a flag option that can be mapped with {@link Logger#ON_NEXT} etc.
+	 *
+	 * @return a new unaltered {@link Stream}
 	 *
 	 * @since 2.0
 	 */
