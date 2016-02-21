@@ -3997,9 +3997,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} which will keep re-subscribing its oldest parent-child stream pair on complete.
+	 * Repeatedly subscribes to the source completion of the previous subscription.
 	 *
-	 * @return a new infinitely repeated {@link Stream}
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeat.png" alt="">
+	 *
+	 * @return an indefinitively repeated {@link Stream} on onComplete
 	 *
 	 * @since 2.0
 	 */
@@ -4008,9 +4011,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} which will keep re-subscribing its oldest parent-child stream pair on complete.
+	 * Repeatedly subscribes to the source if the predicate returns true after completion of the previous subscription.
 	 *
-	 * @param predicate the boolean to evaluate on complete
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatb.png" alt="">
+	 *
+	 * @param predicate the boolean to evaluate on onComplete.
+	 *
+	 * @return an eventually repeated {@link Stream} on onComplete
 	 *
 	 * @since 2.5
 	 */
@@ -4021,6 +4029,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Create a new {@link Stream} which will keep re-subscribing its oldest parent-child stream pair on complete. The
 	 * action will be propagating complete after {@param numRepeat}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatn.png" alt="">
 	 *
 	 * @param numRepeat the number of times to re-subscribe on complete
 	 *
@@ -4035,6 +4046,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Create a new {@link Stream} which will keep re-subscribing its oldest parent-child stream pair on complete. The
 	 * action will be propagating complete after {@param numRepeat}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatb.png" alt="">
 	 *
 	 * @param numRepeat the number of times to re-subscribe on complete
 	 * @param predicate the boolean to evaluate on complete
@@ -4080,8 +4094,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} which will re-subscribe its oldest parent-child stream pair. The action will start
-	 * propagating errors after {@literal Integer.MAX_VALUE}.
+	 * Create a new {@link Stream} which will re-subscribe its oldest parent-child stream pair.
 	 *
 	 * @return a new fault-tolerant {@link Stream}
 	 *
