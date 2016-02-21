@@ -2433,14 +2433,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * <p>
 	 * Typically used for fast publisher, slow consumer(s) scenarios.
-	 * It naturally combines with {@link SchedulerGroup#single} and {@link SchedulerGroup#async} which implement
-	 * fast async event loops.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/dispatchon.png" alt="">
 	 * <p>
 	 * {@code stream.dispatchOn(ForkJoinPool.commonPool()).subscribe(Subscribers.unbounded()) }
 	 *
-	 * @param executorService an {@link ExecutorService}
+	 * @param executorService an {@link ExecutorService} to dispatch events downstream
 	 *
 	 * @return a {@link Stream} consuming asynchronously
 	 */
@@ -3920,65 +3918,82 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @see Flux#publishOn
+	 * Run subscribe, onSubscribe and request on a supplied {@link ExecutorService}.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/publishon.png" alt="">
+	 * <p>
+	 * {@code stream.publishOn(ForkJoinPool.commonPool()).subscribe(Subscribers.unbounded()) }
 	 *
-	 * @return a new dispatched {@link Stream}
+	 * @param executorService an {@link ExecutorService} to run requests and subscribe on
+	 *
+	 * @return a {@link Stream} publishing asynchronously
 	 */
 	public final Stream<O> publishOn(final ExecutorService executorService) {
 		return publishOn(new ExecutorServiceScheduler(executorService));
 	}
 
 	/**
-	 * Reduce the values passing through this {@link Stream} into an object {@code T}. This is a simple functional way
-	 * for accumulating values. The arguments are the N-1 and N next signal in this order.
+	 * Aggregate the values from this {@link Stream} sequence into an object of the same type than the
+	 * emitted items. The left/right {@link BiFunction} arguments are the N-1 and N item, ignoring sequence
+	 * with 0 or 1 element only.
 	 *
-	 * @param fn the reduce function
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/aggregate.png" alt="">
 	 *
-	 * @return a new {@link Stream} whose values contain only the reduced objects
+	 * @param aggregator the aggregating {@link BiFunction}
+	 *
+	 * @return a new reduced {@link Stream}
+	 *
 	 * @since 1.1, 2.0, 2.5
 	 */
-	public final Mono<O> reduce(final BiFunction<O, O, O> fn) {
+	public final Mono<O> reduce(final BiFunction<O, O, O> aggregator) {
 		if(this instanceof Supplier){
 			return MonoSource.wrap(this);
 		}
-		return new MonoAggregate<>(this, fn);
+		return new MonoAggregate<>(this, aggregator);
 	}
 
 	/**
-	 * Reduce the values passing through this {@link Stream} into an object {@code A}. The arguments are the N-1 and N
-	 * next signal in this order.
+	 * Accumulate the values from this {@link Stream} sequence into an object matching an initial value type.
+	 * The arguments are the N-1 or {@literal initial} value and N current item .
 	 *
-	 * @param fn the reduce function
-	 * @param initial the initial argument to pass to the reduce function
-	 * @param <A> the type of the reduced object
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/reduce.png" alt="">
 	 *
-	 * @return a new {@link Stream} whose values contain only the reduced objects
+	 * @param accumulator the reducing {@link BiFunction}
+	 * @param initial the initial left argument to pass to the reducing {@link BiFunction}
+	 * @param <A> the type of the initial and reduced object
+	 *
+	 * @return a new reduced {@link Stream}
 	 * @since 1.1, 2.0, 2.5
 	 */
-	public final <A> Mono<A> reduce(final A initial, BiFunction<A, ? super O, A> fn) {
+	public final <A> Mono<A> reduce(final A initial, BiFunction<A, ? super O, A> accumulator) {
 
 		return reduceWith(new Supplier<A>() {
 			@Override
 			public A get() {
 				return initial;
 			}
-		}, fn);
+		}, accumulator);
 	}
 
 	/**
-	 * Reduce the values passing through this {@link Stream} into an object {@code A}. The arguments are the N-1 and N
-	 * next signal in this order.
+	 * Accumulate the values from this {@link Stream} sequence into an object matching an initial value type.
+	 * The arguments are the N-1 or {@literal initial} value and N current item .
 	 *
-	 * @param fn the reduce function
-	 * @param initial the initial argument to pass to the reduce function
-	 * @param <A> the type of the reduced object
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/reduce.png" alt="">
 	 *
-	 * @return a new {@link Stream} whose values contain only the reduced objects
+	 * @param accumulator the reducing {@link BiFunction}
+	 * @param initial the initial left argument supplied on subscription to the reducing {@link BiFunction}
+	 * @param <A> the type of the initial and reduced object
+	 *
+	 * @return a new reduced {@link Stream}
 	 *
 	 * @since 1.1, 2.0, 2.5
 	 */
-	public final <A> Mono<A> reduceWith(final Supplier<A> initial, BiFunction<A, ? super O, A> fn) {
-		return new MonoReduce<>(this, initial, fn);
+	public final <A> Mono<A> reduceWith(final Supplier<A> initial, BiFunction<A, ? super O, A> accumulator) {
+		return new MonoReduce<>(this, initial, accumulator);
 	}
 
 	/**
