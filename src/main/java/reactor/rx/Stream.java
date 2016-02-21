@@ -3675,7 +3675,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Request an unbounded demand and block incoming values if not enough demand is signaled downstream.
+	 * Request an unbounded demand and block incoming onNext signals if not enough demand is requested downstream.
 	 * <p> Blocking a synchronous {@link Stream} might lead to unexpected starvation of downstream request
 	 * replenishing or upstream hot event producer.
 	 *
