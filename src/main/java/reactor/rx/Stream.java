@@ -3817,6 +3817,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Re-route this sequence into dynamically created {@link Stream} for each unique key evaluated by the given
+	 * key mapper. It will use the given value mapper to extract the element to route.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/groupby.png" alt="">
+	 *
+	 * @param keyMapper the key mapping function that evaluates an incoming data and returns a key.
+	 * @param valueMapper the value mapping function that evaluates which data to extract for re-routing.
+	 *
+	 * @return a {@link Stream} of {@link GroupedStream} grouped sequences
+	 *
+	 * @since 2.5
+	 */
+	/**
+	 *
 	 * Re-route incoming values into a dynamically created {@link Stream} for each unique key evaluated by the {param
 	 * keyMapper}. The hashcode of the incoming data will be used for partitioning over the buckets number passed. That
 	 * means that at any point of time at most {@code buckets} number of streams will be created and used accordingly to
@@ -3839,8 +3854,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Create and subscribe a {@link Promise} that will request {@literal 1L} on onSubscribe.
+	 * A promise will fulfill at most once. It supports both publish-subscribe with many {@link Subscriber} and
+	 * replay to late {@link Subscriber}.
 	 *
-	 * @return a subscribed Promise (caching the signal unlike {@link #next)
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/promise.png" alt="">
+	 *
+	 * @return a subscribed {@link Promise} caching the signal unlike {@link #next)
 	 */
 	public final Promise<O> promise() {
 		return Promise.from(this);

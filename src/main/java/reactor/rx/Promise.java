@@ -50,7 +50,7 @@ import reactor.fn.Supplier;
  * composing actions as a {@link Mono}. Multi-subscribe is allowed.
  *
  * <p>
- * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/mono.png" alt="">
+ * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/promise.png" alt="">
  * <p>
  *
  * Unlike {@link Mono} alone, which represents the read-only side of an eventual value, the {@link Promise} is
@@ -135,10 +135,10 @@ public class Promise<O> extends Mono<O>
 		if(source == null){
 			return Promise.success(null);
 		}
-		if(Promise.class.isAssignableFrom(source.getClass())){
+		if(source instanceof Promise){
 			return (Promise<T>)source;
 		}
-		if(Supplier.class.isAssignableFrom(source.getClass())){
+		if(source instanceof Supplier){
 			return success(((Supplier<T>)source).get());
 		}
 		Promise<T> p = Promise.prepare();

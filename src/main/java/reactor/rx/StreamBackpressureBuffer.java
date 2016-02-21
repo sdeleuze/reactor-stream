@@ -32,7 +32,8 @@ final class StreamBackpressureBuffer<O> extends StreamSource<O, O> implements Fu
 
 	@Override
 	public void subscribe(Subscriber<? super O> s) {
-		Processor<O, O> emitter = new UnicastProcessor<O>(new SpscLinkedArrayQueue<>(PlatformDependent.SMALL_BUFFER_SIZE));
+		Processor<O, O> emitter = new UnicastProcessor<O>(new SpscLinkedArrayQueue<O>(PlatformDependent
+				.SMALL_BUFFER_SIZE));
 		emitter.subscribe(s);
 		source.subscribe(emitter);
 	}

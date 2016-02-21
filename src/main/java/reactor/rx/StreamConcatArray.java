@@ -43,6 +43,7 @@ extends Stream<T>
 	final Publisher<? extends T>[] array;
 
 	@SafeVarargs
+	@SuppressWarnings("varargs")
 	public StreamConcatArray(Publisher<? extends T>... array) {
 		this.array = Objects.requireNonNull(array, "array");
 	}
