@@ -3645,11 +3645,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Emit only the first item emitted by this {@link Stream}.
+	 * Emit only the first observed item from this {@link Stream} sequence.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/next.png" alt="">
 	 * <p>
-	 * If the sequence emits more than 1 data, emit {@link ArrayIndexOutOfBoundsException}.
 	 *
 	 * @return a new {@link Mono}
 	 *
@@ -3694,54 +3693,23 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a No-Op {@link Stream} that only serves the purpose of buffering incoming values if not enough demand is signaled
-	 * downstream. A buffering capable stream will prevent underlying dispatcher to be saturated (and sometimes
-	 * blocking).
+	 * Request an unbounded demand and push the returned {@link Stream}, or park the observed elements if not enough
+	 * demand is requested downstream.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressurebuffer.png" alt="">
 	 *
-	 * @return a buffered stream
+	 * @return a buffering {@link Stream}
 	 *
 	 * @since 2.0, 2.5
 	 */
 	public final Stream<O> onBackpressureBuffer() {
-		return onBackpressureBuffer(PlatformDependent.SMALL_BUFFER_SIZE);
+		return new StreamBackpressureBuffer<>(this);
 	}
 
 	/**
-	 * Attach a No-Op {@link Stream} that only serves the purpose of buffering incoming values if not enough demand is signaled
-	 * downstream. A buffering capable stream will prevent underlying dispatcher to be saturated (and sometimes
-	 * blocking).
-	 *
-	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressurebuffer.png" alt="">
-	 *
-	 * @param size max buffer size
-	 *
-	 * @return a buffered stream
-	 *
-	 * @since 2.0, 2.5
-	 */
-	public final Stream<O> onBackpressureBuffer(final int size) {
-		return new StreamSource<O, O>(this) {
-			@Override
-			public String getName() {
-				return "onBackpressureBuffer";
-			}
-
-			@Override
-			public void subscribe(Subscriber<? super O> s) {
-				Processor<O, O> emitter = EmitterProcessor.replay(size);
-				emitter.subscribe(s);
-				source.subscribe(emitter);
-			}
-		};
-	}
-
-	/**
-	 * Attach a No-Op {@link Stream} that only serves the purpose of dropping incoming values if not enough demand is signaled
-	 * downstream. A dropping stream will prevent underlying dispatcher to be saturated (and sometimes blocking).
+	 * Request an unbounded demand and push the returned {@link Stream}, or drop the observed elements if not enough
+	 * demand is requested downstream.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressuredrop.png" alt="">
@@ -3755,11 +3723,11 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Attach a No-Op {@link Stream} that only serves the purpose of dropping incoming values if not enough demand is signaled
-	 * downstream. A dropping stream will prevent underlying dispatcher to be saturated (and sometimes blocking).
+	 * Request an unbounded demand and push the returned {@link Stream}, or drop and notify dropping {@link Consumer}
+	 * with the observed elements if not enough demand is requested downstream.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressuredrop.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressuredropc.png" alt="">
 	 *
 	 * @return a dropping {@link Stream}
 	 *
@@ -3770,15 +3738,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 *
-	 * Attach a No-Op {@link Stream} that only serves the purpose of buffering incoming values if not enough demand is signaled
-	 * downstream. A buffering capable stream will prevent underlying dispatcher to be saturated (and sometimes
-	 * blocking).
+	 * Request an unbounded demand and push the returned
+	 * {@link Stream}, or emit onError fom {@link Exceptions#failWithOverflow} if not enough demand is requested
+	 * downstream.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressureerror.png" alt="">
 	 *
-	 * @return a buffered {@link Stream}
+	 * @return an erroring {@link Stream} on backpressure
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -3792,10 +3759,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * @return
+	 * Request an unbounded demand and push the returned {@link Stream}, or only keep the most recent observed item
+	 * if not enough demand is requested downstream.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/onbackpressurelatest.png" alt="">
+	 *
+	 * @return a dropping {@link Stream} that will only keep a reference to the last observed item
 	 *
 	 * @since 2.5
 	 */
@@ -5367,6 +5337,5 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	static <O> Supplier<Set<O>> hashSetSupplier() {
 		return (Supplier<Set<O>>) SET_SUPPLIER;
 	}
-
 
 }
