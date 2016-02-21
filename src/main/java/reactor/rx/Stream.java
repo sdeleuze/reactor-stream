@@ -3858,7 +3858,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/promise.png" alt="">
 	 *
-	 * @return a subscribed {@link Promise} caching the signal unlike {@link #next)
+	 * @return a subscribed {@link Promise} caching the captured signal.
 	 */
 	public final Promise<O> promise() {
 		return Promise.from(this);
