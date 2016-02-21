@@ -3802,13 +3802,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Re-route incoming values into a dynamically created {@link Stream} for each unique key evaluated by the {param
-	 * keyMapper}. The hashcode of the incoming data will be used for partitioning over {@link
-	 * SchedulerGroup#DEFAULT_POOL_SIZE} buckets. That means that at any point of time at most {@link
-	 * SchedulerGroup#DEFAULT_POOL_SIZE} number of streams will be created and used accordingly to the current hashcode % n
-	 * result.
+	 * Re-route incoming values into a dynamically created {@link Stream} for each unique key evaluated by the given
+	 * key mapper. The hashcode of the incoming data will be used for partitionning over
+	 * {@link SchedulerGroup#DEFAULT_POOL_SIZE} number of partitions. That
+	 * means that at any point of time at most {@link SchedulerGroup#DEFAULT_POOL_SIZE} number of streams will be
+	 * created.
 	 *
-	 * @return a new {@link Stream} whose values are a {@link Stream} of all values routed to this partition
+	 * <p> Partition resolution happens accordingly to the positive modulo of the current hashcode over
+	 * the
+	 * number of
+	 * buckets {@link SchedulerGroup#DEFAULT_POOL_SIZE}: <code>bucket = o.hashCode() % buckets;</code>
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/partition.png" alt="">
+	 *
+	 *
+	 * @return a new {@link Stream} whose values are {@link GroupedStream} of all active partionned sequences
 	 *
 	 * @since 2.0
 	 */
@@ -3817,29 +3825,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Re-route this sequence into dynamically created {@link Stream} for each unique key evaluated by the given
-	 * key mapper. It will use the given value mapper to extract the element to route.
+	 *
+	 * Re-route incoming values into a dynamically created {@link Stream} for each unique key evaluated by the given
+	 * key mapper. The hashcode of the incoming data will be used for partitioning over the buckets number passed. That
+	 * means that at any point of time at most {@code buckets} number of streams will be created.
+	 *
+	 * <p> Partition resolution happens accordingly to the positive modulo of the current hashcode over the
+	 * specified number of buckets: <code>bucket = o.hashCode() % buckets;</code>
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/groupby.png" alt="">
-	 *
-	 * @param keyMapper the key mapping function that evaluates an incoming data and returns a key.
-	 * @param valueMapper the value mapping function that evaluates which data to extract for re-routing.
-	 *
-	 * @return a {@link Stream} of {@link GroupedStream} grouped sequences
-	 *
-	 * @since 2.5
-	 */
-	/**
-	 *
-	 * Re-route incoming values into a dynamically created {@link Stream} for each unique key evaluated by the {param
-	 * keyMapper}. The hashcode of the incoming data will be used for partitioning over the buckets number passed. That
-	 * means that at any point of time at most {@code buckets} number of streams will be created and used accordingly to
-	 * the positive modulo of the current hashcode with respect to the number of buckets specified.
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/partition.png" alt="">
 	 *
 	 * @param buckets the maximum number of buckets to partition the values across
 	 *
-	 * @return a new {@link Stream} whose values are a {@link Stream} of all values routed to this partition
+	 * @return a new {@link Stream} whose values are {@link GroupedStream} of all active partionned sequences
 	 *
 	 * @since 2.0
 	 */
