@@ -4198,7 +4198,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Emit latest value for every given given period.
+	 * Emit latest value for every given period of ti,e.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sampletimespan.png" alt="">
@@ -4212,7 +4212,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Emit latest value for every given given period .
+	 * Emit latest value for every given period of time.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sampletimespan.png" alt="">
@@ -4248,7 +4248,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Take a value from this {@link Stream} then uses the duration provided to skip other values.
+	 * Take a value from this {@link Stream} then use the duration provided to skip other values.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/samplefirsttimespan.png" alt="">
@@ -4262,7 +4262,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Take a value from this {@link Stream} then uses the duration provided to skip other values.
+	 * Take a value from this {@link Stream} then use the duration provided to skip other values.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/samplefirsttimespan.png" alt="">
@@ -4282,19 +4282,19 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Take a value from this {@link Stream} then uses the duration provided by a
-	 * generated Publisher to skip other values until that other Publisher signals.
+	 * Take a value from this {@link Stream} then use the duration provided by a
+	 * generated Publisher to skip other values until that sampler {@link Publisher} signals.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/samplefirst.png" alt="">
 	 *
-	 * @param sampler the sampling function returning eventually to stop skipping upstream next
+	 * @param samplerFactory the sampling function returning eventually to stop skipping upstream next
 	 * @param <U> the companion reified type
 	 *
 	 * @return a sampled {@link Stream} by last item observed when the sampler signals
 	 */
-	public final <U> Stream<O> sampleFirst(Function<? super O, ? extends Publisher<U>> sampler) {
-		return new StreamThrottleFirst<>(this, sampler);
+	public final <U> Stream<O> sampleFirst(Function<? super O, ? extends Publisher<U>> samplerFactory) {
+		return new StreamThrottleFirst<>(this, samplerFactory);
 	}
 
 
@@ -4397,7 +4397,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Expect and emit a single item from this {@link Stream} source or signal
-	 * {@link NoSuchElementException} (or a default generated value) for empty source,
+	 * {@link java.util.NoSuchElementException} (or a default generated value) for empty source,
 	 * {@link IndexOutOfBoundsException} for a multi-item source.
 	 * 
 	 * <p>
@@ -4412,7 +4412,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 *
 	 * Expect and emit a single item from this {@link Stream} source or signal
-	 * {@link NoSuchElementException} (or a default generated value) for empty source,
+	 * {@link java.util.NoSuchElementException} (or a default generated value) for empty source,
 	 * {@link IndexOutOfBoundsException} for a multi-item source.
 	 * 
 	 * <p>
@@ -4638,8 +4638,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream} and pass
-	 * it into another {@link Stream}. The produced stream will emit the data from the most recent transformed stream.
+	 * Switch to a new {@link Publisher} generated via a {@link Function} whenever this {@link Stream} produces an item.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/switchmap.png" alt="">
@@ -5068,12 +5067,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Fetch all values in a List to the returned Mono
+	 * Accumulate all values of this {@link Stream} in a {@link List} that is emitted to the returned {@link Mono} on
+	 * onComplete.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tolist.png" alt="">
 	 *
-	 * @return the mono of all data from this Stream
+	 * @return the {@link Mono} of all values from this {@link Stream}
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -5095,7 +5095,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomap.png" alt="">
 	 *
 	 *
-	 * @return the mono of all data from this Stream
+	 * @return the {@link Mono} of all values from this {@link Stream}
 	 *
 	 * @since 2.5
 	 */
