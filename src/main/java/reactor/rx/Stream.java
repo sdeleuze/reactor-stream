@@ -4441,20 +4441,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that will NOT signal next elements up to {@param max} times.
+	 * Skip next the specified number of elements from this {@link Stream}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/skip.png" alt="">
 	 *
-	 * @param max the number of times to drop next signals before starting
+	 * @param skipped the number of times to drop
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return a dropping {@link Stream} until the specified skipped number of elements
 	 *
 	 * @since 2.0
 	 */
-	public final Stream<O> skip(long max) {
-		if (max > 0) {
-			return new StreamSkip<>(this, max);
+	public final Stream<O> skip(long skipped) {
+		if (skipped > 0) {
+			return new StreamSkip<>(this, skipped);
 		}
 		else {
 			return this;
@@ -4462,23 +4462,23 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that will NOT signal next elements up to the specified {@param time}.
+	 * Skip elements from this {@link Stream} for the given time period.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/skiptime.png" alt="">
 	 *
-	 * @param time the time window to drop next signals before starting
+	 * @param timespan the time window to exclude next signals
 	 * @param unit the time unit to use
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return a dropping {@link Stream} until the end of the given timespan
 	 *
 	 * @since 2.0
 	 */
-	public final Stream<O> skip(long time, TimeUnit unit) {
-		if(time > 0) {
+	public final Stream<O> skip(long timespan, TimeUnit unit) {
+		if(timespan > 0) {
 			Timer timer = getTimer();
 			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the stream");
-			return skipUntil(Mono.delay(time, unit, timer));
+			return skipUntil(Mono.delay(timespan, unit, timer));
 		}
 		else{
 			return this;
@@ -4486,14 +4486,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that WILL NOT signal last {@param n} elements
+	 * Skip the last specified number of elements from this {@link Stream}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/skiplast.png" alt="">
 	 *
 	 * @param n the number of elements to ignore before completion
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return a dropping {@link Stream} for the specified skipped number of elements before termination
 	 *
 	 * @since 2.5
 	 */
@@ -4502,15 +4502,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that WILL NOT signal next elements until {@param other} emits.
-	 * If {@code other} terminates, then terminate the returned stream and cancel this stream.
+	 * Skip values from this {@link Stream} until a specified {@link Publisher} signals
+	 * an onNext or onComplete.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/skipuntil.png" alt="">
 	 *
-	 * @param other the Publisher to signal when to stop skipping
+	 * @param other the {@link Publisher} companion to coordinate with to stop skipping
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return a dropping {@link Stream} until the other {@link Publisher} emits
 	 *
 	 * @since 2.5
 	 */
@@ -4519,19 +4519,19 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that WILL NOT signal next elements while {@param limitMatcher} is true
+	 * Skips values from this {@link Stream} while a {@link Predicate} returns true for the value.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/skipwhile.png" alt="">
 	 *
-	 * @param limitMatcher the predicate to evaluate for starting dropping events
+	 * @param skipPredicate the {@link Predicate} evaluating to true to keep skipping.
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return a dropping {@link Stream} while the {@link Predicate} matches
 	 *
 	 * @since 2.0
 	 */
-	public final Stream<O> skipWhile(final Predicate<? super O> limitMatcher) {
-		return new StreamSkipWhile<>(this, limitMatcher);
+	public final Stream<O> skipWhile(final Predicate<? super O> skipPredicate) {
+		return new StreamSkipWhile<>(this, skipPredicate);
 	}
 
 	/**
