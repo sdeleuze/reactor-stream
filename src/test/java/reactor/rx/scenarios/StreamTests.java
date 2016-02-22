@@ -1112,6 +1112,7 @@ public class StreamTests extends AbstractReactorTest {
 	public void shouldThrottleCorrectly() throws InterruptedException {
 		Stream.range(1, 10000000)
 		      .dispatchOn(asyncGroup)
+		      .log("test", Logger.REQUEST)
 		      .requestWhen(reqs -> reqs.flatMap(req -> {
 			       // set the batch size
 			       long batchSize = 10;

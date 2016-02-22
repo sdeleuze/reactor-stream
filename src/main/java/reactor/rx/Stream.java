@@ -4083,26 +4083,27 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Request the parent stream every time the passed throttleStream signals a Long request volume. Complete and Error
-	 * signals will be propagated.
-	 *
+	 * Request this {@link Stream} when a companion sequence signals a demand.
+	 * <p>If the companion sequence terminates when this
+	 * {@link Stream} is active, it  will terminate this {@link Stream} with the same signal immediately.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/requestwhen.png" alt="">
 	 *
-	 * @param throttleStream a function that takes a broadcasted stream of request signals and must return a stream of
-	 * valid request signal (long).
+	 * @param throttleFactory the
+	 * {@link Function} providing a {@link Stream} signalling downstream requests and returning a {@link Publisher}
+	 * companion that coordinate requests upstream.
 	 *
-	 * @return a new {@link Stream}
+	 * @return a request throttling {@link Stream}
 	 *
 	 * @since 2.0
 	 */
 	public final Stream<O> requestWhen(final Function<? super Stream<? extends Long>, ? extends Publisher<? extends
-			Long>> throttleStream) {
-		return new StreamThrottleRequestWhen<O>(this, getTimer(), throttleStream);
+			Long>> throttleFactory) {
+		return new StreamThrottleRequestWhen<O>(this, getTimer(), throttleFactory);
 	}
 
 	/**
-	 * Repeatedly subscribes to this {@link Stream} sequence if it signals any error
+	 * Re-subscribes to this {@link Stream} sequence if it signals any error
 	 * either indefinitely.
 	 * <p>
 	 * The times == Long.MAX_VALUE is treated as infinite retry.
@@ -4119,7 +4120,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 	
 	/**
-	 * Repeatedly subscribes to this {@link Stream} sequence if it signals any error
+	 * Re-subscribes to this {@link Stream} sequence if it signals any error
 	 * either indefinitely or a fixed number of times.
 	 * <p>
 	 * The times == Long.MAX_VALUE is treated as infinite retry.
@@ -4138,7 +4139,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Repeatedly subscribes to this {@link Stream} sequence if it signals any error
+	 * Re-subscribes to this {@link Stream} sequence if it signals any error
 	 * and the given {@link Predicate} matches otherwise push the error downstream.
 	 *
 	 * <p>
@@ -4155,7 +4156,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Repeatedly subscribes to this {@link Stream} sequence up to the specified number of retries if it signals any
+	 * Re-subscribes to this {@link Stream} sequence up to the specified number of retries if it signals any
 	 * error and the given {@link Predicate} matches otherwise push the error downstream.
 	 *
 	 * <p>
