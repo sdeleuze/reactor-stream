@@ -4062,22 +4062,24 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} which will re-subscribe its oldest parent-child stream pair if the backOff stream
-	 * produced by the passed mapper emits any next signal. It will propagate the complete and error if the backoff
-	 * stream emits the relative signals.
+	 * Repeatedly subscribes to this {@link Stream} when a companion sequence signals a number of emitted elements in
+	 * response to the stream completion signal.
+	 * <p>If the companion sequence signals when this {@link Stream} is active, the repeat
+	 * attempt is suppressed and any terminal signal will terminate this {@link Stream} with the same signal immediately.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatwhen.png" alt="">
 	 *
-	 * @param backOffStream the function providing a stream signalling an anonymous object on each complete
-	 * a new stream that applies some backoff policy, e.g. @{link Stream#timer(long)}
+	 * @param whenFactory the {@link Function} providing a {@link Stream} signalling an exclusive number of
+	 * emitted elements on onComplete and returning a {@link Publisher} companion.
 	 *
-	 * @return a new repeated {@link Stream}
+	 * @return an eventually repeated {@link Stream} on onComplete when the companion {@link Publisher} produces an
+	 * onNext signal
 	 *
 	 * @since 2.0, 2.5
 	 */
-	public final Stream<O> repeatWhen(final Function<Stream<Long>, ? extends Publisher<?>> backOffStream) {
-		return new StreamRepeatWhen<O>(this, backOffStream);
+	public final Stream<O> repeatWhen(final Function<Stream<Long>, ? extends Publisher<?>> whenFactory) {
+		return new StreamRepeatWhen<O>(this, whenFactory);
 	}
 
 	/**
@@ -4100,31 +4102,34 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} which will re-subscribe its oldest parent-child stream pair.
+	 * Repeatedly subscribes to this {@link Stream} sequence if it signals any error
+	 * either indefinitely.
+	 * <p>
+	 * The times == Long.MAX_VALUE is treated as infinite retry.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/retry.png" alt="">
 	 *
-	 * @return a new fault-tolerant {@link Stream}
+	 * @return a re-subscribing {@link Stream} on onError
 	 *
 	 * @since 2.0
 	 */
-	@SuppressWarnings("unchecked")
 	public final Stream<O> retry() {
-		return retry(ALWAYS_PREDICATE);
+		return retry(Long.MAX_VALUE);
 	}
 	
 	/**
-	 * Create a new {@link Stream} which will re-subscribe its oldest parent-child stream pair. The action will start
-	 * propagating errors after {@param numRetries}. This is generally useful for retry strategies and fault-tolerant
-	 * streams.
+	 * Repeatedly subscribes to this {@link Stream} sequence if it signals any error
+	 * either indefinitely or a fixed number of times.
+	 * <p>
+	 * The times == Long.MAX_VALUE is treated as infinite retry.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/retryn.png" alt="">
 	 *
 	 * @param numRetries the number of times to tolerate an error
 	 *
-	 * @return a new fault-tolerant {@link Stream}
+	 * @return a re-subscribing {@link Stream} on onError up to the specified number of retries.
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -4133,16 +4138,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} which will re-subscribe its oldest parent-child stream pair. {@param retryMatcher}
-	 * will test an incoming {@link Throwable}, if positive the retry will occur. This is generally useful for retry
-	 * strategies and fault-tolerant streams.
+	 * Repeatedly subscribes to this {@link Stream} sequence if it signals any error
+	 * and the given {@link Predicate} matches otherwise push the error downstream.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/retryb.png" alt="">
 	 *
 	 * @param retryMatcher the predicate to evaluate if retry should occur based on a given error signal
 	 *
-	 * @return a new fault-tolerant {@link Stream}
+	 * @return a re-subscribing {@link Stream} on onError if the predicates matches.
 	 *
 	 * @since 2.0
 	 */
@@ -4151,18 +4155,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} which will re-subscribe its oldest parent-child stream pair. The action will start
-	 * propagating errors after {@param numRetries}. {@param retryMatcher} will test an incoming {@Throwable}, if
-	 * positive the retry will occur (in conjonction with the {@param numRetries} condition). This is generally useful
-	 * for retry strategies and fault-tolerant streams.
+	 * Repeatedly subscribes to this {@link Stream} sequence up to the specified number of retries if it signals any
+	 * error and the given {@link Predicate} matches otherwise push the error downstream.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/retryb.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/retrynb.png" alt="">
 	 *
 	 * @param numRetries the number of times to tolerate an error
 	 * @param retryMatcher the predicate to evaluate if retry should occur based on a given error signal
 	 *
-	 * @return a new fault-tolerant {@link Stream}
+	 * @return a re-subscribing {@link Stream} on onError up to the specified number of retries and if the predicate
+	 * matches.
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -4171,22 +4174,26 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} which will re-subscribe its oldest parent-child stream pair if the backOff stream
-	 * produced by the passed mapper emits any next data or complete signal. It will propagate the error if the backOff
-	 * stream emits an error signal.
+	 * Retries this {@link Stream} when a companion sequence signals
+	 * an item in response to this {@link Stream} error signal
+	 * <p>
+	 * <p>If the companion sequence signals when the {@link Stream} is active, the retry
+	 * attempt is suppressed and any terminal signal will terminate the {@link Stream} source with the same signal
+	 * immediately.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatb.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/retrywhen.png" alt="">
 	 *
-	 * @param backOffStream the function taking the error stream as an downstream and returning a new stream that
-	 * applies some backoff policy e.g. Mono.delay
+	 * @param whenFactory the
+	 * {@link Function} providing a {@link Stream} signalling any error from the source sequence and returning a {@link Publisher} companion.
 	 *
-	 * @return a new fault-tolerant {@link Stream}
+	 * @return a re-subscribing {@link Stream} on onError when the companion {@link Publisher} produces an
+	 * onNext signal
 	 *
 	 * @since 2.0
 	 */
-	public final Stream<O> retryWhen(final Function<Stream<Throwable>, ? extends Publisher<?>> backOffStream) {
-		return new StreamRetryWhen<O>(this, backOffStream);
+	public final Stream<O> retryWhen(final Function<Stream<Throwable>, ? extends Publisher<?>> whenFactory) {
+		return new StreamRetryWhen<O>(this, whenFactory);
 	}
 
 	/**
@@ -5467,12 +5474,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	static final BooleanSupplier ALWAYS_BOOLEAN_SUPPLIER = new BooleanSupplier() {
 		@Override
 		public boolean getAsBoolean() {
-			return true;
-		}
-	};
-	static final Predicate ALWAYS_PREDICATE = new Predicate() {
-		@Override
-		public boolean test(Object o) {
 			return true;
 		}
 	};
