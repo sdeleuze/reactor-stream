@@ -33,6 +33,9 @@ import reactor.fn.Supplier;
  * continually updated as data passes through the stream, so a call to {@link #get()} will
  * return the last value seen by the event stream.
  *
+ * <p>
+ * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tap.png" alt="">
+ *
  * @param <T> the type of values that this Tap can consume and supply
  * @author Stephane Maldini
  */

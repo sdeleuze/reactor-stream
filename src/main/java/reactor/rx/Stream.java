@@ -4066,6 +4066,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * produced by the passed mapper emits any next signal. It will propagate the complete and error if the backoff
 	 * stream emits the relative signals.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatwhen.png" alt="">
+	 *
 	 * @param backOffStream the function providing a stream signalling an anonymous object on each complete
 	 * a new stream that applies some backoff policy, e.g. @{link Stream#timer(long)}
 	 *
@@ -4080,6 +4083,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Request the parent stream every time the passed throttleStream signals a Long request volume. Complete and Error
 	 * signals will be propagated.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/requestwhen.png" alt="">
 	 *
 	 * @param throttleStream a function that takes a broadcasted stream of request signals and must return a stream of
 	 * valid request signal (long).
@@ -4096,6 +4102,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Create a new {@link Stream} which will re-subscribe its oldest parent-child stream pair.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/retry.png" alt="">
+	 *
 	 * @return a new fault-tolerant {@link Stream}
 	 *
 	 * @since 2.0
@@ -4109,6 +4118,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Create a new {@link Stream} which will re-subscribe its oldest parent-child stream pair. The action will start
 	 * propagating errors after {@param numRetries}. This is generally useful for retry strategies and fault-tolerant
 	 * streams.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/retryn.png" alt="">
 	 *
 	 * @param numRetries the number of times to tolerate an error
 	 *
@@ -4124,6 +4136,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Create a new {@link Stream} which will re-subscribe its oldest parent-child stream pair. {@param retryMatcher}
 	 * will test an incoming {@link Throwable}, if positive the retry will occur. This is generally useful for retry
 	 * strategies and fault-tolerant streams.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/retryb.png" alt="">
 	 *
 	 * @param retryMatcher the predicate to evaluate if retry should occur based on a given error signal
 	 *
@@ -4141,6 +4156,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * positive the retry will occur (in conjonction with the {@param numRetries} condition). This is generally useful
 	 * for retry strategies and fault-tolerant streams.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/retryb.png" alt="">
+	 *
 	 * @param numRetries the number of times to tolerate an error
 	 * @param retryMatcher the predicate to evaluate if retry should occur based on a given error signal
 	 *
@@ -4157,6 +4175,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * produced by the passed mapper emits any next data or complete signal. It will propagate the error if the backOff
 	 * stream emits an error signal.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatb.png" alt="">
+	 *
 	 * @param backOffStream the function taking the error stream as an downstream and returning a new stream that
 	 * applies some backoff policy e.g. Mono.delay
 	 *
@@ -4172,6 +4193,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Create a new {@link Stream} whose values will be only the first value signalled after the next {@code other}
 	 * emission.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sampletimespan.png" alt="">
+	 *
 	 * @param other the sampler stream
 	 *
 	 * @return a new {@link Stream} whose values are the  value of each batch
@@ -4183,6 +4207,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Create a new {@link Stream} whose values will be only the first value signalled after the next {@code other}
 	 * emission.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sampletimespan.png" alt="">
 	 *
 	 * @param other the sampler stream
 	 *
@@ -4196,6 +4223,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Create a new {@link Stream} whose values will be only the first value signalled after the next {@code other}
 	 * emission.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sample.png" alt="">
+	 *
 	 * @param other the sampler stream
 	 *
 	 * @return a new {@link Stream} whose values are the  value of each batch
@@ -4206,6 +4236,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Create a new {@link Stream} whose values will be only the first value of each batch.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/samplefirsttimespan.png" alt="">
 	 *
 	 * @param timespan the period in unit to use to release a buffered list
 	 * @param unit the time unit
@@ -4218,6 +4251,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Create a new {@link Stream} whose values will be only the first value of each batch.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/samplefirsttimespan.png" alt="">
 	 *
 	 * @param timespan the period in unit to use to release a buffered list
 	 * @param unit the time unit
@@ -4237,6 +4273,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Takes a value from upstream then uses the duration provided by a
 	 * generated Publisher to skip other values until that other Publisher signals.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/samplefirst.png" alt="">
+	 *
 	 * @param sampler the sampling function returning eventually to stop skipping upstream next
 	 * @param <U>
 	 *
@@ -4251,6 +4290,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Emits the last value from upstream only if there were no newer values emitted
 	 * during the time window provided by a publisher for that particular last value.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
+	 *
 	 * @param throttler the throttling function to Publisher
 	 * @param <U> the throttling type
 	 *
@@ -4264,6 +4306,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Scan the values passing through this {@link Stream} into an object {@code A}. The arguments are the N-1 and N
 	 * next signal in this order.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/accumulate.png" alt="">
 	 *
 	 * @param fn the reduce function
 	 *
@@ -4280,6 +4325,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * passed to the function's {@link Tuple2} argument. Behave like Reduce but triggers downstream {@link Stream} for every
 	 * transformation.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/scan.png" alt="">
+	 *
 	 * @param initial the initial argument to pass to the reduce function
 	 * @param fn the scan function
 	 * @param <A> the type of the reduced object
@@ -4293,6 +4341,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/single.png" alt="">
+	 *
 	 * @return
 	 */
 	public final Mono<O> single() {
@@ -4300,6 +4352,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/singleordefault.png" alt="">
 	 * @param defaultSupplier
 	 *
 	 * @return
@@ -4309,6 +4364,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/singleorempty.png" alt="">
+	 *
 	 * @return
 	 */
 	public final Mono<O> singleOrEmpty() {
@@ -4317,6 +4376,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Create a new {@link Stream} that will NOT signal next elements up to {@param max} times.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/skip.png" alt="">
 	 *
 	 * @param max the number of times to drop next signals before starting
 	 *
@@ -4336,6 +4398,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Create a new {@link Stream} that will NOT signal next elements up to the specified {@param time}.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/skiptime.png" alt="">
+	 *
 	 * @param time the time window to drop next signals before starting
 	 * @param unit the time unit to use
 	 *
@@ -4344,32 +4409,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public final Stream<O> skip(long time, TimeUnit unit) {
-		return skip(time, unit, getTimer());
-	}
-
-	/**
-	 * Create a new {@link Stream} that will NOT signal next elements up to the specified {@param time}.
-	 *
-	 * @param time the time window to drop next signals before starting
-	 * @param unit the time unit to use
-	 * @param timer the Timer to use
-	 *
-	 * @return a new limited {@link Stream}
-	 *
-	 * @since 2.0
-	 */
-	public final Stream<O> skip(final long time, final TimeUnit unit, final Timer timer) {
-		if (time > 0) {
+		if(time > 0) {
+			Timer timer = getTimer();
 			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the stream");
 			return skipUntil(Mono.delay(time, unit, timer));
 		}
-		else {
+		else{
 			return this;
 		}
 	}
 
 	/**
 	 * Create a new {@link Stream} that WILL NOT signal last {@param n} elements
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/skiplast.png" alt="">
 	 *
 	 * @param n the number of elements to ignore before completion
 	 *
@@ -4385,6 +4439,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Create a new {@link Stream} that WILL NOT signal next elements until {@param other} emits.
 	 * If {@code other} terminates, then terminate the returned stream and cancel this stream.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/skipuntil.png" alt="">
+	 *
 	 * @param other the Publisher to signal when to stop skipping
 	 *
 	 * @return a new limited {@link Stream}
@@ -4397,6 +4454,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Create a new {@link Stream} that WILL NOT signal next elements while {@param limitMatcher} is true
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/skipwhile.png" alt="">
 	 *
 	 * @param limitMatcher the predicate to evaluate for starting dropping events
 	 *
@@ -4411,6 +4471,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Start emitting all items from the passed publisher then emits from the current stream.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/startwithi.png" alt="">
+	 *
 	 * @return the merged stream
 	 *
 	 * @since 2.0
@@ -4422,6 +4485,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Start emitting all items from the passed publisher then emits from the current stream.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/startwithv.png" alt="">
+	 *
 	 * @return the merged stream
 	 *
 	 * @since 2.0
@@ -4432,6 +4498,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Start emitting all items from the passed publisher then emits from the current stream.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/startwith.png" alt="">
 	 *
 	 * @return the merged stream
 	 *
@@ -4509,6 +4578,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Assign the given {@link Function} to transform the incoming value {@code T} into a {@link Stream} and pass
 	 * it into another {@link Stream}. The produced stream will emit the data from the most recent transformed stream.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/switchmap.png" alt="">
+	 *
 	 * @param fn the transformation function
 	 * @param <V> the type of the return value of the transformation function
 	 *
@@ -4543,6 +4615,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Create a new {@link Stream} that will signal next elements up to {@param max} times.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/take.png" alt="">
+	 *
 	 * @param max the number of times to broadcast next signals before completing
 	 *
 	 * @return a new limited {@link Stream}
@@ -4556,6 +4631,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Create a new {@link Stream} that will signal next elements up to the specified {@param time}.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/taketime.png" alt="">
+	 *
 	 * @param time the time window to broadcast next signals before completing
 	 * @param unit the time unit to use
 	 *
@@ -4564,22 +4642,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.0
 	 */
 	public final Stream<O> take(long time, TimeUnit unit) {
-		return take(time, unit, getTimer());
-	}
-
-	/**
-	 * Create a new {@link Stream} that will signal next elements up to the specified {@param time}.
-	 *
-	 * @param time the time window to broadcast next signals before completing
-	 * @param unit the time unit to use
-	 * @param timer the Timer to use
-	 *
-	 * @return a new limited {@link Stream}
-	 *
-	 * @since 2.0
-	 */
-	public final Stream<O> take(final long time, final TimeUnit unit, final Timer timer) {
 		if (time > 0) {
+			Timer timer = getTimer();
 			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the stream");
 			return takeUntil(Mono.delay(time, unit, timer));
 		}
@@ -4590,6 +4654,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Create a new {@link Stream} that will signal the last {@param n} elements.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/takelast.png" alt="">
 	 *
 	 * @param n the max number of last elements to capture before onComplete
 	 *
@@ -4603,6 +4670,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Create a new {@link Stream} that will signal next elements until {@param limitMatcher} is true.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/takeuntilp.png" alt="">
 	 *
 	 * @param limitMatcher the predicate to evaluate for starting dropping events and completing
 	 *
@@ -4618,6 +4688,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Create a new {@link Stream} that will signal next elements until {@param other} emits.
 	 * Completion and Error will cause this stream to cancel.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/takeuntil.png" alt="">
+	 *
 	 * @param other the {@link Publisher} to signal when to stop replaying signal from upstream
 	 *
 	 * @return a new limited {@link Stream}
@@ -4630,6 +4703,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Create a new {@link Stream} that will signal next elements while {@param limitMatcher} is true.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/takewhile.png" alt="">
 	 *
 	 * @param limitMatcher the predicate to evaluate for starting dropping events and completing
 	 *
@@ -4645,9 +4721,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Create a {@link StreamTap} that maintains a reference to the last value seen by this {@link Stream}. The {@link StreamTap} is
 	 * continually updated when new values pass through the {@link Stream}.
 	 *
-	 * @return the new {@link StreamTap}
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tap.png" alt="">
 	 *
-	 * @see Consumer
+	 * @return a peekable {@link StreamTap}
 	 */
 	public final StreamTap<O> tap() {
 		return StreamTap.tap(this);
@@ -4655,6 +4732,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * @see #sampleFirst(Function)
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/throttlefirst.png" alt="">
 	 *
 	 * @return a new {@link Stream}
 	 *
@@ -4667,6 +4747,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * @see #sample(Publisher)
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/throttlelast.png" alt="">
+	 *
 	 * @return a new {@link Stream}
 	 *
 	 * @since 2.5
@@ -4677,6 +4760,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Request once the parent stream every {@param period} milliseconds. Timeout is run on the environment root timer.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/throttlerequest.png" alt="">
 	 *
 	 * @param period the period in milliseconds between two notifications on this stream
 	 *
@@ -4694,6 +4780,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * @see #sampleTimeout(Function)
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/throttletimeout.png" alt="">
+	 *
 	 * @return a new {@link Stream}
 	 *
 	 * @since 2.5
@@ -4706,6 +4795,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Signal an error if no data has been emitted for {@param timeout} milliseconds. Timeout is run on the environment
 	 * root timer. <p> A Timeout Exception will be signaled if no data or complete signal have been sent within the
 	 * given period.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
 	 *
 	 * @param timeout the timeout in milliseconds between two notifications on this composable
 	 *
@@ -4722,6 +4814,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * root timer. <p> A Timeout Exception will be signaled if no data or complete signal have been sent within the
 	 * given period.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
+	 *
 	 * @param timeout the timeout in unit between two notifications on this composable
 	 * @param unit the time unit
 	 *
@@ -4737,6 +4832,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Switch to the fallback Publisher if no data has been emitted for {@param timeout} milliseconds. Timeout is run on
 	 * the environment root timer. <p> The current subscription will be cancelled and the fallback publisher subscribed.
 	 * <p> A Timeout Exception will be signaled if no data or complete signal have been sent within the given period.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
 	 *
 	 * @param timeout the timeout in unit between two notifications on this composable
 	 * @param unit the time unit
@@ -4767,6 +4865,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Switch to the fallback Publisher if no data has been emitted when timeout publishers emit a signal <p> A Timeout
 	 * Exception will be signaled if no data or complete signal have been sent within the given period.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
+	 *
 	 * @param allTimeout the timeout emitter before the each signal from this sequence
 	 *
 	 * @return a new {@link Stream}
@@ -4786,6 +4887,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Switch to the fallback Publisher if no data has been emitted when timeout publishers emit a signal <p> A Timeout
 	 * Exception will be signaled if no data or complete signal have been sent within the given period.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
+	 *
 	 * @param firstTimeout the timeout emitter before the first signal from this sequence
 	 * @param followingTimeouts the timeout in unit between two notifications on this composable
 	 *
@@ -4802,6 +4906,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Switch to the fallback Publisher if no data has been emitted when timeout publishers emit a signal <p> The
 	 * current subscription will be cancelled and the fallback publisher subscribed. <p> A Timeout Exception will be
 	 * signaled if no data or complete signal have been sent within the given period.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
 	 *
 	 * @param firstTimeout the timeout emitter before the first signal from this sequence
 	 * @param followingTimeouts the timeout in unit between two notifications on this composable
@@ -4825,6 +4932,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Create a new {@link Stream} that accepts a {@link reactor.fn.tuple.Tuple2} of T1 {@link Long} system time in
 	 * millis and T2 {@link <T>} associated data
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timestamp.png" alt="">
 	 *
 	 * @return a new {@link Stream} that emits tuples of millis time and matching data
 	 *
@@ -4867,7 +4977,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/toiterablen.png" alt="">
-	 * <p>
 	 *
 	 * @return a blocking {@link Iterable}
 	 */
@@ -4883,9 +4992,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
+	 * Transform this {@link Stream} into a lazy {@link Iterable#iterator()} blocking on next calls using a prefetch
+	 * size of 1L.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/toiterablen.png" alt="">
 	 *
-	 * @return
+	 * @return a blocking {@link Iterator}
 	 */
 	public final Iterator<O> toIterator() {
 		return toIterable(1L).iterator();
@@ -4893,6 +5006,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Fetch all values in a List to the returned Mono
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tolist.png" alt="">
 	 *
 	 * @return the mono of all data from this Stream
 	 *
@@ -4912,7 +5028,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
 	 * the most recent emitted item for this key.
 	 *
-	 * @param keyExtractor
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomap.png" alt="">
+	 *
 	 *
 	 * @return the mono of all data from this Stream
 	 *
@@ -4926,6 +5044,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
 	 * the most recent extracted item for this key.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomapv.png" alt="">
 	 *
 	 * @param keyExtractor
 	 * @param valueExtractor
@@ -4947,6 +5068,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Convert all the sequence into a supplied map where the key is extracted by the given function and the value will
 	 * be the most recent extracted item for this key.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomapvs.png" alt="">
 	 *
 	 * @param keyExtractor
 	 * @param valueExtractor
@@ -4975,6 +5099,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
 	 * all the emitted item for this key.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomultimap.png" alt="">
+	 *
 	 * @param keyExtractor
 	 *
 	 * @return the mono of all data from this Stream
@@ -4989,6 +5116,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
 	 * all the extracted items for this key.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomultimapv.png" alt="">
 	 *
 	 * @param keyExtractor
 	 * @param valueExtractor
@@ -5010,6 +5140,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Convert all the sequence into a supplied map where the key is extracted by the given function and the value will
 	 * be all the extracted items for this key.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomultimapvs.png" alt="">
 	 *
 	 * @param keyExtractor
 	 * @param valueExtractor
@@ -5041,7 +5174,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Make this {@link Stream} subscribers unbounded
+	 * Configure a hinted capacity {@literal Long.MAX_VALUE} that can be used by downstream operators to adapt a
+	 * better consuming strage.
 	 *
 	 * @return {@link Stream} with capacity set to max
 	 *
@@ -5052,7 +5186,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Assign a Timer to be provided to this Stream Subscribers
+	 * Configure a {@link Timer} that can be used by timed operators downstream.
 	 *
 	 * @param timer the timer
 	 *
@@ -5077,6 +5211,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Re-route incoming values into a dynamically created {@link Stream} every pre-defined {@param backlog} times. The
 	 * nested streams will be pushed into the returned {@link Stream}.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsize.png" alt="">
+	 *
 	 * @param backlog the time period when each window close and flush the attached consumer
 	 *
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
@@ -5091,6 +5228,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Re-route incoming values into bucket streams that will be pushed into the returned {@link Stream} every {@code
 	 * skip} and complete every time {@code maxSize} has been reached by any of them. Complete signal will flush any
 	 * remaining buckets.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsizeskip.png" alt="">
 	 *
 	 * @param skip the number of items to skip before creating a new bucket
 	 * @param maxSize the collected size
@@ -5109,6 +5249,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Re-route incoming values into bucket streams that will be pushed into the returned {@link Stream} every  and
 	 * complete every time {@code boundarySupplier} emits an item.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowboundary.png" alt="">
+	 *
 	 * @param boundarySupplier the the stream to listen to for separating each window
 	 *
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
@@ -5116,14 +5259,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	public final Stream<Stream<O>> window(final Publisher<?> boundarySupplier) {
 		return new StreamWindowBoundary<>(this,
 				boundarySupplier,
-				QueueSupplier.<O>xs(),
-				QueueSupplier.xs());
+				SpscLinkedArrayQueue.<O>unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE),
+				SpscLinkedArrayQueue.unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE));
 	}
 
 	/**
 	 * Re-route incoming values into bucket streams that will be pushed into the returned {@link Stream} every and
 	 * complete every time {@code boundarySupplier} stream emits an item. Window starts forwarding when the
 	 * bucketOpening stream emits an item, then subscribe to the boundary supplied to complete.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowopenclose.png" alt="">
 	 *
 	 * @param bucketOpening the publisher to listen for signals to create a new window
 	 * @param boundarySupplier the factory to create the stream to listen to for closing an open window
@@ -5146,12 +5292,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamWindowStartEnd<>(this,
 				bucketOpening,
 				boundarySupplier,
-				QueueSupplier.get(c), QueueSupplier.<O>xs());
+				SpscLinkedArrayQueue.unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE),
+				SpscLinkedArrayQueue.<O>unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE));
 	}
 
 	/**
 	 * Re-route incoming values into a dynamically created {@link Stream} every pre-defined timespan. The nested streams
 	 * will be pushed into the returned {@link Stream}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowtimespan.png" alt="">
 	 *
 	 * @param timespan the period in unit to use to release a new window as a Stream
 	 * @param unit the time unit
@@ -5170,6 +5320,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Re-route incoming values into a dynamically created {@link Stream} every pre-defined timespan OR maxSize items.
 	 * The nested streams will be pushed into the returned {@link Stream}.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsizetimeout.png" alt="">
+	 *
 	 * @param maxSize the max collected size
 	 * @param timespan the period in unit to use to release a buffered list
 	 * @param unit the time unit
@@ -5187,9 +5340,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * timeshift} period. These streams will complete every {@code timespan} period has cycled. Complete signal will
 	 * flush any remaining buckets.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowtimeshiftover.png" alt="">
+	 *
 	 * @param timespan the period in unit to use to complete a window
 	 * @param timeshift the period in unit to use to create a new window
-	 * @param unit the time unit
+	 * @param unit the time unittime
 	 *
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
 	 */
@@ -5212,6 +5368,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 * Combine the most recent items from this sequence and the passed sequence.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/withlatestfrom.png" alt="">
 	 *
 	 * @param other
 	 * @param <U>
@@ -5264,29 +5423,39 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Pass all the nested {@link Publisher} values to a new {@link Stream} until one of them complete. The result will
-	 * be produced by the zipper transformation from a tuple of each upstream most recent emitted data.
+	 * Pairwise combines as {@link Tuple2} elements of this {@link Stream} and an {@link Iterable} sequence.
 	 *
-	 * @return the zipped stream
+	 * @param iterable the {@link Iterable} to pair with
 	 *
-	 * @since 2.5
-	 */
-	public final <T2, V> Stream<V> zipWithIterable(Iterable<? extends T2> iterable,
-			BiFunction<? super O, ? super T2, ? extends V> zipper) {
-		return new StreamZipIterable<>(this, iterable, zipper);
-	}
-
-	/**
-	 * Pass all the nested {@link Publisher} values to a new {@link Stream} until one of them complete. The result will
-	 * be produced by the zipper transformation from a tuple of each upstream most recent emitted data.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipwithiterable.png" alt="">
 	 *
-	 * @return the zipped stream
+	 * @return a zipped {@link Stream}
 	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
 	public final <T2> Stream<Tuple2<O, T2>> zipWithIterable(Iterable<? extends T2> iterable) {
 		return new StreamZipIterable<>(this, iterable, (BiFunction<O, T2, Tuple2<O, T2>>)TUPLE2_BIFUNCTION);
+	}
+
+	/**
+	 * Pairwise combines elements of this
+	 * {@link Stream} and an {@link Iterable} sequence using the given zipper {@link BiFunction}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipwithiterable.png" alt="">
+	 *
+	 * @param iterable the {@link Iterable} to pair with
+	 * @param zipper the {@link BiFunction} combinator
+	 *
+	 * @return a zipped {@link Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final <T2, V> Stream<V> zipWithIterable(Iterable<? extends T2> iterable,
+			BiFunction<? super O, ? super T2, ? extends V> zipper) {
+		return new StreamZipIterable<>(this, iterable, zipper);
 	}
 
 	static final BiFunction JOIN_BIFUNCTION = new BiFunction<Object, Object, List>() {
