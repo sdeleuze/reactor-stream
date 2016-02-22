@@ -4288,7 +4288,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/samplefirst.png" alt="">
 	 *
-	 * @param samplerFactory the sampling function returning eventually to stop skipping upstream next
+	 * @param samplerFactory select a {@link Publisher} companion to signal onNext or onComplete to stop excluding
+	 * others values from this sequence
 	 * @param <U> the companion reified type
 	 *
 	 * @return a sampled {@link Stream} by last item observed when the sampler signals
@@ -4305,8 +4306,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sampletimeout.png" alt="">
 	 *
-	 * @param throttlerFactory the throttling function to Publisher
-	 * @param <U> the throttling type
+	 * @param throttlerFactory select a {@link Publisher} companion to signal onNext or onComplete to stop checking
+	 * others values from this sequence and emit the selecting item
+	 * @param <U> the companion reified type
 	 *
 	 * @return a sampled {@link Stream} by last single item observed before a companion {@link Publisher} emits
 	 */
@@ -4325,7 +4327,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sampletimeoutm.png" alt="">
 	 *
-	 * @param throttlerFactory the throttling function to Publisher
+	 * @param throttlerFactory select a {@link Publisher} companion to signal onNext or onComplete to stop checking
+	 * others values from this sequence and emit the selecting item
 	 * @param <U> the throttling type
 	 *
 	 * @return a sampled {@link Stream} by last single item observed before a companion {@link Publisher} emits
