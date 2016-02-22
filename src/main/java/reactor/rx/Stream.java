@@ -4027,15 +4027,14 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} which will keep re-subscribing its oldest parent-child stream pair on complete. The
-	 * action will be propagating complete after {@param numRepeat}.
+	 * Repeatedly subscribes to the source if the predicate returns true after completion of the previous subscription.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatn.png" alt="">
 	 *
-	 * @param numRepeat the number of times to re-subscribe on complete
+	 * @param numRepeat the number of times to re-subscribe on onComplete
 	 *
-	 * @return a new repeated {@link Stream}
+	 * @return an eventually repeated {@link Stream} on onComplete up to number of repeat specified
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -4044,16 +4043,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} which will keep re-subscribing its oldest parent-child stream pair on complete. The
-	 * action will be propagating complete after {@param numRepeat}.
+	 * Repeatedly subscribes to the source if the predicate returns true after completion of the previous
+	 * subscription. A specified maximum of repeat will limit the number of re-subscribe.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatb.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatnb.png" alt="">
 	 *
 	 * @param numRepeat the number of times to re-subscribe on complete
-	 * @param predicate the boolean to evaluate on complete
+	 * @param predicate the boolean to evaluate on onComplete
 	 *
-	 * @return a new repeated {@link Stream}
+	 * @return an eventually repeated {@link Stream} on onComplete up to number of repeat specified OR matching
+	 * predicate
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -5353,7 +5353,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	@SuppressWarnings("unchecked")
 	static BooleanSupplier countingBooleanSupplier(final BooleanSupplier predicate, final long max) {
-		if (max == 0) {
+		if (max <= 0) {
 			return predicate;
 		}
 		return new BooleanSupplier() {
