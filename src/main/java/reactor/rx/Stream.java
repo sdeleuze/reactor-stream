@@ -1570,7 +1570,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 *
-	 * Emits a single boolean true if all values of this sequence match
+	 * Emit a single boolean true if all values of this sequence match
 	 * the {@link Predicate}.
 	 * <p>
 	 * The implementation uses short-circuit logic and completes with false if
@@ -2683,7 +2683,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that accepts a {@link reactor.fn.tuple.Tuple2} of T1 {@link Long} timemillis and T2
+	 * Map this {@link Stream} sequence into {@link reactor.fn.tuple.Tuple2} of T1 {@link Long} timemillis and T2
 	 * {@link <T>} associated data. The timemillis corresponds to the elapsed time between the subscribe and the first
 	 * next signal OR between two next signals.
 	 *
@@ -2700,7 +2700,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Emits only the element at the given index position or {@link IndexOutOfBoundsException} if the sequence is shorter.
+	 * Emit only the element at the given index position or {@link IndexOutOfBoundsException} if the sequence is shorter.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/elementat.png" alt="">
@@ -2714,7 +2714,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Emits only the element at the given index position or signals a
+	 * Emit only the element at the given index position or signals a
 	 * default value if specified if the sequence is shorter.
 	 *
 	 * <p>
@@ -2730,7 +2730,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Emits only the last value of each batch counted from this {@link Stream} sequence.
+	 * Emit only the last value of each batch counted from this {@link Stream} sequence.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/every.png" alt="">
@@ -2744,7 +2744,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Emits only the first value of each batch counted from this {@link Stream} sequence.
+	 * Emit only the first value of each batch counted from this {@link Stream} sequence.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/everyfirst.png" alt="">
@@ -2758,7 +2758,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Emits a single boolean true if any of the values of this {@link Stream} sequence match
+	 * Emit a single boolean true if any of the values of this {@link Stream} sequence match
 	 * the predicate.
 	 * <p>
 	 * The implementation uses short-circuit logic and completes with true if
@@ -3213,7 +3213,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Emits a single boolean true if this {@link Stream} sequence has at least one element.
+	 * Emit a single boolean true if this {@link Stream} sequence has at least one element.
 	 * <p>
 	 * The implementation uses short-circuit logic and completes with true on onNext.
 	 *
@@ -3268,7 +3268,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that will signal the last element observed before complete signal.
+	 * Signal the last element observed before complete signal.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/last.png" alt="">
@@ -3282,7 +3282,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a {@link Stream} intercepting all source signals with the returned Subscriber that might choose to pass them
+	 * Intercept all source signals with the returned Subscriber that might choose to pass them
 	 * alone to the provided Subscriber (given to the returned {@code subscribe(Subscriber)}.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/lift.png" alt="">
@@ -3629,7 +3629,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} whose only value will be the current instance of the {@link Stream}.
+	 * Emit the current instance of the {@link Stream}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/nest.png" alt="">
@@ -3997,7 +3997,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Repeatedly subscribes to the source completion of the previous subscription.
+	 * Repeatedly subscribe to the source completion of the previous subscription.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeat.png" alt="">
@@ -4011,7 +4011,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Repeatedly subscribes to the source if the predicate returns true after completion of the previous subscription.
+	 * Repeatedly subscribe to the source if the predicate returns true after completion of the previous subscription.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatb.png" alt="">
@@ -4027,7 +4027,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Repeatedly subscribes to the source if the predicate returns true after completion of the previous subscription.
+	 * Repeatedly subscribe to the source if the predicate returns true after completion of the previous subscription.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/repeatn.png" alt="">
@@ -4043,7 +4043,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Repeatedly subscribes to the source if the predicate returns true after completion of the previous
+	 * Repeatedly subscribe to the source if the predicate returns true after completion of the previous
 	 * subscription. A specified maximum of repeat will limit the number of re-subscribe.
 	 *
 	 * <p>
@@ -4062,7 +4062,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Repeatedly subscribes to this {@link Stream} when a companion sequence signals a number of emitted elements in
+	 * Repeatedly subscribe to this {@link Stream} when a companion sequence signals a number of emitted elements in
 	 * response to the stream completion signal.
 	 * <p>If the companion sequence signals when this {@link Stream} is active, the repeat
 	 * attempt is suppressed and any terminal signal will terminate this {@link Stream} with the same signal immediately.
@@ -4198,75 +4198,79 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} whose values will be only the first value signalled after the next {@code other}
-	 * emission.
+	 * Emit latest value for every given given period.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sampletimespan.png" alt="">
 	 *
-	 * @param other the sampler stream
+	 * @param timespan the period in second to emit the latest observed item
 	 *
-	 * @return a new {@link Stream} whose values are the  value of each batch
+	 * @return a sampled {@link Stream} by last item over a period of time
 	 */
 	public final Stream<O> sample(long timespan) {
 		return sample(timespan, TimeUnit.SECONDS);
 	}
 
 	/**
-	 * Create a new {@link Stream} whose values will be only the first value signalled after the next {@code other}
-	 * emission.
+	 * Emit latest value for every given given period .
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sampletimespan.png" alt="">
 	 *
-	 * @param other the sampler stream
+	 * @param timespan the period in unit to emit the latest observed item
+	 * @param unit the unit of time
 	 *
-	 * @return a new {@link Stream} whose values are the  value of each batch
+	 * @return a sampled {@link Stream} by last item over a period of time
 	 */
 	public final Stream<O> sample(long timespan, TimeUnit unit) {
 		return sample(interval(timespan, unit));
 	}
 
 	/**
-	 * Create a new {@link Stream} whose values will be only the first value signalled after the next {@code other}
-	 * emission.
+	 * Sample this {@link Stream} and emit its latest value whenever the sampler {@link Publisher}
+	 * signals a value.
+	 * <p>
+	 * Termination of either {@link Publisher} will result in termination for the {@link Subscriber}
+	 * as well.
+	 * <p>
+	 * Both {@link Publisher} will run in unbounded mode because the backpressure
+	 * would interfere with the sampling precision.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sample.png" alt="">
 	 *
-	 * @param other the sampler stream
+	 * @param sampler the sampler {@link Publisher}
 	 *
-	 * @return a new {@link Stream} whose values are the  value of each batch
+	 * @return a sampled {@link Stream} by last item observed when the sampler {@link Publisher} signals
 	 */
-	public final <U> Stream<O> sample(Publisher<U> other) {
-		return new StreamSample<>(this, other);
+	public final <U> Stream<O> sample(Publisher<U> sampler) {
+		return new StreamSample<>(this, sampler);
 	}
 
 	/**
-	 * Create a new {@link Stream} whose values will be only the first value of each batch.
+	 * Take a value from this {@link Stream} then uses the duration provided to skip other values.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/samplefirsttimespan.png" alt="">
 	 *
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
+	 * @param timespan the period in seconds to exclude others values from this sequence
 	 *
-	 * @return a new {@link Stream} whose values are the first value of each batch
+	 * @return a sampled {@link Stream} by first item over a period of time
 	 */
 	public final Stream<O> sampleFirst(final long timespan) {
 		return sampleFirst(timespan, TimeUnit.SECONDS);
 	}
 
 	/**
-	 * Create a new {@link Stream} whose values will be only the first value of each batch.
+	 * Take a value from this {@link Stream} then uses the duration provided to skip other values.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/samplefirsttimespan.png" alt="">
 	 *
-	 * @param timespan the period in unit to use to release a buffered list
+	 * @param timespan the period in unit to exclude others values from this sequence
 	 * @param unit the time unit
 	 *
-	 * @return a new {@link Stream} whose values are the first value of each batch
+	 * @return a sampled {@link Stream} by first item over a period of time
 	 */
 	public final Stream<O> sampleFirst(final long timespan, final TimeUnit unit) {
 		return sampleFirst(new Function<O, Publisher<Long>>() {
@@ -4278,16 +4282,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Takes a value from upstream then uses the duration provided by a
+	 * Take a value from this {@link Stream} then uses the duration provided by a
 	 * generated Publisher to skip other values until that other Publisher signals.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/samplefirst.png" alt="">
 	 *
 	 * @param sampler the sampling function returning eventually to stop skipping upstream next
-	 * @param <U>
+	 * @param <U> the companion reified type
 	 *
-	 * @return a new {@link Stream} whose values are the first value of each batch
+	 * @return a sampled {@link Stream} by last item observed when the sampler signals
 	 */
 	public final <U> Stream<O> sampleFirst(Function<? super O, ? extends Publisher<U>> sampler) {
 		return new StreamThrottleFirst<>(this, sampler);
@@ -4295,65 +4299,111 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 
 	/**
-	 * Emits the last value from upstream only if there were no newer values emitted
+	 * Emit the last value from this {@link Stream} only if there were no new values emitted
 	 * during the time window provided by a publisher for that particular last value.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sampletimeout.png" alt="">
 	 *
-	 * @param throttler the throttling function to Publisher
+	 * @param throttlerFactory the throttling function to Publisher
 	 * @param <U> the throttling type
 	 *
-	 * @return a new {@link Stream} whose values are the first value of each batch
+	 * @return a sampled {@link Stream} by last single item observed before a companion {@link Publisher} emits
 	 */
 	@SuppressWarnings("unchecked")
-	public final <U> Stream<O> sampleTimeout(Function<? super O, ? extends Publisher<U>> throttler) {
-		return new StreamThrottleTimeout<>(this, throttler, QueueSupplier.xs());
+	public final <U> Stream<O> sampleTimeout(Function<? super O, ? extends Publisher<U>> throttlerFactory) {
+		return new StreamThrottleTimeout<>(this, throttlerFactory, SpscLinkedArrayQueue.unboundedSupplier(PlatformDependent
+				.XS_BUFFER_SIZE));
 	}
 
 	/**
-	 * Scan the values passing through this {@link Stream} into an object {@code A}. The arguments are the N-1 and N
-	 * next signal in this order.
+	 * Emit the last value from this {@link Stream} only if there were no newer values emitted
+	 * during the time window provided by a publisher for that particular last value. 
+	 * <p>The provided {@literal maxConcurrency} will keep a bounded maximum of concurrent timeouts and drop any new 
+	 * items until at least one timeout terminates.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sampletimeoutm.png" alt="">
+	 *
+	 * @param throttlerFactory the throttling function to Publisher
+	 * @param <U> the throttling type
+	 *
+	 * @return a sampled {@link Stream} by last single item observed before a companion {@link Publisher} emits
+	 */
+	@SuppressWarnings("unchecked")
+	public final <U> Stream<O> sampleTimeout(Function<? super O, ? extends Publisher<U>> throttlerFactory, long 
+			maxConcurrency) {
+		if(maxConcurrency == Long.MAX_VALUE){
+			return sampleTimeout(throttlerFactory);
+		}
+		return new StreamThrottleTimeout<>(this, throttlerFactory, QueueSupplier.get(maxConcurrency));
+	}
+
+	/**
+	 * Accumulate this {@link Stream} values with an accumulator {@link BiFunction} and
+	 * returns the intermediate results of this function.
+	 * <p>
+	 * Unlike {@link #scan(Object, BiFunction)}, this operator doesn't take an initial value
+	 * but treats the first {@link Stream} value as initial value.
+	 * <br>
+	 * The accumulation works as follows:
+	 * <pre><code>
+	 * result[0] = accumulator(source[0], source[1])
+	 * result[1] = accumulator(result[0], source[2])
+	 * result[2] = accumulator(result[1], source[3])
+	 * ...
+	 * </code></pre>
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/accumulate.png" alt="">
 	 *
-	 * @param fn the reduce function
+	 * @param accumulator the accumulating {@link BiFunction}
 	 *
-	 * @return a new {@link Stream} whose values contain only the reduced objects
+	 * @return an accumulating {@link Stream}
 	 *
 	 * @since 1.1, 2.0
 	 */
-	public final Stream<O> scan(final BiFunction<O, O, O> fn) {
-		return new StreamAccumulate<>(this, fn);
+	public final Stream<O> scan(final BiFunction<O, O, O> accumulator) {
+		return new StreamAccumulate<>(this, accumulator);
 	}
 
 	/**
-	 * Scan the values passing through this {@link Stream} into an object {@code A}. The given initial object will be
-	 * passed to the function's {@link Tuple2} argument. Behave like Reduce but triggers downstream {@link Stream} for every
-	 * transformation.
+	 * Aggregate this {@link Stream} values with the help of an accumulator {@link BiFunction}
+	 * and emits the intermediate results.
+	 * <p>
+	 * The accumulation works as follows:
+	 * <pre><code>
+	 * result[0] = initialValue;
+	 * result[1] = accumulator(result[0], source[0])
+	 * result[2] = accumulator(result[1], source[1])
+	 * result[3] = accumulator(result[2], source[2])
+	 * ...
+	 * </code></pre>
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/scan.png" alt="">
 	 *
 	 * @param initial the initial argument to pass to the reduce function
-	 * @param fn the scan function
-	 * @param <A> the type of the reduced object
+	 * @param accumulator the accumulating {@link BiFunction}
+	 * @param <A> the accumulated type
 	 *
-	 * @return a new {@link Stream} whose values contain only the reduced objects
+	 * @return an accumulating {@link Stream} starting with initial state
 	 *
 	 * @since 1.1, 2.0
 	 */
-	public final <A> Stream<A> scan(final A initial, final BiFunction<A, ? super O, A> fn) {
-		return new StreamScan<>(this, initial, fn);
+	public final <A> Stream<A> scan(final A initial, final BiFunction<A, ? super O, A> accumulator) {
+		return new StreamScan<>(this, initial, accumulator);
 	}
 
 	/**
-	 *
+	 * Expect and emit a single item from this {@link Stream} source or signal
+	 * {@link NoSuchElementException} (or a default generated value) for empty source,
+	 * {@link IndexOutOfBoundsException} for a multi-item source.
+	 * 
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/single.png" alt="">
 	 *
-	 * @return
+	 * @return a {@link Mono} with the eventual single item or an error signal
 	 */
 	public final Mono<O> single() {
 		return new MonoSingle<>(this);
@@ -4361,22 +4411,27 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 	/**
 	 *
+	 * Expect and emit a single item from this {@link Stream} source or signal
+	 * {@link NoSuchElementException} (or a default generated value) for empty source,
+	 * {@link IndexOutOfBoundsException} for a multi-item source.
+	 * 
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/singleordefault.png" alt="">
-	 * @param defaultSupplier
+	 * @param defaultSupplier a {@link Supplier} of a single fallback item if this {@link Stream} is empty
 	 *
-	 * @return
+	 * @return a {@link Mono} with the eventual single item or a supplied default value
 	 */
 	public final Mono<O> singleOrDefault(Supplier<? extends O> defaultSupplier) {
 		return new MonoSingle<>(this, defaultSupplier);
 	}
 
 	/**
-	 *
+	 * Expect and emit a zero or single item from this {@link Stream} source or
+	 * {@link IndexOutOfBoundsException} for a multi-item source.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/singleorempty.png" alt="">
 	 *
-	 * @return
+	 * @return a {@link Mono} with the eventual single item or no item
 	 */
 	public final Mono<O> singleOrEmpty() {
 		return new MonoSingle<>(this, MonoSingle.<O>completeOnEmptySequence());
