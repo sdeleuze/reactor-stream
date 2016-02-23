@@ -4558,8 +4558,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @since 2.0
 	 */
-	public final Stream<O> startWith(final O value) {
-		return startWith(just(value));
+	@SafeVarargs
+	@SuppressWarnings("varargs")
+	public final Stream<O> startWith(final O... values) {
+		return startWith(just(values));
 	}
 
 	/**
@@ -4584,7 +4586,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/unbounded.png" alt="">
-	 * <p>
 	 *
 	 * @return a {@link InterruptableSubscriber} to dispose and cancel the underlying {@link Subscription}
 	 */
@@ -4629,7 +4630,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Provide an alternative if this sequence is completed without any data
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/switchifempty.png" alt="">
-	 * <p>
+	 *
 	 * @param alternate the alternate publisher if this sequence is empty
 	 *
 	 * @return a new {@link Stream}
@@ -4662,7 +4663,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Subscribe to the given fallback {@link Publisher} if an error is observed on this {@link Stream}
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/switchonerror.png" alt="">
-	 * <p>
 	 *
 	 * @param fallback the alternate {@link Publisher}
 	 *
