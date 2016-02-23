@@ -4535,12 +4535,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Start emitting all items from the passed publisher then emits from the current stream.
+	 * Prepend the given {@link Iterable} before this {@link Stream} sequence.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/startwithi.png" alt="">
 	 *
-	 * @return the merged stream
+	 * @return a prefixed {@link Stream} with given {@link Iterable}
 	 *
 	 * @since 2.0
 	 */
@@ -4549,12 +4549,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Start emitting all items from the passed publisher then emits from the current stream.
+	 * Prepend the given values before this {@link Stream} sequence.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/startwithv.png" alt="">
 	 *
-	 * @return the merged stream
+	 * @return a prefixed {@link Stream} with given values
 	 *
 	 * @since 2.0
 	 */
@@ -4565,12 +4565,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Start emitting all items from the passed publisher then emits from the current stream.
+	 * Prepend the given {@link Publisher} sequence before this {@link Stream} sequence.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/startwith.png" alt="">
 	 *
-	 * @return the merged stream
+	 * @return a prefixed {@link Stream} with given {@link Publisher} sequence
 	 *
 	 * @since 2.0
 	 */
@@ -4633,7 +4633,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param alternate the alternate publisher if this sequence is empty
 	 *
-	 * @return a new {@link Stream}
+	 * @return an alternating {@link Stream} on source onComplete without elements
 	 *
 	 * @since 2.5
 	 */
@@ -4650,7 +4650,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param fn the transformation function
 	 * @param <V> the type of the return value of the transformation function
 	 *
-	 * @return a new {@link Stream} containing the transformed values
+	 * @return an alternating {@link Stream} on source onNext
 	 *
 	 * @since 1.1, 2.0
 	 */
@@ -4666,7 +4666,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param fallback the alternate {@link Publisher}
 	 *
-	 * @return a new {@link Stream}
+	 * @return an alternating {@link Stream} on source onError
 	 */
 	public final Stream<O> switchOnError(final Publisher<? extends O> fallback) {
 		return StreamSource.wrap(Flux.onErrorResumeWith(this, new Function<Throwable, Publisher<? extends O>>() {
