@@ -17,13 +17,15 @@ package reactor.rx;
 
 import java.io.Serializable;
 
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.fn.Consumer;
+import reactor.fn.Function;
 import reactor.fn.Supplier;
 
 /**
- * A domain representation of a Reactive {@link reactor.rx.Stream} signal.
+ * A domain representation of a Reactive Stream signal.
  * There are 4 differents signals and their possible sequence is defined as such:
  * onError | (onSubscribe onNext* (onError | onComplete)?)
  *
@@ -36,13 +38,13 @@ public final class Signal<T> implements Supplier<T>, Consumer<Subscriber<? super
 		/**
 		 * Only happens once, a subscribe signal is the handshake between a new subscriber and a producer.
 		 * <p>
-		 * see {@link reactor.rx.Stream#subscribe(Subscriber)}
+		 * see {@link Stream#subscribe(Subscriber)}
 		 */
 		SUBSCRIBE,
 
 		/**
 		 * Can happen N times where N is a possibly unbounded number. The signal will trigger core logic on all
-		 * {@link Subscriber} attached to a {@link reactor.rx.Stream}.
+		 * {@link Subscriber} attached to a {@link Stream}.
 		 * <p>
 		 * see {@link Subscriber#onNext(Object)}
 		 */
@@ -50,9 +52,9 @@ public final class Signal<T> implements Supplier<T>, Consumer<Subscriber<? super
 
 		/**
 		 * Only happens once, a complete signal is used to confirm the successful end of the data sequence flowing in a
-		 * {@link reactor.rx.Stream}. The signal releases batching operations such as {@link reactor.rx.Stream#buffer
+		 * {@link Stream}. The signal releases batching operations such as {@link Stream#buffer
 		 * ()},
-		 * {@link reactor.rx.Stream#window} or {@link reactor.rx.Stream#reduce(reactor.fn.BiFunction)}
+		 * {@link Stream#window} or {@link Stream#reduce(reactor.fn.BiFunction)}
 		 * <p>
 		 * see {@link Subscriber#onComplete()}
 		 */
@@ -60,10 +62,8 @@ public final class Signal<T> implements Supplier<T>, Consumer<Subscriber<? super
 
 		/**
 		 * Only happens once, a complete signal is used to confirm the error end of the data sequence flowing in a
-		 * {@link reactor.rx.Stream}. However, the signal can be recovered using various operations such as {@link
-		 * reactor
-		 * .rx.Stream#recover
-		 * (Class)} or {@link reactor.rx.Stream#retry()}
+		 * {@link Stream}. However, the signal can be recovered using various operations such as {@link 
+		 * Stream#onErrorResumeWith(Function)} , {@link Stream#switchOnError(Publisher)} or {@link Stream#retry}
 		 * <p>
 		 * see {@link Subscriber#onError(Throwable cause)}
 		 */
