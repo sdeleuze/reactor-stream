@@ -80,12 +80,23 @@ import reactor.rx.subscriber.InterruptableSubscriber;
 import reactor.rx.subscriber.ManualSubscriber;
 
 /**
- * A public factory to build {@link Stream}, Streams provide for common transformations from a few structures such as
- * Iterable or Future to a Stream, in addition to provide for combinatory operations (merge, switchOnNext...).
+ * A Reactive Stream {@link Publisher} implementing a complete scope of Reactive Extensions.
+ * <p>
+ * A {@link Stream} is a sequence of 0..N events flowing via callbacks to {@link Subscriber#onNext(Object)}.
+ * Static source generators are available and allow for transfromation from functional callbacks or plain Java types
+ * like {@link Iterable} or {@link Future}.
+ * Instance methods will build a new template {@link Stream} also called operators. Their role is to build adelegate
+ * chain of
+ * {@link Subscriber} materialized only when {@link Stream#subscribe}
+ * is called. Materialization will operate by propagating a
+ * {@link Subscription} from the root {@link Publisher} via {@link Subscriber#onSubscribe(Subscription)}.
+ *
+ *
+ * This API is not directly an extension of {@link Flux} but considerably expand its scope and reusing it internally. and conversions between {@link Stream} and {@link Flux} can
+ * be achieved using the operator {@link #as} : {@code flux.as(Stream::from)}.
  * <p>
  * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" alt="">
  * <p>
- * Examples of use (In Java8 but would also work with Anonymous classes or Groovy Closures for instance):
  * <pre>
  * {@code
  * Stream.just(1, 2, 3).map(i -> i*2) //...
