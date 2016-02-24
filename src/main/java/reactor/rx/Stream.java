@@ -85,7 +85,8 @@ import reactor.rx.subscriber.ManualSubscriber;
  * A {@link Stream} is a sequence of 0..N events flowing via callbacks to {@link Subscriber#onNext(Object)}.
  * Static source generators are available and allow for transfromation from functional callbacks or plain Java types
  * like {@link Iterable} or {@link Future}.
- * Instance methods will build a new template {@link Stream} also called operators. Their role is to build adelegate
+ * Instance methods will build a new templates of {@link Stream} also called operators. Their role is to build a
+ * delegate
  * chain of
  * {@link Subscriber} materialized only when {@link Stream#subscribe}
  * is called. Materialization will operate by propagating a
