@@ -92,7 +92,8 @@ import reactor.rx.subscriber.ManualSubscriber;
  * {@link Subscription} from the root {@link Publisher} via {@link Subscriber#onSubscribe(Subscription)}.
  *
  *
- * This API is not directly an extension of {@link Flux} but considerably expand its scope and reusing it internally. and conversions between {@link Stream} and {@link Flux} can
+ * This API is not directly an extension of
+ * {@link Flux} but considerably expands its scope. and conversions between {@link Stream} and {@link Flux} can
  * be achieved using the operator {@link #as} : {@code flux.as(Stream::from)}.
  * <p>
  * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" alt="">
