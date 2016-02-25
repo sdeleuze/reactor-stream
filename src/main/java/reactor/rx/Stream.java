@@ -5122,13 +5122,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Accumulate all values of this {@link Stream} in a {@link List} that is emitted to the returned {@link Mono} on
+	 * Accumulate this {@link Stream} sequence in a {@link List} that is emitted to the returned {@link Mono} on
 	 * onComplete.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tolist.png" alt="">
 	 *
-	 * @return the {@link Mono} of all values from this {@link Stream}
+	 * @return a {@link Mono} of all values from this {@link Stream}
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -5143,14 +5143,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
-	 * the most recent emitted item for this key.
+	 * Convert all this
+	 * {@link Stream} sequence into a hashed map where the key is extracted by the given {@link Function} and the
+	 * value will be the most recent emitted item for this key.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomap.png" alt="">
 	 *
+	 * @param keyExtractor a {@link Function} to route items into a keyed {@link Collection}
 	 *
-	 * @return the {@link Mono} of all values from this {@link Stream}
+	 * @return a {@link Mono} of all last matched key-values from this {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -5160,16 +5162,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
+	 * Convert all this {@link Stream} sequence into a hashed map where the key is extracted by the given function and the value will be
 	 * the most recent extracted item for this key.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomapv.png" alt="">
 	 *
-	 * @param keyExtractor
-	 * @param valueExtractor
+	 * @param keyExtractor a {@link Function} to route items into a keyed {@link Collection}
+	 * @param valueExtractor a {@link Function} to select the data to store from each item
 	 *
-	 * @return the mono of all data from this Stream
+	 * @return a {@link Mono} of all last matched key-values from this {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -5184,17 +5186,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Convert all the sequence into a supplied map where the key is extracted by the given function and the value will
+	 * Convert all this {@link Stream} sequence into a supplied map where the key is extracted by the given function and the value will
 	 * be the most recent extracted item for this key.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomapvs.png" alt="">
 	 *
-	 * @param keyExtractor
-	 * @param valueExtractor
-	 * @param mapSupplier
+	 * @param keyExtractor a {@link Function} to route items into a keyed {@link Collection}
+	 * @param valueExtractor a {@link Function} to select the data to store from each item
+	 * @param mapSupplier a {@link Map} factory called for each {@link Subscriber}
 	 *
-	 * @return the mono of all data from this Stream
+	 * @return a {@link Mono} of all last matched key-values from this {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -5214,15 +5216,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
+	 * Convert this {@link Stream} sequence into a hashed map where the key is extracted by the given function and the value will be
 	 * all the emitted item for this key.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomultimap.png" alt="">
 	 *
-	 * @param keyExtractor
+	 * @param keyExtractor a {@link Function} to route items into a keyed {@link Collection}
 	 *
-	 * @return the mono of all data from this Stream
+	 * @return a {@link Mono} of all matched key-values from this {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -5232,16 +5234,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Convert all the sequence into a hashed map where the key is extracted by the given function and the value will be
+	 * Convert this {@link Stream} sequence into a hashed map where the key is extracted by the given function and the value will be
 	 * all the extracted items for this key.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomultimapv.png" alt="">
 	 *
-	 * @param keyExtractor
-	 * @param valueExtractor
+	 * @param keyExtractor a {@link Function} to route items into a keyed {@link Collection}
+	 * @param valueExtractor a {@link Function} to select the data to store from each item
 	 *
-	 * @return the mono of all data from this Stream
+	 * @return a {@link Mono} of all matched key-values from this {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -5256,17 +5258,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Convert all the sequence into a supplied map where the key is extracted by the given function and the value will
+	 * Convert this {@link Stream} sequence into a supplied map where the key is extracted by the given function and the value will
 	 * be all the extracted items for this key.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomultimapvs.png" alt="">
 	 *
-	 * @param keyExtractor
-	 * @param valueExtractor
-	 * @param mapSupplier
+	 * @param keyExtractor a {@link Function} to route items into a keyed {@link Collection}
+	 * @param valueExtractor a {@link Function} to select the data to store from each item
+	 * @param mapSupplier a {@link Map} factory called for each {@link Subscriber}
 	 *
-	 * @return the mono of all data from this Stream
+	 * @return a {@link Mono} of all matched key-values from this {@link Stream}
 	 *
 	 * @since 2.5
 	 */
