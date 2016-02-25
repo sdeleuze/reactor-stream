@@ -4948,6 +4948,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * Switch to a fallback {@link Publisher} in case a per-item period
 	 * fires before the next item arrives from this {@link Stream}.
 	 *
+	 * <p> If the given {@link Publisher} is null, signal a {@link java.util.concurrent.TimeoutException}.
+	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeouttimefallback.png" alt="">
 	 *
@@ -4973,75 +4975,75 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 			}
 		};
 
+		if(fallback == null) {
+			return timeout(_timer, rest);
+		}
 		return timeout(_timer, rest, fallback);
 	}
 
-	/**
-	 * Switch to the fallback Publisher if no data has been emitted when timeout publishers emit a signal <p> A Timeout
-	 * Exception will be signaled if no data or complete signal have been sent within the given period.
-	 *
-	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
-	 *
-	 * @param allTimeout the timeout emitter before the each signal from this sequence
-	 *
-	 * @return a new {@link Stream}
-	 *
-	 * @since 2.5
-	 */
-	public final <U> Stream<O> timeout(final Publisher<U> allTimeout) {
-		return timeout(allTimeout, new Function<O, Publisher<U>>() {
-			@Override
-			public Publisher<U> apply(O o) {
-				return allTimeout;
-			}
-		}, null);
-	}
 
 	/**
-	 * Switch to a fallback {@link Publisher} in case a per-item period
-	 * fires before the next item arrives from this {@link Stream}.
+	 * Signal a {@link java.util.concurrent.TimeoutException} in case a first item from this {@link Stream} has
+	 * not been emitted before the given {@link Publisher} emits.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeoutfirst.png" alt="">
 	 *
-	 * @param firstTimeout the timeout emitter before the first signal from this sequence
-	 * @param followingTimeouts the timeout in unit between two notifications on this composable
+	 * @param firstTimeout the timeout {@link Publisher} that must not emit before the first signal from this {@link Stream}
 	 *
-	 * @return a per-item expirable {@link Stream}
+	 * @return an expirable {@link Stream} if the first item does not come before a {@link Publisher} signal
 	 *
 	 * @since 2.5
 	 */
-	public final <U, V> Stream<O> timeout(Publisher<U> firstTimeout,
-			Function<? super O, ? extends Publisher<V>> followingTimeouts) {
-		return timeout(firstTimeout, followingTimeouts, null);
+	public final <U> Stream<O> timeout(final Publisher<U> firstTimeout) {
+		return timeout(firstTimeout, new Function<O, Publisher<U>>() {
+			@Override
+			public Publisher<U> apply(O o) {
+				return never();
+			}
+		});
 	}
 
 	/**
-	 * Switch to the fallback Publisher if no data has been emitted when timeout publishers emit a signal <p> The
-	 * current subscription will be cancelled and the fallback publisher subscribed. <p> A Timeout Exception will be
-	 * signaled if no data or complete signal have been sent within the given period.
+	 * Signal a {@link java.util.concurrent.TimeoutException} in case a first item from this {@link Stream} has
+	 * not been emitted before the given {@link Publisher} emits. The following items will be individually timed via
+	 * the factory provided {@link Publisher}.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeoutall.png" alt="">
 	 *
-	 * @param firstTimeout the timeout emitter before the first signal from this sequence
-	 * @param followingTimeouts the timeout in unit between two notifications on this composable
-	 * @param fallback the fallback {@link Publisher} to subscribe when a timeout occurs
+	 * @param firstTimeout the timeout {@link Publisher} that must not emit before the first signal from this {@link Stream}
+	 * @param nextTimeoutFactory the timeout {@link Publisher} factory for each next item
 	 *
-	 * @return a per-item expirable {@link Stream} with a fallback {@link Publisher}
+	 * @return a first then per-item expirable {@link Stream}
 	 *
 	 * @since 2.5
 	 */
 	public final <U, V> Stream<O> timeout(Publisher<U> firstTimeout,
-			Function<? super O, ? extends Publisher<V>> followingTimeouts, final Publisher<? extends O>
+			Function<? super O, ? extends Publisher<V>> nextTimeoutFactory) {
+		return new StreamTimeout<>(this, firstTimeout, nextTimeoutFactory);
+	}
+
+	/**
+	 * Switch to a fallback {@link Publisher} in case a first item from this {@link Stream} has
+	 * not been emitted before the given {@link Publisher} emits. The following items will be individually timed via
+	 * the factory provided {@link Publisher}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeoutfallfallback.png" alt="">
+	 *
+	 * @param firstTimeout the timeout {@link Publisher} that must not emit before the first signal from this {@link Stream}
+	 * @param nextTimeoutFactory the timeout {@link Publisher} factory for each next item
+	 * @param fallback the fallback {@link Publisher} to subscribe when a timeout occurs
+	 *
+	 * @return a first then per-item expirable {@link Stream} with a fallback {@link Publisher}
+	 *
+	 * @since 2.5
+	 */
+	public final <U, V> Stream<O> timeout(Publisher<U> firstTimeout,
+			Function<? super O, ? extends Publisher<V>> nextTimeoutFactory, final Publisher<? extends O>
 			fallback) {
-		if(fallback == null) {
-			return new StreamTimeout<>(this, firstTimeout, followingTimeouts);
-		}
-		else{
-			return new StreamTimeout<>(this, firstTimeout, followingTimeouts, fallback);
-		}
+		return new StreamTimeout<>(this, firstTimeout, nextTimeoutFactory, fallback);
 	}
 
 	/**
