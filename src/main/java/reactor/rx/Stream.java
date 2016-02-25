@@ -5166,7 +5166,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * the most recent extracted item for this key.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomapv.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomap.png" alt="">
 	 *
 	 * @param keyExtractor a {@link Function} to route items into a keyed {@link Collection}
 	 * @param valueExtractor a {@link Function} to select the data to store from each item
@@ -5190,7 +5190,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * be the most recent extracted item for this key.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomapvs.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomap.png" alt="">
 	 *
 	 * @param keyExtractor a {@link Function} to route items into a keyed {@link Collection}
 	 * @param valueExtractor a {@link Function} to select the data to store from each item
@@ -5238,7 +5238,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * all the extracted items for this key.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomultimapv.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomultimap.png" alt="">
 	 *
 	 * @param keyExtractor a {@link Function} to route items into a keyed {@link Collection}
 	 * @param valueExtractor a {@link Function} to select the data to store from each item
@@ -5262,7 +5262,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * be all the extracted items for this key.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomultimapvs.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tomultimap.png" alt="">
 	 *
 	 * @param keyExtractor a {@link Function} to route items into a keyed {@link Collection}
 	 * @param valueExtractor a {@link Function} to select the data to store from each item
@@ -5487,15 +5487,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Combine the most recent items from this sequence and the passed sequence.
+	 * Combine values from this {@link Stream} with values from another
+	 * {@link Publisher} through a {@link BiFunction} and emits the result.
+	 * <p>
+	 * The operator will drop values from this {@link Stream} until the other
+	 * {@link Publisher} produces any value.
+	 * <p>
+	 * If the other {@link Publisher} completes without any value, the sequence is completed.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/withlatestfrom.png" alt="">
 	 *
-	 * @param other
-	 * @param <U>
+	 * @param other the {@link Publisher} to combine with
+	 * @param <U> the other {@link Publisher} sequence type
 	 *
-	 * @return
+	 * @return a combined {@link Stream} gated by another {@link Publisher}
 	 */
 	public final <U, R> Stream<R> withLatestFrom(Publisher<? extends U> other, BiFunction<? super O, ? super U, ?
 			extends R > resultSelector){
