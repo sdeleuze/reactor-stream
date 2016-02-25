@@ -2330,24 +2330,53 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Delays the {@link Stream#subscribe(Subscriber) subscription} to this {@link Stream} source until a period
-	 * given a number of seconds elapses.
+	 * Delay this {@link Stream} signals to {@linkS Subscriber#onNext} until the given period in seconds elapses.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delaysubscription.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delayonnext.png" alt="">
 	 *
-	 * @param seconds period to delay {@link #subscribe(Subscriber)} call
+	 * @param seconds period to delay each {@linkS Subscriber#onNext} call
 	 *
-	 * @return a delayed {@link Stream}
+	 * @return a throttled {@link Stream}
 	 *
 	 * @since 2.5
 	 */
-	public final Stream<O> delaySubscription(long seconds) {
-		return delaySubscription(seconds, TimeUnit.SECONDS);
+	public final Stream<O> delay(long seconds) {
+		return delay(seconds, TimeUnit.SECONDS);
+	}
+
+
+	/**
+	 * Delay this {@link Stream} signals to {@linkS Subscriber#onNext} until the given period elapses.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delayonnext.png" alt="">
+	 *
+	 * @param delay period to delay each {@linkS Subscriber#onNext} call
+	 * @param unit unit of time
+	 *
+	 * @return a throttled {@link Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> delay(long delay, TimeUnit unit) {
+		return concatMap(new Function<O, Publisher<? extends O>>() {
+			@Override
+			public Publisher<? extends O> apply(final O o) {
+				Timer timer = getTimer();
+				return Mono.delay(delay, unit, timer != null ? timer : Timer.globalOrNew())
+				           .map(new Function<Long, O>() {
+					@Override
+					public O apply(Long aLong) {
+						return o;
+					}
+				});
+			}
+		});
 	}
 
 	/**
-	 * Delays the {@link Stream#subscribe(Subscriber) subscription} to this {@link Stream} source until the given
+	 * Delay the {@link Stream#subscribe(Subscriber) subscription} to this {@link Stream} source until the given
 	 * period elapses.
 	 *
 	 * <p>
@@ -2365,7 +2394,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Delays the {@link Stream#subscribe(Subscriber) subscription} to this {@link Stream} source until a period
+	 * Delay the {@link Stream#subscribe(Subscriber) subscription} to this {@link Stream} source until a period
 	 * given a number of seconds elapses.
 	 *
 	 * <p>
@@ -2384,7 +2413,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Delays the subscription to the main source until another Publisher
+	 * Delay the subscription to the main source until another Publisher
 	 * signals a value or completes.
 	 *
 	 * <p>

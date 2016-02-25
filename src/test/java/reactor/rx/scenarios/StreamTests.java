@@ -1223,6 +1223,18 @@ public class StreamTests extends AbstractReactorTest {
 		assertThat("Not totally dispatched", latch.await(30, TimeUnit.SECONDS));
 	}
 
+	@Test
+	public void delayEach() throws InterruptedException {
+		CountDownLatch latch = new CountDownLatch(3);
+
+		Stream.range(1, 3)
+		      .delay(1)
+		      .log("delay")
+		      .consume(t -> latch.countDown());
+
+		assertThat("Not totally dispatched", latch.await(30, TimeUnit.SECONDS));
+	}
+
 	// Test issue https://github.com/reactor/reactor/issues/474
 // code by @masterav10
 	@Test
