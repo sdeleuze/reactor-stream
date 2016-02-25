@@ -4910,16 +4910,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Signal an error if no data has been emitted for {@param timeout} milliseconds. Timeout is run on the environment
-	 * root timer. <p> A Timeout Exception will be signaled if no data or complete signal have been sent within the
-	 * given period.
+	 * Signal a {@link java.util.concurrent.TimeoutException} error in case a per-item period in milliseconds fires
+	 * before the next item arrives from this {@link Stream}.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeouttime.png" alt="">
 	 *
-	 * @param timeout the timeout in milliseconds between two notifications on this composable
+	 * @param timeout the timeout in milliseconds between two signals from this {@link Stream}
 	 *
-	 * @return a new {@link Stream}
+	 * @return a per-item expirable {@link Stream}
 	 *
 	 * @since 1.1, 2.0
 	 */
@@ -4928,17 +4927,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Signal an error if no data has been emitted for {@param timeout} milliseconds. Timeout is run on the environment
-	 * root timer. <p> A Timeout Exception will be signaled if no data or complete signal have been sent within the
-	 * given period.
+	 * Signal a {@link java.util.concurrent.TimeoutException} in case a per-item period fires before the
+	 * next item arrives from this {@link Stream}.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeouttime.png" alt="">
 	 *
-	 * @param timeout the timeout in unit between two notifications on this composable
+	 * @param timeout the timeout in milliseconds between two signals from this {@link Stream}
 	 * @param unit the time unit
 	 *
-	 * @return a new {@link Stream}
+	 * @return a per-item expirable {@link Stream}
 	 *
 	 * @since 1.1, 2.0
 	 */
@@ -4947,18 +4945,17 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Switch to the fallback Publisher if no data has been emitted for {@param timeout} milliseconds. Timeout is run on
-	 * the environment root timer. <p> The current subscription will be cancelled and the fallback publisher subscribed.
-	 * <p> A Timeout Exception will be signaled if no data or complete signal have been sent within the given period.
+	 * Switch to a fallback {@link Publisher} in case a per-item period
+	 * fires before the next item arrives from this {@link Stream}.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeouttimefallback.png" alt="">
 	 *
-	 * @param timeout the timeout in unit between two notifications on this composable
+	 * @param timeout the timeout in milliseconds between two signals from this {@link Stream}
 	 * @param unit the time unit
-	 * @param fallback the fallback {@link Publisher} to subscribe to once the timeout has occured
+	 * @param fallback the fallback {@link Publisher} to subscribe when a timeout occurs
 	 *
-	 * @return a new {@link Stream}
+	 * @return a per-item expirable {@link Stream} with a fallback {@link Publisher}
 	 *
 	 * @since 2.0
 	 */
@@ -5002,16 +4999,16 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Switch to the fallback Publisher if no data has been emitted when timeout publishers emit a signal <p> A Timeout
-	 * Exception will be signaled if no data or complete signal have been sent within the given period.
+	 * Switch to a fallback {@link Publisher} in case a per-item period
+	 * fires before the next item arrives from this {@link Stream}.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeout.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeoutfirst.png" alt="">
 	 *
 	 * @param firstTimeout the timeout emitter before the first signal from this sequence
 	 * @param followingTimeouts the timeout in unit between two notifications on this composable
 	 *
-	 * @return a new {@link Stream}
+	 * @return a per-item expirable {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -5030,9 +5027,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param firstTimeout the timeout emitter before the first signal from this sequence
 	 * @param followingTimeouts the timeout in unit between two notifications on this composable
-	 * @param fallback the fallback {@link Publisher} to subscribe to once the timeout has occured
+	 * @param fallback the fallback {@link Publisher} to subscribe when a timeout occurs
 	 *
-	 * @return a new {@link Stream}
+	 * @return a per-item expirable {@link Stream} with a fallback {@link Publisher}
 	 *
 	 * @since 2.5
 	 */
