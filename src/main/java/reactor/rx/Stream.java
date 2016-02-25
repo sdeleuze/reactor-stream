@@ -5328,20 +5328,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Re-route incoming values into a dynamically created {@link Stream} every pre-defined {@param backlog} times. The
-	 * nested streams will be pushed into the returned {@link Stream}.
+	 * Route incoming values into multiple {@link Stream} delimited by the given {@code maxSize} count and starting from
+	 * the first item of each batch.
+	 * Each {@link Stream} bucket will onComplete after {@code maxSize} items have been routed.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsize.png" alt="">
 	 *
-	 * @param backlog the time period when each window close and flush the attached consumer
+	 * @param maxSize the maximum routed items before emitting onComplete per {@link Stream} bucket
 	 *
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
 	 *
 	 * @since 2.0
 	 */
-	public final Stream<Stream<O>> window(final int backlog) {
-		return new StreamWindow<>(this, backlog, QueueSupplier.<O>get(backlog));
+	public final Stream<Stream<O>> window(final int maxSize) {
+		return new StreamWindow<>(this, maxSize, QueueSupplier.<O>get(maxSize));
 	}
 
 	/**
@@ -5362,7 +5363,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsize.png" alt="">
 	 *
-	 * @param maxSize the maximum re-routed items per {@link Stream}
+	 * @param maxSize the maximum routed items per {@link Stream}
 	 * @param skip the number of items to count before emitting a new bucket {@link Stream}
 	 *
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
@@ -5466,18 +5467,31 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Re-route incoming values into bucket streams that will be pushed into the returned {@link Stream} every {@code
-	 * timeshift} period. These streams will complete every {@code timespan} period has cycled. Complete signal will
-	 * flush any remaining buckets.
+	 * Collect incoming values into multiple {@link List} delimited by the given {@link Publisher} signals.
+	 * Each {@link List} bucket will last until the mapped {@link Publisher} receiving the boundary signal emits,
+	 * thus releasing the bucket to the returned {@link Stream}.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowtimeshiftover.png" alt="">
+	 * When Open signal is strictly not overlapping Close signal : dropping buffers
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/bufferopenclose.png" alt="">
+	 * <p>
+	 * When Open signal is strictly more frequent than Close signal : overlapping buffers
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/bufferopencloseover.png" alt="">
+	 * <p>
+	 * When Open signal is exactly coordinated with Close signal : exact buffers
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/bufferboundary.png" alt="">
 	 *
-	 * @param timespan the period in unit to use to complete a window
-	 * @param timeshift the period in unit to use to create a new window
-	 * @param unit the time unittime
+	 * @param timespan the {@link Publisher} to subscribe to for creating new receiving bucket
+	 * signals.
+	 * @param timeshift the {@link Supplier} to provide a {@link Publisher} to subscribe to for emitting relative
+	 * bucket.
 	 *
-	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
+	 * @return a new
+	 * {@link Stream} of {@link List} delimited by an opening {@link Publisher} and a relative closing {@link Publisher}
+	 *
 	 */
 	public final Stream<Stream<O>> window(final long timespan, final long timeshift, final TimeUnit unit) {
 		if (timeshift == timespan) {
