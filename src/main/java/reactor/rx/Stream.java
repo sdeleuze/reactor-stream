@@ -2330,12 +2330,12 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Delay this {@link Stream} signals to {@linkS Subscriber#onNext} until the given period in seconds elapses.
+	 * Delay this {@link Stream} signals to {@link Subscriber#onNext} until the given period in seconds elapses.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delayonnext.png" alt="">
 	 *
-	 * @param seconds period to delay each {@linkS Subscriber#onNext} call
+	 * @param seconds period to delay each {@link Subscriber#onNext} call
 	 *
 	 * @return a throttled {@link Stream}
 	 *
@@ -2347,19 +2347,19 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 
 	/**
-	 * Delay this {@link Stream} signals to {@linkS Subscriber#onNext} until the given period elapses.
+	 * Delay this {@link Stream} signals to {@link Subscriber#onNext} until the given period elapses.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delayonnext.png" alt="">
 	 *
-	 * @param delay period to delay each {@linkS Subscriber#onNext} call
+	 * @param delay period to delay each {@link Subscriber#onNext} call
 	 * @param unit unit of time
 	 *
 	 * @return a throttled {@link Stream}
 	 *
 	 * @since 2.5
 	 */
-	public final Stream<O> delay(long delay, TimeUnit unit) {
+	public final Stream<O> delay(final long delay, final TimeUnit unit) {
 		return concatMap(new Function<O, Publisher<? extends O>>() {
 			@Override
 			public Publisher<? extends O> apply(final O o) {
