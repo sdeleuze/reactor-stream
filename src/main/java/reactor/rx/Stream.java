@@ -4739,7 +4739,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Relays values from this {@link Stream} until the given time period elapses.
+	 * Relay values from this {@link Stream} until the given time period elapses.
 	 * <p>
 	 * If the time period is zero, the {@link Subscriber} gets completed if this {@link Stream} completes, signals an
 	 * error or
@@ -4768,7 +4768,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Emits the last N values this {@link Stream} emitted before its completion.
+	 * Emit the last N values this {@link Stream} emitted before its completion.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/takelast.png" alt="">
@@ -4785,7 +4785,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 
 	/**
-	 * Relays values until a predicate returns {@literal TRUE}, indicating the sequence should stop
+	 * Relay values until a predicate returns {@literal TRUE}, indicating the sequence should stop
 	 * (checked after each value has been delivered).
 	 *
 	 * <p>
@@ -4802,7 +4802,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Relays values from this {@link Stream} until the given {@link Publisher} emits.
+	 * Relay values from this {@link Stream} until the given {@link Publisher} emits.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/takeuntil.png" alt="">
@@ -4818,7 +4818,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Relays values while a predicate returns
+	 * Relay values while a predicate returns
 	 * {@literal FALSE} for the values (checked before each value is delivered).
 	 *
 	 * <p>
@@ -4876,14 +4876,15 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Request once the parent stream every {@param period} milliseconds. Timeout is run on the environment root timer.
+	 *
+	 * Relay requests of N into N delayed requests of 1 to this {@link Stream}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/throttlerequest.png" alt="">
 	 *
-	 * @param period the period in milliseconds between two notifications on this stream
+	 * @param period the period in milliseconds to delay downstream requests of N into N x delayed requests of 1
 	 *
-	 * @return a new {@link Stream}
+	 * @return a timed step-request {@link Stream}
 	 *
 	 * @since 2.0
 	 */
