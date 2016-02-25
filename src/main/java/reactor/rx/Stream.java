@@ -5345,15 +5345,25 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Re-route incoming values into bucket streams that will be pushed into the returned {@link Stream} every {@code
-	 * skip} and complete every time {@code maxSize} has been reached by any of them. Complete signal will flush any
-	 * remaining buckets.
+	 * Route incoming values into multiple {@link Stream} delimited by the given {@code skip} count and starting from
+	 * the first item of each batch.
+	 * Each {@link Stream} bucket will onComplete after {@code maxSize} items have been routed.
 	 *
 	 * <p>
+	 * When skip > maxSize : dropping windows
+	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsizeskip.png" alt="">
+	 * <p>
+	 * When maxSize < skip : overlapping windows
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsizeskipover.png" alt="">
+	 * <p>
+	 * When skip == maxSize : exact windows
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsize.png" alt="">
 	 *
-	 * @param skip the number of items to skip before creating a new bucket
-	 * @param maxSize the collected size
+	 * @param maxSize the maximum re-routed items per {@link Stream}
+	 * @param skip the number of items to count before emitting a new bucket {@link Stream}
 	 *
 	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
 	 */
