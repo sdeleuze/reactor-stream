@@ -85,7 +85,7 @@ import reactor.rx.subscriber.ManualSubscriber;
  * A {@link Stream} is a sequence of 0..N events flowing via callbacks to {@link Subscriber#onNext(Object)}.
  * Static source generators are available and allow for transfromation from functional callbacks or plain Java types
  * like {@link Iterable} or {@link Future}.
- * Instance methods will build a new templates of {@link Stream} also called operators. Their role is to build a
+ * Instance methods will build new templates of {@link Stream} also called operators. Their role is to build a
  * delegate
  * chain of
  * {@link Subscriber} materialized only when {@link Stream#subscribe}
@@ -4720,54 +4720,63 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that will signal next elements up to {@param max} times.
-	 *
+	 * Take only the first N values from this {@link Stream}.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/take.png" alt="">
+	 * <p>
+	 * If N is zero, the {@link Subscriber} gets completed if this {@link Stream} completes, signals an error or
+	 * signals its first value (which is not not relayed though).
 	 *
-	 * @param max the number of times to broadcast next signals before completing
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/take0.png" alt="">
+	 * @param n the number of items to emit from this {@link Stream}
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return a size limited {@link Stream}
 	 *
 	 * @since 2.0
 	 */
-	public final Stream<O> take(final long max) {
-		return new StreamTake<O>(this, max);
+	public final Stream<O> take(final long n) {
+		return new StreamTake<O>(this, n);
 	}
 
 	/**
-	 * Create a new {@link Stream} that will signal next elements up to the specified {@param time}.
+	 * Relays values from this {@link Stream} until the given time period elapses.
+	 * <p>
+	 * If the time period is zero, the {@link Subscriber} gets completed if this {@link Stream} completes, signals an
+	 * error or
+	 * signals its first value (which is not not relayed though).
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/taketime.png" alt="">
 	 *
-	 * @param time the time window to broadcast next signals before completing
+	 * @param timespan the time window of items to emit from this {@link Stream}
 	 * @param unit the time unit to use
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return a time limited {@link Stream}
 	 *
 	 * @since 2.0
 	 */
-	public final Stream<O> take(long time, TimeUnit unit) {
-		if (time > 0) {
+	public final Stream<O> take(long timespan, TimeUnit unit) {
+		if (timespan > 0) {
 			Timer timer = getTimer();
 			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the stream");
-			return takeUntil(Mono.delay(time, unit, timer));
+			return takeUntil(Mono.delay(timespan, unit, timer));
 		}
-		else {
-			return empty();
+		else if(timespan == 0) {
+			return take(0);
 		}
+		throw new IllegalArgumentException("timespan >= 0 required but it was " + timespan);
 	}
 
 	/**
-	 * Create a new {@link Stream} that will signal the last {@param n} elements.
+	 * Emits the last N values this {@link Stream} emitted before its completion.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/takelast.png" alt="">
 	 *
-	 * @param n the max number of last elements to capture before onComplete
+	 * @param n the number of items from this {@link Stream} to retain and emit on onComplete
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return a terminating {@link Stream} sub-sequence
 	 *
 	 * @since 2.5
 	 */
@@ -4775,32 +4784,33 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 		return new StreamTakeLast<>(this, n);
 	}
 
+
 	/**
-	 * Create a new {@link Stream} that will signal next elements until {@param limitMatcher} is true.
+	 * Relays values until a predicate returns {@literal TRUE}, indicating the sequence should stop
+	 * (checked after each value has been delivered).
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/takeuntilp.png" alt="">
 	 *
-	 * @param limitMatcher the predicate to evaluate for starting dropping events and completing
+	 * @param stopPredicate the {@link Predicate} invoked each onNext returning {@literal TRUE} to terminate
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return an eventually limited {@link Stream}
 	 *
 	 * @since 2.5
 	 */
-	public final Stream<O> takeUntil(final Predicate<? super O> limitMatcher) {
-		return new StreamTakeUntilPredicate<>(this, limitMatcher);
+	public final Stream<O> takeUntil(final Predicate<? super O> stopPredicate) {
+		return new StreamTakeUntilPredicate<>(this, stopPredicate);
 	}
 
 	/**
-	 * Create a new {@link Stream} that will signal next elements until {@param other} emits.
-	 * Completion and Error will cause this stream to cancel.
+	 * Relays values from this {@link Stream} until the given {@link Publisher} emits.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/takeuntil.png" alt="">
 	 *
-	 * @param other the {@link Publisher} to signal when to stop replaying signal from upstream
+	 * @param other the {@link Publisher} to signal when to stop replaying signal from this {@link Stream}
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return an eventually limited {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -4809,19 +4819,20 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that will signal next elements while {@param limitMatcher} is true.
+	 * Relays values while a predicate returns
+	 * {@literal FALSE} for the values (checked before each value is delivered).
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/takewhile.png" alt="">
 	 *
-	 * @param limitMatcher the predicate to evaluate for starting dropping events and completing
+	 * @param continuePredicate the {@link Predicate} invoked each onNext returning {@literal FALSE} to terminate
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return an eventually limited {@link Stream}
 	 *
 	 * @since 2.0
 	 */
-	public final Stream<O> takeWhile(final Predicate<? super O> limitMatcher) {
-		return new StreamTakeWhile<O>(this, limitMatcher);
+	public final Stream<O> takeWhile(final Predicate<? super O> continuePredicate) {
+		return new StreamTakeWhile<O>(this, continuePredicate);
 	}
 
 	/**
@@ -4843,7 +4854,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/throttlefirst.png" alt="">
 	 *
-	 * @return a new {@link Stream}
+	 * @return a sampled {@link Stream} by last item observed when the sampler signals
 	 *
 	 * @since 2.5
 	 */
@@ -4857,7 +4868,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/throttlelast.png" alt="">
 	 *
-	 * @return a new {@link Stream}
+	 * @return a sampled {@link Stream} by last item observed when the sampler {@link Publisher} signals
 	 *
 	 * @since 2.5
 	 */
@@ -4890,7 +4901,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/throttletimeout.png" alt="">
 	 *
-	 * @return a new {@link Stream}
+	 * @return a sampled {@link Stream} by last single item observed before a companion {@link Publisher} emits
 	 *
 	 * @since 2.5
 	 */
