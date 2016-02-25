@@ -5047,13 +5047,13 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Create a new {@link Stream} that accepts a {@link reactor.fn.tuple.Tuple2} of T1 {@link Long} system time in
-	 * millis and T2 {@link <T>} associated data
+	 * Emit a {@link reactor.fn.tuple.Tuple2} pair of T1 {@link Long} current system time in
+	 * millis and T2 {@link <T>} associated data for each item from this {@link Stream}
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timestamp.png" alt="">
 	 *
-	 * @return a new {@link Stream} that emits tuples of millis time and matching data
+	 * @return a timestamped {@link Stream}
 	 *
 	 * @since 2.0
 	 */
