@@ -5030,7 +5030,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * the factory provided {@link Publisher}.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeoutfallfallback.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeoutallfallback.png" alt="">
 	 *
 	 * @param firstTimeout the timeout {@link Publisher} that must not emit before the first signal from this {@link Stream}
 	 * @param nextTimeoutFactory the timeout {@link Publisher} factory for each next item
