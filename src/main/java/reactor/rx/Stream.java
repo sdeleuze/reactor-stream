@@ -2382,6 +2382,23 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delaysubscription.png" alt="">
 	 *
+	 * @param delay period in seconds before subscribing this {@link Stream}
+	 *
+	 * @return a delayed {@link Stream}
+	 *
+	 * @since 2.5
+	 */
+	public final Stream<O> delaySubscription(long delay) {
+		return delaySubscription(delay, TimeUnit.SECONDS);
+	}
+
+	/**
+	 * Delay the {@link Stream#subscribe(Subscriber) subscription} to this {@link Stream} source until the given
+	 * period elapses.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delaysubscription.png" alt="">
+	 *
 	 * @param delay period in given unit before subscribing this {@link Stream}
 	 * @param unit unit of time
 	 *
@@ -2390,26 +2407,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @since 2.5
 	 */
 	public final Stream<O> delaySubscription(long delay, TimeUnit unit) {
-		return delaySubscription(delay, unit, Timer.global());
-	}
-
-	/**
-	 * Delay the {@link Stream#subscribe(Subscriber) subscription} to this {@link Stream} source until a period
-	 * given a number of seconds elapses.
-	 *
-	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delaysubscription.png" alt="">
-	 *
-	 * @param delay period in given unit before subscribing this {@link Stream}
-	 * @param unit unit of time
-	 * @param timer a {@link Timer} instance
-	 *
-	 * @return a delayed {@link Stream}
-	 *
-	 * @since 2.5
-	 */
-	public final Stream<O> delaySubscription(long delay, TimeUnit unit, Timer timer) {
-		return delaySubscription(Mono.delay(delay, unit, timer));
+		Timer timer = getTimer();
+		return delaySubscription(Mono.delay(delay, unit, timer != null ? timer : Timer.globalOrNew()));
 	}
 
 	/**
