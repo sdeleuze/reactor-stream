@@ -80,26 +80,34 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	}
 
 	/**
+	 * Create a unicast {@link FluxProcessor#blocking blocking} {@link Broadcaster} that will simply monitor the 
+	 * requests downstream to gate each {@link #onNext(Object)} call. 
+	 * 
+	 * <p>Note that using this factory for synchronous 
+	 * backpressured flow where {@code requests != Long.MAX_VALUE}, it could unexpectedly hang if the operator 
+	 * use a post onNext request replenishment strategy.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterblocking.png" alt="">
 	 *
 	 * @param <IN> the relayed type
-	 * @return a blocking {@link Broadcaster}
+	 * 
+	 * @return a blocking eventually interruptable {@link Broadcaster}
 	 */
 	public static <IN> Broadcaster<IN> blocking() {
 		FluxProcessor<IN, IN> emitter = FluxProcessor.blocking();
-		return new Broadcaster<>(emitter, emitter, false);
+		return new Broadcaster<>(emitter, emitter, true);
 	}
 
 	/**
-	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values
-	 * broadcasted are directly consumable by subscribing to the returned instance.
+	 * Create a {@link Broadcaster} from hot {@link EmitterProcessor} that will not propagate cancel upstream if 
+	 * subscribed.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
 	 *
 	 * @param <T> the relayed type
+	 * 
 	 * @return a non interruptable pub-sub {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> create() {
@@ -108,14 +116,17 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 
 
 	/**
-	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values
-	 * broadcasted are directly consumable by subscribing to the returned instance.
+	 * Create a {@link Broadcaster} from hot {@link EmitterProcessor#create EmitterProcessor} that will eventually 
+	 * propagate cancel upstream
+	 * if 
+	 * subscribed.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
 	 *
 	 * @param autoCancel Propagate cancel upstream
 	 * @param <T> the relayed type
+	 * 
 	 * @return an eventually interruptable pub-sub {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> create(boolean autoCancel) {
@@ -123,14 +134,16 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	}
 
 	/**
-	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
-	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
-	 * subscribing to the returned instance.
+	 * Create a {@link Broadcaster} from hot-cold {@link EmitterProcessor#replay EmitterProcessor}  that will not 
+	 * propagate 
+	 * cancel upstream if {@link Subscription} has been set. Up to {@link PlatformDependent#SMALL_BUFFER_SIZE} history will be replayable to
+	 * late {@link Subscriber}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterreplay.png" alt="">
 	 *
 	 * @param <T> the relayed type
+	 * 
 	 * @return an non interruptable caching {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> replay() {
@@ -138,14 +151,16 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	}
 
 	/**
-	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
-	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
-	 * subscribing to the returned instance.
+	 * Create a {@link Broadcaster} from hot-cold {@link EmitterProcessor#replay EmitterProcessor}  that will not 
+	 * propagate 
+	 * cancel upstream if {@link Subscription} has been set. Up to a given history count will be replayable to
+	 * late {@link Subscriber}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterreplay.png" alt="">
 	 * @param history the maximum items to replay
 	 * @param <T> the relayed type
+	 * 
 	 * @return an non interruptable caching {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> replay(int history) {
@@ -153,15 +168,16 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	}
 
 	/**
-	 * Build a {@literal Broadcaster}, first broadcasting the most recent signal then ready to broadcast values with
-	 * {@link #onNext(Object)},
-	 * {@link Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}.
-	 * Values broadcasted are directly consumable by subscribing to the returned instance.
+	 * Create a {@link Broadcaster} from hot-cold {@link EmitterProcessor#replay EmitterProcessor}  that will not 
+	 * propagate 
+	 * cancel upstream if {@link Subscription} has been set. The last emitted item will be replayable to late {@link Subscriber} 
+	 * (buffer and history size of 1).
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterreplaylast.png" alt="">
 	 *
 	 * @param <T>  the relayed type
+	 * 
 	 * @return a non interruptable last item cached pub-sub {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> replayLast() {
@@ -169,22 +185,16 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	}
 
 	/**
-	 * Build a {@literal Broadcaster}, rfirst broadcasting the most recent signal then starting with the passed value,
-	 * then ready to broadcast values with {@link 
-	 * Broadcaster#onNext(Object)},
-	 * {@link Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}.
-	 * Values broadcasted are directly consumable by subscribing to the returned instance.
-	 * <p>
-	 * A serialized broadcaster will make sure that even in a multhithreaded scenario, only one thread will be able to
-	 * broadcast at a time.
-	 * The synchronization is non blocking for the publisher, using thread-stealing and first-in-first-served 
-	 * patterns.
+	 * Create a {@link Broadcaster} from hot-cold {@link EmitterProcessor#replay EmitterProcessor}  that will not 
+	 * propagate 
+	 * cancel upstream if {@link Subscription} has been set. The last emitted item will be replayable to late {@link Subscriber} (buffer and history size of 1).
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterreplaylastd.png" alt="">
 	 *
-	 * @param value the value to start with the sequence
+	 * @param value a default value to start the sequence with
 	 * @param <T> the relayed type
+	 * 
 	 * @return a non interruptable last item cached pub-sub {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> replayLastOrDefault(T value) {
@@ -196,8 +206,11 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	}
 
 	/**
-	 * Build a {@literal Broadcaster} that will support concurrent signals (onNext, onError, onComplete) and use
-	 * thread-stealing to serialize underlying emitter processor calls.
+	 * Create a 
+	 * {@link Broadcaster} from hot {@link EmitterProcessor#create EmitterProcessor}  safely gated by {@link SerializedSubscriber}. 
+	 * It will not propagate cancel upstream if {@link Subscription} has been set. Serialization uses thread-stealing
+	 * and a potentially unbounded queue that might starve a calling thread if races are too important and
+	 * {@link Subscriber} is slower.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterserialize.png" alt="">
@@ -211,9 +224,8 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	}
 
 	/**
-	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
-	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
-	 * subscribing to the returned instance. <p> Will not bubble up  any {@code Exception.CancelException}
+	 * Create an optimized {@link Broadcaster} from an internal optimized {@link Processor} for Unicasting. Usually
+	 * used to bridge a simple hot source to a stream based flow where it should be preferred to {@link #create}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterunicast.png" alt="">
