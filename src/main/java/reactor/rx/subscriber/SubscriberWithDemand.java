@@ -27,6 +27,8 @@ import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.util.BackpressureUtils;
 
 /**
+ * A base {@link Subscriber} with safe request handling able to delegate to a target {@link Subscriber}
+ *
  * @author Stephane Maldini
  * @since 2.5
  */
@@ -54,43 +56,32 @@ public class SubscriberWithDemand<I, O> extends SubscriberBarrier<I, O> implemen
 		super(subscriber);
 	}
 
-	/**
-	 *
-	 * @return
-	 */
 	@Override
 	public boolean isTerminated() {
 		return terminated != NOT_TERMINATED;
 	}
 
 	/**
-	 *
-	 * @return
+	 * @return has this {@link Subscriber} terminated with success ?
 	 */
 	public final boolean isCompleted() {
 		return terminated == TERMINATED_WITH_SUCCESS;
 	}
 
 	/**
-	 *
-	 * @return
+	 * @return has this {@link Subscriber} terminated with an error ?
 	 */
 	public final boolean isFailed() {
 		return terminated == TERMINATED_WITH_ERROR;
 	}
 
 	/**
-	 *
-	 * @return
+	 * @return has this {@link Subscriber} been cancelled
 	 */
 	public final boolean isCancelled() {
 		return terminated == TERMINATED_WITH_CANCEL;
 	}
 
-	/**
-	 *
-	 * @return
-	 */
 	@Override
 	public final long requestedFromDownstream() {
 		return requested;

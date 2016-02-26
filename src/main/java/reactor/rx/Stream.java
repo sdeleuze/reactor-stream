@@ -98,7 +98,6 @@ import reactor.rx.subscriber.ManualSubscriber;
  * be achieved using the operator {@link #as} : {@code flux.as(Stream::from)}.
  * <p>
  * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" alt="">
- * <p>
  * <pre>
  * {@code
  * Stream.just(1, 2, 3).map(i -> i*2) //...
@@ -455,7 +454,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * passed to the returned Publisher.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/concat.png" alt="">
-	 * <p>
+	 *
 	 * @param sources The {@link Publisher} of {@link Publisher} to concat
 	 * @param <T> The source type of the data sequence
 	 *

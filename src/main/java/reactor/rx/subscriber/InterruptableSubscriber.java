@@ -211,9 +211,10 @@ public class InterruptableSubscriber<T> extends ConsumerSubscriber<T> {
 	}
 
 	/**
-	 * Parse the materialized upstream source to fetch a materialized map form which allows for graph-style printing.
+	 * Parse the materialized upstream source to fetch a materialized graph of the flow which allows for graph-style
+	 * printing.
 	 *
-	 * @return {@link ReactiveStateUtils.Graph} a Debug container for the current source
+	 * @return a {@link ReactiveStateUtils} {@code Graph}
 	 */
 	public ReactiveStateUtils.Graph debug() {
 		return ReactiveStateUtils.scan(this);
