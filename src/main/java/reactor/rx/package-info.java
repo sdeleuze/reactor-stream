@@ -16,6 +16,6 @@
 
 /**
  * The
- * {@link reactor.rx.Stream} {@link org.reactivestreams.Publisher reactive} composition API and its derived {@link org.reactivestreams.Processor}: {@link reactor.rx.Broadcaster} and {@link reactor.rx.Promise}.
+ * {@link reactor.rx.Fluxion} {@link org.reactivestreams.Publisher reactive} composition API and its derived {@link org.reactivestreams.Processor}: {@link reactor.rx.Broadcaster} and {@link reactor.rx.Promise}.
  */
 package reactor.rx;

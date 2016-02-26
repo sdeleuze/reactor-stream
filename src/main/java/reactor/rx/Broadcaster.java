@@ -40,7 +40,7 @@ import reactor.core.util.PlatformDependent;
 import reactor.rx.subscriber.SerializedSubscriber;
 
 /**
- * {@link Broadcaster} is an identity {@link Processor} extending {@link Stream} qualified for "Hot" sequence
+ * {@link Broadcaster} is an identity {@link Processor} extending {@link Fluxion} qualified for "Hot" sequence
  * generation. The message passing strategy can be chosen over the various factories including
  * {@link #async async}, {@link #replay replaying} or {@link #blocking blocking}.
  * <p>
@@ -60,13 +60,13 @@ import reactor.rx.subscriber.SerializedSubscriber;
  *
  * @author Stephane Maldini
  */
-public class Broadcaster<O> extends StreamProcessor<O, O> {
+public class Broadcaster<O> extends FluxionProcessor<O, O> {
 
 	/**
 	 * Create an
 	 * {@link EmitterProcessor#create EmitterProcessor} that will be immediately composed with a {@link reactor.core.publisher.Flux#dispatchOn(Callable) dispatchOn}.
 	 * It offers the same effect while providing for a
-	 * {@link Stream} API instead of {@link reactor.core.publisher.Flux}.
+	 * {@link Fluxion} API instead of {@link reactor.core.publisher.Flux}.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterasync.png" alt="">
 	 *

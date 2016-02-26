@@ -42,7 +42,7 @@ public class MonoReduceTest {
 	public void normal() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		new MonoReduce<>(new StreamRange(1, 10), () -> 0, (a, b) -> b).subscribe(ts);
+		new MonoReduce<>(new FluxionRange(1, 10), () -> 0, (a, b) -> b).subscribe(ts);
 
 		ts.assertValues(10)
 		  .assertComplete()
@@ -53,7 +53,7 @@ public class MonoReduceTest {
 	public void normalBackpressured() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>(0);
 
-		new MonoReduce<>(new StreamRange(1, 10), () -> 0, (a, b) -> b).subscribe(ts);
+		new MonoReduce<>(new FluxionRange(1, 10), () -> 0, (a, b) -> b).subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNoError()
@@ -70,7 +70,7 @@ public class MonoReduceTest {
 	public void supplierThrows() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		new MonoReduce<Integer, Integer>(new StreamRange(1, 10), () -> {
+		new MonoReduce<Integer, Integer>(new FluxionRange(1, 10), () -> {
 			throw new RuntimeException("forced failure");
 		}, (a, b) -> b).subscribe(ts);
 
@@ -84,7 +84,7 @@ public class MonoReduceTest {
 	public void accumulatorThrows() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		new MonoReduce<>(new StreamRange(1, 10), () -> 0, (a, b) -> {
+		new MonoReduce<>(new FluxionRange(1, 10), () -> 0, (a, b) -> {
 			throw new RuntimeException("forced failure");
 		}).subscribe(ts);
 
@@ -98,7 +98,7 @@ public class MonoReduceTest {
 	public void supplierReturnsNull() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		new MonoReduce<Integer, Integer>(new StreamRange(1, 10), () -> null, (a, b) -> b).subscribe(ts);
+		new MonoReduce<Integer, Integer>(new FluxionRange(1, 10), () -> null, (a, b) -> b).subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNotComplete()
@@ -109,7 +109,7 @@ public class MonoReduceTest {
 	public void accumulatorReturnsNull() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		new MonoReduce<>(new StreamRange(1, 10), () -> 0, (a, b) -> null).subscribe(ts);
+		new MonoReduce<>(new FluxionRange(1, 10), () -> 0, (a, b) -> null).subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNotComplete()

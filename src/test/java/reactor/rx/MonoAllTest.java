@@ -36,7 +36,7 @@ public class MonoAllTest {
 	public void normal() {
 		TestSubscriber<Boolean> ts = new TestSubscriber<>();
 
-		new MonoAll<>(new StreamRange(1, 10), v -> true).subscribe(ts);
+		new MonoAll<>(new FluxionRange(1, 10), v -> true).subscribe(ts);
 
 		ts.assertValues(true)
 		  .assertComplete()
@@ -47,7 +47,7 @@ public class MonoAllTest {
 	public void normalBackpressured() {
 		TestSubscriber<Boolean> ts = new TestSubscriber<>(0);
 
-		new MonoAll<>(new StreamRange(1, 10), v -> true).subscribe(ts);
+		new MonoAll<>(new FluxionRange(1, 10), v -> true).subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNotComplete()
@@ -64,7 +64,7 @@ public class MonoAllTest {
 	public void someMatch() {
 		TestSubscriber<Boolean> ts = new TestSubscriber<>();
 
-		new MonoAll<>(new StreamRange(1, 10), v -> v < 6).subscribe(ts);
+		new MonoAll<>(new FluxionRange(1, 10), v -> v < 6).subscribe(ts);
 
 		ts.assertValues(false)
 		  .assertComplete()
@@ -75,7 +75,7 @@ public class MonoAllTest {
 	public void someMatchBackpressured() {
 		TestSubscriber<Boolean> ts = new TestSubscriber<>(0);
 
-		new MonoAll<>(new StreamRange(1, 10), v -> v < 6).subscribe(ts);
+		new MonoAll<>(new FluxionRange(1, 10), v -> v < 6).subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNotComplete()
@@ -92,7 +92,7 @@ public class MonoAllTest {
 	public void predicateThrows() {
 		TestSubscriber<Boolean> ts = new TestSubscriber<>();
 
-		new MonoAll<>(new StreamRange(1, 10), v -> {
+		new MonoAll<>(new FluxionRange(1, 10), v -> {
 			throw new RuntimeException("forced failure");
 		}).subscribe(ts);
 

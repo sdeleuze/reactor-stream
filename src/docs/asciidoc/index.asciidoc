@@ -18,8 +18,8 @@ include::20to25.adoc[]
 
 
 ////
-[[reactor-stream]]
-= *reactor-stream*
+[[reactor-fluxion]]
+= *reactor-fluxion*
 include::streams.adoc[]
 
 [[reactor-samples]]

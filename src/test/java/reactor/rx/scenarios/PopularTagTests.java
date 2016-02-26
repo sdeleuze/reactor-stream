@@ -23,7 +23,7 @@ import org.junit.Test;
 import reactor.AbstractReactorTest;
 import reactor.core.util.Logger;
 import reactor.fn.tuple.Tuple;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 import reactor.rx.subscriber.InterruptableSubscriber;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -51,24 +51,24 @@ public class PopularTagTests extends AbstractReactorTest {
 		CountDownLatch latch = new CountDownLatch(1);
 
 		InterruptableSubscriber<?> top10every1second =
-		  Stream.fromIterable(PULP_SAMPLE)
-		        .dispatchOn(asyncGroup)
-		        .flatMap(samuelJackson ->
-				Stream
+		  Fluxion.fromIterable(PULP_SAMPLE)
+		         .dispatchOn(asyncGroup)
+		         .flatMap(samuelJackson ->
+				Fluxion
 				  .fromArray(samuelJackson.split(" "))
 				  .dispatchOn(asyncGroup)
 				  .filter(w -> !w.trim().isEmpty())
 				  .doOnNext(i -> simulateLatency())
 			)
-		        .window(2, SECONDS)
-		        .flatMap(s -> s.groupBy(w -> w)
+		         .window(2, SECONDS)
+		         .flatMap(s -> s.groupBy(w -> w)
 		                       .flatMap(w -> w.count().map(c -> Tuple.of(w.key(), c)))
 		                       .bufferSort((a, b) -> -a.t2.compareTo(b.t2))
 		                       .take(10)
 		                       .doAfterTerminate(() -> LOG.info("------------------------ window terminated" +
 						      "----------------------"))
 			)
-		        .consume(
+		         .consume(
 			  entry -> LOG.info(entry.t1 + ": " + entry.t2),
 			  error -> LOG.error("", error),
 				        latch::countDown

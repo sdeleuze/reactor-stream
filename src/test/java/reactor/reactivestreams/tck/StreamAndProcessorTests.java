@@ -26,7 +26,7 @@ import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.publisher.WorkQueueProcessor;
 import reactor.fn.BiFunction;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 
 /**
  * @author Stephane Maldini
@@ -41,7 +41,7 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 	@Override
 	public Processor<Integer, Integer> createProcessor(int bufferSize) {
 
-		Stream<String> otherStream = Stream.just("test", "test2", "test3");
+		Fluxion<String> otherStream = Fluxion.just("test", "test2", "test3");
 		System.out.println("Providing new downstream");
 		Processor<Integer, Integer> p = WorkQueueProcessor.create("stream-raw-fork", bufferSize);
 
@@ -49,23 +49,23 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 		cumulatedJoin.set(0);
 
 		BiFunction<Integer, String, Integer> combinator = (t1, t2) -> t1;
-		return FluxProcessor.create(p, Stream.fromProcessor(p)
-		                                     .multiplex(2, stream -> stream.scan((prev, next) -> next)
+		return FluxProcessor.create(p, Fluxion.fromProcessor(p)
+		                                      .multiplex(2, stream -> stream.scan((prev, next) -> next)
 		                                                                   .map(integer -> -integer)
 		                                                                   .filter(integer -> integer <= 0)
 		                                                                   .every(1)
 		                                                                   .map(integer -> -integer)
 		                                                                   .buffer(batch, 50, TimeUnit.MILLISECONDS)
-		                                                                   .flatMap(Stream::fromIterable)
+		                                                                   .flatMap(Fluxion::fromIterable)
 		                                                                   .doOnNext(array -> cumulated.getAndIncrement())
-		                                                                   .flatMap(i -> Stream.zip(Stream.just(i),
+		                                                                   .flatMap(i -> Fluxion.zip(Fluxion.just(i),
 		                                                                                          otherStream,
 		                                                                                          combinator))
 		                                                                   .doOnNext(this::monitorThreadUse))
-		                                     .doOnNext(array -> cumulatedJoin.getAndIncrement())
-		                                     .subscribeWith(TopicProcessor.create("stream-raw-join", bufferSize))
-		                                     .as(Stream::from)
-		                                     .doOnError(Throwable.class, Throwable::printStackTrace));
+		                                      .doOnNext(array -> cumulatedJoin.getAndIncrement())
+		                                      .subscribeWith(TopicProcessor.create("stream-raw-join", bufferSize))
+		                                      .as(Fluxion::from)
+		                                      .doOnError(Throwable.class, Throwable::printStackTrace));
 	}
 
 	@Override

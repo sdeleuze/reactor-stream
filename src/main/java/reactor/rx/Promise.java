@@ -585,24 +585,24 @@ public class Promise<O> extends Mono<O>
 	}
 
 	/**
-	 * @return a scalar or dynamic {@link Stream} of this {@link Promise} depending on whether it has been fulfilled
+	 * @return a scalar or dynamic {@link Fluxion} of this {@link Promise} depending on whether it has been fulfilled
 	 * or not.
 	 */
 	@SuppressWarnings("unchecked")
-	public Stream<O> stream() {
+	public Fluxion<O> stream() {
 		Processor<O, O> processor = this.processor;
 		if (processor != NOOP_PROCESSOR && processor != null) {
-			return Stream.from(processor);
+			return Fluxion.from(processor);
 		}
 		int endState = this.state;
 		if (endState == STATE_COMPLETE_NO_VALUE) {
-			return Stream.empty();
+			return Fluxion.empty();
 		}
 		else if (endState == STATE_SUCCESS_VALUE) {
-			return Stream.just(value);
+			return Fluxion.just(value);
 		}
 		else if (endState == STATE_ERROR) {
-			return Stream.error(error);
+			return Fluxion.error(error);
 		}
 
 		Processor<O, O> out = processor;
@@ -620,7 +620,7 @@ public class Promise<O> extends Mono<O>
 				out = (Processor<O, O>) PROCESSOR.get(this);
 			}
 		}
-		return Stream.from(out);
+		return Fluxion.from(out);
 	}
 
 	/**
@@ -788,12 +788,12 @@ public class Promise<O> extends Mono<O>
 
 	static final class PromiseFulfilled<T> extends Promise<T> implements Supplier<T> {
 
-		final Stream<T> just;
+		final Fluxion<T> just;
 
 		public PromiseFulfilled(T value, Timer timer) {
 			super(value, timer);
 			if (value != null) {
-				just = Stream.just(value);
+				just = Fluxion.just(value);
 			}
 			else {
 				just = null;
@@ -811,8 +811,8 @@ public class Promise<O> extends Mono<O>
 		}
 
 		@Override
-		public Stream<T> stream() {
-			return just == null ? Stream.<T>empty() : just;
+		public Fluxion<T> stream() {
+			return just == null ? Fluxion.<T>empty() : just;
 		}
 
 		@Override

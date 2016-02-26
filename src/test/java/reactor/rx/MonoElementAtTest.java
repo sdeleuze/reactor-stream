@@ -52,7 +52,7 @@ public class MonoElementAtTest {
 	public void normal() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		new MonoElementAt<>(new StreamRange(1, 10), 0).subscribe(ts);
+		new MonoElementAt<>(new FluxionRange(1, 10), 0).subscribe(ts);
 
 		ts.assertValues(1)
 		  .assertNoError()
@@ -63,7 +63,7 @@ public class MonoElementAtTest {
 	public void normalBackpressured() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>(0);
 
-		new MonoElementAt<>(new StreamRange(1, 10), 0).subscribe(ts);
+		new MonoElementAt<>(new FluxionRange(1, 10), 0).subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNoError()
@@ -80,7 +80,7 @@ public class MonoElementAtTest {
 	public void normal2() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		new MonoElementAt<>(new StreamRange(1, 10), 4).subscribe(ts);
+		new MonoElementAt<>(new FluxionRange(1, 10), 4).subscribe(ts);
 
 		ts.assertValues(5)
 		  .assertNoError()
@@ -91,7 +91,7 @@ public class MonoElementAtTest {
 	public void normal5Backpressured() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>(0);
 
-		new MonoElementAt<>(new StreamRange(1, 10), 4).subscribe(ts);
+		new MonoElementAt<>(new FluxionRange(1, 10), 4).subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNoError()
@@ -108,7 +108,7 @@ public class MonoElementAtTest {
 	public void normal3() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		new MonoElementAt<>(new StreamRange(1, 10), 9).subscribe(ts);
+		new MonoElementAt<>(new FluxionRange(1, 10), 9).subscribe(ts);
 
 		ts.assertValues(10)
 		  .assertNoError()
@@ -119,7 +119,7 @@ public class MonoElementAtTest {
 	public void normal3Backpressured() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>(0);
 
-		new MonoElementAt<>(new StreamRange(1, 10), 9).subscribe(ts);
+		new MonoElementAt<>(new FluxionRange(1, 10), 9).subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNoError()
@@ -175,7 +175,7 @@ public class MonoElementAtTest {
 	public void nonEmptyDefault() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		new MonoElementAt<>(new StreamRange(1, 10), 20, () -> 20).subscribe(ts);
+		new MonoElementAt<>(new FluxionRange(1, 10), 20, () -> 20).subscribe(ts);
 
 		ts.assertValues(20)
 		  .assertNoError()
@@ -186,7 +186,7 @@ public class MonoElementAtTest {
 	public void nonEmptyDefaultBackpressured() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>(0);
 
-		new MonoElementAt<>(new StreamRange(1, 10), 20, () -> 20).subscribe(ts);
+		new MonoElementAt<>(new FluxionRange(1, 10), 20, () -> 20).subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNoError()

@@ -44,7 +44,7 @@ import reactor.core.subscriber.SignalEmitter;
 import reactor.core.timer.Timer;
 import reactor.core.util.Assert;
 import reactor.rx.Broadcaster;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 
 /**
  * @author Stephane Maldini
@@ -106,7 +106,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 
 	@Override
 	public Publisher<Integer> createFailedPublisher() {
-		return Stream.error(new Exception("oops")).cast(Integer.class);
+		return Fluxion.error(new Exception("oops")).cast(Integer.class);
 	}
 
 	public abstract Processor<Integer, Integer> createProcessor(int bufferSize);
@@ -128,7 +128,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 				list.add(i);
 			}
 
-			return Stream
+			return Fluxion
 			  .fromIterable(list)
 			  .log("iterable-publisher")
 			  .filter(integer -> true)
@@ -137,7 +137,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 		} else {
 			final Random random = new Random();
 
-			return Stream
+			return Fluxion
 			  .<Integer>generate((n, s) -> s.onNext(random.nextInt()))
 			  .log("random-publisher")
 			  .map(Math::abs);
@@ -161,8 +161,8 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 
 		createHelperPublisher(10).subscribe(processor);
 
-		if(Stream.class.isAssignableFrom(processor.getClass())) {
-			System.out.println(((Stream)processor).debug());
+		if(Fluxion.class.isAssignableFrom(processor.getClass())) {
+			System.out.println(((Fluxion)processor).debug());
 		}
 		List<Integer> list = new ArrayList<>();
 
@@ -201,8 +201,8 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 		//stream.broadcastComplete();
 
 		latch.await(8, TimeUnit.SECONDS);
-		if(Stream.class.isAssignableFrom(processor.getClass())) {
-			System.out.println(((Stream)processor).debug());
+		if(Fluxion.class.isAssignableFrom(processor.getClass())) {
+			System.out.println(((Fluxion)processor).debug());
 		}
 
 		long count = latch.getCount();
@@ -229,8 +229,8 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 		Broadcaster<Integer> stream = Broadcaster.create();
 		SignalEmitter<Integer> session = SignalEmitter.create(stream);
 		stream.subscribe(processor);
-		if(Stream.class.isAssignableFrom(processor.getClass())) {
-			System.out.println(((Stream)processor).debug());
+		if(Fluxion.class.isAssignableFrom(processor.getClass())) {
+			System.out.println(((Fluxion)processor).debug());
 		}
 
 		processor.subscribe(new Subscriber<Integer>() {

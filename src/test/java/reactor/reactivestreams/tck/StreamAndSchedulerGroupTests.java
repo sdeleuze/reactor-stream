@@ -27,7 +27,7 @@ import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.fn.BiFunction;
 import reactor.rx.Broadcaster;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 
 /**
  * @author Stephane Maldini
@@ -41,7 +41,7 @@ public class StreamAndSchedulerGroupTests extends AbstractStreamVerification {
 	@Override
 	public Processor<Integer, Integer> createProcessor(int bufferSize) {
 
-		Stream<String> otherStream = Stream.just("test", "test2", "test3");
+		Fluxion<String> otherStream = Fluxion.just("test", "test2", "test3");
 		System.out.println("Providing new downstream");
 
 		SchedulerGroup asyncGroup =
@@ -62,8 +62,8 @@ public class StreamAndSchedulerGroupTests extends AbstractStreamVerification {
 		                                           .every(1)
 		                                           .map(integer -> -integer)
 		                                           .buffer(batch, 50, TimeUnit.MILLISECONDS)
-		                                           .flatMap(Stream::fromIterable)
-		                                           .flatMap(i -> Stream.zip(Stream.just(i), otherStream, combinator))
+		                                           .flatMap(Fluxion::fromIterable)
+		                                           .flatMap(i -> Fluxion.zip(Fluxion.just(i), otherStream, combinator))
 		                  )
 				.dispatchOn(sharedGroup)
 				.doOnError(Throwable.class, Throwable::printStackTrace)

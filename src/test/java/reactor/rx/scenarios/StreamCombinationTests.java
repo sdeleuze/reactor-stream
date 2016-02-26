@@ -36,7 +36,7 @@ import reactor.core.publisher.SchedulerGroup;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.util.Logger;
 import reactor.fn.Consumer;
-import reactor.rx.Stream;
+import reactor.rx.Fluxion;
 import reactor.rx.subscriber.InterruptableSubscriber;
 
 /**
@@ -46,7 +46,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 
 	private static final Logger LOG = Logger.getLogger(StreamCombinationTests.class);
 
-	private ArrayList<Stream<SensorData>> allSensors;
+	private ArrayList<Fluxion<SensorData>> allSensors;
 
 	private Processor<SensorData, SensorData> sensorEven;
 	private Processor<SensorData, SensorData> sensorOdd;
@@ -73,7 +73,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		return m -> LOG.info("(int) msg={}", m);
 	}
 
-	public List<Stream<SensorData>> allSensors() {
+	public List<Fluxion<SensorData>> allSensors() {
 		if (allSensors == null) {
 			this.allSensors = new ArrayList<>();
 		}
@@ -84,14 +84,14 @@ public class StreamCombinationTests extends AbstractReactorTest {
 	public void testMerge1ToN() throws Exception {
 		final int n = 1000000;
 
-		Stream<Integer> stream = Stream.range(0, n).publishOn
+		Fluxion<Integer> stream = Fluxion.range(0, n).publishOn
 				(SchedulerGroup.single("b")).dispatchOn(SchedulerGroup.single("a"));
 
 		final CountDownLatch latch = new CountDownLatch(1);
 		awaitLatch(stream.consume(null, null, latch::countDown), latch);
 	}
 
-	public Stream<SensorData> sensorOdd() {
+	public Fluxion<SensorData> sensorOdd() {
 		if (sensorOdd == null) {
 			// this is the stream we publish odd-numbered events to
 			this.sensorOdd = FluxProcessor.blackbox(TopicProcessor.create("odd"), p -> p.log("odd"));
@@ -100,10 +100,10 @@ public class StreamCombinationTests extends AbstractReactorTest {
 			//allSensors().add(sensorOdd.reduce(this::computeMin).timeout(1000));
 		}
 
-		return Stream.fromProcessor(sensorOdd);
+		return Fluxion.fromProcessor(sensorOdd);
 	}
 
-	public Stream<SensorData> sensorEven() {
+	public Fluxion<SensorData> sensorEven() {
 		if (sensorEven == null) {
 			// this is the stream we publish even-numbered events to
 			this.sensorEven = FluxProcessor.blackbox(TopicProcessor.create("even"), p -> p.log("even"));
@@ -111,7 +111,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 			// add substream to "master" list
 			//allSensors().add(sensorEven.reduce(this::computeMin).timeout(1000));
 		}
-		return Stream.fromProcessor(sensorEven);
+		return Fluxion.fromProcessor(sensorEven);
 	}
 
 	@Test
@@ -142,9 +142,9 @@ public class StreamCombinationTests extends AbstractReactorTest {
 
 		CountDownLatch latch = new CountDownLatch(elements + 1);
 
-		InterruptableSubscriber<?> tail = Stream.concat(sensorEven(), sensorOdd())
-		                     .log("concat")
-		                     .consume(i -> latch.countDown(), null, latch::countDown);
+		InterruptableSubscriber<?> tail = Fluxion.concat(sensorEven(), sensorOdd())
+		                                         .log("concat")
+		                                         .consume(i -> latch.countDown(), null, latch::countDown);
 
 		System.out.println(tail.debug());
 		generateData(elements);
@@ -157,12 +157,12 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 40;
 		CountDownLatch latch = new CountDownLatch(elements / 2 - 2);
 
-		InterruptableSubscriber<?> tail = Stream.combineLatest(
+		InterruptableSubscriber<?> tail = Fluxion.combineLatest(
 				sensorOdd().cache().throttleRequest(50),
 				sensorEven().cache().throttleRequest(100),
 		this::computeMin)
-		                      .log("combineLatest")
-		                      .consume(i -> latch.countDown(), null, latch::countDown);
+		                                         .log("combineLatest")
+		                                         .consume(i -> latch.countDown(), null, latch::countDown);
 
 		generateData(elements);
 
@@ -174,10 +174,10 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 40;
 		CountDownLatch latch = new CountDownLatch(elements + 1);
 
-		InterruptableSubscriber<?> tail = Stream.range(1, elements)
-		                     .forkJoin(d -> Mono.just(d + "!"), d -> Mono.just(d + "?"))
-		                     .log("forkJoin")
-		                     .consume(i -> latch.countDown(), null, latch::countDown);
+		InterruptableSubscriber<?> tail = Fluxion.range(1, elements)
+		                                         .forkJoin(d -> Mono.just(d + "!"), d -> Mono.just(d + "?"))
+		                                         .log("forkJoin")
+		                                         .consume(i -> latch.countDown(), null, latch::countDown);
 
 		generateData(elements);
 
@@ -188,22 +188,22 @@ public class StreamCombinationTests extends AbstractReactorTest {
 	public void sampleCombineLatestSample() throws Exception {
 		Broadcaster<Double> doubleStream = Broadcaster.create();
 
-		Stream<Double> mainStream = doubleStream.onBackpressureDrop();
+		Fluxion<Double> mainStream = doubleFluxion.onBackpressureDrop();
 
-		Stream<Double> avgStream = mainStream.buffer(1000).map(l -> l.stream().mapToDouble(Double::doubleValue).average().getAsDouble());
+		Fluxion<Double> avgStream = mainFluxion.buffer(1000).map(l -> l.stream().mapToDouble(Double::doubleValue).average().getAsDouble());
 
-		Stream<Double> avgAvgStream = mainStream
+		Fluxion<Double> avgAvgStream = mainStream
 				.buffer(100).map(l -> l.stream().mapToDouble(Double::doubleValue).average().getAsDouble());
 
-		Stream.combineLatest(
-				mainStream.map(v ->Tuple.of(System.nanoTime(), v)),
+		Fluxion.combineLatest(
+				mainFluxion.map(v ->Tuple.of(System.nanoTime(), v)),
 				avgStream,
 				avgAvgStream,
 				x -> (((Tuple2<Long,?>)x[0]).getT1())
 		).consume(System.out::println);
 
 
-		new Random().doubles().forEach(doubleStream::onNext);
+		new Random().doubles().forEach(doubleFluxion::onNext);
 	}
 */
 	@Test
@@ -273,9 +273,9 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		int elements = 69;
 		CountDownLatch latch = new CountDownLatch(elements / 2);
 
-		InterruptableSubscriber<?> tail = Stream.zip(sensorEven(), sensorOdd(), this::computeMin)
-		                     .log("sampleZipTest")
-		                     .consume(x -> latch.countDown());
+		InterruptableSubscriber<?> tail = Fluxion.zip(sensorEven(), sensorOdd(), this::computeMin)
+		                                         .log("sampleZipTest")
+		                                         .consume(x -> latch.countDown());
 
 		generateData(elements);
 

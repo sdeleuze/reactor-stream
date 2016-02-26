@@ -36,9 +36,9 @@ public class MonoAggregateTest {
 	public void normal() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		Stream.range(1, 10)
-		      .reduce((a, b) -> a + b)
-		      .subscribe(ts);
+		Fluxion.range(1, 10)
+		       .reduce((a, b) -> a + b)
+		       .subscribe(ts);
 
 		ts.assertValues(55)
 		  .assertNoError()
@@ -49,9 +49,9 @@ public class MonoAggregateTest {
 	public void normalBackpressured() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>(0L);
 
-		Stream.range(1, 10)
-		      .reduce((a, b) -> a + b)
-		      .subscribe(ts);
+		Fluxion.range(1, 10)
+		       .reduce((a, b) -> a + b)
+		       .subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNoError()
@@ -68,9 +68,9 @@ public class MonoAggregateTest {
 	public void single() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		Stream.just(1)
-		      .reduce((a, b) -> a + b)
-		      .subscribe(ts);
+		Fluxion.just(1)
+		       .reduce((a, b) -> a + b)
+		       .subscribe(ts);
 
 		ts.assertValues(1)
 		  .assertNoError()
@@ -81,8 +81,8 @@ public class MonoAggregateTest {
 	public void empty() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		Stream.<Integer>empty().reduce((a, b) -> a + b)
-		                       .subscribe(ts);
+		Fluxion.<Integer>empty().reduce((a, b) -> a + b)
+		                        .subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNoError()
@@ -93,8 +93,8 @@ public class MonoAggregateTest {
 	public void error() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		Stream.<Integer>error(new RuntimeException("forced failure")).reduce((a, b) -> a + b)
-		                                                             .subscribe(ts);
+		Fluxion.<Integer>error(new RuntimeException("forced failure")).reduce((a, b) -> a + b)
+		                                                              .subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertError(RuntimeException.class)
@@ -107,11 +107,11 @@ public class MonoAggregateTest {
 	public void aggregatorThrows() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		Stream.range(1, 10)
-		      .reduce((a, b) -> {
+		Fluxion.range(1, 10)
+		       .reduce((a, b) -> {
 			      throw new RuntimeException("forced failure");
 		      })
-		      .subscribe(ts);
+		       .subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertError(RuntimeException.class)
@@ -124,9 +124,9 @@ public class MonoAggregateTest {
 	public void aggregatorReturnsNull() {
 		TestSubscriber<Integer> ts = new TestSubscriber<>();
 
-		Stream.range(1, 10)
-		      .reduce((a, b) -> null)
-		      .subscribe(ts);
+		Fluxion.range(1, 10)
+		       .reduce((a, b) -> null)
+		       .subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertError(NullPointerException.class)

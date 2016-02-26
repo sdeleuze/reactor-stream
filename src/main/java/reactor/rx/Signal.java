@@ -38,13 +38,13 @@ public final class Signal<T> implements Supplier<T>, Consumer<Subscriber<? super
 		/**
 		 * Only happens once, a subscribe signal is the handshake between a new subscriber and a producer.
 		 * <p>
-		 * see {@link Stream#subscribe(Subscriber)}
+		 * see {@link Fluxion#subscribe(Subscriber)}
 		 */
 		SUBSCRIBE,
 
 		/**
 		 * Can happen N times where N is a possibly unbounded number. The signal will trigger core logic on all
-		 * {@link Subscriber} attached to a {@link Stream}.
+		 * {@link Subscriber} attached to a {@link Fluxion}.
 		 * <p>
 		 * see {@link Subscriber#onNext(Object)}
 		 */
@@ -52,9 +52,9 @@ public final class Signal<T> implements Supplier<T>, Consumer<Subscriber<? super
 
 		/**
 		 * Only happens once, a complete signal is used to confirm the successful end of the data sequence flowing in a
-		 * {@link Stream}. The signal releases batching operations such as {@link Stream#buffer
+		 * {@link Fluxion}. The signal releases batching operations such as {@link Fluxion#buffer
 		 * ()},
-		 * {@link Stream#window} or {@link Stream#reduce(reactor.fn.BiFunction)}
+		 * {@link Fluxion#window} or {@link Fluxion#reduce(reactor.fn.BiFunction)}
 		 * <p>
 		 * see {@link Subscriber#onComplete()}
 		 */
@@ -62,8 +62,8 @@ public final class Signal<T> implements Supplier<T>, Consumer<Subscriber<? super
 
 		/**
 		 * Only happens once, a complete signal is used to confirm the error end of the data sequence flowing in a
-		 * {@link Stream}. However, the signal can be recovered using various operations such as {@link 
-		 * Stream#onErrorResumeWith(Function)} , {@link Stream#switchOnError(Publisher)} or {@link Stream#retry}
+		 * {@link Fluxion}. However, the signal can be recovered using various operations such as {@link
+		 * Fluxion#onErrorResumeWith(Function)} , {@link Fluxion#switchOnError(Publisher)} or {@link Fluxion#retry}
 		 * <p>
 		 * see {@link Subscriber#onError(Throwable cause)}
 		 */

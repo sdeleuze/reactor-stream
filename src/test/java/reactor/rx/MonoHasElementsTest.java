@@ -59,7 +59,7 @@ public class MonoHasElementsTest {
 	public void nonEmptySource() {
 		TestSubscriber<Boolean> ts = new TestSubscriber<>();
 
-		new MonoHasElements<>(new StreamRange(1, 10)).subscribe(ts);
+		new MonoHasElements<>(new FluxionRange(1, 10)).subscribe(ts);
 
 		ts.assertValues(true)
 		  .assertComplete()
@@ -70,7 +70,7 @@ public class MonoHasElementsTest {
 	public void nonEmptySourceBackpressured() {
 		TestSubscriber<Boolean> ts = new TestSubscriber<>(0);
 
-		new MonoHasElements<>(new StreamRange(1, 10)).subscribe(ts);
+		new MonoHasElements<>(new FluxionRange(1, 10)).subscribe(ts);
 
 		ts.assertNoValues()
 		  .assertNotComplete()

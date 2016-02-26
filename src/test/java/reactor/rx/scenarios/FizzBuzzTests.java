@@ -25,8 +25,8 @@ import org.junit.Test;
 import reactor.AbstractReactorTest;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.util.Assert;
+import reactor.rx.Fluxion;
 import reactor.rx.Promise;
-import reactor.rx.Stream;
 import reactor.rx.subscriber.InterruptableSubscriber;
 
 /**
@@ -45,7 +45,7 @@ public class FizzBuzzTests extends AbstractReactorTest {
 		final Timer timer = new Timer();
 		AtomicLong globalCounter = new AtomicLong();
 
-		InterruptableSubscriber<?> c = Stream.generate((demand, subscriber) -> {
+		InterruptableSubscriber<?> c = Fluxion.generate((demand, subscriber) -> {
 			System.out.println("demand is " + demand);
 			if (!subscriber.isCancelled()) {
 				for (int i = 0; i < demand; i++) {
@@ -62,17 +62,17 @@ public class FizzBuzzTests extends AbstractReactorTest {
 				}
 			}
 		}).log("oooo")
-		                                     .flatMap((s) -> Stream.yield((sub) -> timer.schedule(new TimerTask() {
+		                                      .flatMap((s) -> Fluxion.yield((sub) -> timer.schedule(new TimerTask() {
 			  @Override
 			  public void run() {
 				  sub.onNext(s);
 				  sub.onComplete();
 			  }
 		  }, 10)))
-		                                     .capacity(batchSize)
-		                                     .log()
-		                                     .take(numOfItems + 1)
-		                                     .subscribe();
+		                                      .capacity(batchSize)
+		                                      .log()
+		                                      .take(numOfItems + 1)
+		                                      .subscribe();
 
 		while (!c.isTerminated()) ;
 	}
@@ -89,10 +89,10 @@ public class FizzBuzzTests extends AbstractReactorTest {
 		//this line works
 //        Broadcaster<String> ring = Broadcaster.create(Environment.get());
 
-		Stream<String> stream = Stream.fromProcessor(ring.start());
+		Fluxion<String> stream = Fluxion.fromProcessor(ring.start());
 
-		Stream<String> stream2 = stream
-				.zipWith(Stream.generate((d, s) -> {
+		Fluxion<String> stream2 = stream
+				.zipWith(Fluxion.generate((d, s) -> {
 			  for (int i = 0; i < d; i++) {
 				  if(!s.isCancelled()) {
 					  s.onNext(System.currentTimeMillis());

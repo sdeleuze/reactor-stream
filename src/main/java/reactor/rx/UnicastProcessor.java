@@ -45,7 +45,7 @@ import reactor.core.util.BackpressureUtils;
  * @param <T> the input and output type
  */
 final class UnicastProcessor<T>
-		extends reactor.rx.Stream<T>
+		extends Fluxion<T>
 		implements Processor<T, T>, Fuseable.QueueSubscription<T>, Fuseable, Producer, Receiver, Failurable,
 		           Completable, Cancellable, Requestable {
 

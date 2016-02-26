@@ -19,10 +19,10 @@ configure(rootProject) {
 
 	task api(type: Javadoc) {
 	  	dependsOn jar
-		group = "Reactor Stream Javadoc"
+		group = "Reactor Fluxion Javadoc"
 
 		description = "Generates aggregated Javadoc API documentation."
-		title = "Reactor Stream 2.5.0.M1 API"
+		title = "Reactor Fluxion ${version} API"
 
 		if (JavaVersion.current().isJava8Compatible()) {
 			compileTestJava.options.compilerArgs += "-parameters"
@@ -33,7 +33,7 @@ configure(rootProject) {
 
 		options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED
 		options.author = true
-		options.header = "Reactor Stream"
+		options.header = "Reactor Fluxion"
 		options.overview = "src/api/overview.html"
 		options.stylesheetFile = file("src/api/stylesheet.css")
 		options.links(rootProject.ext.javadocLinks)

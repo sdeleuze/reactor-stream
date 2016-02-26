@@ -7,7 +7,7 @@
 [source,java]
 ----
 import static reactor.Environment.*;
-import reactor.rx.Streams;
+import reactor.rx.Fluxions;
 import reactor.rx.BiStreams;
 
 //...
@@ -15,7 +15,7 @@ import reactor.rx.BiStreams;
 Environment.initialize()
 
 //find the top 10 words used in a list of Strings
-Stream.from(aListOfString)
+Fluxion.from(aListOfString)
   .dispatchOn(SchedulerGroup.single())
   .flatMap(sentence ->
     Stream
@@ -45,7 +45,7 @@ Stream.from(aListOfString)
 image::images/streams-overview.png[Stream Overview, width=650, align="center", link="images/streams-overview.png"]
 
 
-*Reactor Streams* has the following artifacts:
+*Reactor Fluxions* has the following artifacts:
 
 ****
 * `Stream` and its direct implementations
@@ -57,14 +57,14 @@ image::images/streams-overview.png[Stream Overview, width=650, align="center", l
 ** `IOStreams` for <<streams.adoc#streams-persistent, Persisting>> and <<core-codec#core-codecs, Decoding>> `Streams`
 ** `Promises` for single-data-only `Promise`
 * `Action` and its direct implementations of every operation provided by the `Stream` following the *Reactive Streams Processor* specification
-** Not created directly, but with the Stream API (`Stream.map()` -> MapAction, `Stream.filter()` -> FilterAction...)
+** Not created directly, but with the Stream API (`Fluxion.map()` -> MapAction, `Fluxion.filter()` -> FilterAction...)
 * `Broadcaster`, a specific kind of `Action` exposing onXXXX interfaces for dynamic data dispatch
 ** Unlike <<core-processor#core-processor,Core Processors>>, they will usually not bother with buffering data if there is no subscriber attached
 ** However the `BehaviorBroadcaster` can replay the latest signal to new Subscribers
 ****
 
 [NOTE]
-Do not confuse `reactor.rx.Stream` with the new JDK 8 `java.util.stream.Stream`. The latter does not offer a Reactive Streams based API nor Reactive Extensions. However, the JDK 8 `Stream` API is quite complete when used with primitive types and Collections. In fact it's quite interesting for JDK 8 enabled applications to mix both JDK and Reactive Stream.
+Do not confuse `reactor.rx.Fluxion` with the new JDK 8 `java.util.stream.Stream`. The latter does not offer a Reactive Streams based API nor Reactive Extensions. However, the JDK 8 `Stream` API is quite complete when used with primitive types and Collections. In fact it's quite interesting for JDK 8 enabled applications to mix both JDK and Reactive Fluxion.
 
 [[streams-basics]]
 == Streams Basics
@@ -110,12 +110,12 @@ Most of the Streams stick to the *Share-Nothing* pattern, only creating new immu
 Every operation will return a new instance:
 [source, java]
 ----
-Stream<A> stream = Stream.just(a);
-Stream<B> transformedStream = stream.map(transformationToB);
+Fluxion<A> stream = Fluxion.just(a);
+Fluxion<B> transformedStream = stream.map(transformationToB);
 
 Assert.isTrue(transformationStream != stream);
 stream.subscribe(subscriber1); //subscriber1 will see the data A unaltered
-transformedStream.subscribe(subscriber2); //subscriber2 will see the data B after transformation from A.
+transformedFluxion.subscribe(subscriber2); //subscriber2 will see the data B after transformation from A.
 
 //Note that these two subscribers will materialize independent stream pipelines, a process we also call lifting
 ----
@@ -125,10 +125,10 @@ transformedStream.subscribe(subscriber2); //subscriber2 will see the data B afte
 
 You can create a `Stream` from a variety of sources, including an `Iterable` of known values, a single value to use as the basis for a flow of tasks, or even from blocking structures such as `Future` of `Supplier`.
 
-.Stream.just()
+.Fluxion.just()
 [source,java]
 ----
-Stream<String> st = Stream.just("Hello ", "World", "!"); // <1>
+Fluxion<String> st = Fluxion.just("Hello ", "World", "!"); // <1>
 
 st.dispatchOn(Environment.cachedDispatcher()) // <2>
   .map(String::toUpperCase) // <3>
@@ -140,7 +140,7 @@ st.dispatchOn(Environment.cachedDispatcher()) // <2>
 <4> Produce demand on the pipeline, which means "start processing now". It's an optimize shortcut for `subscribe(Subscriber)` where the Subscriber just requests Long.MAX_VALUE by default.
 
 [IMPORTANT]
-Cold Data Sources will be replayed from start for every fresh Subscriber passed to `Stream.subscribe(Subscriber)`, and, therefore, duplicate consuming is possible.
+Cold Data Sources will be replayed from start for every fresh Subscriber passed to `Fluxion.subscribe(Subscriber)`, and, therefore, duplicate consuming is possible.
 
 .Creating pre-determined Streams and Promises
 [cols="2,1", options="header"]
@@ -150,39 +150,39 @@ Cold Data Sources will be replayed from start for every fresh Subscriber passed 
 |Data Type
 2+^.^h|Role
 
-|Stream.<T>empty()
+|Fluxion.<T>empty()
 |T
 2+|Only emit `onComplete()` once *requested by its Subscriber*.
 
-|Stream.<T>never()
+|Fluxion.<T>never()
 |T
 2+|Never emit anything. Useful for keep-alive behaviors.
 
-|Stream.<T, Throwable>error(*Throwable*)
+|Fluxion.<T, Throwable>error(*Throwable*)
 |T
 2+|Only emit `onError(Throwable)`.
 
-|Stream.from(*Future<T>*)
+|Fluxion.from(*Future<T>*)
 |T
 2+|Block the `Subscription.request(long)` on the passed `Future.get()` that might emit `onNext(T)` and `onComplete()` otherwise `onError(Throwable)` for any exception.
 
-|Stream.from(*T[]*)
+|Fluxion.from(*T[]*)
 |T
 2+|Emit N `onNext(T)` elements everytime `Subscription.request(N)` is invoked. If N == Long.MAX_VALUE, emit everything. Once all the array has been read, emit `onComplete()`.
 
-|Stream.from(*Iterable<T>*)
+|Fluxion.from(*Iterable<T>*)
 |T
 2+|Emit N `onNext(T)` elements everytime `Subscription.request(N)` is invoked. If N == Long.MAX_VALUE, emit everything. Once all the array has been read, emit `onComplete()`.
 
-|Stream.range(*long*, _long_)
+|Fluxion.range(*long*, _long_)
 |Long
 2+|Emit a sequence of N `onNext(Long)` everytime `Subscription.request(N)` is invoked. If N == Long.MAX_VALUE, emit everything. Once the inclusive upper bound been read, emit `onComplete()`.
 
-|Stream.just(T, _T, T, T, T, T, T, T_)
+|Fluxion.just(T, _T, T, T, T, T, T, T_)
 |T
-2+|An optimization over `Stream.from(Iterable)` that just behaves similarly. Also useful to emit Iterable, Array or Future without colliding with the Stream.from() signatures.
+2+|An optimization over `Fluxion.from(Iterable)` that just behaves similarly. Also useful to emit Iterable, Array or Future without colliding with the Fluxion.from() signatures.
 
-|Stream.generate(*Supplier<T>*)
+|Fluxion.generate(*Supplier<T>*)
 |T
 2+|Emit `onNext(T)` from the producing `Supplier.get()` factory everytime `Subscription.request(N)` is called. The demand N is ignored as only one data is emitted. When a null value is returned, emit `onComplete()`.
 
@@ -213,16 +213,16 @@ The use cases include:
 * Plain Publisher decoration with `Stream API`
 ****
 
-.Stream.concat() and Stream.from() in action
+.Fluxion.concat() and Fluxion.from() in action
 [source,java]
 ----
 Processor<String,String> processor = TopicProcessor.create();
 
-Stream<String> st1 = Stream.just("Hello "); // <1>
-Stream<String> st2 = Stream.just("World "); // <1>
-Stream<String> st3 = Stream.from(processor); // <2>
+Fluxion<String> st1 = Fluxion.just("Hello "); // <1>
+Fluxion<String> st2 = Fluxion.just("World "); // <1>
+Fluxion<String> st3 = Fluxion.from(processor); // <2>
 
-Stream.concat(st1, st2, st3) // <3>
+Fluxion.concat(st1, st2, st3) // <3>
   .reduce( (prev, next) -> prev + next ) // <4>
   .consume(s -> System.out.printf("%s greeting = %s%n", Thread.currentThread(), s)); // <5>
 
@@ -230,7 +230,7 @@ processor.onNext("!");
 processor.onComplete();
 ----
 <1> Create a `Stream` from a known value.
-<2> Decorate the core processor with `Stream` API. Note that `Stream.concat()` would have accepted the processor directly as a valid Publisher argument.
+<2> Decorate the core processor with `Stream` API. Note that `Fluxion.concat()` would have accepted the processor directly as a valid Publisher argument.
 <3> Concat the 3 upstream sources (all st1, then all st2, then all st3).
 <4> Accumulate the input 2 by 2 and emit the result on upstream completion, after the last complete from st3.
 <5> Produce demand on the pipeline, which means "start processing now".
@@ -245,67 +245,67 @@ h|Factory method
 
 2+|
 
-h|Stream.create(*Publisher<T>*)
+h|Fluxion.create(*Publisher<T>*)
 |T
 2+|Only subscribe to the passed `Publisher` when the first `Subscription.request(N)` hits the returned `Stream`.
 Therefore, it supports malformed Publishers that do not invoke `Subscriber.onSubscribe(Subscription)` as required per specification.
 
-h|Stream.from(*Publisher<T>*)
+h|Fluxion.from(*Publisher<T>*)
 |T
 2+|A simple delegating `Stream` to the passed `Publisher.subscribe(Subscriber<T>)` argument. Only supports _well formed_ Publishers correctly using the Reactive Streams protocol:
 
 onSubscribe > onNext\* > (onError \| onComplete)
 
-h|Stream.defer(*Supplier<Publisher<T>>*)
+h|Fluxion.defer(*Supplier<Publisher<T>>*)
 |T
-2+|A lazy Publisher access using the level of indirection provided by `Supplier.get()` every time `Stream.subscribe(Subscriber)` is called.
+2+|A lazy Publisher access using the level of indirection provided by `Supplier.get()` every time `Fluxion.subscribe(Subscriber)` is called.
 
-h|Stream.generate(*BiConsumer<Long,SubscriberWithContext<T, C>*, _Function<Subscriber<T>,C>, Consumer<C>_)
+h|Fluxion.generate(*BiConsumer<Long,SubscriberWithContext<T, C>*, _Function<Subscriber<T>,C>, Consumer<C>_)
 |T
-2+|A Stream generator with explicit callbacks for each `Subscriber` request, start and stop events. similar to `Stream.create(Publisher)` minus the boilerplate for common use.
+2+|A Stream generator with explicit callbacks for each `Subscriber` request, start and stop events. similar to `Fluxion.create(Publisher)` minus the boilerplate for common use.
 
-h|Stream.switchOnNext(*Publisher<Publisher<T>>*)
+h|Fluxion.switchOnNext(*Publisher<Publisher<T>>*)
 |T
 2+|A Stream alterning in FIFO order between emitted `onNext(Publisher<T>)` from the passed Publisher. The signals will result in downstream Subscriber<T> receiving the next Publisher sequence of `onNext(T)`.
 It might interrupt a current upstream emission when the `onNext(Publisher<T>)` signal is received.
 
-h|Stream.concat(*Publisher<T>*, _Publisher<T>*_)
+h|Fluxion.concat(*Publisher<T>*, _Publisher<T>*_)
 
-Stream.concat(*Publisher<Publisher<T>>*)
+Fluxion.concat(*Publisher<Publisher<T>>*)
 |T
 2+|If a Publisher<T> is already emitting, wait for it to `onComplete()` before draining the next pending Publisher<T>. As the name suggests its useful to http://rxmarbles.com/#concat[concat various datasources] and keep ordering right.
 
-h|Stream.merge(*Publisher<T>, Publisher<T>*, Publisher<T>*)
+h|Fluxion.merge(*Publisher<T>, Publisher<T>*, Publisher<T>*)
 
-Stream.merge(*Publisher<Publisher<T>>*)
+Fluxion.merge(*Publisher<Publisher<T>>*)
 |T
 2+|http://rxmarbles.com/#merge[Accept multiple sources] and *interleave* their respective sequence. Order won't be preserved like with `concat`. Demand from a Subscriber will be split between various sources with a minimum of 1 to make sure everyone has a chance to send something.
 
-h|Stream.combineLatest(*Publisher<T1>, Publisher<T2>*, _Publisher<T3-N> x6_, *Function<Tuple2-N, C>*)
+h|Fluxion.combineLatest(*Publisher<T1>, Publisher<T2>*, _Publisher<T3-N> x6_, *Function<Tuple2-N, C>*)
 |C
 2+|http://rxmarbles.com/#combineLatest[Combine most recent emitted elements] from the passed sources using the given aggregating `Function`.
 
-h|Stream.zip(*Publisher<T1>, Publisher<T2>,* _Publisher<T3-N> x6_, *Function<Tuple2-N, C>*)
+h|Fluxion.zip(*Publisher<T1>, Publisher<T2>,* _Publisher<T3-N> x6_, *Function<Tuple2-N, C>*)
 |C
 2+|http://rxmarbles.com/#zip[Combine most recent elements once], every time a source has emitted a signal, apply the given `Function` and clear the temporary aggregate. Effectively it's a flexible _join_ mechanism for multiple types of sources.
 
-h|Stream.join(*Publisher<T>, Publisher<T>*, _Publisher<T> x6_)
+h|Fluxion.join(*Publisher<T>, Publisher<T>*, _Publisher<T> x6_)
 |List<T>
 2+|A shortcut for zip that only aggregates each complete aggregate in a List matching the order of the passed argument sources.
 
-h|Stream.await(*Publisher<>*, _long, unit, boolean_)
+h|Fluxion.await(*Publisher<>*, _long, unit, boolean_)
 |void
 2+|Block the calling thread until `onComplete` of the passed `Publisher`. Optional arguments to tune the timeout and the need to request data as well can be passed. It will throw an exception if the final state is `onError`.
 
-h|IOStream.<K,V>persistentMap(*String*, _deleteOnExit_)
+h|IOFluxion.<K,V>persistentMap(*String*, _deleteOnExit_)
 |V
 2+|<<streams.adoc#streams-persistent, A simple shortcut over ChronicleStream constructors>>, a disk-based log appender/tailer. The name argument must match an existing persistent queue under /tmp/persistent-queue\[name\].
 
-h|IOStream.<K,V>persistentMapReader(*String*)
+h|IOFluxion.<K,V>persistentMapReader(*String*)
 |V
 2+|<<streams.adoc#streams-persistent, A simple shortcut over ChronicleReaderStream constructors>>, a disk-based log tailer. The name argument must match an existing persistent queue under /tmp/persistent-queue\[name\].
 
-h|IOStream.decode(*Codec<SRC, IN, ?>, Publisher<SRC>*)
+h|IOFluxion.decode(*Codec<SRC, IN, ?>, Publisher<SRC>*)
 |IN
 2+|Use <<core.adoc#core-codecs, Codec decoder>> to decode the passed source data type into *IN* type.
 
@@ -332,10 +332,10 @@ Respecting the contract requires a *Subscription* and a call to *onSubscribe* + 
 However Reactor allows some flexibility to only deal with the message passing part and will automatically provide the buffering *Subscription* transparently,
 the difference is demonstrated in the code sample below.
 
-.Stream.create and Stream.defer in action
+.Fluxion.create and Fluxion.defer in action
 [source,java]
 ----
-final Stream<String> stream1 = Stream.create(new Publisher<String>() {
+final Fluxion<String> stream1 = Fluxion.create(new Publisher<String>() {
   @Override
   public void subscribe(Subscriber<? super String> sub) {
     sub.onSubscribe(new Subscription() { // <1>
@@ -356,7 +356,7 @@ final Stream<String> stream1 = Stream.create(new Publisher<String>() {
   }
 });
 
-final Stream<String> stream2 = Stream.create(sub -> {
+final Fluxion<String> stream2 = Fluxion.create(sub -> {
   sub.onNext("3"); // <2>
   sub.onNext("4");
   sub.onComplete();
@@ -364,7 +364,7 @@ final Stream<String> stream2 = Stream.create(sub -> {
 
 final AtomicInteger counterSubscriber = new AtomicInteger();
 
-Stream<String> deferred = Stream.defer(() -> {
+Fluxion<String> deferred = Fluxion.defer(() -> {
   if (counterSubscriber.incrementAndGet() == 1) { // <3>
     return stream1;
   }
@@ -380,7 +380,7 @@ deferred
 ----
 <1> Create a `Stream` from a custom valid `Publisher` which first calls `onSubscribe(Subscription)`.
 <2> Create a `Stream` from a custom malformed `Publisher which skips `onSubscribe(Subscription)` and immediately calls `onNext(T)`.
-<3> Create a `DeferredStream` that will alternate source Publisher<T> on each `Stream.subscribe` call, evaluating the total number of Subscribers,
+<3> Create a `DeferredStream` that will alternate source Publisher<T> on each `Fluxion.subscribe` call, evaluating the total number of Subscribers,
 
 Where to go from here? There are plenty of use cases that can benefit from a custom Publisher:
 
@@ -392,14 +392,14 @@ Where to go from here? There are plenty of use cases that can benefit from a cus
 Reactor offers some reusable components to avoid the boilerplate checking you would have to do without extending exsiting Stream or `PushSubscription`
 
 * Extending `PushSubscription` instead of implementing `Subscription` directly to benefit from terminal state (PushSubscription.isComplete())
-* Using `Flux.create(args)` or `Stream.generate(args)` to use Functional consumers for every lifecycle step
+* Using `Flux.create(args)` or `Fluxion.generate(args)` to use Functional consumers for every lifecycle step
 (requested, stopped, started).
 * Extending `Stream` instead of implementing `Publisher` directly to benefit from composition API
 
-.Stream.generate, an alternative to create() minus some boilerplate
+.Fluxion.generate, an alternative to create() minus some boilerplate
 [source,java]
 ----
-final Stream<String> stream = Stream.generate(
+final Fluxion<String> stream = Fluxion.generate(
   (demand, sub) -> { // <1>
       sub.context(); // <2>
       if (demand >= 2L && !sub.isCancelled()) {
@@ -446,8 +446,8 @@ sink.onNext("Hello World!"); // <4>
 <4> Publish a value into the pipeline, which will cause the tasks to be invoked.
 
 [IMPORTANT]
-Hot Data Sources will never be replayed. Subscribers will only see data from the moment they have been passed to `Stream.subscribe(Subscriber)`.
-An exception applies for `BehaviorBroadcaster` (last emitted element is replayed); `Mono.delay()` and `Stream.interval()` will also maintain unique timed cursors but will still ignore backpressure.
+Hot Data Sources will never be replayed. Subscribers will only see data from the moment they have been passed to `Fluxion.subscribe(Subscriber)`.
+An exception applies for `BehaviorBroadcaster` (last emitted element is replayed); `Mono.delay()` and `Fluxion.interval()` will also maintain unique timed cursors but will still ignore backpressure.
 
 [IMPORTANT]
 Subscribers will see new data N flowing through a Broadcaster every T+I^N^ *only* after they have subscribed at time T.
@@ -466,16 +466,16 @@ h|Factory
 h|Mono.delay(*delay*, _unit, timer_)
 |N/A
 |Long
-3+|Start a Timer on `Stream.subscribe(Subscriber)` call and emit a single `onNext(0L)` then `onComplete()` once the delay is elapsed. Be sure to pass the optional argument `Timer` if there is no current active `Environment`.
+3+|Start a Timer on `Fluxion.subscribe(Subscriber)` call and emit a single `onNext(0L)` then `onComplete()` once the delay is elapsed. Be sure to pass the optional argument `Timer` if there is no current active `Environment`.
 `Subscription.request(long)` will be ignored as no backpressure can apply to a scheduled emission.
 
-h|Stream.interval(*period*, _unit, timer_)
+h|Fluxion.interval(*period*, _unit, timer_)
 |N/A
 |Long
-3+|Start a Timer on `Stream.subscribe(Subscriber)` call and every period of time emit `onNext(N)` where N is an incremented counter starting from 0. Be sure to pass the optional argument `Timer` if there is no current active `Environment`.
+3+|Start a Timer on `Fluxion.subscribe(Subscriber)` call and every period of time emit `onNext(N)` where N is an incremented counter starting from 0. Be sure to pass the optional argument `Timer` if there is no current active `Environment`.
 `Subscription.request(long)` will be ignored as no backpressure can apply to a scheduled emission.
 
-h|Stream.<T>switchOnNext()
+h|Fluxion.<T>switchOnNext()
 |Publisher<T>
 |T
 3+|An `Action` which for the record is also a `Processor`. The `onNext(Publisher<T>)` signals will result in downstream `Subscriber<T>` receiving the next Publisher sequence of `onNext(T)`.
@@ -502,7 +502,7 @@ h|BehaviorBroadcaster.first(*T*, _Environment, Dispatcher_)
 3+|Similar to `BehaviorBroadcaster` but starts with a default value T.
 
 
-h|Stream.from(*Processor<I, O>*)
+h|Fluxion.from(*Processor<I, O>*)
 |I
 |O
 3+|A simple delegating `Stream` to the passed `Publisher.subscribe(Subscriber<O>)` argument. Only supports _well formed_ Publishers correctly using the Reactive Streams protocol:
@@ -539,8 +539,8 @@ For Asynchronous broadcasting, always consider a <<core-processor.adoc#core-proc
 Streams operations -- except for a few exceptions like terminal actions and `multicast()` -- will never directly subscribe. Instead they will lazily prepare for subscribe.
 This is usually called *lift* in Functional programming.
 
-That basically means the Reactor `Stream` user will explicitely call `Stream.subscribe(Subscriber)` or, alternativly, *terminal* actions such as `Stream.consume(Consumer)` to materialize all the registered operations.
-Before that `Actions` don't really exist. We use `Stream.lift(Supplier)` to defer the creation of these Actions until `Stream.subscribe(Subscriber)` is explicitely called.
+That basically means the Reactor `Stream` user will explicitely call `Fluxion.subscribe(Subscriber)` or, alternativly, *terminal* actions such as `Fluxion.consume(Consumer)` to materialize all the registered operations.
+Before that `Actions` don't really exist. We use `Fluxion.lift(Supplier)` to defer the creation of these Actions until `Fluxion.subscribe(Subscriber)` is explicitely called.
 
 Once everything is wired, each action maintains an upstream `Subscription` and a downstream `Subscription` and the Reactive Streams contract applies all along the pipeline.
 
@@ -552,15 +552,15 @@ This is an component you can use to request or cancel a pipeline without being i
 [source, java]
 ----
 import static reactor.Environment.*;
-import reactor.rx.Streams;
-import reactor.rx.Stream;
+import reactor.rx.Fluxions;
+import reactor.rx.Fluxion;
 //...
 
-Stream<String> stream = Stream.just("a","b","c","d","e","f","g","h");
+Fluxion<String> stream = Fluxion.just("a","b","c","d","e","f","g","h");
 
 //prepare two unique pipelines
-Stream<String> actionChain1 = stream.map(String::toUpperCase).filter(w -> w.equals("C"));
-Stream<Long> actionChain2 = stream.dispatchOn(SchedulerGroup.single()).take(5).count();
+Fluxion<String> actionChain1 = stream.map(String::toUpperCase).filter(w -> w.equals("C"));
+Fluxion<Long> actionChain2 = stream.dispatchOn(SchedulerGroup.single()).take(5).count();
 
 actionChain1.consume(System.out::println); //start chain1
 InterruptableSubscriber<?> c = actionChain2.consume(System.out::println); //start chain2
@@ -572,25 +572,25 @@ c.cancel(); //force this consumer to stop receiving data
 image::images/wiringup.png[The 2 Pipelines wired, width=650, align="center", link="images/wiringup.png"]
 
 ==== Publish/Subscribe
-For *Fan-Out* to subscribers from a unified pipeline, `Stream.subscribeWith(Subscribe)`, `Stream.multicast()`, `Stream
-.broadcastOn()` and `Stream.broadcastTo()` can be used.
+For *Fan-Out* to subscribers from a unified pipeline, `Fluxion.subscribeWith(Subscribe)`, `Fluxion.multicast()`, `Stream
+.broadcastOn()` and `Fluxion.broadcastTo()` can be used.
 
 .Sharing an upstream pipeline and wiring up 2 downstream pipelines
 [source, java]
 ----
 import static reactor.Environment.*;
-import reactor.rx.Streams;
-import reactor.rx.Stream;
+import reactor.rx.Fluxions;
+import reactor.rx.Fluxion;
 //...
 
-Stream<String> stream = Stream.just("a","b","c","d","e","f","g","h");
+Fluxion<String> stream = Fluxion.just("a","b","c","d","e","f","g","h");
 
 //prepare a shared pipeline
-Stream<String> sharedStream = stream.doOnNext(System.out::println).multicast();
+Fluxion<String> sharedStream = stream.doOnNext(System.out::println).multicast();
 
 //prepare two unique pipelines
-Stream<String> actionChain1 = sharedStream.map(String::toUpperCase).filter(w -> w.equals("C"));
-Stream<Long> actionChain2 = sharedStream.take(5).count();
+Fluxion<String> actionChain1 = sharedFluxion.map(String::toUpperCase).filter(w -> w.equals("C"));
+Fluxion<Long> actionChain2 = sharedFluxion.take(5).count();
 
 actionChain1.consume(System.out::println); //start chain1
 actionChain2.consume(System.out::println); //start chain2
@@ -604,7 +604,7 @@ image::images/broadcast.png[The 3 Pipelines wired, width=650, align="center", li
 [cols="2,1"]
 |===
 
-h|Stream<T> method
+h|Fluxion<T> method
 |Return Type
 2+|Role
 
@@ -620,7 +620,7 @@ h|consume(_Consumer<T>,Consumer<T>,Consumer<T>_)
 
 _consumeOn_
 |Control
-2+|Call `subscribe` with a `ConsumerAction` which interacts with each passed `Consumer`, each time the interest signal is detected. It will `request(Stream.capacity())` to the received `Subscription`, which is `Long.MAX_VALUE` by default, which results in unbounded consuming. The `publishOn` and `consumeOn` alternatives provide for signalling `onSubscribe` using the passed `Dispatcher`. Returns a `Control` component to cancel the materialized `Stream`, if necessary. Note that `ConsumeAction` takes care of unbounded recursion if the `onNext(T)` signal triggers a blocking request.
+2+|Call `subscribe` with a `ConsumerAction` which interacts with each passed `Consumer`, each time the interest signal is detected. It will `request(Fluxion.capacity())` to the received `Subscription`, which is `Long.MAX_VALUE` by default, which results in unbounded consuming. The `publishOn` and `consumeOn` alternatives provide for signalling `onSubscribe` using the passed `Dispatcher`. Returns a `Control` component to cancel the materialized `Stream`, if necessary. Note that `ConsumeAction` takes care of unbounded recursion if the `onNext(T)` signal triggers a blocking request.
 
 h|subscribeLater()
 |Control
@@ -630,9 +630,9 @@ h|batchConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Long,Long>*)
 
 _batchConsumeOn_
 |Control
-2+|Similar to `consume` but will request the mapped `Long` demand given the previous demand and starting with the default `Stream.capacity()`. Useful for adapting the demand dynamically due to various factors.
+2+|Similar to `consume` but will request the mapped `Long` demand given the previous demand and starting with the default `Fluxion.capacity()`. Useful for adapting the demand dynamically due to various factors.
 
-h|adaptiveConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Stream<Long>,Publisher<Long>>*)
+h|adaptiveConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Fluxion<Long>,Publisher<Long>>*)
 
 _adaptiveConsumeOn_
 |Control
@@ -646,25 +646,25 @@ h|toList()
 |Promise<List<T>>
 2+|Similar to `next()` but will wait until the entire sequence has been produced (`onComplete()`) and pass the accumulated `onNext(T)` in a single `List<T>` fulfilling the returned promise.
 
-h|Stream.toBlockingQueue()
+h|Fluxion.toBlockingQueue()
 |CompletableBlockingQueue<T>
 2+|Subscribe to the `Stream` and return an iterable blocking `Queue<T>` accumulating all `onNext` signals. `CompletableBlockingQueue.isTerminated()` can be used as a condition to exit a blocking `poll()` loop.
 
 h|cache()
-|Stream<T>
+|Fluxion<T>
 2+|Turn any Stream into a *Cold* Stream, able to replay all the sequence of signals individually for each Subscriber.
 Due to the unbounded nature of the action, you should probably use it only with small(ish) sequences.
 
 h|multicast()
 
 broadcastOn(Environment, Dispatcher)
-|Stream<T>
-2+|Turn Any Stream into a *Hot* Stream. This will prevent pipeline duplication by immediately materializing the `Stream` and be ready to publish the signal to N Subscribers downstream.
+|Fluxion<T>
+2+|Turn Any Stream into a *Hot* Fluxion. This will prevent pipeline duplication by immediately materializing the `Stream` and be ready to publish the signal to N Subscribers downstream.
 The demand will be aggregated from all child Subscribers.
 
 h|broadcastTo(*Subscriber<T>*)
 |Subscriber<T>
-2+|An alternative to `Stream.subscribe` which allows method chaining since the returned instance is the same as the passed argument.
+2+|An alternative to `Fluxion.subscribe` which allows method chaining since the returned instance is the same as the passed argument.
 
 
 |===
@@ -676,12 +676,12 @@ The Reactive Streams standard encourages application developers to set reasonabl
 
 Within a Reactor `Stream`, it's possible to microbatch items to limit the amount of data in-flight at any given time. This has distinct advantages in a number of ways, not the least of which is that it limits exposure to data loss by preventing the system from accepting more data than it can afford to lose if the system was to crash.
 
-To limit the amount of data in-flight in a `Stream`, use the link:/docs/api/reactor/rx/Stream.html#capacity-long-[`.capacity(long)`] method.
+To limit the amount of data in-flight in a `Stream`, use the link:/docs/api/reactor/rx/Fluxion.html#capacity-long-[`.capacity(long)`] method.
 
-.Stream.just()
+.Fluxion.just()
 [source,java]
 ----
-Stream<String> st;
+Fluxion<String> st;
 
 st
   .dispatchOn(SchedulerGroup.single())
@@ -695,7 +695,7 @@ st
 `capacity` will not affect `consume` actions if the current Stream dispatcher set with `dispatchOn` is a `SynchronousDispatcher.INSTANCE` (default if unset).
 
 [TIP]
-We leave as an exercise to the *Reactor User* to study the benefit of setting capacity vs computing dynamic demand with `Stream.adaptiveConsume` or a custom `Subscriber`.
+We leave as an exercise to the *Reactor User* to study the benefit of setting capacity vs computing dynamic demand with `Fluxion.adaptiveConsume` or a custom `Subscriber`.
 
 === Functional Composition
 
@@ -716,12 +716,12 @@ any point of the chain.
 ==== Observe
 
 If you want to passively observe data as it passes through the pipeline, then use the `.doOnNext(Consumer)` methods and other `reactor.rx.action.passive` actions.
-To observe values, use link:/docs/api/reactor/rx/Stream.html#observe-reactor.fn.Consumer-[.doOnNext(Consumer<? super T>)]. To observe errors without dealing with them definitively, use link:/docs/api/reactor/rx/Stream.html#doOnError-java.lang.Class-reactor.fn.BiConsumer-[.doOnNext(Class<? extends Throwable>, BiConsumer<Object,? extends Throwable>)]. To observe the Reactive Streams complete signal, use link:/docs/api/reactor/rx/Stream.html#doOnComplete-reactor.fn.Consumer-[.doOnComplete(Consumer<Void>)]. To observe the cancel signal, use link:/docs/api/reactor/rx/Stream.html#doOnCancel-reactor.fn.Consumer-[.doOnCancel(Consumer<Void>)]. To observe the Reactive Streams subscribe signal, use link:/docs/api/reactor/rx/Stream.html#observeSubscribe-reactor.fn.Consumer-[.observeSubscribe(Consumer<? super Subscription<T>>)].
+To observe values, use link:/docs/api/reactor/rx/Fluxion.html#observe-reactor.fn.Consumer-[.doOnNext(Consumer<? super T>)]. To observe errors without dealing with them definitively, use link:/docs/api/reactor/rx/Fluxion.html#doOnError-java.lang.Class-reactor.fn.BiConsumer-[.doOnNext(Class<? extends Throwable>, BiConsumer<Object,? extends Throwable>)]. To observe the Reactive Streams complete signal, use link:/docs/api/reactor/rx/Fluxion.html#doOnComplete-reactor.fn.Consumer-[.doOnComplete(Consumer<Void>)]. To observe the cancel signal, use link:/docs/api/reactor/rx/Fluxion.html#doOnCancel-reactor.fn.Consumer-[.doOnCancel(Consumer<Void>)]. To observe the Reactive Streams subscribe signal, use link:/docs/api/reactor/rx/Fluxion.html#observeSubscribe-reactor.fn.Consumer-[.observeSubscribe(Consumer<? super Subscription<T>>)].
 
 .doOnNext(Consumer<T>)
 [source,java]
 ----
-Stream<String> st;
+Fluxion<String> st;
 
 st.doOnNext(s -> LOG.info("Got input [{}] on thread [{}}]", s, Thread.currentThread())) // <1>
   .doOnComplete(v -> LOG.info("Stream is complete")) // <2>
@@ -736,7 +736,7 @@ st.doOnNext(s -> LOG.info("Got input [{}] on thread [{}}]", s, Thread.currentThr
 ==== Filter
 
 It's possible to filter items passing through a `Stream` so that downstream actions only see the data you want them to see. Filtering actions can be found under the `reactor.rx.action.filter` package.
-The most popular one is the link:/docs/api/reactor/rx/Stream.html#filter-reactor.fn.Predicate-[`.filter(Predicate<T>)`] method.
+The most popular one is the link:/docs/api/reactor/rx/Fluxion.html#filter-reactor.fn.Predicate-[`.filter(Predicate<T>)`] method.
 
 [NOTE]
 Unmatched data will trigger a `Subscription.request(1)` if the stream is actually not unbounded with a previous demand of Long.MAX_VALUE.
@@ -744,7 +744,7 @@ Unmatched data will trigger a `Subscription.request(1)` if the stream is actuall
 .filter(Predicate<T>)
 [source,java]
 ----
-Stream<String> st;
+Fluxion<String> st;
 
 st.filter(s -> s.startsWith("Hello")) // <1>
   .consume(s -> service.doWork(s)); // <2>
@@ -755,11 +755,11 @@ st.filter(s -> s.startsWith("Hello")) // <1>
 ==== Limits
 
 A specific application of filters is for setting limits to a `Stream`. Limiting actions can be found under the `reactor.rx.action.filter` package.
-There are various ways to tell a Stream<T> its boundary in time, in size and/or on a specific condition.
-The most popular one is the link:/docs/api/reactor/rx/Stream.html#take-long-[`.take(long)`] method.
+There are various ways to tell a Fluxion<T> its boundary in time, in size and/or on a specific condition.
+The most popular one is the link:/docs/api/reactor/rx/Fluxion.html#take-long-[`.take(long)`] method.
 
 
-.Stream.take(long)
+.Fluxion.take(long)
 [source,java]
 ----
 Stream
@@ -776,10 +776,10 @@ Stream
 ==== Transformation
 
 If you want to actively transform data as it passes through the pipeline, then use `.map(Function)` and other `reactor.rx.action.transformation` actions.
-The most popular transforming action is link:/docs/api/reactor/rx/Stream.html#map-reactor.fn.Function-[.map(Function<? super I, ? extends O>)].
+The most popular transforming action is link:/docs/api/reactor/rx/Fluxion.html#map-reactor.fn.Function-[.map(Function<? super I, ? extends O>)].
 A few other `Actions` depend on transforming data, especially <<streams.adoc#streams-combine,Combinatory operations>> like `flatMap` or `concatMap`.
 
-.Stream.map(Function<T,V>)
+.Fluxion.map(Function<T,V>)
 [source,java]
 ----
 Stream
@@ -792,21 +792,21 @@ Stream
 [[stream-flatmap]]
 ==== (A)Sync Transformation: FlatMap, ConcatMap, SwitchMap
 
-If you want to execute a distinct pipeline `Stream<V>` or `Publisher<V>` given an actual input data, you can use combinatory actions such as `.flatMap(Function)` and other `reactor.rx.action.combination` actions.
+If you want to execute a distinct pipeline `Fluxion<V>` or `Publisher<V>` given an actual input data, you can use combinatory actions such as `.flatMap(Function)` and other `reactor.rx.action.combination` actions.
 
-To transform values into a distinct, possibly asynchronous `Publisher<V>`, use link:/docs/api/reactor/rx/Stream.html#map-reactor.fn.Function-[.flatMap(Function<? super I, ? extends Publisher<? extends O>)].
+To transform values into a distinct, possibly asynchronous `Publisher<V>`, use link:/docs/api/reactor/rx/Fluxion.html#map-reactor.fn.Function-[.flatMap(Function<? super I, ? extends Publisher<? extends O>)].
 The returned `Publisher<V>` will then be *merged* back to the main flow signaling `onNext(V)`. They are properly removed from the merging action whey they complete.
 The difference between flatMap, concatMap and switchOnMap is the *merging strategy*, respectively *Interleave*, *Fully Sequential* and *Partially Sequential* (interrupted by `onNext(Publisher<T>)`).
 
 [IMPORTANT]
 The downstream request is split (minimum 1 by merged Publisher)
 
-.Stream.flatMap(Function)
+.Fluxion.flatMap(Function)
 [source,java]
 ----
 Stream
   .range(1, 100)
-  .flatMap(number -> Stream.range(1, number).publishOn(SchedulerGroup.io()) ) // <1>
+  .flatMap(number -> Fluxion.range(1, number).publishOn(SchedulerGroup.io()) ) // <1>
   .consume(
     System.out::println, <2>
     Throwable::printStackTrace,
@@ -822,7 +822,7 @@ Blocking is considered an anti-pattern in *Reactor*. That said, we do offer an a
 
 The Promise API offers a range of *stateful actions* which inspect the current *ready|error|complete* state and, if fulfilled, immediately calls the wired action.
 
-.Stream.toList()
+.Fluxion.toList()
 [source,java]
 ----
 Promise<List<Long>> result = Stream
@@ -845,20 +845,20 @@ h|Functional API or Factory method
 
 |
 
-h|Stream.await(Publisher<?>)
+h|Fluxion.await(Publisher<?>)
 |Block until the passed Publisher `onComplete()` or `onError(e)`, bubbling up the eventual exception.
 
-h|Stream.next()
+h|Fluxion.next()
 
 _with_ Promise.await(), Promise.get()...
 |Capture in a Promise the immediate next signal only and `onComplete()` if the signal was a data. `get()` can be used to touch but not wait on the promise to fulfill.
 
-h|Stream.toList()
+h|Fluxion.toList()
 
 _with_ Promise.await(), Promise.get()...
 |Similar to `next()` but capture the full sequence in a List<T> to fulfill the `Promise<List<T>>` returned.
 
-h|Stream.toBlockingQueue()
+h|Fluxion.toBlockingQueue()
 |Subscribe to the `Stream` and return an iterable blocking `Queue<T>` accumulating all `onNext` signals. `CompletableBlockingQueue.isTerminated()` can be used as a condition to exit a blocking `poll()` loop.
 
 h|Wiring up Synchronous Streams
@@ -873,27 +873,27 @@ One common purpose for *Reactive Streams* and *Reactive Extensions* is to be uno
 Streams are all about *it will be executed at some point between now and some time T*. Non-concurrent signals may also preserve `Subscriber` from concurrency access (share-nothing),
 however, signals and requests can run on 2 asymmetric threads.
 
-By default the `Stream` is assigned with a `SynchronousDispatcher` and will inform its immediate child `Actions` via `Stream.getDispatcher()`.
+By default the `Stream` is assigned with a `SynchronousDispatcher` and will inform its immediate child `Actions` via `Fluxion.getDispatcher()`.
 
 [IMPORTANT]
-Various `Stream` factories, the `Broadcaster`, the `Stream.dispatchOn`  and the terminal `xxxOn` methods might alter the default `SynchronousDispatcher`.
+Various `Stream` factories, the `Broadcaster`, the `Fluxion.dispatchOn`  and the terminal `xxxOn` methods might alter the default `SynchronousDispatcher`.
 
-.It is fundamental to understand the three major thread switches available in Reactor Stream:
+.It is fundamental to understand the three major thread switches available in Reactor Fluxion:
 ****
-* The `Stream.dispatchOn` action is the only one available under `Stream` that will be dispatching *onError*, *onComplete* and *onNext* signals on the given `Dispatcher`.
+* The `Fluxion.dispatchOn` action is the only one available under `Stream` that will be dispatching *onError*, *onComplete* and *onNext* signals on the given `Dispatcher`.
 ** Since an action is a `Processor` it doesn't support concurrent `Dispatcher` such as `WorkQueueDispatcher`.
 ** `request` and `cancel` will run on the dispatcher as well if in its context already. Otherwise, it will execute after the current dispatch ends.
-* The `Stream.publishOn` action will be executing *onSubscribe* only on the passed dispatcher.
+* The `Fluxion.publishOn` action will be executing *onSubscribe* only on the passed dispatcher.
 ** Since the only time the passed `Dispatcher` is called is *onSubscribe*, any dispatcher can be used including the concurrent ones such as `WorkQueueDispatcher`.
-** The first `request` might still execute in the *onSubscribe* thread, for instance, with `Stream.subscribe()` actions.
-* Attaching a `Processor` via `Stream.process` for instance can affect the thread too. The `Processor` such as `TopicProcessor` will run the `Subscribers` on its managed threads.
+** The first `request` might still execute in the *onSubscribe* thread, for instance, with `Fluxion.subscribe()` actions.
+* Attaching a `Processor` via `Fluxion.process` for instance can affect the thread too. The `Processor` such as `TopicProcessor` will run the `Subscribers` on its managed threads.
 ** `request` and `cancel` will run on the processor as well if in its context already.
 ** `WorkQueueProcessor` will only dispatch *onNext* signals to one `Subscriber` at most unless it has canceled in-flight (replay to a new Subscriber).
 ****
 
 Since the common contract is to start requesting data *onSubscribe*, `publishOn` is an efficient tool to scale-up streams, particularly unbounded ones.
 If a `Subscriber` requests *Long.MAX_VALUE* in *onSubscribe*, it will then be the only request executed and it will run on the dispatcher assigned in `publishOn`.
-This is the default behavior for unbounded `Stream.consume` actions.
+This is the default behavior for unbounded `Fluxion.consume` actions.
 
 .Jumping between threads with an unbounded demand
 [source,java]
@@ -911,7 +911,7 @@ Stream
 .publishOn and dispatchOn/process with an unbounded Subscriber
 image::images/longMaxThreading.png[Unbounded threading, width=600, align="center", link="images/longMaxThreading.png"]
 
-However, `publishOn` is less useful when more than 1 request will be involved, like in step-consuming with `Stream.capacity(n)`.
+However, `publishOn` is less useful when more than 1 request will be involved, like in step-consuming with `Fluxion.capacity(n)`.
 The only request executed possibly running on the dispatcher assigned in `publishOn` is the *first one*.
 
 .Jumping between thread with a bounded demand 1
@@ -981,9 +981,9 @@ Originally by Peter Norvig: http://norvig.com/21-days.html#answers
 ****
 * *Buffer* : Concrete boundaries *accumulating* `onNext(T)` inside grouped `List<T>` passed to the child `Subscriber`.
 ** Used best with external API requiring `Iterable<T>` input argument.
-* *Window* : Discrete boundaries *forwarding* `onNext(T)` into distinct `Stream<T>` passed to the child `Subscriber`.
+* *Window* : Discrete boundaries *forwarding* `onNext(T)` into distinct `Fluxion<T>` passed to the child `Subscriber`.
 ** Used best with accumulators such as `reduce` or any subscriber/action reacting to `onComplete()`.
-** Can be combined with `flatMap` or `concatMap` which merge back the individual windows in a common `Stream<T>`
+** Can be combined with `flatMap` or `concatMap` which merge back the individual windows in a common `Fluxion<T>`
 ****
 
 === Into Buffers
@@ -1023,9 +1023,9 @@ streamBatcher.onNext(666);
 latch.await(2, TimeUnit.SECONDS);
 ----
 
-.Chunk processing with Stream buffers (returning Stream<List<T>>):
+.Chunk processing with Stream buffers (returning Fluxion<List<T>>):
 |===
-h|Stream<T> API
+h|Fluxion<T> API
 ^.^a|*Role*
 
 |
@@ -1055,18 +1055,18 @@ h|buffer(*int, long*, _TimeUnit, Timer_)
 
 === Into Windows
 
-Forwarding grouped sequences of data `T` into a `Stream<T>` serves three main purposes:
+Forwarding grouped sequences of data `T` into a `Fluxion<T>` serves three main purposes:
 
 ****
 * Expose a sequence of data `T` to various limited grouped observations and accumulation: metrics, average, flexible aggregate (`Map`, `Tuple`...).
-* Parallelizing grouped sequences combined with `dispatchOn` for each generated `Stream<T>` and merging their results back.
+* Parallelizing grouped sequences combined with `dispatchOn` for each generated `Fluxion<T>` and merging their results back.
 * Repeat `onComplete()` for individual grouped sequences, e.g. in <<net.adoc#net-overview,Async IO>> module to delimit a flush.
 ****
 
 
 [NOTE]
 ====
-`Stream<T>` windows are slightly less optimized but equivalent aggregating producer than buffer API if combined with the aggregate-all `Stream.buffer()` method:
+`Fluxion<T>` windows are slightly less optimized but equivalent aggregating producer than buffer API if combined with the aggregate-all `Fluxion.buffer()` method:
 
 [source,java]
 ----
@@ -1083,7 +1083,7 @@ An `Environment` must be initialized if the alias for timed `window()` are used 
 [source,java]
 ----
 //create a list of 1000 numbers and prepare a Stream to read it
-Stream<Integer> sensorDataStream = Stream.from(createTestDataset(1000));
+Fluxion<Integer> sensorDataStream = Fluxion.from(createTestDataset(1000));
 
 //wait for all windows of 100 to finish
 CountDownLatch endLatch = new CountDownLatch(1000 / 100);
@@ -1104,33 +1104,33 @@ System.out.println(controls.debug());
 Assert.assertEquals(0, endLatch.getCount());
 ----
 
-.Chunk processing with Stream (returning Stream<Stream<T>>):
+.Chunk processing with Stream (returning Fluxion<Fluxion<T>>):
 |===
-h|Stream<T> API
+h|Fluxion<T> API
 ^.^a|*Role*
 
 |
 
 h|window(_int_)
-|Forward to a generated `Stream<T>` until `onComplete()` or the given `int` argument is reached which starts over a new `Stream`.
+|Forward to a generated `Fluxion<T>` until `onComplete()` or the given `int` argument is reached which starts over a new `Stream`.
 
 h|window(*Publisher<?>*, _Supplier<? extends Publisher<?>>_)
-|Forward to a generated `Stream<T>` until `onComplete()` or when the first `Publisher<?>` argument emits a signal. The optional `Supplier<? extends Publisher<?>>` supplies a sequence whose first signal will end the linked aggregation. That means overlapping (sliding buffers) and disjointed aggregations can be emitted to the child `Subscriber<Stream<T>>`.
+|Forward to a generated `Fluxion<T>` until `onComplete()` or when the first `Publisher<?>` argument emits a signal. The optional `Supplier<? extends Publisher<?>>` supplies a sequence whose first signal will end the linked aggregation. That means overlapping (sliding buffers) and disjointed aggregations can be emitted to the child `Subscriber<Fluxion<T>>`.
 
 h|window(*Supplier<? extends Publisher<?>>*)
-|Forward to a generated `Stream<T>`  until `onComplete()` or in coordination with a provided `Publisher<?>`. The `Supplier<? extends Publisher<?>>` supplies a sequence whose first signal will end the linked `Stream<T>` and start a new one immediately.
+|Forward to a generated `Fluxion<T>`  until `onComplete()` or in coordination with a provided `Publisher<?>`. The `Supplier<? extends Publisher<?>>` supplies a sequence whose first signal will end the linked `Fluxion<T>` and start a new one immediately.
 
 h|window(*int, int*)
-|Forward to a generated `Stream<T>`  until `onComplete()` or the given *skip* (the second `int` argument) is reached which starts over a new `Stream<T>`. The *size* (the first `int` argument) will delimit the maximum number of aggregated elements by buffer. That means overlapping (sliding buffers) and disjointed sequences can be emitted to the child `Subscriber<Stream<T>>`.
+|Forward to a generated `Fluxion<T>`  until `onComplete()` or the given *skip* (the second `int` argument) is reached which starts over a new `Fluxion<T>`. The *size* (the first `int` argument) will delimit the maximum number of aggregated elements by buffer. That means overlapping (sliding buffers) and disjointed sequences can be emitted to the child `Subscriber<Fluxion<T>>`.
 
 h|window(*long*, TimeUnit, Timer_)
-|Forward to a generated `Stream<T>` until `onComplete()` or the elapsed *period* (the `long` argument) is reached, which starts over a new `Stream<T>`.
+|Forward to a generated `Fluxion<T>` until `onComplete()` or the elapsed *period* (the `long` argument) is reached, which starts over a new `Fluxion<T>`.
 
 h|window(*long, long*, TimeUnit, Timer_)
-|Forward to a generated `Stream<T>`  until `onComplete()` or the given *timeshift* (the second `long` argument) is reached. The *timespan* (the first `long` argument) will delimit the maximum number of aggregated elements by buffer. That means overlapping (sliding buffers) and disjointed sequenced can be emitted to the child `Subscriber<Stream<T>>`.
+|Forward to a generated `Fluxion<T>`  until `onComplete()` or the given *timeshift* (the second `long` argument) is reached. The *timespan* (the first `long` argument) will delimit the maximum number of aggregated elements by buffer. That means overlapping (sliding buffers) and disjointed sequenced can be emitted to the child `Subscriber<Fluxion<T>>`.
 
 h|window(*int, long*, _TimeUnit, Timer_)
-|A combination of `buffer(int)` *OR* `buffer(long, TimeUnit, Timer)` conditions. It forwards to a generated `Stream<T>` until the given *size* has been reached or the *timespan* has elapsed.
+|A combination of `buffer(int)` *OR* `buffer(long, TimeUnit, Timer)` conditions. It forwards to a generated `Fluxion<T>` until the given *size* has been reached or the *timespan* has elapsed.
 
 |===
 
@@ -1160,14 +1160,14 @@ image::images/marble/marble-101.png[Marble Diagrams, width=650, align="center", 
 
 [source,java]
 ----
-Stream.just(1,2,3,4,5)
+Fluxion.just(1,2,3,4,5)
   .buffer(3) // <1>
   //onOverflowBuffer()
   .capacity(2) // <2>
   .subscribe()
 
 
-Stream.just(1,2,3,4,5)
+Fluxion.just(1,2,3,4,5)
   .dispatchOn(dispatcher1) // <3>
   //onOverflowBuffer()
   .dispatchOn(dispatcher2) // <4>
@@ -1182,7 +1182,7 @@ Ultimately the `Subscriber` can request data one by one, limiting the in-flight 
 
 [source,java]
 ----
-Stream.range(1,1000000)
+Fluxion.range(1,1000000)
   .subscribe(new DefaultSubscriber<Long>(){ // <1>
     Subscription sub;
 
@@ -1205,7 +1205,7 @@ Stream.range(1,1000000)
 .Controlling the volume of in-flight data
 |===
 
-h|Stream<T>
+h|Fluxion<T>
 |Role
 
 |
@@ -1214,7 +1214,7 @@ h|subscribe(*Subscriber<T>*)
 |A custom `Subscriber<T>` will have the flexibility to request whenever it wishes. It's best to change the size these requests if the `Subscriber` uses blocking operations.
 
 h|capacity(*long*)
-|<<streams.adoc#stream-capacity, Set the capacity>> to this `Stream<T>` and all downstream actions.
+|<<streams.adoc#stream-capacity, Set the capacity>> to this `Fluxion<T>` and all downstream actions.
 
 h|onOverflowBuffer(_CompletableQueue_)
 ^.^a|Create or use the given `CompletableQueue` to store the overflow elements. Overflow occurs when a `Publisher` sends more data than a `Subscriber` has actually requested. Overflow will be drained over the next calls to `request(long)`.
@@ -1231,17 +1231,17 @@ h|throttleRequest(*long*)
 
 image::images/marble/marble-throttle.png[throttleRequest(delay), width=500, align="center", link="images/marble/marble-throttle.png"]
 
-h|requestWhen(*Function<Stream<Long>, Publisher<Long>>*)
-^.^a|Pass any downstream `request(long)` to `Stream<Long>` sequence of requests that can be altered and returned using any form of `Publisher<Long>`. The `RequestWhenAction` will subscribe to the produced sequence and immediately forward `onNext(Long)` to the upstream `request(long)`. It behaves similarly to `adaptiveConsume` but can be inserted at any point in the `Stream` pipeline.
+h|requestWhen(*Function<Fluxion<Long>, Publisher<Long>>*)
+^.^a|Pass any downstream `request(long)` to `Fluxion<Long>` sequence of requests that can be altered and returned using any form of `Publisher<Long>`. The `RequestWhenAction` will subscribe to the produced sequence and immediately forward `onNext(Long)` to the upstream `request(long)`. It behaves similarly to `adaptiveConsume` but can be inserted at any point in the `Stream` pipeline.
 
 image::images/marble/marble-requestwhen.png[requestWhen(requestMapper), width=500, align="center", link="images/marble/marble-requestwhen.png"]
 
 h|batchConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Long,Long>*)
 
 _batchConsumeOn_
-|Similar to `consume` but will request the mapped `Long` demand given the previous demand and starting with the default `Stream.capacity()`. Useful for adapting the demand from various factors.
+|Similar to `consume` but will request the mapped `Long` demand given the previous demand and starting with the default `Fluxion.capacity()`. Useful for adapting the demand from various factors.
 
-h|adaptiveConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Stream<Long>,Publisher<Long>>*),
+h|adaptiveConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Fluxion<Long>,Publisher<Long>>*),
 
 _adaptiveConsumeOn_
 |Similar to `batchConsume` but will request the computed sequence of demand `Long`. It can be used to insert flow-control such as `Mono.delay()` to delay demand.  The `AdaptiveConsumerAction` will subscribe to the produced sequence and immediately forwards `onNext(Long)` to the upstream `request(long)`.
@@ -1253,10 +1253,10 @@ h|buffer(_arguments_), reduce(_arguments_), count(_arguments_)...
 |All aggregating and metrics operations can be used to proactively limit the volume of a `Stream`.
 
 h|_All_ sample(_arguments_), sampleFirst(_arguments_)
-|Reduce the volume of a `Stream<T>` by selecting the last (or the first) `onNext(T)` signals matching the given conditions. These conditions can be timed, sized, timed or sized, and interactive (event-driven).
+|Reduce the volume of a `Fluxion<T>` by selecting the last (or the first) `onNext(T)` signals matching the given conditions. These conditions can be timed, sized, timed or sized, and interactive (event-driven).
 
 h|zip(_arguments_), zipWith(_arguments_)
-|Reduce the volume of N `Stream<T>` to the least signals producing zipped `Publisher`. The aggregated signals from each `Publisher` can be used to produce a distinct value from the N most recent upstream `onNext(T)`.
+|Reduce the volume of N `Fluxion<T>` to the least signals producing zipped `Publisher`. The aggregated signals from each `Publisher` can be used to produce a distinct value from the N most recent upstream `onNext(T)`.
 
 |===
 
@@ -1273,12 +1273,12 @@ Merging actions are modeled in `FanInAction` and take care of concurrent signali
 [WARNING]
 <<streams.adoc#streams-backpressure,Reducing the demand volume>> before using `flatMap` might be a good or a bad idea. In effect, it doesn't deserve the merging action to subscribe to many parallel `Publisher` if it can't actually process them all. However, it limiting the parallel `Publisher` size might also not give a chance to faster `Publisher` pending a request to be delivered.
 
-.Stream.zipWith(Function)
+.Fluxion.zipWith(Function)
 [source,java]
 ----
 Stream
   .range(1, 100)
-  .zipWith( Stream.generate(System::currentTimeMillis), tuple -> tuple ) // <1>
+  .zipWith( Fluxion.generate(System::currentTimeMillis), tuple -> tuple ) // <1>
   .consume(
     tuple -> System.out.println("number: "+tuple.getT1()+" time: "+tuple.getT2()) , // <2>
     Throwable::printStackTrace,
@@ -1296,50 +1296,50 @@ h|Functional API or Factory method
 
 |
 
-h|Stream.flatMap(Function<T, Publisher<V>>)
+h|Fluxion.flatMap(Function<T, Publisher<V>>)
 |An <<streams.adoc#stream-flatmap,Async transformation>> is a typed shortcut for `merge(map(Function<T, Publisher<V>>))`.
 
 The mapping part produces a `Publisher<V>` eventually using the passed data `T`, a common pattern used in <<streams.adoc#streams-microservice, MicroService architecture>>.
 
 The merging part transforms the sequence of produced `Publisher<V>` into a sequence of `V` by _safely_ subscribing in parallel to all of them. There is no ordering guaranteed, it is *interleaved* sequence of `V`. All merged `Publisher<T>` must complete before the `Subscriber<T>` can complete.
 
-h|Stream.switchOnNext(Publisher<Publisher<T>>)
+h|Fluxion.switchOnNext(Publisher<Publisher<T>>)
 |A Stream alternating in FIFO order between emitted `onNext(Publisher<T>)` from the passed Publisher. The signals will result in downstream Subscriber<T> receiving the next Publisher sequence of `onNext(T)`.
 It might interrupt a current upstream emission when the `onNext(Publisher<T>)` signal is received.
 All merged `Publisher<T>` must complete before the `Subscriber<T>` can complete.
 
-h|Stream.merge(Publisher<T>, _Publisher<T> x7_)
+h|Fluxion.merge(Publisher<T>, _Publisher<T> x7_)
 
-Stream.merge(Publisher<Publisher<T>>)
+Fluxion.merge(Publisher<Publisher<T>>)
 
-Stream.mergeWith(Publisher<T>)
+Fluxion.mergeWith(Publisher<T>)
 
-h|Stream.concat(Publisher<T>, _Publisher<T> x7_)
+h|Fluxion.concat(Publisher<T>, _Publisher<T> x7_)
 
-Stream.concat(Publisher<Publisher<T>>)
+Fluxion.concat(Publisher<Publisher<T>>)
 
-Stream.concatWith(Publisher)
+Fluxion.concatWith(Publisher)
 
-Stream.startWith(Publisher)
+Fluxion.startWith(Publisher)
 |Similar to `merge()` actions but if a Publisher<T> is already emitting, wait for it to `onComplete()` before draining the next pending Publisher<T>. The sequences will be subscribed in declarative order, from left to right, e.g. `stream1.concatWith(stream2)` or with the argument given in `stream2.startWith(stream1)`.
 
-h|Stream.combineLatest(Publisher<T>, _Publisher<T> x7_, Function<Tuple,V>)
+h|Fluxion.combineLatest(Publisher<T>, _Publisher<T> x7_, Function<Tuple,V>)
 
-Stream.combineLatest(Publisher<Publisher<T>>, Function<Tuple,V>)
+Fluxion.combineLatest(Publisher<Publisher<T>>, Function<Tuple,V>)
 |Combine the most recent `onNext(T)` signal from each distinct `Publisher<T>`. Each signal combines until a future `onNext(T)` from its source `Publisher<T>` replaces it. *After* all `Publisher<T>` have emitted at least one signal, the given combinator function will accept all recent signals and produce the desired combined object. If any `Publisher<T>` completes, the downstream `Subscriber<T>` will complete.
 
-h|Stream.zip(Publisher<T>, _Publisher<T> x7_, Function<Tuple,V>)
+h|Fluxion.zip(Publisher<T>, _Publisher<T> x7_, Function<Tuple,V>)
 
-Stream.zip(Publisher<Publisher<T>>, Function<Tuple,V>)
+Fluxion.zip(Publisher<Publisher<T>>, Function<Tuple,V>)
 
-Stream.zipWith(Publisher<T>, Function<Tuple2,V>)
+Fluxion.zipWith(Publisher<T>, Function<Tuple2,V>)
 |Combine the most recent `onNext(T)` signal from each distinct `Publisher<T>`. Each signal combines only once. *Every time* all `Publisher<T>` have emitted one signal, the given zipper function will receive them and produce the desired zipped object. If any `Publisher<T>` completes, the downstream `Subscriber<T>` will complete.
 
-h|Stream.join(Publisher<T>, _Publisher<T> x7_)
+h|Fluxion.join(Publisher<T>, _Publisher<T> x7_)
 
-Stream.join(Publisher<Publisher<T>>)
+Fluxion.join(Publisher<Publisher<T>>)
 
-Stream.joinWith(Publisher<T>)
+Fluxion.joinWith(Publisher<T>)
 |A shortcut for `zip` with a predefined zipper function transforming each most recent `Tuple` into a `List<?>`.
 
 |===
@@ -1391,7 +1391,7 @@ In this section we're going to cover the basics to create a reactive facade gati
 . Transform target service calls into _unbounded_ `Stream` or `Promise` return types
 ** Asynchronous switch for Blocking -> Non Blocking conversion
 ** Error isolation
-. Compose services with the *Reactor Stream* API
+. Compose services with the *Reactor Fluxion* API
 ** Blocking -> Non Blocking coordination
 ** Parallelize Blocking calls
 . Evolve transformed services to backpressure ready `Stream`
@@ -1407,21 +1407,21 @@ h|Functional API or Factory method
 
 |
 
-h|Stream.create(Publisher), Stream.defer(Supplier), Stream.from(Publisher), Stream.generate(Supplier)
+h|Fluxion.create(Publisher), Fluxion.defer(Supplier), Fluxion.from(Publisher), Fluxion.generate(Supplier)
 |Protecting resource access with a `Publisher` is encouraged. A few <<streams.adoc#streams-basics, Stream factories>> will be particularly useful. The point of creating a `Publisher` is to only `onNext(T)` when the data is ready such as in an IO callback. The read should be triggered by a `Subscriber` request if possible to implement a form of backpressure.
 
-h|Stream.timeout(_arguments_)
+h|Fluxion.timeout(_arguments_)
 |Accessing an external resource, especially remote, should always be limited in time to become more resilient to external conditions such as network partitions. Timeout operations can fallback to another `Publisher` for alternative  service call or just `onError(TimeoutException)`. The timer resets each time a fresh `onNext(T)` is observed.
 
-h|Stream.take(_arguments_)
+h|Fluxion.take(_arguments_)
 |Similar to `timeout()`, a need to scope in size an external resource is a common one. It's also useful to fully trigger a pipeline including `onComplete()` processing.
 
-h|Stream.flatMap(Function<T,Publisher<V>)
+h|Fluxion.flatMap(Function<T,Publisher<V>)
 |An <<streams.adoc#stream-flatmap,Async transformation>> that produces a `Publisher<V>` eventually using the passed data `T`, the ideal place to hook in a call to another service before resuming the current processing.
 
 The sequence of produced `Publisher<V>` will flow in the `Subscriber` into a sequence of `V` by _safely_ subscribing in parallel.
 
-h|Stream.publishOn(Dispatcher), Stream.dispatchOn(Dispatcher), _Core Processors_
+h|Fluxion.publishOn(Dispatcher), Fluxion.dispatchOn(Dispatcher), _Core Processors_
 a|<<streams.adoc#streams-multithreading,Threading control>> is strategic:
 
 ****
@@ -1434,10 +1434,10 @@ a|<<streams.adoc#streams-multithreading,Threading control>> is strategic:
 [[streams-microservice-start]]
 === Creating Non-Blocking Services
 
-The first step is to isolate the microservice access. Instead of returning a type `T` or `Future<T>`, we will now start using `Publisher<T>` and specifically `Stream<T>` or `Promise<T>`. The immediate benefit is we don't need to worry anymore about error handling and threading (yet): Errors are propagated in `onError` calls (no bubble up), threading might be tuned later, for instance using `dispatchOn`. The additional bonus is we get to make our code more _functional_. It also works nicely with Java 8 Lambdas! The target will be to reduce control brackets noise (if, for, while...) and limit more the need for sharing context. Ultimately our target design will encourage streaming over polling large datasets: functions will apply to a sequence, result by result, avoiding loop duplication.
+The first step is to isolate the microservice access. Instead of returning a type `T` or `Future<T>`, we will now start using `Publisher<T>` and specifically `Fluxion<T>` or `Promise<T>`. The immediate benefit is we don't need to worry anymore about error handling and threading (yet): Errors are propagated in `onError` calls (no bubble up), threading might be tuned later, for instance using `dispatchOn`. The additional bonus is we get to make our code more _functional_. It also works nicely with Java 8 Lambdas! The target will be to reduce control brackets noise (if, for, while...) and limit more the need for sharing context. Ultimately our target design will encourage streaming over polling large datasets: functions will apply to a sequence, result by result, avoiding loop duplication.
 
 [IMPORTANT]
-We prefer to use the implementation artifacts and not `Publisher<T>` to get compile-time access to all the *Reactor Stream* API unless we want to be API agnostic (a possible case for library developers). `Stream.from(Publisher<T>)` will do the trick anyway to convert such generic return type into a proper `Stream<T>`.
+We prefer to use the implementation artifacts and not `Publisher<T>` to get compile-time access to all the *Reactor Fluxion* API unless we want to be API agnostic (a possible case for library developers). `Fluxion.from(Publisher<T>)` will do the trick anyway to convert such generic return type into a proper `Fluxion<T>`.
 
 .Evolving to reactive microservices, part 1, error isolation and non-blocking in some UserService
 [cols="1,1"]
@@ -1488,10 +1488,10 @@ public Promise<User> get(final String name) {
     .publishOn(workDispatcher());
 }
 
-public Stream<User> allFriends(final User user)  {
+public Fluxion<User> allFriends(final User user)  {
   return Stream
     .defer(() ->
-      Stream.just(userDB.findAllFriends(user)))
+      Fluxion.just(userDB.findAllFriends(user)))
     .timeout(3, TimeUnit.Seconds)
     .map(this::convertToList)
     .flatMap(Streams::from)
@@ -1499,7 +1499,7 @@ public Stream<User> allFriends(final User user)  {
     .publishOn(workDispatcher());
 }
 
-public Stream<User> filteredFind(String name){
+public Fluxion<User> filteredFind(String name){
     return get(name)
       .stream()
       .filter(User::isAdmin)
@@ -1527,7 +1527,7 @@ public Stream<User> filteredFind(String name){
 * In *filteredFind(name)*:
 ** We convert a `Promise` from first get to a Stream with `stream()`
 ** We only call allFriends() sub-stream if there is a valid user
-** The returned Stream<User> resume on the first allFriend() signal
+** The returned Fluxion<User> resume on the first allFriend() signal
 ****
 
 |===
@@ -1576,14 +1576,14 @@ a|
 
 [source,java]
 ----
-return Stream.merge(
+return Fluxion.merge(
   userService.filteredFind("Rick"),
   userService.filteredFind("Morty")
 )
 .buffer()
 .retryWhen( errors ->
   errors
-  .zipWith(Stream.range(1,3), t -> t.getT2())
+  .zipWith(Fluxion.range(1,3), t -> t.getT2())
   .flatMap( tries -> Mono.delay(tries) )
 )
 .consume(System.out::println);
@@ -1592,9 +1592,9 @@ return Stream.merge(
 2+a|
 
 ****
-* `Stream.merge(source1, source2)` is a non-blocking coordinating operation mixing the two queries in one
+* `Fluxion.merge(source1, source2)` is a non-blocking coordinating operation mixing the two queries in one
 * `buffer()` will aggregate all results until completion or error (which we timed previously)
-* `retryWhen(Function<Stream<Throwable>, Publisher<?>>` will keep re-subscribing if an error is propagated
+* `retryWhen(Function<Fluxion<Throwable>, Publisher<?>>` will keep re-subscribing if an error is propagated
 ** `zipWith` will combine errors with a number of tries up to 3 times
 ** `zipWith` only return the number of tries from the tuple
 ** `flatMap` + `Mono.delay(long)` convert each try into a delayed signal (seconds by default)
@@ -1621,7 +1621,7 @@ a|
 ----
 return Stream
   .defer(() ->
-    Stream.just(userDB.findAllFriends(user)))
+    Fluxion.just(userDB.findAllFriends(user)))
   .timeout(3, TimeUnit.Seconds)
   .map(this::convertToList)
   .flatMap(Streams::from)
@@ -1677,7 +1677,7 @@ stream
 ****
 * Yes it's more verbose…
 * …But now we stream result by result from the query (could have used pagination with SQL limits as well).
-* `Stream.generate` is a `Flux` which intercepts requests, start and stop.
+* `Fluxion.generate` is a `Flux` which intercepts requests, start and stop.
 ** The request consumer gives precisely how many elements a subscriber is ready to receive.
 ** The request consumer receives a `SubscriberWithContext` delegating to the real `Subscriber`, it gives access to shared context and cancel status.
 ** We send at most as many individual _Result_ as demanded
@@ -1704,7 +1704,7 @@ Error isolation comes simply by preventing `onNext`, `onSubscribe` and `onComple
 Inverting the propagation to the consuming side instead of bubbling up to the producer side is the reactive pattern to isolate the data producer from the pipeline errors and keep producers alive and happy.
 ****
 
-In the end, the last `Subscriber` in the chain will be notified with the `onError(t)` callback method. If that `Subscriber` is a `ConsumerAction` for instance, Reactor will re-route an error if no _errorConsumer_ callback has been assigned using `Stream.consume(dataConsumer, errorConsumer)`. The route will trigger the current `Environment` error journal if set, which by default uses SLF4J to log errors.
+In the end, the last `Subscriber` in the chain will be notified with the `onError(t)` callback method. If that `Subscriber` is a `ConsumerAction` for instance, Reactor will re-route an error if no _errorConsumer_ callback has been assigned using `Fluxion.consume(dataConsumer, errorConsumer)`. The route will trigger the current `Environment` error journal if set, which by default uses SLF4J to log errors.
 
 ****
 *Reactor* also distinguishes *fatal exceptions* from normal ones, specially during `onSubscribe` process. These exceptions will not be isolated nor passed downstream to the subscriber(s):
@@ -1733,8 +1733,8 @@ Broadcaster<String> broadcaster = Broadcaster.create();
 
 Promise<List<String>> promise =
     broadcaster
-        .timeout(1, TimeUnit.SECONDS, Stream.fail(new Exception("another one!"))) // <1>
-        .onErrorResumeNext(Stream.just("Alternative Message")) // <2>
+        .timeout(1, TimeUnit.SECONDS, Fluxion.fail(new Exception("another one!"))) // <1>
+        .onErrorResumeNext(Fluxion.just("Alternative Message")) // <2>
         .toList();
 
 broadcaster.onNext("test1");
@@ -1762,7 +1762,7 @@ Another classic example of fault-tolerant pipeline can be found in <<recipes.ado
 .Handling errors
 |===
 
-h|Stream<T> API
+h|Fluxion<T> API
 |Role
 
 |
@@ -1785,7 +1785,7 @@ h|materialize() _dematerialize()_
 h|retry(_int, Predicate<Throwable_)
 |Cancel/Re-Subscribe the parent `Stream` up to the optional _tries_ argument and matching the passed `Predicate` if provided.
 
-h|retryWhen(Function<Stream<Throwable>,Publisher<?>>)
+h|retryWhen(Function<Fluxion<Throwable>,Publisher<?>>)
 |Cancel/Re-Subscribe the parent `Stream` when the returned `Publisher` from the passed `Function` emits `onNext(Object)`. The function is called once on subscribe and the generated `Publisher` is subscribed. If the `Publisher` emits `onError(e)` or `onComplete()`, they will be propagated downstream. The `Function` receives a single `Stream` of errors which have occurred in any subscribed pipeline. Can be combined with *counting* and *delaying* actions to provide for bounded and exponential retry strategies.
 
 h|recover(Class<Throwable>, Subscriber<Object>)
@@ -1806,14 +1806,14 @@ Not everything has to be in-memory and `Reactor` has started a story to integrat
 
 [source,java]
 ----
-return Stream.merge(
+return Fluxion.merge(
   userService.filteredFind("Rick"),
   userService.filteredFind("Morty")
 )
 .buffer()
 .retryWhen( errors ->
   errors
-  .zipWith(Stream.range(1,3), t -> t.getT2())
+  .zipWith(Fluxion.range(1,3), t -> t.getT2())
   .flatMap( tries -> Mono.delay(tries) )
 )
 .consume(System.out::println);
@@ -1827,13 +1827,13 @@ h|Functional API or Factory method
 
 |
 
-h|Stream.onOverflowBuffer(CompletableQueue)
+h|Fluxion.onOverflowBuffer(CompletableQueue)
 |
 
-h|IOStream.persistentMapReader()
+h|IOFluxion.persistentMapReader()
 |
 
-h|IOStream.persistentMap()
+h|IOFluxion.persistentMap()
 |
 
 |===
@@ -1895,7 +1895,7 @@ source.onComplete();
 [cols="6,1"]
 |===
 
-h|Stream<T> API or Factory method
+h|Fluxion<T> API or Factory method
 |Output Type
 2+|Role
 
@@ -1989,23 +1989,23 @@ Stream
 [cols="6,1"]
 |===
 
-h|Stream<T> API
+h|Fluxion<T> API
 |Output Type
 2+|Role
 
 2+|
 
 h|groupBy(Function<T,K>)
-|GroupedStream<K,T>
+|GroupedFluxion<K,T>
 2+|
 
 h|partition(int)
-|GroupedStream<K,T>
+|GroupedFluxion<K,T>
 2+|
 
 
 h|_All_ window(_arguments_)
-|Stream<T>
+|Fluxion<T>
 2+|<<streams.adoc#streams-microbatching, Windows>> are actually for cutting partitions over time, size or coordinated with external signals.
 
 
@@ -2021,7 +2021,7 @@ In addition to implementing directly the Reactive Streams, some more `Stream` me
 [cols="6,1,1"]
 |===
 
-h|Stream<T> API
+h|Fluxion<T> API
 |Input Type
 |Output Type
 3+|Role
