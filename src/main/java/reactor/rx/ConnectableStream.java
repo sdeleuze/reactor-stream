@@ -21,6 +21,8 @@ import reactor.fn.Consumer;
  * The abstract base class for connectable publishers that let subscribers pile up
  * before they connect to their data source.
  *
+ * @see #multicast
+ * @see #publish
  * @see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>
  * @param <T> the input and output value type
  *
@@ -31,6 +33,10 @@ public abstract class ConnectableStream<T> extends Stream<T> {
 	/**
 	 * Connects this {@link ConnectableStream} to the upstream source when the first {@link org.reactivestreams.Subscriber}
 	 * subscribes.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/autoconnect.png" alt="">
+	 *
 	 * @return a {@link Stream} that connects to the upstream source when the first {@link org.reactivestreams.Subscriber} subscribes
 	 */
 	public final Stream<T> autoConnect() {
@@ -43,6 +49,9 @@ public abstract class ConnectableStream<T> extends Stream<T> {
 	 * <p>
 	 * Subscribing and immediately unsubscribing Subscribers also contribute the the subscription count
 	 * that triggers the connection.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/autoconnect.png" alt="">
 	 *
 	 * @param minSubscribers the minimum number of subscribers
 	 *
@@ -57,6 +66,9 @@ public abstract class ConnectableStream<T> extends Stream<T> {
 	 * {@link org.reactivestreams.Subscriber} subscribes and calls the supplied consumer with a runnable that allows disconnecting.
 	 * @param minSubscribers the minimum number of subscribers
 	 * @param cancelSupport the consumer that will receive the {@link Runnable} that allows disconnecting
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/autoconnect.png" alt="">
 	 *
 	 * @return a {@link Stream} that connects to the upstream source when the given amount of subscribers subscribed
 	 */
@@ -99,8 +111,24 @@ public abstract class ConnectableStream<T> extends Stream<T> {
 	public abstract void connect(Consumer<? super Runnable> cancelSupport);
 
 	/**
+	 * Connects to the upstream source when the first {@link org.reactivestreams.Subscriber} subscribes and disconnects
+	 * when all Subscribers cancelled or the upstream source completed.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/refCount.png" alt="">
+	 *
+	 * @return a reference counting {@link Stream}
+	 */
+	public final Stream<T> refCount() {
+		return refCount(1);
+	}
+
+	/**
 	 * Connects to the upstream source when the given number of {@link org.reactivestreams.Subscriber} subscribes and disconnects
 	 * when all Subscribers cancelled or the upstream source completed.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/refCount.png" alt="">
 	 *
 	 * @param minSubscribers the number of subscribers expected to subscribe before connection
 	 *
@@ -108,16 +136,6 @@ public abstract class ConnectableStream<T> extends Stream<T> {
 	 */
 	public final Stream<T> refCount(int minSubscribers) {
 		return new StreamRefCount<>(this, minSubscribers);
-	}
-
-	/**
-	 * Connects to the upstream source when the first {@link org.reactivestreams.Subscriber} subscribes and disconnects
-	 * when all Subscribers cancelled or the upstream source completed.
-	 *
-	 * @return a reference counting {@link Stream}
-	 */
-	public final Stream<T> refCount() {
-		return refCount(1);
 	}
 
 	static final Consumer<Runnable> NOOP_DISCONNECT = new Consumer<Runnable>() {

@@ -21,6 +21,8 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.flow.Loopback;
 import reactor.core.state.Backpressurable;
+import reactor.core.subscriber.SignalEmitter;
+import reactor.core.util.EmptySubscription;
 import reactor.fn.Consumer;
 
 /**
@@ -39,6 +41,86 @@ public class StreamProcessor<E, O> extends Stream<O> implements Processor<E, O>,
 		this.publisher = publisher;
 	}
 
+	/**
+	 * Prepare a {@link SignalEmitter} and pass it to {@link #onSubscribe(Subscription)} if the autostart flag is
+	 * set to true.
+	 *
+	 * @return a new {@link SignalEmitter}
+	 */
+	public SignalEmitter<E> bindEmitter(boolean autostart) {
+		return SignalEmitter.create(this, autostart);
+	}
+
+	@Override
+	public Object connectedInput() {
+		return receiver;
+	}
+
+	@Override
+	public Object connectedOutput() {
+		return publisher;
+	}
+
+	@Override
+	public long getCapacity() {
+		return Backpressurable.class.isAssignableFrom(publisher.getClass()) ?
+				((Backpressurable) publisher).getCapacity() : -1L;
+	}
+
+	@Override
+	public int getMode() {
+		return 0;
+	}
+
+	@Override
+	public void onComplete() {
+		receiver.onComplete();
+	}
+
+	@Override
+	public void onError(Throwable t) {
+		receiver.onError(t);
+	}
+
+	@Override
+	public void onNext(E e) {
+		receiver.onNext(e);
+	}
+
+	@Override
+	public void onSubscribe(Subscription s) {
+		receiver.onSubscribe(s);
+	}
+
+	/**
+	 * Trigger onSubscribe with a stateless subscription to signal this subscriber it can start receiving
+	 * onNext, onComplete and onError calls.
+	 * <p>
+	 * Doing so MAY allow direct UNBOUNDED onXXX calls and MAY prevent {@link org.reactivestreams.Publisher} to subscribe this
+	 * subscriber.
+	 *
+	 * Note that {@link org.reactivestreams.Processor} can extend this behavior to effectively start its subscribers.
+	 *
+	 * @return this {@link StreamProcessor}
+	 */
+	public StreamProcessor<E, O> start() {
+		onSubscribe(EmptySubscription.INSTANCE);
+		return this;
+	}
+
+	/**
+	 * Create a {@link SignalEmitter} and attach it via {@link #onSubscribe(Subscription)}.
+	 *
+	 * @return a new subscribed {@link SignalEmitter}
+	 */
+	public SignalEmitter<E> startEmitter() {
+		return bindEmitter(true);
+	}
+
+	@Override
+	public void subscribe(Subscriber<? super O> s) {
+		publisher.subscribe(s);
+	}
 
 	/**
 	 * Create a consumer that broadcast complete signal from any accepted value.
@@ -51,22 +133,6 @@ public class StreamProcessor<E, O> extends Stream<O> implements Processor<E, O>,
 			@Override
 			public void accept(Object o) {
 				onComplete();
-			}
-		};
-	}
-
-
-	/**
-	 * Create a consumer that broadcast next signal from accepted values.
-	 *
-	 * @return a new {@link Consumer} ready to forward values to this stream
-	 * @since 2.0
-	 */
-	public final Consumer<E> toNextConsumer() {
-		return new Consumer<E>() {
-			@Override
-			public void accept(E o) {
-				onNext(o);
 			}
 		};
 	}
@@ -86,50 +152,19 @@ public class StreamProcessor<E, O> extends Stream<O> implements Processor<E, O>,
 		};
 	}
 
-	@Override
-	public Object connectedInput() {
-		return receiver;
-	}
-
-	@Override
-	public Object connectedOutput() {
-		return publisher;
-	}
-
-	@Override
-	public void subscribe(Subscriber<? super O> s) {
-		publisher.subscribe(s);
-	}
-
-	@Override
-	public void onSubscribe(Subscription s) {
-		receiver.onSubscribe(s);
-	}
-
-	@Override
-	public void onNext(E e) {
-		receiver.onNext(e);
-	}
-
-	@Override
-	public void onError(Throwable t) {
-		receiver.onError(t);
-	}
-
-	@Override
-	public void onComplete() {
-		receiver.onComplete();
-	}
-
-	@Override
-	public long getCapacity() {
-		return Backpressurable.class.isAssignableFrom(publisher.getClass()) ?
-				((Backpressurable) publisher).getCapacity() : -1L;
-	}
-
-	@Override
-	public int getMode() {
-		return 0;
+	/**
+	 * Create a consumer that broadcast next signal from accepted values.
+	 *
+	 * @return a new {@link Consumer} ready to forward values to this stream
+	 * @since 2.0
+	 */
+	public final Consumer<E> toNextConsumer() {
+		return new Consumer<E>() {
+			@Override
+			public void accept(E o) {
+				onNext(o);
+			}
+		};
 	}
 
 	@Override

@@ -56,7 +56,7 @@ import reactor.rx.subscriber.SerializedSubscriber;
  * <p>{@link #blocking()} and {@link #unicast()} are unicast restricted {@link Broadcaster} (at most one {@link Subscriber}.
  * Multicast operators like {@link #publish} or {@link #multicast} can however fan-out such limited {@link Broadcaster}.
  *
- * @param <O> the replayed type
+ * @param <O> the relayed type
  *
  * @author Stephane Maldini
  */
@@ -70,7 +70,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterasync.png" alt="">
 	 *
-	 * @param <IN> the replayed type
+	 * @param <IN> the relayed type
 	 *
 	 * @return a new scheduled {@link Broadcaster}
 	 */
@@ -84,7 +84,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterblocking.png" alt="">
 	 *
-	 * @param <IN> the replayed type
+	 * @param <IN> the relayed type
 	 * @return a blocking {@link Broadcaster}
 	 */
 	public static <IN> Broadcaster<IN> blocking() {
@@ -99,7 +99,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
 	 *
-	 * @param <T> the replayed type
+	 * @param <T> the relayed type
 	 * @return a non interruptable pub-sub {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> create() {
@@ -115,7 +115,7 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
 	 *
 	 * @param autoCancel Propagate cancel upstream
-	 * @param <T> the replayed type
+	 * @param <T> the relayed type
 	 * @return an eventually interruptable pub-sub {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> create(boolean autoCancel) {
@@ -128,13 +128,28 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * subscribing to the returned instance.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterreplay.png" alt="">
 	 *
-	 * @param <T> the replayed type
-	 * @return an eventually interruptable wrapped {@link Processor} as {@link Broadcaster}
+	 * @param <T> the relayed type
+	 * @return an non interruptable caching {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> replay() {
 		return new Broadcaster<T>(EmitterProcessor.<T>replay(), false);
+	}
+
+	/**
+	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
+	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
+	 * subscribing to the returned instance.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterreplay.png" alt="">
+	 * @param history the maximum items to replay
+	 * @param <T> the relayed type
+	 * @return an non interruptable caching {@link Broadcaster}
+	 */
+	public static <T> Broadcaster<T> replay(int history) {
+		return new Broadcaster<T>(EmitterProcessor.<T>replay(history), false);
 	}
 
 	/**
@@ -144,10 +159,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Values broadcasted are directly consumable by subscribing to the returned instance.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterreplaylast.png" alt="">
 	 *
-	 * @param <T>  the replayed type
-	 * @return a non interruptable last item replaying pub-sub {@link Broadcaster}
+	 * @param <T>  the relayed type
+	 * @return a non interruptable last item cached pub-sub {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> replayLast() {
 		return replayLastOrDefault(null);
@@ -162,14 +177,15 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * <p>
 	 * A serialized broadcaster will make sure that even in a multhithreaded scenario, only one thread will be able to
 	 * broadcast at a time.
-	 * The synchronization is non blocking for the publisher, using thread-stealing and first-in-first-served patterns.
+	 * The synchronization is non blocking for the publisher, using thread-stealing and first-in-first-served 
+	 * patterns.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterreplaylastd.png" alt="">
 	 *
 	 * @param value the value to start with the sequence
-	 * @param <T> the replayed type
-	 * @return a non interruptable last item replaying pub-sub {@link Broadcaster}
+	 * @param <T> the relayed type
+	 * @return a non interruptable last item cached pub-sub {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> replayLastOrDefault(T value) {
 		Broadcaster<T> b = new Broadcaster<T>(EmitterProcessor.<T>replay(1), false);
@@ -184,9 +200,9 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * thread-stealing to serialize underlying emitter processor calls.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterserialize.png" alt="">
 	 *
-	 * @param <T> the replayed type
+	 * @param <T> the relayed type
 	 * @return a serializing unicast {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> serialize() {
@@ -200,9 +216,9 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * subscribing to the returned instance. <p> Will not bubble up  any {@code Exception.CancelException}
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterunicast.png" alt="">
 	 *
-	 * @param <T> the replayed type
+	 * @param <T> the relayed type
 	 * @return an eventually interruptable unicast {@link Broadcaster}
 	 */
 	public static <T> Broadcaster<T> unicast(){
@@ -223,16 +239,6 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 		this.subscription = SwapSubscription.create();
 
 		receiver.onSubscribe(subscription);
-	}
-
-	/**
-	 * Prepare a {@link SignalEmitter} and pass it to {@link #onSubscribe(Subscription)} if the autostart flag is
-	 * set to true.
-	 *
-	 * @return a new {@link SignalEmitter}
-	 */
-	public SignalEmitter<O> bindEmitter(boolean autostart) {
-		return SignalEmitter.create(this, autostart);
 	}
 
 	@Override
@@ -274,15 +280,6 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	@Override
 	public void onSubscribe(Subscription subscription) {
 		this.subscription.swapTo(subscription);
-	}
-
-	/**
-	 * Create a {@link SignalEmitter} and attach it via {@link #onSubscribe(Subscription)}.
-	 *
-	 * @return a new subscribed {@link SignalEmitter}
-	 */
-	public SignalEmitter<O> startEmitter() {
-		return bindEmitter(true);
 	}
 
 	static final class SwapSubscription implements Subscription, Receiver, Completable, Introspectable {

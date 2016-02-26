@@ -333,6 +333,8 @@ public class StreamMulticastTest {
 
 		StreamProcessor<Integer, Integer> sp = Stream.fromProcessor(EmitterProcessor.create());
 
+		sp.start();
+
 		ConnectableStream<Integer> p = sp.multicast(EmitterProcessor.<Integer>create());
 
 		p.subscribe(ts1);
