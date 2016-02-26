@@ -97,7 +97,7 @@ import reactor.rx.subscriber.ManualSubscriber;
  * {@link Flux} but considerably expands its scope. and conversions between {@link Fluxion} and {@link Flux} can
  * be achieved using the operator {@link #as} : {@code flux.as(Fluxion::from)}.
  * <p>
- * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" alt="">
+ * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/fluxion.png" alt="">
  * <pre>
  * {@code
  * Fluxion.just(1, 2, 3).map(i -> i*2) //...
