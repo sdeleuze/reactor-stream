@@ -845,7 +845,6 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * complete.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/interval.png" alt="">
-	 * <p>
 	 * @param period The number of seconds to wait before the next increment
 	 *
 	 * @return a new timed {@link Stream}
@@ -857,7 +856,8 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	/**
 	 * Build a {@link Stream} that will emit ever increasing counter from 0 after the time delay on each period.
 	 * It will never complete until cancelled.
-	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/interval.png" alt="">
 	 * @param delay  the timespan in SECONDS to wait before emitting 0l
 	 * @param period the period in SECONDS before each following increment
 	 * @return a new {@link Stream}
