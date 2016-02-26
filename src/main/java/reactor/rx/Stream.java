@@ -1623,7 +1623,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * instance.
 	 * @param <P> the returned {@link Publisher} sequence type
 	 *
-	 * @return a new {@link Stream}
+	 * @return the result {@link Publisher} of the immediately applied {@link Function} given this {@link Stream}
 	 */
 	public final <V, P extends Publisher<V>> P as(Function<? super Stream<O>, P> transformer) {
 		return transformer.apply(this);
@@ -1637,7 +1637,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffer.png" alt="">
 	 *
-	 * @return a new {@link Stream} of at most one {@link List}
+	 * @return a buffered {@link Stream} of at most one {@link List}
 	 */
 	public final Stream<List<O>> buffer() {
 		return buffer(Integer.MAX_VALUE);
@@ -1652,7 +1652,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param maxSize the maximum collected size
 	 *
-	 * @return a new {@link Stream} of {@link List}
+	 * @return a microbatched {@link Stream} of {@link List}
 	 */
 	@SuppressWarnings("unchecked")
 	public final Stream<List<O>> buffer(final int maxSize) {
@@ -1679,7 +1679,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param skip the number of items to skip before creating a new bucket
 	 * @param maxSize the max collected size
 	 *
-	 * @return a new {@link Stream} of possibly overlapped or gapped {@link List}
+	 * @return a microbatched {@link Stream} of possibly overlapped or gapped {@link List}
 	 */
 	@SuppressWarnings("unchecked")
 	public final Stream<List<O>> buffer(final int maxSize, final int skip) {
@@ -1694,7 +1694,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param other the other {@link Publisher}  to subscribe to for emiting and recycling receiving bucket
 	 *
-	 * @return a new {@link Stream} of {@link List} delimited by a {@link Publisher}
+	 * @return a microbatched {@link Stream} of {@link List} delimited by a {@link Publisher}
 	 */
 	@SuppressWarnings("unchecked")
 	public final Stream<List<O>> buffer(final Publisher<?> other) {
@@ -1719,21 +1719,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/bufferboundary.png" alt="">
 	 *
-	 * @param bucketOpening the {@link Publisher} to subscribe to for creating new receiving bucket
+	 * @param bucketOpening a {@link Publisher} to subscribe to for creating new receiving bucket
 	 * signals.
-	 * @param closeSupplier the {@link Supplier} to provide a {@link Publisher} to subscribe to for emitting relative
-	 * bucket.
+	 * @param closeSelector a {@link Publisher} factory provided the opening signal and returning a {@link Publisher}
+	 * to subscribe to for emitting relative bucket.
 	 *
-	 * @return a new
+	 * @return a microbatched  
 	 * {@link Stream} of {@link List} delimited by an opening {@link Publisher} and a relative closing {@link Publisher}
 	 *
 	 * @since 2.5
 	 */
 	@SuppressWarnings("unchecked")
 	public final <U, V> Stream<List<O>> buffer(final Publisher<U> bucketOpening,
-			final Function<? super U, ? extends Publisher<V>> closeSupplier) {
+			final Function<? super U, ? extends Publisher<V>> closeSelector) {
 
-		return new StreamBufferStartEnd<>(this, bucketOpening, closeSupplier, LIST_SUPPLIER,
+		return new StreamBufferStartEnd<>(this, bucketOpening, closeSelector, LIST_SUPPLIER,
 				QueueSupplier.<List<O>>xs());
 	}
 
@@ -1747,7 +1747,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param timespan the period in unit to use to release a buffered list
 	 * @param unit the time unit
 	 *
-	 * @return a new {@link Stream} of {@link List} delimited by the given period
+	 * @return a microbatched {@link Stream} of {@link List} delimited by the given period
 	 */
 	public final Stream<List<O>> buffer(long timespan, TimeUnit unit) {
 		return buffer(timespan, unit, getTimer());
@@ -1764,7 +1764,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param unit the time unit
 	 * @param timer the {@link Timer} to schedule on
 	 *
-	 * @return a new {@link Stream} of {@link List} delimited by the given period
+	 * @return a microbatched {@link Stream} of {@link List} delimited by the given period
 	 */
 	public final Stream<List<O>> buffer(long timespan, TimeUnit unit, Timer timer) {
 		return buffer(interval(timespan, unit, timer));
@@ -1792,7 +1792,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param timeshift the period in unit to use to create a new bucket
 	 * @param unit the time unit
 	 *
-	 * @return a new {@link Stream} of {@link List} delimited by the given period timeshift and sized by timespan
+	 * @return a microbatched {@link Stream} of {@link List} delimited by the given period timeshift and sized by timespan
 	 */
 	public final Stream<List<O>> buffer(final long timespan, final long timeshift, final TimeUnit unit) {
 		return buffer(timespan, timeshift, unit, getTimer());
@@ -1821,7 +1821,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param unit the time unit
 	 * @param timer the {@link Timer} to run on
 	 *
-	 * @return a new {@link Stream} of {@link List} delimited by the given period timeshift and sized by timespan
+	 * @return a microbatched {@link Stream} of {@link List} delimited by the given period timeshift and sized by timespan
 
 	 */
 	public final Stream<List<O>> buffer(final long timespan,
@@ -1851,7 +1851,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param timespan the timeout in unit to use to release a buffered list
 	 * @param unit the time unit
 	 *
-	 * @return a new {@link Stream} of {@link List} delimited by given size or a given period timeout
+	 * @return a microbatched {@link Stream} of {@link List} delimited by given size or a given period timeout
 	 */
 	public final Stream<List<O>> buffer(int maxSize, long timespan, TimeUnit unit) {
 		return buffer(maxSize, timespan, unit, getTimer());
@@ -1869,7 +1869,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param unit the time unit
 	 * @param timer the {@link Timer} to run on
 	 *
-	 * @return a new {@link Stream} of {@link List} delimited by given size or a given period timeout
+	 * @return a microbatched {@link Stream} of {@link List} delimited by given size or a given period timeout
 	 */
 	public final Stream<List<O>> buffer(final int maxSize,
 			final long timespan,
@@ -1887,7 +1887,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffersort.png" alt="">
 	 *
-	 * @return a new {@link Stream} whose values re-ordered using a {@link PriorityQueue}.
+	 * @return a buffering {@link Stream} whose values are re-ordered using a {@link PriorityQueue}.
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -1906,7 +1906,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param comparator A {@link Comparator} to evaluate incoming data
 	 *
-	 * @return a new {@link Stream} whose values re-ordered using a {@link PriorityQueue}.
+	 * @return a buffering {@link Stream} whose values are re-ordered using a {@link PriorityQueue}.
 	 *
 	 * @since 2.0, 2.5
 	 */
@@ -1965,7 +1965,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/cache.png" alt="">
 	 *
-	 * @return a new cachable {@link Stream}
+	 * @return a replaying {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -1983,7 +1983,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param history number of events retained in history excluding complete and error
 	 *
-	 * @return a new cachable {@link Stream}
+	 * @return a replaying {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -2063,7 +2063,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param mapper the function to transform this sequence of O into concatenated sequences of V
 	 * @param <V> the produced concatenated type
 	 *
-	 * @return a new concatenated {@link Stream}
+	 * @return a concatenated {@link Stream}
 	 */
 	public final <V> Stream<V> concatMap(final Function<? super O, Publisher<? extends V>> mapper) {
 		return new StreamConcatMap<>(this, mapper, QueueSupplier.<O>xs(), PlatformDependent.XS_BUFFER_SIZE,
@@ -2083,7 +2083,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param mapper the function to transform this sequence of O into concatenated sequences of V
 	 * @param <V> the produced concatenated type
 	 *
-	 * @return a new concatenated {@link Stream}
+	 * @return a concatenated {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -2099,7 +2099,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param other the {@link Publisher} sequence to concat after this {@link Stream}
 	 *
-	 * @return a new {@link Stream}
+	 * @return a concatenated {@link Stream}
 	 */
 	@SuppressWarnings("unchecked")
 	public final Stream<O> concatWith(final Publisher<? extends O> other) {
@@ -2494,7 +2494,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/distinct.png" alt="">
 	 *
-	 * @return a new {@link Stream} with unique values
+	 * @return a filtering {@link Stream} with unique values
 	 */
 	@SuppressWarnings("unchecked")
 	public final Stream<O> distinct() {
@@ -2510,7 +2510,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param keySelector function to compute comparison key for each element
 	 *
-	 * @return a new {@link Stream} with values having distinct keys
+	 * @return a filtering {@link Stream} with values having distinct keys
 	 */
 	public final <V> Stream<O> distinct(final Function<? super O, ? extends V> keySelector) {
 		return new StreamDistinct<>(this, keySelector, hashSetSupplier());
@@ -2523,7 +2523,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/distinctuntilchanged.png" alt="">
 
 	 *
-	 * @return a new {@link Stream} with conflated repeated elements
+	 * @return a filtering {@link Stream} with conflated repeated elements
 	 *
 	 * @since 2.0
 	 */
@@ -2541,7 +2541,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param keySelector function to compute comparison key for each element
 	 *
-	 * @return a new {@link Stream} with conflated repeated elements given a comparison key
+	 * @return a filtering {@link Stream} with conflated repeated elements given a comparison key
 	 *
 	 * @since 2.0
 	 */
@@ -2556,7 +2556,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * @param afterTerminate the callback to call after {@link Subscriber#onComplete} or {@link Subscriber#onError}
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 */
 	public final Stream<O> doAfterTerminate(final Runnable afterTerminate) {
 		if (this instanceof Fuseable) {
@@ -2572,7 +2572,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * @param onCancel the callback to call on {@link Subscription#cancel}
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 */
 	public final Stream<O> doOnCancel(final Runnable onCancel) {
 		if (this instanceof Fuseable) {
@@ -2588,7 +2588,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * @param onComplete the callback to call on {@link Subscriber#onComplete}
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 */
 	public final Stream<O> doOnComplete(final Runnable onComplete) {
 		if (this instanceof Fuseable) {
@@ -2604,7 +2604,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * @param onError the callback to call on {@link Subscriber#onError}
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 */
 	public final Stream<O> doOnError(final Consumer<Throwable> onError) {
 		if (this instanceof Fuseable) {
@@ -2622,7 +2622,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param onError the error handler for each error
 	 * @param <E> type of the error to handle
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 * @since 2.0, 2.5
 	 */
 	public final <E extends Throwable> Stream<O> doOnError(final Class<E> exceptionType,
@@ -2637,7 +2637,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * @param onNext the callback to call on {@link Subscriber#onNext}
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 */
 	public final Stream<O> doOnNext(final Consumer<? super O> onNext) {
 		if (this instanceof Fuseable) {
@@ -2654,7 +2654,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param consumer the consumer to invoke on each request
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 */
 	public final Stream<O> doOnRequest(final LongConsumer consumer) {
 		if (this instanceof Fuseable) {
@@ -2670,7 +2670,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * @param onSubscribe the callback to call on {@link Subscriber#onSubscribe}
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 */
 	public final Stream<O> doOnSubscribe(final Consumer<? super Subscription> onSubscribe) {
 		if (this instanceof Fuseable) {
@@ -2686,7 +2686,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * @param onTerminate the callback to call on {@link Subscriber#onComplete} or {@link Subscriber#onError}
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 */
 	public final Stream<O> doOnTerminate(final Runnable onTerminate) {
 		if (this instanceof Fuseable) {
@@ -2706,7 +2706,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param onError the error handler for each error
 	 * @param <E> type of the error to handle
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 */
 	public final <E extends Throwable> Stream<O> doOnValueError(final Class<E> exceptionType,
 			final BiConsumer<Object, ? super E> onError) {
@@ -2731,7 +2731,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/elapsed.png" alt="">
 	 *
-	 * @return a new {@link Stream} that emits tuples of time elapsed in milliseconds and matching data
+	 * @return a transforming {@link Stream} that emits tuples of time elapsed in milliseconds and matching data
 	 *
 	 * @since 2.0
 	 */
@@ -2892,7 +2892,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param prefetch the maximum in-flight elements from each inner {@link Publisher} sequence
 	 * @param <V> the merged output sequence type
 	 *
-	 * @return a new {@link Stream}
+	 * @return a merged {@link Stream}
 	 *
 	 * @since 2.5
 	 */
@@ -2917,7 +2917,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param mapperOnComplete the {@link Function} to call on complete signal and returning a sequence to merge
 	 * @param <R> the output {@link Publisher} type target
 	 *
-	 * @return a new {@link Stream}
+	 * @return a merged {@link Stream}
 	 */
 	@SuppressWarnings("unchecked")
 	public final <R> Stream<R> flatMap(Function<? super O, ? extends Publisher<? extends R>> mapperOnNext,
@@ -2941,7 +2941,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T1> the type of the return value of the transformation function
 	 * @param <T2> the type of the return value of the transformation function
 	 *
-	 * @return a new {@link Stream} containing the combined values
+	 * @return a merged {@link Stream} containing the combined values
 	 *
 	 * @since 2.5
 	 */
@@ -2970,7 +2970,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T2> the type of the return value of the transformation function
 	 * @param <T3> the type of the return value of the transformation function
 	 *
-	 * @return a new {@link Stream} containing the combined values
+	 * @return a merged {@link Stream} containing the combined values
 	 *
 	 * @since 2.5
 	 */
@@ -3002,7 +3002,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T3> the type of the return value of the transformation function
 	 * @param <T4> the type of the return value of the transformation function
 	 *
-	 * @return a new {@link Stream} containing the combined values
+	 * @return a merged {@link Stream} containing the combined values
 	 *
 	 * @since 2.5
 	 */
@@ -3037,7 +3037,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T4> the type of the return value of the transformation function
 	 * @param <T5> the type of the return value of the transformation function
 	 *
-	 * @return a new {@link Stream} containing the combined values
+	 * @return a merged {@link Stream} containing the combined values
 	 *
 	 * @since 2.5
 	 */
@@ -3075,7 +3075,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T5> the type of the return value of the transformation function
 	 * @param <T6> the type of the return value of the transformation function
 	 *
-	 * @return a new {@link Stream} containing the combined values
+	 * @return a merged {@link Stream} containing the combined values
 	 *
 	 * @since 2.5
 	 */
@@ -3116,7 +3116,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T6> the type of the return value of the transformation function
 	 * @param <T7> the type of the return value of the transformation function
 	 *
-	 * @return a new {@link Stream} containing the combined values
+	 * @return a merged {@link Stream} containing the combined values
 	 *
 	 * @since 2.5
 	 */
@@ -3160,7 +3160,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param <T7> the type of the return value of the transformation function
 	 * @param <T8> the type of the return value of the transformation function
 	 *
-	 * @return a new {@link Stream} containing the combined values
+	 * @return a merged {@link Stream} containing the combined values
 	 *
 	 * @since 2.5
 	 */
@@ -3261,7 +3261,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/haselements.png" alt="">
 	 *
-	 * @return a new {@link Stream} with <code>true</code> if any value is emitted and <code>false</code>
+	 * @return a new {@link Mono} with <code>true</code> if any value is emitted and <code>false</code>
 	 * otherwise
 	 */
 	public final Mono<Boolean> hasElements() {
@@ -3314,7 +3314,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/last.png" alt="">
 	 *
-	 * @return a new limited {@link Stream}
+	 * @return a limited {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -3332,7 +3332,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * exposed this sequence
 	 * @param <V> the output operator type
 	 *
-	 * @return a new {@link Stream}
+	 * @return a lifted {@link Stream}
 	 * @since 2.5
 	 */
 	public <V> Stream<V> lift(final Function<Subscriber<? super V>, Subscriber<? super O>> lifter) {
@@ -3347,7 +3347,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * The default log category will be "reactor.core.publisher.FluxLog".
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -3363,7 +3363,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * @param category to be mapped into logger configuration (e.g. org.springframework.reactor).
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -3385,7 +3385,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param category to be mapped into logger configuration (e.g. org.springframework.reactor).
 	 * @param options a flag option that can be mapped with {@link Logger#ON_NEXT} etc.
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -3409,7 +3409,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param level the level to enforce for this tracing Flux
 	 * @param options a flag option that can be mapped with {@link Logger#ON_NEXT} etc.
 	 *
-	 * @return a new unaltered {@link Stream}
+	 * @return an observed  {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -3425,7 +3425,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param mapper the transforming {@link Function}
 	 * @param <V> the transformed type
 	 *
-	 * @return a new {@link Stream}
+	 * @return a transformed {@link Stream}
 	 */
 	public final <V> Stream<V> map(final Function<? super O, ? extends V> mapper) {
 		if (this instanceof Fuseable) {
@@ -3455,7 +3455,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param other the {@link Publisher} to merge with
 	 *
-	 * @return a new {@link Stream}
+	 * @return a merged {@link Stream}
 	 *
 	 * @since 2.0
 	 */
@@ -3819,7 +3819,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <p>
 	 * @param fallback the {@link Function} mapping the error to a new {@link Publisher} sequence
 	 *
-	 * @return a new {@link Stream}
+	 * @return a fallbacking {@link Stream}
 	 */
 	public final Stream<O> onErrorResumeWith(final Function<Throwable, ? extends Publisher<? extends O>> fallback) {
 		return StreamSource.wrap(Flux.onErrorResumeWith(this, fallback));
@@ -3855,7 +3855,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/partition.png" alt="">
 	 *
 	 *
-	 * @return a new {@link Stream} whose values are {@link GroupedStream} of all active partionned sequences
+	 * @return a partitioning {@link Stream} whose values are {@link GroupedStream} of all active partionned sequences
 	 *
 	 * @since 2.0
 	 */
@@ -3877,7 +3877,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param buckets the maximum number of buckets to partition the values across
 	 *
-	 * @return a new {@link Stream} whose values are {@link GroupedStream} of all active partionned sequences
+	 * @return a partitioning {@link Stream} whose values are {@link GroupedStream} of all active partionned sequences
 	 *
 	 * @since 2.0
 	 */
@@ -3983,7 +3983,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param aggregator the aggregating {@link BiFunction}
 	 *
-	 * @return a new reduced {@link Stream}
+	 * @return a reduced {@link Stream}
 	 *
 	 * @since 1.1, 2.0, 2.5
 	 */
@@ -4005,7 +4005,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param initial the initial left argument to pass to the reducing {@link BiFunction}
 	 * @param <A> the type of the initial and reduced object
 	 *
-	 * @return a new reduced {@link Stream}
+	 * @return a reduced {@link Stream}
 	 * @since 1.1, 2.0, 2.5
 	 */
 	public final <A> Mono<A> reduce(final A initial, BiFunction<A, ? super O, A> accumulator) {
@@ -4029,7 +4029,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param initial the initial left argument supplied on subscription to the reducing {@link BiFunction}
 	 * @param <A> the type of the initial and reduced object
 	 *
-	 * @return a new reduced {@link Stream}
+	 * @return a reduced {@link Stream}
 	 *
 	 * @since 1.1, 2.0, 2.5
 	 */
@@ -5328,8 +5328,9 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Route incoming values into multiple {@link Stream} delimited by the given {@code maxSize} count and starting from
-	 * the first item of each batch.
+	 * Split this {@link Stream} sequence into multiple {@link Stream} delimited by the given {@code maxSize}
+	 * count and starting from
+	 * the first item.
 	 * Each {@link Stream} bucket will onComplete after {@code maxSize} items have been routed.
 	 *
 	 * <p>
@@ -5337,7 +5338,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 *
 	 * @param maxSize the maximum routed items before emitting onComplete per {@link Stream} bucket
 	 *
-	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
+	 * @return a windowing {@link Stream} of sized {@link Stream} buckets
 	 *
 	 * @since 2.0
 	 */
@@ -5346,8 +5347,10 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Route incoming values into multiple {@link Stream} delimited by the given {@code skip} count and starting from
-	 * the first item of each batch.
+	 * Split this {@link Stream} sequence into multiple {@link Stream} delimited by the given {@code skip}
+	 * count,
+	 * starting from
+	 * the first item.
 	 * Each {@link Stream} bucket will onComplete after {@code maxSize} items have been routed.
 	 *
 	 * <p>
@@ -5366,7 +5369,7 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	 * @param maxSize the maximum routed items per {@link Stream}
 	 * @param skip the number of items to count before emitting a new bucket {@link Stream}
 	 *
-	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
+	 * @return a windowing {@link Stream} of sized {@link Stream} buckets every skip count
 	 */
 	public final Stream<Stream<O>> window(final int maxSize, final int skip) {
 		return new StreamWindow<>(this,
@@ -5377,38 +5380,49 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Re-route incoming values into bucket streams that will be pushed into the returned {@link Stream} every  and
-	 * complete every time {@code boundarySupplier} emits an item.
+	 * Split this {@link Stream} sequence into continuous, non-overlapping windows
+	 * where the window boundary is signalled by another {@link Publisher}
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowboundary.png" alt="">
 	 *
-	 * @param boundarySupplier the the stream to listen to for separating each window
+	 * @param boundary a {@link Publisher} to emit any item for a split signal and complete to terminate
 	 *
-	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
+	 * @return a windowing {@link Stream} delimiting its sub-sequences by a given {@link Publisher}
 	 */
-	public final Stream<Stream<O>> window(final Publisher<?> boundarySupplier) {
+	public final Stream<Stream<O>> window(final Publisher<?> boundary) {
 		return new StreamWindowBoundary<>(this,
-				boundarySupplier,
+				boundary,
 				SpscLinkedArrayQueue.<O>unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE),
 				SpscLinkedArrayQueue.unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE));
 	}
 
 	/**
-	 * Re-route incoming values into bucket streams that will be pushed into the returned {@link Stream} every and
-	 * complete every time {@code boundarySupplier} stream emits an item. Window starts forwarding when the
-	 * bucketOpening stream emits an item, then subscribe to the boundary supplied to complete.
+	 * Split this {@link Stream} sequence into potentially overlapping windows controlled by items of a
+	 * start {@link Publisher} and end {@link Publisher} derived from the start values.
 	 *
 	 * <p>
+	 * When Open signal is strictly not overlapping Close signal : dropping windows
+	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowopenclose.png" alt="">
+	 * <p>
+	 * When Open signal is strictly more frequent than Close signal : overlapping windows
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowopencloseover.png" alt="">
+	 * <p>
+	 * When Open signal is exactly coordinated with Close signal : exact windows
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowboundary.png" alt="">
 	 *
-	 * @param bucketOpening the publisher to listen for signals to create a new window
-	 * @param boundarySupplier the factory to create the stream to listen to for closing an open window
+	 * @param bucketOpening a {@link Publisher} to emit any item for a split signal and complete to terminate
+	 * @param closeSelector a {@link Function} given an opening signal and returning a {@link Publisher} that
+	 * emits to complete the window
 	 *
-	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
+	 * @return a windowing {@link Stream} delimiting its sub-sequences by a given {@link Publisher} and lasting until
+	 * a selected {@link Publisher} emits
 	 */
 	public final <U, V> Stream<Stream<O>> window(final Publisher<U> bucketOpening,
-			final Function<? super U, ? extends Publisher<V>> boundarySupplier) {
+			final Function<? super U, ? extends Publisher<V>> closeSelector) {
 
 		long c = getCapacity();
 		c = c == -1L ? Long.MAX_VALUE : c;
@@ -5422,22 +5436,21 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 
 		return new StreamWindowStartEnd<>(this,
 				bucketOpening,
-				boundarySupplier,
+				closeSelector,
 				SpscLinkedArrayQueue.unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE),
 				SpscLinkedArrayQueue.<O>unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE));
 	}
 
 	/**
-	 * Re-route incoming values into a dynamically created {@link Stream} every pre-defined timespan. The nested streams
-	 * will be pushed into the returned {@link Stream}.
+	 * Split this {@link Stream} sequence into continuous, non-overlapping windows delimited by a given period.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowtimespan.png" alt="">
 	 *
-	 * @param timespan the period in unit to use to release a new window as a Stream
+	 * @param timespan the period in unit to delimit {@link Stream} windows
 	 * @param unit the time unit
 	 *
-	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
+	 * @return a windowing {@link Stream} of timed {@link Stream} buckets
 	 *
 	 * @since 2.0
 	 */
@@ -5448,49 +5461,29 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 	}
 
 	/**
-	 * Re-route incoming values into a dynamically created {@link Stream} every pre-defined timespan OR maxSize items.
-	 * The nested streams will be pushed into the returned {@link Stream}.
+	 * Split this {@link Stream} sequence into multiple {@link Stream} delimited by the given {@code timeshift}
+	 * period, starting from the first item.
+	 * Each {@link Stream} bucket will onComplete after {@code timespan} period has elpased.
 	 *
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsizetimeout.png" alt="">
+	 * When timeshift > timespan : dropping windows
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsizeskip.png" alt="">
+	 * <p>
+	 * When timeshift < timespan : overlapping windows
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsizeskipover.png" alt="">
+	 * <p>
+	 * When timeshift == timespan : exact windows
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsize.png" alt="">
 	 *
-	 * @param maxSize the max collected size
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
-	 *
-	 * @return a new {@link Stream} whose values are a {@link Stream} of all values in this window
-	 *
-	 * @since 2.0
-	 */
-	public final Stream<Stream<O>> window(final int maxSize, final long timespan, final TimeUnit unit) {
-		return new StreamWindowTimeOrSize<>(this, maxSize, timespan, unit, getTimer());
-	}
-
-	/**
-	 * Collect incoming values into multiple {@link List} delimited by the given {@link Publisher} signals.
-	 * Each {@link List} bucket will last until the mapped {@link Publisher} receiving the boundary signal emits,
-	 * thus releasing the bucket to the returned {@link Stream}.
-	 *
-	 * <p>
-	 * When Open signal is strictly not overlapping Close signal : dropping buffers
-	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/bufferopenclose.png" alt="">
-	 * <p>
-	 * When Open signal is strictly more frequent than Close signal : overlapping buffers
-	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/bufferopencloseover.png" alt="">
-	 * <p>
-	 * When Open signal is exactly coordinated with Close signal : exact buffers
-	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/bufferboundary.png" alt="">
-	 *
-	 * @param timespan the {@link Publisher} to subscribe to for creating new receiving bucket
+	 * @param timespan the maximum {@link Stream} window duration in unit of time
 	 * signals.
-	 * @param timeshift the {@link Supplier} to provide a {@link Publisher} to subscribe to for emitting relative
-	 * bucket.
+	 * @param timeshift the period of time to create new {@link Stream} windows
 	 *
-	 * @return a new
-	 * {@link Stream} of {@link List} delimited by an opening {@link Publisher} and a relative closing {@link Publisher}
+	 * @return a windowing
+	 * {@link Stream} of {@link Stream} buckets delimited by an opening {@link Publisher} and a selected closing {@link Publisher}
 	 *
 	 */
 	public final Stream<Stream<O>> window(final long timespan, final long timeshift, final TimeUnit unit) {
@@ -5508,6 +5501,26 @@ public abstract class Stream<O> implements Publisher<O>, Backpressurable, Intros
 				return Mono.delay(timespan, unit, timer);
 			}
 		});
+	}
+
+	/**
+	 * Split this {@link Stream} sequence into multiple {@link Stream} delimited by the given {@code maxSize} number
+	 * of items, starting from the first item. {@link Stream} windows will onComplete after a given
+	 * timespan occurs and the number of items has not be counted.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsizetimeout.png" alt="">
+	 *
+	 * @param maxSize the maximum {@link Stream} window items to count before onComplete
+	 * @param timespan the timeout in unit to use to onComplete a given window if size is not counted yet
+	 * @param unit the time unit
+	 *
+	 * @return a windowing {@link Stream} of sized or timed {@link Stream} buckets
+	 *
+	 * @since 2.0
+	 */
+	public final Stream<Stream<O>> window(final int maxSize, final long timespan, final TimeUnit unit) {
+		return new StreamWindowTimeOrSize<>(this, maxSize, timespan, unit, getTimer());
 	}
 
 	/**
