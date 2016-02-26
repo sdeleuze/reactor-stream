@@ -81,6 +81,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	}
 
 	/**
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param <IN> the replayed type
 	 * @return a blocking {@link Broadcaster}
 	 */
@@ -93,6 +97,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link reactor.rx
 	 * .Broadcaster#onNext(Object)}, {@link Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values
 	 * broadcasted are directly consumable by subscribing to the returned instance.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param <T> the replayed type
 	 * @return a non interruptable pub-sub {@link Broadcaster}
 	 */
@@ -105,6 +113,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link reactor.rx
 	 * .Broadcaster#onNext(Object)}, {@link Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values
 	 * broadcasted are directly consumable by subscribing to the returned instance.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param autoCancel Propagate cancel upstream
 	 * @param <T> the replayed type
 	 * @return an eventually interruptable pub-sub {@link Broadcaster}
@@ -117,6 +129,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
 	 * subscribing to the returned instance.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param timer the Reactor {@link Timer} to use downstream
 	 * @param <T> the replayed type
 	 * @return an eventually interruptable pub-sub {@link Broadcaster}
@@ -129,6 +145,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
 	 * subscribing to the returned instance.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param timer the Reactor {@link Timer} to use downstream
 	 * @param autoCancel Propagate cancel upstream
 	 * @param <T> the replayed type
@@ -142,6 +162,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
 	 * subscribing to the returned instance.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param emitter Identity processor to support broadcasting
 	 * @param <T> the replayed type
 	 * @return an interruptable {@link Processor} as {@link Broadcaster}
@@ -154,6 +178,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
 	 * subscribing to the returned instance.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param emitter Identity processor to support broadcasting
 	 * @param autoCancel Propagate cancel upstream
 	 * @param <T> the replayed type
@@ -167,6 +195,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
 	 * subscribing to the returned instance.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param timer the Reactor {@link Timer} to use downstream
 	 * @param autoCancel Propagate cancel upstream
 	 * @param emitter Identity processor to support broadcasting
@@ -181,6 +213,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
 	 * subscribing to the returned instance.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param <T> the replayed type
 	 * @return an eventually interruptable wrapped {@link Processor} as {@link Broadcaster}
 	 */
@@ -192,6 +228,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
 	 * subscribing to the returned instance.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param timer the Reactor {@link Timer} to use downstream
 	 * @param <T> the replayed type
 	 * @return a non interruptable history replaying pub-sub {@link Broadcaster}
@@ -206,6 +246,9 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * {@link Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}.
 	 * Values broadcasted are directly consumable by subscribing to the returned instance.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param timer the {@link Timer} to use downstream
 	 * @param <T>  the replayed type
 	 * @return a non interruptable last item replaying pub-sub {@link Broadcaster}
@@ -218,13 +261,15 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, rfirst broadcasting the most recent signal then starting with the passed value,
 	 * then ready to broadcast values with {@link reactor.rx
 	 * .Broadcaster#onNext(Object)},
-	 * {@link Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete
-	 * ()}.
+	 * {@link Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}.
 	 * Values broadcasted are directly consumable by subscribing to the returned instance.
 	 * <p>
 	 * A serialized broadcaster will make sure that even in a multhithreaded scenario, only one thread will be able to
 	 * broadcast at a time.
 	 * The synchronization is non blocking for the publisher, using thread-stealing and first-in-first-served patterns.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
 	 *
 	 * @param value the value to start with the sequence
 	 * @param <T> the replayed type
@@ -239,6 +284,9 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * then  ready to broadcast values with {@link #onNext(Object)},
 	 * {@link Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}.
 	 * Values broadcasted are directly consumable by subscribing to the returned instance.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
 	 *
 	 * @param value the value to start with the sequence
 	 * @param timer the {@link Timer} to use downstream
@@ -257,6 +305,9 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster} that will support concurrent signals (onNext, onError, onComplete) and use
 	 * thread-stealing to serialize underlying emitter processor calls.
 	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param <T> the replayed type
 	 * @return a serializing unicast {@link Broadcaster}
 	 */
@@ -267,6 +318,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	/**
 	 * Build a {@literal Broadcaster} that will support concurrent signals (onNext, onError, onComplete) and use
 	 * thread-stealing to serialize underlying emitter processor calls.
+	 *
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
 	 *
 	 * @param timer the Reactor {@link Timer} to use downstream
 	 * @param <T> the replayed type
@@ -281,6 +336,10 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
 	 * subscribing to the returned instance. <p> Will not bubble up  any {@link Exceptions.CancelException}
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param <T> the replayed type
 	 * @return an eventually interruptable unicast {@link Broadcaster}
 	 */
@@ -292,6 +351,11 @@ public class Broadcaster<O> extends StreamProcessor<O, O> {
 	 * Build a {@literal Broadcaster}, ready to broadcast values with {@link Broadcaster#onNext(Object)}, {@link
 	 * Broadcaster#onError(Throwable)}, {@link Broadcaster#onComplete()}. Values broadcasted are directly consumable by
 	 * subscribing to the returned instance. <p> Will not bubble up  any {@link Exceptions.CancelException}
+	 *
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcaster.png" alt="">
+	 *
 	 * @param timer the Reactor {@link Timer} to use downstream
 	 * @param <T> the replayed type
 	 * @return an eventually interruptable unicast {@link Broadcaster}
