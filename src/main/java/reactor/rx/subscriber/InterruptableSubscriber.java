@@ -30,6 +30,20 @@ import reactor.fn.Consumer;
 import reactor.fn.Function;
 
 /**
+ * An extensible
+ * {@link org.reactivestreams.Subscriber} that supports arbitrary thread-safe {@link Subscription} cancellation via {@link #run()}.
+ * <p>The
+ * {@link InterruptableSubscriber} also offers static factories completing {@link reactor.core.subscriber.Subscribers} available Reactor Core factories.
+ * They include
+ * {@link org.reactivestreams.Subscriber} generators for for prefetching {@link #bounded(int, Consumer)}, dynamically
+ * requesting via
+ * {@link #adaptive(Consumer, Function, Processor)} and manually requesting via {@link #bindLater(Publisher, Consumer, Consumer, Runnable)}.
+ *
+ * <p>
+ * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consume.png" alt="">
+ *
+ * @param <T> the consumed sequence type
+ *
  * @author Stephane Maldini
  * @since 2.5
  */
@@ -37,23 +51,36 @@ public class InterruptableSubscriber<T> extends ConsumerSubscriber<T> {
 
 	/**
 	 *
-	 * @param prefetch
-	 * @param callback
-	 * @param <T>
-	 * @return
+	 * Create a bounded {@link InterruptableSubscriber} that will keep a maximum in-flight items running.
+	 * The prefetch strategy works with a first request N, then when 25% of N is left to be received on
+	 * onNext, request N x 0.75.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consume.png" alt="">
+	 *
+	 * @param prefetch the in-flight capacity used to request source {@link Publisher}
+	 * @param callback an onNext {@link Consumer} callback
+	 * @param <T> the consumed sequence type
+	 * @return a bounded {@link InterruptableSubscriber}
 	 */
 	public static <T> InterruptableSubscriber<T> bounded(int prefetch, Consumer<? super T> callback){
 		return bounded(prefetch, callback, null, null);
 	}
 
 	/**
+	 * Create a bounded {@link InterruptableSubscriber} that will keep a maximum in-flight items running.
+	 * The prefetch strategy works with a first request N, then when 25% of N is left to be received on
+	 * onNext, request N x 0.75.
 	 *
-	 * @param prefetch
-	 * @param callback
-	 * @param errorCallback
-	 * @param completeCallback
-	 * @param <T>
-	 * @return
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consume.png" alt="">
+	 *
+	 * @param prefetch the in-flight capacity used to request source {@link Publisher}
+	 * @param callback an onNext {@link Consumer} callback
+	 * @param errorCallback an onError {@link Consumer} callback
+	 * @param completeCallback an onComplete {@link Consumer} callback
+	 * @param <T> the consumed sequence type
+	 * @return a bounded {@link InterruptableSubscriber}
 	 */
 	public static <T> InterruptableSubscriber<T> bounded(int prefetch, Consumer<? super T> callback,
 			Consumer<? super Throwable> errorCallback, Runnable completeCallback){
@@ -61,35 +88,47 @@ public class InterruptableSubscriber<T> extends ConsumerSubscriber<T> {
 	}
 
 	/**
+	 * Create a {@link ManualSubscriber} that will wait for interaction via {@link ManualSubscriber#request} to
+	 * start consuming the sequence.
 	 *
-	 * @param consumer
-	 * @param mapper
-	 * @param broadcaster
-	 * @param <O>
-	 * @param <E>
-	 * @return
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consumelater.png" alt="">
+	 *
+	 * @param callback an onNext {@link Consumer} callback
+	 * @param requestFactory the request flow factory
+	 * @param broadcaster the {@link Processor} to use to publish and consume requests
+	 * @param <O> the consumed sequence type
+	 * @param <E> the {@link Processor} type
+	 * @return an adaptive {@link InterruptableSubscriber}
 	 */
-	public static <O, E extends Processor<Long, Long>> InterruptableSubscriber<O> adaptive(Consumer<? super O> consumer,
-			Function<? super Publisher<Long>, ? extends Publisher<? extends Long>> mapper,
+	public static <O, E extends Processor<Long, Long>> InterruptableSubscriber<O> adaptive(Consumer<? super O> callback,
+			Function<? super Publisher<Long>, ? extends Publisher<? extends Long>> requestFactory,
 			E broadcaster) {
-		return new AdaptiveSubscriber<>(consumer, mapper, broadcaster);
+		return new AdaptiveSubscriber<>(callback, requestFactory, broadcaster);
 	}
 
 	/**
 	 *
-	 * @param stream
-	 * @param consumer
-	 * @param consumer1
-	 * @param consumer2
-	 * @param <O>
-	 * @return
+	 * Create a {@link ManualSubscriber} that will wait for interaction via {@link ManualSubscriber#request} to
+	 * start consuming the sequence.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consumelater.png" alt="">
+	 *
+	 * @param source the {@link Publisher} to subscribe to immediately
+	 * @param callback an onNext {@link Consumer} callback
+	 * @param errorCallback an onError {@link Consumer} callback
+	 * @param completeCallback an onComplete {@link Consumer} callback
+	 * @param <O> the consumed sequence type
+	 *
+	 * @return a new {@link ManualSubscriber}
 	 */
-	public static <O>  ManualSubscriber<O> bindLater(Publisher<O> stream,
-			Consumer<? super O> consumer,
-			Consumer<? super Throwable> consumer1,
-			Runnable consumer2) {
-		ManualSubscriber<O> manualSubscriber = new ManualSubscriber<>(consumer, consumer1, consumer2);
-		stream.subscribe(manualSubscriber);
+	public static <O>  ManualSubscriber<O> bindLater(Publisher<O> source,
+			Consumer<? super O> callback,
+			Consumer<? super Throwable> errorCallback,
+			Runnable completeCallback) {
+		ManualSubscriber<O> manualSubscriber = new ManualSubscriber<>(callback, errorCallback, completeCallback);
+		source.subscribe(manualSubscriber);
 		return manualSubscriber;
 	}
 
