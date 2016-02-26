@@ -54,7 +54,7 @@ final class StreamThrottleRequestWhen<T> extends StreamSource<T, T> {
 				Function<? super Stream<? extends Long>, ? extends Publisher<? extends Long>> predicate) {
 
 			super(actual);
-			this.throttleStream = Broadcaster.create(timer);
+			this.throttleStream = Broadcaster.create();
 			Publisher<? extends Long> afterRequestStream = predicate.apply(throttleStream);
 			afterRequestStream.subscribe(new ThrottleSubscriber());
 		}

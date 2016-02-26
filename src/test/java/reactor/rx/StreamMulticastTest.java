@@ -331,7 +331,7 @@ public class StreamMulticastTest {
 		TestSubscriber<Integer> ts1 = new TestSubscriber<>();
 		TestSubscriber<Integer> ts2 = new TestSubscriber<>();
 
-		Broadcaster<Integer> sp = Broadcaster.from(EmitterProcessor.create());
+		StreamProcessor<Integer, Integer> sp = Stream.fromProcessor(EmitterProcessor.create());
 
 		ConnectableStream<Integer> p = sp.multicast(EmitterProcessor.<Integer>create());
 

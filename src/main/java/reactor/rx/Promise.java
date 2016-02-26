@@ -607,7 +607,7 @@ public class Promise<O> extends Mono<O>
 
 		Processor<O, O> out = processor;
 		if (out == null) {
-			out = Broadcaster.replayLastOrDefault(value, timer);
+			out = Broadcaster.replayLastOrDefault(value);
 			if (PROCESSOR.compareAndSet(this, null, out)) {
 				if (source != null) {
 					source.subscribe(this);
@@ -699,7 +699,7 @@ public class Promise<O> extends Mono<O>
 		}
 		Processor<O, O> out = processor;
 		if (out == null) {
-			out = Broadcaster.replayLastOrDefault(value, timer);
+			out = Broadcaster.replayLastOrDefault(value);
 			if (PROCESSOR.compareAndSet(this, null, out)) {
 				if (source != null) {
 					source.subscribe(this);
