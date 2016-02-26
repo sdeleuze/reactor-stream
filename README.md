@@ -21,17 +21,17 @@ With Gradle from repo.spring.io or Maven Central repositories (stable releases o
     }
 ```
 
-## Stream
+## Fluxion
 
-A Reactive Streams Publisher implementing the most common Reactive Extensions and other operators.
-- Static factories on Stream allow for sequence generation from arbitrary callbacks types.
-- Instance methods allows operational building, materialized on each _Stream#subscribe()_ or _Stream#consume()_ eventually called.
+A Reactive Streams `Publisher` implementing the most common Reactive Extensions and other operators.
+- Static factories on `Fluxion` allow for sequence generation from arbitrary callbacks types.
+- Instance methods allows operational building, materialized on each Fluxion#subscribe()_ or Fluxion#consume()_ eventually called.
 
-[<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" width="500">](http://projectreactor.io/fluxion/docs/api/reactor/rx/Fluxion.html)
+[<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/fluxion.png" width="500">](http://projectreactor.io/fluxion/docs/api/reactor/rx/Fluxion.html)
 
-Stream in action :
+Fluxion in action :
 ```java
-Stream
+Fluxion
     .range(1, 100_000_000)
     .doOnNext(System.out::println)
     .window(50, TimeUnit.MILLISECONDS)
@@ -46,11 +46,11 @@ Stream
     .consume(someMetrics::updateCounter);
 ```
 
-### Log, Convert and Tap Streams
+### Log, Convert and Tap Fluxions
 
-RxJava Observable/Single, Java 8 CompletableFuture and Java 9 Flow Publishers can be converted to Stream directly. Alternatively, the conventional "[as](http://projectreactor.io/core/docs/api/reactor/core/publisher/Flux.html#as-reactor.fn.Function-)" operator,  can easily convert to Reactive Stream Publisher implementations. 
+RxJava Observable/Single, Java 8 CompletableFuture and Java 9 Flow Publishers can be converted to Fluxion directly. Alternatively, the conventional "[as](http://projectreactor.io/core/docs/api/reactor/core/publisher/Flux.html#as-reactor.fn.Function-)" operator,  can easily convert to Reactive Stream Publisher implementations. 
 ```java
-StreamTap<Tuple2<Integer, Long>> tapped = Fluxion.convert(Observable.range(1, 100_000_000))
+FluxionTap<Tuple2<Integer, Long>> tapped = Fluxion.convert(Observable.range(1, 100_000_000))
                                                 .log("my.category", Logger.REQUEST)
                                                 .tap();
 tapped.zipWith(
@@ -65,7 +65,7 @@ Fluxion.interval(1).consume(n -> someService.metric(tapped.get()));
 
 ### reactor.rx.Fluxion != java.util.stream.Stream
 
-A [Reactor Fluxion](http://projectreactor.io/fluxion/docs/api/reactor/rx/Fluxion.html) is a Reactive Streams Publisher implementing [Reactive Extensions](http://reactivex.io). With the Reactive Stream Subscription protocol, a reactive Stream can push or be pulled, synchronously or asynchronously, in a bounded way. Java 8 Streams usually incur less overhead especially when operating on primitive sequences. However and fundamentally, these streams do not support eventual results or **latency**.
+A [Reactor Fluxion](http://projectreactor.io/fluxion/docs/api/reactor/rx/Fluxion.html) is a Reactive Streams Publisher implementing [Reactive Extensions](http://reactivex.io). With the Reactive Stream Subscription protocol, a reactive Fluxion can push or be pulled, synchronously or asynchronously, in a bounded way. Java 8 Streams usually incur less overhead especially when operating on primitive sequences. However and fundamentally, these streams do not support eventual results or **latency**.
 
 ## Promise
 
@@ -126,10 +126,10 @@ Fluxion.merge(
 
 ## An Efficient Asynchronous Pipeline
 
-Streams endure rounds of JMH testing with some nice success CPU or Memory-wise. This is the direct result of an interesting mix:
+Fluxions endure rounds of JMH testing with some nice success CPU or Memory-wise. This is the direct result of an interesting mix:
 - Reactor Fluxion makes the most of [reactor-core](https://github.com/reactor/reactor-core) scheduling and queuing capabilities.
-- Its architecture is fully aligned and combined with the [reactive-streams-commons](https://github.com/reactor/reactor-fluxions-commons) research effort.
-- Streams participate into the "Stream Fusion" optimization lifecycle, thus reducing further message-passing overhead.
+- Its architecture is fully aligned and combined with the [reactive-streams-commons](https://github.com/reactor/reactive-streams-commons) research effort.
+- Fluxion participate into the "Fusion" optimization lifecycle, thus reducing further message-passing overhead.
 
 -------------------------------------
 ## Reference
