@@ -99,11 +99,11 @@ final class FluxionPeek<T> extends FluxionSource<T, T> implements reactor.rx.Flu
 
 		final Subscriber<? super T> actual;
 
-		final StreamPeekHelper<T> parent;
+		final FluxionPeekHelper<T> parent;
 
 		Subscription s;
 
-		public PeekSubscriber(Subscriber<? super T> actual, StreamPeekHelper<T> parent) {
+		public PeekSubscriber(Subscriber<? super T> actual, FluxionPeekHelper<T> parent) {
 			this.actual = actual;
 			this.parent = parent;
 		}

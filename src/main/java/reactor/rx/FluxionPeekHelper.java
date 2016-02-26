@@ -24,7 +24,7 @@ import reactor.fn.LongConsumer;
  *
  * @param <T> the value type of the sequence
  */
-interface StreamPeekHelper<T> {
+interface FluxionPeekHelper<T> {
 
 	Consumer<? super Subscription> onSubscribeCall();
 

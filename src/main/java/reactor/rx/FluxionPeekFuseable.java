@@ -42,7 +42,7 @@ import reactor.fn.LongConsumer;
  * {@see <a href='https://github.com/reactor/reactive-streams-commons'>https://github.com/reactor/reactive-streams-commons</a>}
  * @since 2.5
  */
-final class FluxionPeekFuseable<T> extends FluxionSource<T, T> implements Fuseable, StreamPeekHelper<T> {
+final class FluxionPeekFuseable<T> extends FluxionSource<T, T> implements Fuseable, FluxionPeekHelper<T> {
 
 	final Consumer<? super Subscription> onSubscribeCall;
 
@@ -91,13 +91,13 @@ final class FluxionPeekFuseable<T> extends FluxionSource<T, T> implements Fuseab
 
 		final Subscriber<? super T> actual;
 
-		final StreamPeekHelper<T> parent;
+		final FluxionPeekHelper<T> parent;
 
 		QueueSubscription<T> s;
 
 		int sourceMode;
 
-		public PeekFuseableSubscriber(Subscriber<? super T> actual, StreamPeekHelper<T> parent) {
+		public PeekFuseableSubscriber(Subscriber<? super T> actual, FluxionPeekHelper<T> parent) {
 			this.actual = actual;
 			this.parent = parent;
 		}
@@ -318,13 +318,13 @@ final class FluxionPeekFuseable<T> extends FluxionSource<T, T> implements Fuseab
 
 		final ConditionalSubscriber<? super T> actual;
 
-		final StreamPeekHelper<T> parent;
+		final FluxionPeekHelper<T> parent;
 
 		QueueSubscription<T> s;
 
 		int sourceMode;
 
-		public PeekFuseableConditionalSubscriber(ConditionalSubscriber<? super T> actual, StreamPeekHelper<T> parent) {
+		public PeekFuseableConditionalSubscriber(ConditionalSubscriber<? super T> actual, FluxionPeekHelper<T> parent) {
 			this.actual = actual;
 			this.parent = parent;
 		}
@@ -582,11 +582,11 @@ final class FluxionPeekFuseable<T> extends FluxionSource<T, T> implements Fuseab
 
 		final ConditionalSubscriber<? super T> actual;
 
-		final StreamPeekHelper<T> parent;
+		final FluxionPeekHelper<T> parent;
 
 		Subscription s;
 
-		public PeekConditionalSubscriber(ConditionalSubscriber<? super T> actual, StreamPeekHelper<T> parent) {
+		public PeekConditionalSubscriber(ConditionalSubscriber<? super T> actual, FluxionPeekHelper<T> parent) {
 			this.actual = actual;
 			this.parent = parent;
 		}
