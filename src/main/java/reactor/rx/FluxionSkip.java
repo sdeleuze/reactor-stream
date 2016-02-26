@@ -28,7 +28,7 @@ import reactor.core.state.Prefetchable;
 import reactor.core.util.BackpressureUtils;
 
 /**
- * Skips the first N elements from a reactive stream.
+ * Skips the first N elements from a reactive fluxion.
  *
  * @param <T> the value type
  */

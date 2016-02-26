@@ -125,7 +125,7 @@ public class FluxionProcessor<E, O> extends Fluxion<O> implements Processor<E, O
 	/**
 	 * Create a consumer that broadcast complete signal from any accepted value.
 	 *
-	 * @return a new {@link Consumer} ready to forward complete signal to this stream
+	 * @return a new {@link Consumer} ready to forward complete signal to this fluxion
 	 * @since 2.0
 	 */
 	public final Consumer<?> toCompleteConsumer() {
@@ -140,7 +140,7 @@ public class FluxionProcessor<E, O> extends Fluxion<O> implements Processor<E, O
 	/**
 	 * Create a consumer that broadcast error signal from any accepted value.
 	 *
-	 * @return a new {@link Consumer} ready to forward error to this stream
+	 * @return a new {@link Consumer} ready to forward error to this fluxion
 	 * @since 2.0
 	 */
 	public final Consumer<Throwable> toErrorConsumer() {
@@ -155,7 +155,7 @@ public class FluxionProcessor<E, O> extends Fluxion<O> implements Processor<E, O
 	/**
 	 * Create a consumer that broadcast next signal from accepted values.
 	 *
-	 * @return a new {@link Consumer} ready to forward values to this stream
+	 * @return a new {@link Consumer} ready to forward values to this fluxion
 	 * @since 2.0
 	 */
 	public final Consumer<E> toNextConsumer() {

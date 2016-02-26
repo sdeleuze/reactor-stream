@@ -29,7 +29,7 @@ import reactor.core.util.Exceptions;
  * The TimerStream will manage dedicated timers for new subscriber assigned via {@link
  * this#subscribe(Subscriber)}.
  * <p>
- * Create such stream with the provided factory, E.g with a delay of 1 second, then every 2 seconds.:
+ * Create such fluxion with the provided factory, E.g with a delay of 1 second, then every 2 seconds.:
  * <pre>
  * {@code
  * Streams.delay(1, 2).consume(

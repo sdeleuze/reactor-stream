@@ -374,7 +374,7 @@ class PromiseSpec extends Specification {
 	def bc1 = Broadcaster.<Integer> create();
 	def promise1 = bc1.doOnNext { println 'hey' + it }.promise()
 	def bc2 = Promise.<Integer> ready()
-	def promise2 = bc2.stream().log().promise()
+	def promise2 = bc2.fluxion().log().promise()
 
 	when: "a combined promise is first created"
 	def combined = Mono.when(promise1, promise2).subscribeWith(Promise.prepare())
@@ -530,7 +530,7 @@ class PromiseSpec extends Specification {
   def "A filtered promise is not fulfilled if the filter does not allow the value to pass through"() {
 	given: "a promise with a filter that only accepts even values"
 	def promise = Promise.ready()
-	def filtered = promise.stream().filter { it % 2 == 0 }.next()
+	def filtered = promise.fluxion().filter { it % 2 == 0 }.next()
 
 	when: "the promise is fulfilled with an odd value"
 	promise.onNext 1
@@ -542,7 +542,7 @@ class PromiseSpec extends Specification {
   def "A filtered promise is fulfilled if the filter allows the value to pass through"() {
 	given: "a promise with a filter that only accepts even values"
 	def promise = Promise.ready()
-	promise.stream().filter { it % 2 == 0 }.next()
+	promise.fluxion().filter { it % 2 == 0 }.next()
 
 	when: "the promise is fulfilled with an even value"
 	promise.onNext 2
@@ -556,7 +556,7 @@ class PromiseSpec extends Specification {
 	given: "a promise with a filter that throws an error"
 	def promise = Promise.ready()
 	def e = new RuntimeException()
-	def filteredPromise = promise.stream().filter { throw e }.next()
+	def filteredPromise = promise.fluxion().filter { throw e }.next()
 
 	when: "the promise is fulfilled"
 	promise.onNext 2
@@ -571,7 +571,7 @@ class PromiseSpec extends Specification {
 	def promise = Promise.success(2)
 
 	when: "the promise is filtered with a filter that only accepts even values"
-	def v = promise.stream().filter { it % 2 == 0 }.next().get()
+	def v = promise.fluxion().filter { it % 2 == 0 }.next().get()
 
 	then: "the filtered promise is fulfilled"
 	promise.peek() == v
@@ -583,7 +583,7 @@ class PromiseSpec extends Specification {
 	def promise = Promise.success(1)
 
 	when: "the promise is filtered with a filter that only accepts even values"
-	def v = promise.stream().filter { it % 2 == 0 }.next().get()
+	def v = promise.fluxion().filter { it % 2 == 0 }.next().get()
 
 	then: "the filtered promise is not fulfilled"
 	!v

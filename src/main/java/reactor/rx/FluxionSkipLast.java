@@ -11,7 +11,7 @@ import reactor.core.state.Backpressurable;
 import reactor.core.util.BackpressureUtils;
 
 /**
- * Skips the last N elements from the source stream.
+ * Skips the last N elements from the source fluxion.
  *
  * @param <T> the value type
  */

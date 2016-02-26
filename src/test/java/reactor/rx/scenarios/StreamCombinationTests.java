@@ -93,7 +93,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 
 	public Fluxion<SensorData> sensorOdd() {
 		if (sensorOdd == null) {
-			// this is the stream we publish odd-numbered events to
+			// this is the fluxion we publish odd-numbered events to
 			this.sensorOdd = FluxProcessor.blackbox(TopicProcessor.create("odd"), p -> p.log("odd"));
 
 			// add substream to "master" list
@@ -105,7 +105,7 @@ public class StreamCombinationTests extends AbstractReactorTest {
 
 	public Fluxion<SensorData> sensorEven() {
 		if (sensorEven == null) {
-			// this is the stream we publish even-numbered events to
+			// this is the fluxion we publish even-numbered events to
 			this.sensorEven = FluxProcessor.blackbox(TopicProcessor.create("even"), p -> p.log("even"));
 
 			// add substream to "master" list
@@ -190,10 +190,10 @@ public class StreamCombinationTests extends AbstractReactorTest {
 
 		Fluxion<Double> mainStream = doubleFluxion.onBackpressureDrop();
 
-		Fluxion<Double> avgStream = mainFluxion.buffer(1000).map(l -> l.stream().mapToDouble(Double::doubleValue).average().getAsDouble());
+		Fluxion<Double> avgStream = mainFluxion.buffer(1000).map(l -> l.fluxion().mapToDouble(Double::doubleValue).average().getAsDouble());
 
 		Fluxion<Double> avgAvgStream = mainStream
-				.buffer(100).map(l -> l.stream().mapToDouble(Double::doubleValue).average().getAsDouble());
+				.buffer(100).map(l -> l.fluxion().mapToDouble(Double::doubleValue).average().getAsDouble());
 
 		Fluxion.combineLatest(
 				mainFluxion.map(v ->Tuple.of(System.nanoTime(), v)),

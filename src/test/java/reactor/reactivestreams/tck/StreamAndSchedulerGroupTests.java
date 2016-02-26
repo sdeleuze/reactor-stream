@@ -45,7 +45,7 @@ public class StreamAndSchedulerGroupTests extends AbstractStreamVerification {
 		System.out.println("Providing new downstream");
 
 		SchedulerGroup asyncGroup =
-				SchedulerGroup.async("stream-p-tck", bufferSize, 2,
+				SchedulerGroup.async("fluxion-p-tck", bufferSize, 2,
 						Throwable::printStackTrace, () -> System.out.println("EEEEE"));
 
 		BiFunction<Integer, String, Integer> combinator = (t1, t2) -> t1;
@@ -113,7 +113,7 @@ public class StreamAndSchedulerGroupTests extends AbstractStreamVerification {
 	@BeforeClass
 	public static void setupGlobal(){
 		System.out.println("test ");
-		sharedGroup = SchedulerGroup.async("stream-tck", 32, 2,
+		sharedGroup = SchedulerGroup.async("fluxion-tck", 32, 2,
 				Throwable::printStackTrace, null, false);
 	}
 

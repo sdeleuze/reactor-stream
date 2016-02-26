@@ -225,7 +225,7 @@ public class Broadcaster<O> extends FluxionProcessor<O, O> {
 
 	/**
 	 * Create an optimized {@link Broadcaster} from an internal optimized {@link Processor} for Unicasting. Usually
-	 * used to bridge a simple hot source to a stream based flow where it should be preferred to {@link #create}.
+	 * used to bridge a simple hot source to a fluxion based flow where it should be preferred to {@link #create}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/broadcasterunicast.png" alt="">

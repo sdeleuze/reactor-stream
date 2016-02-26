@@ -44,7 +44,7 @@ import reactor.fn.Supplier;
 /**
  * A {@code Promise} is a {@link Mono} extension that implements {@link Processor} of 0..1 stateful semantics. In
  * addition to {@link #peek()
- * getting} or {@link #await() awaiting} the value, consumers can be registered to the outbound stream or via
+ * getting} or {@link #await() awaiting} the value, consumers can be registered to the outbound fluxion or via
  * , consumers can be registered to be notified of {@link #doOnError(Consumer) notified an error}, {@link
  * #doOnSuccess(Consumer) a value}, or {@link #doOnTerminate(BiConsumer)} both}. <p> A promise also provides methods for
  * composing actions as a {@link Mono}. Multi-subscribe is allowed.
@@ -589,7 +589,7 @@ public class Promise<O> extends Mono<O>
 	 * or not.
 	 */
 	@SuppressWarnings("unchecked")
-	public Fluxion<O> stream() {
+	public Fluxion<O> fluxion() {
 		Processor<O, O> processor = this.processor;
 		if (processor != NOOP_PROCESSOR && processor != null) {
 			return Fluxion.from(processor);
@@ -811,7 +811,7 @@ public class Promise<O> extends Mono<O>
 		}
 
 		@Override
-		public Fluxion<T> stream() {
+		public Fluxion<T> fluxion() {
 			return just == null ? Fluxion.<T>empty() : just;
 		}
 

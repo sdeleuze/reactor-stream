@@ -29,9 +29,9 @@ import reactor.fn.Supplier;
 /**
  *  A
  *  {@link FluxionTap} provides a peek access into the last element visible of any sequence observed by the tap. Using a {@code Tap} one can
- * inspect the current event passing through a stream. A {@code StreamTap}'s value will be
- * continually updated as data passes through the stream, so a call to {@link #get()} will
- * return the last value seen by the event stream.
+ * inspect the current event passing through a fluxion. A {@code StreamTap}'s value will be
+ * continually updated as data passes through the fluxion, so a call to {@link #get()} will
+ * return the last value seen by the event fluxion.
  *
  * <p>
  * <img width="640" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tap.png" alt="">
@@ -69,7 +69,7 @@ public class FluxionTap<T> extends FluxionSource<T, T> implements Supplier<T> {
 	}
 
 	/**
-	 * Get the value of this {@code Tap}, which is the current value of the event stream this
+	 * Get the value of this {@code Tap}, which is the current value of the event fluxion this
 	 * tap is consuming.
 	 *
 	 * @return the value

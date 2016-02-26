@@ -102,9 +102,9 @@ import reactor.rx.subscriber.ManualSubscriber;
  * {@code
  * Fluxion.just(1, 2, 3).map(i -> i*2) //...
  *
- * Broadcaster<String> stream = Broadcaster.create()
- * stream.map(i -> i*2).consume(System.out::println);
- * stream.onNext("hello");
+ * Broadcaster<String> fluxion = Broadcaster.create()
+ * fluxion.map(i -> i*2).consume(System.out::println);
+ * fluxion.onNext("hello");
  *
  * Fluxion.range(1, 1_000_000)
  *  .publishOn(SchedulerGroup.io())
@@ -680,7 +680,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	}
 
 	/**
-	 * Supply a {@link Publisher} everytime subscribe is called on the returned stream. The passed {@link Supplier}
+	 * Supply a {@link Publisher} everytime subscribe is called on the returned fluxion. The passed {@link Supplier}
 	 * will be invoked and it's up to the developer to choose to return a new instance of a {@link Publisher} or reuse
 	 * one effecitvely behaving like {@link #from(Publisher)}.
 	 *
@@ -811,7 +811,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/fromiterable.png" alt="">
 	 * <p>
 	 * @param it the {@link Iterable} to read data from
-	 * @param <T> the {@link Iterable} type to stream
+	 * @param <T> the {@link Iterable} type to fluxion
 	 *
 	 * @return a new {@link Fluxion}
 	 */
@@ -1616,7 +1616,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	/**
 	 * Immediately apply the given transformation to this {@link Fluxion} in order to generate a target {@link Publisher} type.
 	 *
-	 * {@code stream.as(Mono::from).subscribe(Subscribers.unbounded()) }
+	 * {@code fluxion.as(Mono::from).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param transformer the {@link Function} to immediately map this {@link Fluxion} into a target {@link Publisher}
 	 * instance.
@@ -2457,7 +2457,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/dispatchon.png" alt="">
 	 * <p>
-	 * {@code stream.dispatchOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
+	 * {@code fluxion.dispatchOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param scheduler a checked factory for {@link Consumer} of {@link Runnable}
 	 *
@@ -2476,7 +2476,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/dispatchon.png" alt="">
 	 * <p>
-	 * {@code stream.dispatchOn(ForkJoinPool.commonPool()).subscribe(Subscribers.unbounded()) }
+	 * {@code fluxion.dispatchOn(ForkJoinPool.commonPool()).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param executorService an {@link ExecutorService} to dispatch events downstream
 	 *
@@ -3377,7 +3377,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 *
 	 * Options allow fine grained filtering of the traced signal, for instance to only capture onNext and onError:
 	 * <pre>
-	 *     stream.log("category", Logger.ON_NEXT | LOGGER.ON_ERROR)
+	 *     fluxion.log("category", Logger.ON_NEXT | LOGGER.ON_ERROR)
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/log.png" alt="">
 	 *
@@ -3400,7 +3400,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 *
 	 * Options allow fine grained filtering of the traced signal, for instance to only capture onNext and onError:
 	 * <pre>
-	 *     stream.log("category", Level.INFO, Logger.ON_NEXT | LOGGER.ON_ERROR)
+	 *     fluxion.log("category", Level.INFO, Logger.ON_NEXT | LOGGER.ON_ERROR)
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/log.png" alt="">
 	 *
@@ -3436,7 +3436,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	/**
 	 * Transform the incoming onNext, onError and onComplete signals into {@link reactor.rx.Signal}.
 	 * Since the error is materialized as a {@code Signal}, the propagation will be stopped and onComplete will be
-	 * emitted. Complete signal will first emit a {@code Signal.complete()} and then effectively complete the stream.
+	 * emitted. Complete signal will first emit a {@code Signal.complete()} and then effectively complete the fluxion.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/materialize.png" alt="">
@@ -3947,7 +3947,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * It naturally combines with {@link SchedulerGroup#io} which implements work-queue thread dispatching.
 	 *
 	 * <p>
-	 * {@code stream.publishOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
+	 * {@code fluxion.publishOn(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param schedulerFactory a checked factory for {@link Consumer} of {@link Runnable}
 	 *
@@ -3962,7 +3962,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/publishon.png" alt="">
 	 * <p>
-	 * {@code stream.publishOn(ForkJoinPool.commonPool()).subscribe(Subscribers.unbounded()) }
+	 * {@code fluxion.publishOn(ForkJoinPool.commonPool()).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param executorService an {@link ExecutorService} to run requests and subscribe on
 	 *
@@ -4103,7 +4103,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 
 	/**
 	 * Repeatedly subscribe to this {@link Fluxion} when a companion sequence signals a number of emitted elements in
-	 * response to the stream completion signal.
+	 * response to the fluxion completion signal.
 	 * <p>If the companion sequence signals when this {@link Fluxion} is active, the repeat
 	 * attempt is suppressed and any terminal signal will terminate this {@link Fluxion} with the same signal immediately.
 	 *
@@ -4517,7 +4517,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	public final Fluxion<O> skip(long timespan, TimeUnit unit) {
 		if(timespan > 0) {
 			Timer timer = getTimer();
-			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the stream");
+			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the fluxion");
 			return skipUntil(Mono.delay(timespan, unit, timer));
 		}
 		else{
@@ -4654,7 +4654,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * A chaining {@link Publisher#subscribe(Subscriber)} alternative to inline composition type conversion to a hot
 	 * emitter (e.g. reactor FluxProcessor Broadcaster and Promise or rxjava Subject).
 	 *
-	 * {@code stream.subscribeWith(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
+	 * {@code fluxion.subscribeWith(WorkQueueProcessor.create()).subscribe(Subscribers.unbounded()) }
 	 *
 	 * @param subscriber the {@link Subscriber} to subscribe and return
 	 * @param <E> the reified type from the input/output subscriber
@@ -4757,7 +4757,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	public final Fluxion<O> take(long timespan, TimeUnit unit) {
 		if (timespan > 0) {
 			Timer timer = getTimer();
-			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the stream");
+			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the fluxion");
 			return takeUntil(Mono.delay(timespan, unit, timer));
 		}
 		else if(timespan == 0) {
@@ -5309,7 +5309,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 *
 	 * @param timer the timer
 	 *
-	 * @return a configured stream
+	 * @return a configured fluxion
 	 */
 	public Fluxion<O> useTimer(final Timer timer) {
 		return new FluxionSource<O, O>(this) {

@@ -43,7 +43,7 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 
 		Fluxion<String> otherStream = Fluxion.just("test", "test2", "test3");
 		System.out.println("Providing new downstream");
-		Processor<Integer, Integer> p = WorkQueueProcessor.create("stream-raw-fork", bufferSize);
+		Processor<Integer, Integer> p = WorkQueueProcessor.create("fluxion-raw-fork", bufferSize);
 
 		cumulated.set(0);
 		cumulatedJoin.set(0);
@@ -63,7 +63,7 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 		                                                                                          combinator))
 		                                                                   .doOnNext(this::monitorThreadUse))
 		                                      .doOnNext(array -> cumulatedJoin.getAndIncrement())
-		                                      .subscribeWith(TopicProcessor.create("stream-raw-join", bufferSize))
+		                                      .subscribeWith(TopicProcessor.create("fluxion-raw-join", bufferSize))
 		                                      .as(Fluxion::from)
 		                                      .doOnError(Throwable.class, Throwable::printStackTrace));
 	}

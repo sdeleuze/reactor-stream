@@ -775,7 +775,7 @@ public class FluxionTests extends AbstractReactorTest {
 
 		/**
 		 * Relative tolerance, default to 90% of the batches, in an operative environment, random factors can impact
-		 * the stream latency, e.g. GC pause if system is under pressure.
+		 * the fluxion latency, e.g. GC pause if system is under pressure.
 		 */
 		final double TOLERANCE = 0.9;
 
@@ -1353,7 +1353,7 @@ public class FluxionTests extends AbstractReactorTest {
 
 		@Override
 		public void onComplete() {
-			log.info("stream complete");
+			log.info("fluxion complete");
 		}
 
 	}

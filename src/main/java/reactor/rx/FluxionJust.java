@@ -27,10 +27,10 @@ import reactor.core.util.Exceptions;
 /**
  * A Stream that emits only one value and then complete.
  * <p>
- * Since the stream retains the value in a final field, any {@link this#subscribe(Subscriber)} will
- * replay the value. This is a "Cold" stream.
+ * Since the fluxion retains the value in a final field, any {@link this#subscribe(Subscriber)} will
+ * replay the value. This is a "Cold" fluxion.
  * <p>
- * Create such stream with the provided factory, E.g.:
+ * Create such fluxion with the provided factory, E.g.:
  * <pre>
  * {@code
  * Streams.just(1).consume(
