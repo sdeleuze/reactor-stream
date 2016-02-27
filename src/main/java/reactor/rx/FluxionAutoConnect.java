@@ -17,10 +17,10 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.Consumer;
 
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.Receiver;
-import reactor.fn.Consumer;
 
 /**
  * Connects to the underlying Stream once the given amount of Subscribers

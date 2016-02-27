@@ -19,6 +19,9 @@ package reactor.rx;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
@@ -37,9 +40,6 @@ import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
 import reactor.core.util.PlatformDependent;
 import reactor.core.util.ScalarSubscription;
-import reactor.fn.BiConsumer;
-import reactor.fn.Consumer;
-import reactor.fn.Supplier;
 
 /**
  * A {@code Promise} is a {@link Mono} extension that implements {@link Processor} of 0..1 stateful semantics. In

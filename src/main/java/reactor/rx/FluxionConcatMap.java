@@ -19,6 +19,8 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -29,8 +31,6 @@ import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ScalarSubscription;
-import reactor.fn.Function;
-import reactor.fn.Supplier;
 
 /**
  * Maps each upstream value into a Publisher and concatenates them into one

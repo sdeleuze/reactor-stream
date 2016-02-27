@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -28,7 +29,6 @@ import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
 import reactor.rx.subscriber.SerializedSubscriber;
 
 /**

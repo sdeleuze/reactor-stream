@@ -16,6 +16,7 @@
 package reactor.rx;
 
 import java.util.Objects;
+import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -26,7 +27,6 @@ import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.BiFunction;
 
 /**
  * Accumulates the source values with an accumulator function and

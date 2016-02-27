@@ -17,6 +17,7 @@ package reactor.rx;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -25,7 +26,6 @@ import reactor.core.flow.Receiver;
 import reactor.core.subscriber.DeferredScalarSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Supplier;
 
 /**
  * Expects and emits a single item from the source or signals

@@ -17,6 +17,8 @@
 package reactor.rx.subscriber;
 
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
@@ -25,8 +27,6 @@ import org.reactivestreams.Subscription;
 import reactor.core.state.Backpressurable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Consumer;
-import reactor.fn.Function;
 
 /**
  * @author Stephane Maldini

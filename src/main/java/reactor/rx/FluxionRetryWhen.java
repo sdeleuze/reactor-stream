@@ -17,6 +17,7 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -27,7 +28,6 @@ import reactor.core.subscriber.MultiSubscriptionSubscriber;
 import reactor.core.util.DeferredSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
 import reactor.rx.subscriber.SerializedSubscriber;
 
 /**

@@ -21,6 +21,9 @@ import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
@@ -33,9 +36,6 @@ import reactor.core.state.Completable;
 import reactor.core.state.Introspectable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Consumer;
-import reactor.fn.Function;
-import reactor.fn.Supplier;
 
 /**
  * @param <T>

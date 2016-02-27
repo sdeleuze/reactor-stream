@@ -21,9 +21,9 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.Supplier;
 
 import reactor.core.queue.RingBuffer;
-import reactor.fn.Supplier;
 
 /**
  * An unbounded, array-backed single-producer, single-consumer queue with a fixed link size.

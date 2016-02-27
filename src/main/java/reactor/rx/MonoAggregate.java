@@ -16,6 +16,7 @@
 package reactor.rx;
 
 import java.util.Objects;
+import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -24,7 +25,6 @@ import reactor.core.publisher.MonoSource;
 import reactor.core.subscriber.DeferredScalarSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.BiFunction;
 
 /**
  * Aggregates the source items with an aggregator function and returns the last result.

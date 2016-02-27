@@ -16,6 +16,9 @@
 
 package reactor.rx;
 
+import java.util.function.Consumer;
+import java.util.function.LongConsumer;
+
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -25,8 +28,6 @@ import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.Consumer;
-import reactor.fn.LongConsumer;
 import reactor.rx.FluxionPeekFuseable.PeekConditionalSubscriber;
 import reactor.rx.FluxionPeekFuseable.PeekFuseableSubscriber;
 

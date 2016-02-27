@@ -16,6 +16,8 @@
 package reactor.rx;
 
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -25,8 +27,6 @@ import reactor.core.subscriber.DeferredScalarSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.BiConsumer;
-import reactor.fn.Supplier;
 
 /**
  * Collects the values of the source sequence into a container returned by

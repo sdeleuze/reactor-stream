@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Consumer;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -27,7 +28,6 @@ import reactor.core.flow.MultiProducer;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.util.BackpressureUtils;
-import reactor.fn.Consumer;
 
 /**
  * Connects to the underlying Stream once the given number of Subscribers subscribed

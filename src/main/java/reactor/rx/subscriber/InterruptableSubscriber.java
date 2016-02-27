@@ -16,6 +16,8 @@
 package reactor.rx.subscriber;
 
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
@@ -26,8 +28,6 @@ import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
 import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveStateUtils;
-import reactor.fn.Consumer;
-import reactor.fn.Function;
 
 /**
  * An extensible

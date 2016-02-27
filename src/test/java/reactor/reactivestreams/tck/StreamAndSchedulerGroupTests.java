@@ -17,6 +17,7 @@
 package reactor.reactivestreams.tck;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 import org.junit.Test;
 import org.reactivestreams.Processor;
@@ -25,7 +26,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.SchedulerGroup;
-import reactor.fn.BiFunction;
 import reactor.rx.Broadcaster;
 import reactor.rx.Fluxion;
 

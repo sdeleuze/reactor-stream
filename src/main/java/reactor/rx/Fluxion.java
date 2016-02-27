@@ -33,6 +33,14 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.LongConsumer;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 
 import org.reactivestreams.Processor;
@@ -68,14 +76,6 @@ import reactor.core.util.Logger;
 import reactor.core.util.PlatformDependent;
 import reactor.core.util.ReactiveStateUtils;
 import reactor.core.util.WaitStrategy;
-import reactor.fn.BiConsumer;
-import reactor.fn.BiFunction;
-import reactor.fn.BooleanSupplier;
-import reactor.fn.Consumer;
-import reactor.fn.Function;
-import reactor.fn.LongConsumer;
-import reactor.fn.Predicate;
-import reactor.fn.Supplier;
 import reactor.rx.subscriber.InterruptableSubscriber;
 import reactor.rx.subscriber.ManualSubscriber;
 
@@ -508,7 +508,6 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 *     <li>Iterator to Fluxion</li>
 	 *     <li>RxJava 1 Single to Fluxion</li>
 	 *     <li>RxJava 1 Observable to Fluxion</li>
-	 *     <li>JDK 8 CompletableFuture to Fluxion</li>
 	 *     <li>JDK 9 Flow.Publisher to Fluxion</li>
 	 * </ul>
 	 *
@@ -2109,7 +2108,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * Subscribe a {@link Consumer} to this {@link Fluxion} that will consume all the
 	 * sequence.  If {@link Fluxion#getCapacity()} returns an integer value, the {@link Subscriber} will use it as a
 	 * prefetch strategy: first request N, then when 25% of N is left to be received on onNext, request N x 0.75. <p>
-	 * For a passive version that observe and forward incoming data see {@link #doOnNext(reactor.fn.Consumer)}
+	 * For a passive version that observe and forward incoming data see {@link #doOnNext(java.util.function.Consumer)}
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consume.png" alt="">
@@ -2136,7 +2135,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * sequence.  If {@link Fluxion#getCapacity()} returns an integer value, the {@link Subscriber} will use it as a
 	 * prefetch strategy: first request N, then when 25% of N is left to be received on onNext, request N x 0.75. <p>
 	 * For a passive version that observe and forward incoming data see
-	 * {@link #doOnNext(reactor.fn.Consumer)} and {@link #doOnError(reactor.fn.Consumer)}.
+	 * {@link #doOnNext(java.util.function.Consumer)} and {@link #doOnError(java.util.function.Consumer)}.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consumeerror.png" alt="">
@@ -2154,8 +2153,8 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * Subscribe {@link Consumer} to this {@link Fluxion} that will consume all the
 	 * sequence.  If {@link Fluxion#getCapacity()} returns an integer value, the {@link Subscriber} will use it as a
 	 * prefetch strategy: first request N, then when 25% of N is left to be received on onNext, request N x 0.75. <p>
-	 * For a passive version that observe and forward incoming data see {@link #doOnNext(reactor.fn.Consumer)},
-	 * {@link #doOnError(reactor.fn.Consumer)} and {@link #doOnComplete(Runnable)},
+	 * For a passive version that observe and forward incoming data see {@link #doOnNext(java.util.function.Consumer)},
+	 * {@link #doOnError(java.util.function.Consumer)} and {@link #doOnComplete(Runnable)},
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/consumecomplete.png" alt="">

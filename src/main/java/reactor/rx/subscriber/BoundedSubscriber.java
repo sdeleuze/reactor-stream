@@ -16,10 +16,11 @@
 
 package reactor.rx.subscriber;
 
+import java.util.function.Consumer;
+
 import org.reactivestreams.Subscription;
 import reactor.core.state.Backpressurable;
 import reactor.core.state.Prefetchable;
-import reactor.fn.Consumer;
 
 /**
  * @author Stephane Maldini

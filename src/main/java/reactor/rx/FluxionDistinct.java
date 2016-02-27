@@ -17,6 +17,8 @@ package reactor.rx;
 
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -28,8 +30,6 @@ import reactor.core.state.Completable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
-import reactor.fn.Supplier;
 
 /**
  * For each subscriber, tracks the source values that have been seen and

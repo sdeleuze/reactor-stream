@@ -7,6 +7,8 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -23,8 +25,6 @@ import reactor.core.state.Introspectable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Consumer;
-import reactor.fn.Supplier;
 
 /**
  * A connectable {@link Fluxion} which shares an underlying source and dispatches source values to subscribers in a

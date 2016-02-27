@@ -16,6 +16,7 @@
 package reactor.rx;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -27,7 +28,6 @@ import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
 import reactor.rx.FluxionMapFuseable.MapFuseableSubscriber;
 
 /**

@@ -22,9 +22,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import reactor.core.util.Exceptions;
-import reactor.fn.Consumer;
 
 /**
  * An Rsc scheduler which uses a backing ExecutorService to schedule Runnables for async operators. 

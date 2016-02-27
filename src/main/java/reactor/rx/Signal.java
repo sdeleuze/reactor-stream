@@ -16,13 +16,13 @@
 package reactor.rx;
 
 import java.io.Serializable;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.fn.Consumer;
-import reactor.fn.Function;
-import reactor.fn.Supplier;
 
 /**
  * A domain representation of a Reactive Stream signal.
@@ -54,7 +54,7 @@ public final class Signal<T> implements Supplier<T>, Consumer<Subscriber<? super
 		 * Only happens once, a complete signal is used to confirm the successful end of the data sequence flowing in a
 		 * {@link Fluxion}. The signal releases batching operations such as {@link Fluxion#buffer
 		 * ()},
-		 * {@link Fluxion#window} or {@link Fluxion#reduce(reactor.fn.BiFunction)}
+		 * {@link Fluxion#window} or {@link Fluxion#reduce(java.util.function.BiFunction)}
 		 * <p>
 		 * see {@link Subscriber#onComplete()}
 		 */

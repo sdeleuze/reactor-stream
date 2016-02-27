@@ -17,13 +17,13 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.state.Failurable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
-import reactor.fn.Supplier;
 
 /**
  * Emits a constant or generated Throwable instance to Subscribers.

@@ -38,6 +38,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -61,8 +63,6 @@ import reactor.core.tuple.Tuple;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ExecutorUtils;
 import reactor.core.util.Logger;
-import reactor.fn.Consumer;
-import reactor.fn.Function;
 import reactor.rx.Broadcaster;
 import reactor.rx.Fluxion;
 import reactor.rx.FluxionProcessor;

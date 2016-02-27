@@ -18,6 +18,7 @@ package reactor.reactivestreams.tck;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
 
 import org.junit.Test;
 import org.reactivestreams.Processor;
@@ -25,7 +26,6 @@ import org.testng.SkipException;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.publisher.WorkQueueProcessor;
-import reactor.fn.BiFunction;
 import reactor.rx.Fluxion;
 
 /**

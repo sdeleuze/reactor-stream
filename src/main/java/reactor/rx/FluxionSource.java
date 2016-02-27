@@ -17,6 +17,7 @@
 package reactor.rx;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -26,7 +27,6 @@ import reactor.core.state.Backpressurable;
 import reactor.core.timer.Timer;
 import reactor.core.util.Exceptions;
 import reactor.core.util.ReactiveStateUtils;
-import reactor.fn.Function;
 
 /**
  *

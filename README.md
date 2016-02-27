@@ -48,7 +48,7 @@ Fluxion
 
 ### Log, Convert and Tap Fluxions
 
-RxJava Observable/Single, Java 8 CompletableFuture and Java 9 Flow Publishers can be converted to Fluxion directly. Alternatively, the conventional "[as](http://projectreactor.io/core/docs/api/reactor/core/publisher/Flux.html#as-reactor.fn.Function-)" operator,  can easily convert to Reactive Stream Publisher implementations. 
+RxJava Observable/Single, Java 8 CompletableFuture and Java 9 Flow Publishers can be converted to Fluxion directly. Alternatively, the conventional "[as](http://projectreactor.io/core/docs/api/reactor/core/publisher/Flux.html#as-java.util.function.Function-)" operator,  can easily convert to Reactive Stream Publisher implementations.
 ```java
 FluxionTap<Tuple2<Integer, Long>> tapped = Fluxion.convert(Observable.range(1, 100_000_000))
                                                 .log("my.category", Logger.REQUEST)

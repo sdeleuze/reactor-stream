@@ -16,6 +16,7 @@
 package reactor.rx;
 
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -24,7 +25,6 @@ import reactor.core.flow.Fuseable;
 import reactor.core.flow.Producer;
 import reactor.core.flow.Receiver;
 import reactor.core.util.PlatformDependent;
-import reactor.fn.Supplier;
 
 /**
  *  A

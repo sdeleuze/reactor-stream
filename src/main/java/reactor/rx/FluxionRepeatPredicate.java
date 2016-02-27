@@ -17,12 +17,12 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.BooleanSupplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.subscriber.MultiSubscriptionSubscriber;
 import reactor.core.util.Exceptions;
-import reactor.fn.BooleanSupplier;
 
 /**
  * Repeatedly subscribes to the source if the predicate returns true after

@@ -15,7 +15,7 @@
  */
 package reactor.rx;
 
-import reactor.fn.Consumer;
+import java.util.function.Consumer;
 
 /**
  * The abstract base class for connectable publishers that let subscribers pile up

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -35,7 +36,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.SchedulerGroup;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.util.Logger;
-import reactor.fn.Consumer;
 import reactor.rx.Fluxion;
 import reactor.rx.subscriber.InterruptableSubscriber;
 

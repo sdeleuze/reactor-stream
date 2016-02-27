@@ -24,13 +24,13 @@ import reactor.core.subscriber.SubscriberWithContext
 import reactor.core.test.TestSubscriber
 import reactor.core.timer.Timer
 import reactor.core.util.ReactiveStateUtils
-import reactor.fn.BiFunction
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.BiFunction
 
 import static reactor.core.publisher.Flux.error
 

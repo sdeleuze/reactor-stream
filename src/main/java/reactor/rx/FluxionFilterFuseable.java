@@ -16,6 +16,7 @@
 package reactor.rx;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -27,7 +28,6 @@ import reactor.core.flow.Receiver;
 import reactor.core.state.Completable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Predicate;
 
 /**
  * Filters out values that make a filter function return false.

@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
@@ -28,7 +29,6 @@ import org.reactivestreams.Subscription;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.Supplier;
 
 /**
  * Splits the source sequence into possibly overlapping publishers.

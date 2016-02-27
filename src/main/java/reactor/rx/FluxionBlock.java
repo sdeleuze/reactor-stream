@@ -169,7 +169,7 @@ final class FluxionBlock<T> extends FluxionSource<T, T> {
 
 		@Override
 		public long requestedFromDownstream() {
-			return REQUESTED.get();
+			return REQUESTED.getAsLong();
 		}
 
 		@Override

@@ -15,6 +15,8 @@
  */
 package reactor.rx;
 
+import java.util.function.Consumer;
+
 import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -23,7 +25,6 @@ import reactor.core.flow.Loopback;
 import reactor.core.state.Backpressurable;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.util.EmptySubscription;
-import reactor.fn.Consumer;
 
 /**
  * Create a Processor decorated with Stream API

@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -26,7 +27,6 @@ import org.reactivestreams.Subscription;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.DeferredSubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
 
 /**
  * Takes a value from upstream then uses the duration provided by a 

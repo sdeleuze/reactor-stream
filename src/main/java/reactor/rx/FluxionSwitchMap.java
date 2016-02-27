@@ -20,6 +20,8 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -28,8 +30,6 @@ import reactor.core.util.BackpressureUtils;
 import reactor.core.util.CancelledSubscription;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
-import reactor.fn.Function;
-import reactor.fn.Supplier;
 
 /**
  * Switches to a new Publisher generated via a function whenever the upstream produces an item.

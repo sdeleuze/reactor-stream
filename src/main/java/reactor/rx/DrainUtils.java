@@ -17,10 +17,10 @@ package reactor.rx;
 
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.function.BooleanSupplier;
 
 import org.reactivestreams.Subscriber;
 import reactor.core.util.BackpressureUtils;
-import reactor.fn.BooleanSupplier;
 
 /**
  * @author Stephane Maldini

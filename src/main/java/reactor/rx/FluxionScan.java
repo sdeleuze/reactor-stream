@@ -17,6 +17,7 @@ package reactor.rx;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.function.BiFunction;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -28,7 +29,6 @@ import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.BiFunction;
 
 /**
  * Aggregates the source values with the help of an accumulator function

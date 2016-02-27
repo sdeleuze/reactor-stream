@@ -18,12 +18,12 @@ package reactor.rx.subscriber;
 
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.function.Consumer;
 
 import org.reactivestreams.Subscription;
 import reactor.core.state.Prefetchable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
-import reactor.fn.Consumer;
 
 /**
  * @author Stephane Maldini

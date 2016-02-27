@@ -17,13 +17,13 @@
 package reactor.rx;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.state.Pausable;
 import reactor.core.timer.Timer;
 import reactor.core.util.BackpressureUtils;
-import reactor.fn.Consumer;
 import reactor.rx.subscriber.SerializedSubscriber;
 import reactor.rx.subscriber.SubscriberWithDemand;
 

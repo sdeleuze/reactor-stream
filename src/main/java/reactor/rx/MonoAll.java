@@ -16,6 +16,7 @@
 package reactor.rx;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -24,7 +25,6 @@ import reactor.core.flow.Receiver;
 import reactor.core.subscriber.DeferredScalarSubscriber;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.Predicate;
 
 /**
  * Emits a single boolean true if all values of the source sequence match

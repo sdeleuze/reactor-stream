@@ -716,7 +716,7 @@ any point of the chain.
 ==== Observe
 
 If you want to passively observe data as it passes through the pipeline, then use the `.doOnNext(Consumer)` methods and other `reactor.rx.action.passive` actions.
-To observe values, use link:/docs/api/reactor/rx/Fluxion.html#observe-reactor.fn.Consumer-[.doOnNext(Consumer<? super T>)]. To observe errors without dealing with them definitively, use link:/docs/api/reactor/rx/Fluxion.html#doOnError-java.lang.Class-reactor.fn.BiConsumer-[.doOnNext(Class<? extends Throwable>, BiConsumer<Object,? extends Throwable>)]. To observe the Reactive Streams complete signal, use link:/docs/api/reactor/rx/Fluxion.html#doOnComplete-reactor.fn.Consumer-[.doOnComplete(Consumer<Void>)]. To observe the cancel signal, use link:/docs/api/reactor/rx/Fluxion.html#doOnCancel-reactor.fn.Consumer-[.doOnCancel(Consumer<Void>)]. To observe the Reactive Streams subscribe signal, use link:/docs/api/reactor/rx/Fluxion.html#observeSubscribe-reactor.fn.Consumer-[.observeSubscribe(Consumer<? super Subscription<T>>)].
+To observe values, use link:/docs/api/reactor/rx/Fluxion.html#observe-java.util.function.Consumer-[.doOnNext(Consumer<? super T>)]. To observe errors without dealing with them definitively, use link:/docs/api/reactor/rx/Fluxion.html#doOnError-java.lang.Class-java.util.function.BiConsumer-[.doOnNext(Class<? extends Throwable>, BiConsumer<Object,? extends Throwable>)]. To observe the Reactive Streams complete signal, use link:/docs/api/reactor/rx/Fluxion.html#doOnComplete-java.util.function.Consumer-[.doOnComplete(Consumer<Void>)]. To observe the cancel signal, use link:/docs/api/reactor/rx/Fluxion.html#doOnCancel-java.util.function.Consumer-[.doOnCancel(Consumer<Void>)]. To observe the Reactive Streams subscribe signal, use link:/docs/api/reactor/rx/Fluxion.html#observeSubscribe-java.util.function.Consumer-[.observeSubscribe(Consumer<? super Subscription<T>>)].
 
 .doOnNext(Consumer<T>)
 [source,java]
@@ -736,7 +736,7 @@ st.doOnNext(s -> LOG.info("Got input [{}] on thread [{}}]", s, Thread.currentThr
 ==== Filter
 
 It's possible to filter items passing through a `Stream` so that downstream actions only see the data you want them to see. Filtering actions can be found under the `reactor.rx.action.filter` package.
-The most popular one is the link:/docs/api/reactor/rx/Fluxion.html#filter-reactor.fn.Predicate-[`.filter(Predicate<T>)`] method.
+The most popular one is the link:/docs/api/reactor/rx/Fluxion.html#filter-java.util.function.Predicate-[`.filter(Predicate<T>)`] method.
 
 [NOTE]
 Unmatched data will trigger a `Subscription.request(1)` if the stream is actually not unbounded with a previous demand of Long.MAX_VALUE.
@@ -776,7 +776,7 @@ Stream
 ==== Transformation
 
 If you want to actively transform data as it passes through the pipeline, then use `.map(Function)` and other `reactor.rx.action.transformation` actions.
-The most popular transforming action is link:/docs/api/reactor/rx/Fluxion.html#map-reactor.fn.Function-[.map(Function<? super I, ? extends O>)].
+The most popular transforming action is link:/docs/api/reactor/rx/Fluxion.html#map-java.util.function.Function-[.map(Function<? super I, ? extends O>)].
 A few other `Actions` depend on transforming data, especially <<streams.adoc#streams-combine,Combinatory operations>> like `flatMap` or `concatMap`.
 
 .Fluxion.map(Function<T,V>)
@@ -794,7 +794,7 @@ Stream
 
 If you want to execute a distinct pipeline `Fluxion<V>` or `Publisher<V>` given an actual input data, you can use combinatory actions such as `.flatMap(Function)` and other `reactor.rx.action.combination` actions.
 
-To transform values into a distinct, possibly asynchronous `Publisher<V>`, use link:/docs/api/reactor/rx/Fluxion.html#map-reactor.fn.Function-[.flatMap(Function<? super I, ? extends Publisher<? extends O>)].
+To transform values into a distinct, possibly asynchronous `Publisher<V>`, use link:/docs/api/reactor/rx/Fluxion.html#map-java.util.function.Function-[.flatMap(Function<? super I, ? extends Publisher<? extends O>)].
 The returned `Publisher<V>` will then be *merged* back to the main flow signaling `onNext(V)`. They are properly removed from the merging action whey they complete.
 The difference between flatMap, concatMap and switchOnMap is the *merging strategy*, respectively *Interleave*, *Fully Sequential* and *Partially Sequential* (interrupted by `onNext(Publisher<T>)`).
 

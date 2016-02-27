@@ -15,11 +15,12 @@
  */
 package reactor.rx;
 
+import java.util.function.Consumer;
+
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.subscriber.SubscriberBarrier;
 import reactor.core.util.Exceptions;
-import reactor.fn.Consumer;
 
 /**
  * @author Stephane Maldini

@@ -15,9 +15,10 @@
  */
 package reactor.rx;
 
+import java.util.function.Consumer;
+import java.util.function.LongConsumer;
+
 import org.reactivestreams.Subscription;
-import reactor.fn.Consumer;
-import reactor.fn.LongConsumer;
 
 /**
  * Set of methods that return various publisher state peeking callbacks.

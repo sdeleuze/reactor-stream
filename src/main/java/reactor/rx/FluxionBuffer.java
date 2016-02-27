@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -33,8 +35,6 @@ import reactor.core.state.Completable;
 import reactor.core.state.Requestable;
 import reactor.core.util.BackpressureUtils;
 import reactor.core.util.Exceptions;
-import reactor.fn.BooleanSupplier;
-import reactor.fn.Supplier;
 
 /**
  * Buffers a certain number of subsequent elements and emits the buffers.
