@@ -5,8 +5,8 @@
 [Reactive Extensions](http://reactivex.io) over [Reactive Streams](http://reactive-streams.org) for the JVM.
 
 ## Getting it
-- Snapshot : **2.5.0.BUILD-SNAPSHOT**  ( Java 7+ required )
-- Milestone : **2.5.0.M1**  ( Java 7+ required )
+- Snapshot : **2.5.0.BUILD-SNAPSHOT**  ( Java 8+ required )
+- Milestone : **2.5.0.M1**  ( Java 8+ required )
 
 With Gradle from repo.spring.io or Maven Central repositories (stable releases only):
 ```groovy
