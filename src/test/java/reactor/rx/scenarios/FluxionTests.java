@@ -1174,7 +1174,7 @@ public class FluxionTests extends AbstractReactorTest {
 
 	public void mapPassThru() throws InterruptedException {
 		Fluxion.just(1)
-		       .map(IDENTITY_FUNCTION);
+		       .map(Function.identity());
 	}
 
 	@Test
@@ -1306,13 +1306,6 @@ public class FluxionTests extends AbstractReactorTest {
 			Assert.assertTrue("was " + (time - prev), time - prev <= delayMS * 1.2);
 		}
 	}
-
-	private static final Function<Integer, Integer> IDENTITY_FUNCTION = new Function<Integer, Integer>() {
-		@Override
-		public Integer apply(Integer value) {
-			return value;
-		}
-	};
 
 	private List<Integer> createTestDataset(int i) {
 		List<Integer> list = new ArrayList<>(i);

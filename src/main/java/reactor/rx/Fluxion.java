@@ -1126,7 +1126,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	public static <T> Fluxion<T> switchOnNext(
 	  Publisher<Publisher<? extends T>> mergedPublishers) {
 		return new FluxionSwitchMap<>(mergedPublishers,
-				IDENTITY_FUNCTION,
+				Function.identity(),
 				QueueSupplier.xs(),
 				PlatformDependent.XS_BUFFER_SIZE);
 	}
@@ -1503,7 +1503,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 */
 	@SuppressWarnings("unchecked")
 	public static Fluxion<Tuple> zip(Publisher<? extends Publisher<?>> sources) {
-		return zip(sources, (Function<Tuple, Tuple>) IDENTITY_FUNCTION);
+		return zip(sources, Function.identity());
 	}
 
 	/**
@@ -1576,7 +1576,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 						return concat(afterSupplier.get(), Fluxion.<V>error(throwable));
 					}
 				}, afterSupplier),
-				IDENTITY_FUNCTION, PlatformDependent.SMALL_BUFFER_SIZE, 32, false));
+				Function.identity(), PlatformDependent.SMALL_BUFFER_SIZE, 32, false));
 	}
 
 	/**
@@ -2923,7 +2923,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 			Supplier<? extends Publisher<? extends R>> mapperOnComplete) {
 		return FluxionSource.wrap(Flux.flatMap(
 				Flux.mapSignal(this, mapperOnNext, mapperOnError, mapperOnComplete),
-				IDENTITY_FUNCTION, PlatformDependent.SMALL_BUFFER_SIZE, 32, false)
+				Function.identity(), PlatformDependent.SMALL_BUFFER_SIZE, 32, false)
 		);
 	}
 
@@ -3226,7 +3226,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 */
 	@SuppressWarnings("unchecked")
 	public final <K> Fluxion<GroupedFluxion<K, O>> groupBy(final Function<? super O, ? extends K> keyMapper) {
-		return groupBy(keyMapper, (Function<O, O>)IDENTITY_FUNCTION);
+		return groupBy(keyMapper, Function.identity());
 	}
 
 	/**
@@ -3535,7 +3535,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	@SuppressWarnings("unchecked")
 	public final ConnectableFluxion<O> multicast(
 			Supplier<? extends Processor<? super O, ? extends O>> processorSupplier) {
-		return multicast(processorSupplier, IDENTITY_FUNCTION);
+		return multicast(processorSupplier, Function.identity());
 	}
 
 	/**
@@ -5156,7 +5156,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 */
 	@SuppressWarnings("unchecked")
 	public final <K> Mono<Map<K, O>> toMap(Function<? super O, ? extends K> keyExtractor) {
-		return toMap(keyExtractor, (Function<O, O>)IDENTITY_FUNCTION);
+		return toMap(keyExtractor, Function.identity());
 	}
 
 	/**
@@ -5228,7 +5228,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 */
 	@SuppressWarnings("unchecked")
 	public final <K> Mono<Map<K, Collection<O>>> toMultimap(Function<? super O, ? extends K> keyExtractor) {
-		return toMultimap(keyExtractor, (Function<O, O>)IDENTITY_FUNCTION);
+		return toMultimap(keyExtractor, Function.identity());
 	}
 
 	/**
@@ -5631,49 +5631,13 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 			return true;
 		}
 	};
-	static final Function        HASHCODE_EXTRACTOR      = new Function<Object, Integer>() {
-		@Override
-		public Integer apply(Object t1) {
-			return t1.hashCode();
-		}
-	};
-	static final Supplier        LIST_SUPPLIER           = new Supplier() {
-		@Override
-		public Object get() {
-			return new ArrayList<>();
-		}
-	};
-	static final Supplier        SET_SUPPLIER            = new Supplier() {
-		@Override
-		public Object get() {
-			return new HashSet<>();
-		}
-	};
-	static final Function        TIMESTAMP_OPERATOR      = new Function<Object, Tuple2<Long, ?>>() {
-		@Override
-		public Tuple2<Long, ?> apply(Object o) {
-			return Tuple.of(System.currentTimeMillis(), o);
-		}
-	};
+	static final Function        HASHCODE_EXTRACTOR      = Object::hashCode;
+	static final Supplier        LIST_SUPPLIER           = ArrayList::new;
+	static final Supplier        SET_SUPPLIER            = HashSet::new;
+	static final Function        TIMESTAMP_OPERATOR      = o -> Tuple.of(System.currentTimeMillis(), o);
 	static final Fluxion         NEVER                   = from(Flux.never());
-	static final Function        IDENTITY_FUNCTION       = new Function() {
-		@Override
-		public Object apply(Object o) {
-			return o;
-		}
-	};
-	static final BiFunction      TUPLE2_BIFUNCTION       = new BiFunction() {
-		@Override
-		public Tuple2 apply(Object t1, Object t2) {
-			return Tuple.of(t1, t2);
-		}
-	};
-	static final Function        JOIN_FUNCTION           = new Function<Object[], Object>() {
-		@Override
-		public Object apply(Object[] objects) {
-			return Arrays.asList(objects);
-		}
-	};
+	static final BiFunction      TUPLE2_BIFUNCTION       = Tuple::of;
+	static final Function        JOIN_FUNCTION           = Arrays::asList;
 
 	@SuppressWarnings("unchecked")
 	static BooleanSupplier countingBooleanSupplier(final BooleanSupplier predicate, final long max) {
