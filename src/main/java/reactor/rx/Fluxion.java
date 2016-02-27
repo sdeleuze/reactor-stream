@@ -5619,25 +5619,17 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 		return new FluxionZipIterable<>(this, iterable, zipper);
 	}
 
-	static final BiFunction      JOIN_BIFUNCTION         = new BiFunction<Object, Object, List>() {
-		@Override
-		public List<?> apply(Object t1, Object t2) {
-			return Arrays.asList(t1, t2);
-		}
-	};
-	static final BooleanSupplier ALWAYS_BOOLEAN_SUPPLIER = new BooleanSupplier() {
-		@Override
-		public boolean getAsBoolean() {
-			return true;
-		}
-	};
+	static final BiFunction      JOIN_BIFUNCTION         = (t1, t2) -> Arrays.asList(t1, t2);
+	static final BooleanSupplier ALWAYS_BOOLEAN_SUPPLIER = () -> true;
 	static final Function        HASHCODE_EXTRACTOR      = Object::hashCode;
 	static final Supplier        LIST_SUPPLIER           = ArrayList::new;
 	static final Supplier        SET_SUPPLIER            = HashSet::new;
 	static final Function        TIMESTAMP_OPERATOR      = o -> Tuple.of(System.currentTimeMillis(), o);
 	static final Fluxion         NEVER                   = from(Flux.never());
 	static final BiFunction      TUPLE2_BIFUNCTION       = Tuple::of;
-	static final Function        JOIN_FUNCTION           = Arrays::asList;
+
+	@SuppressWarnings("unchecked")
+	static final Function        JOIN_FUNCTION           =  objects -> Arrays.asList((Object[])objects);
 
 	@SuppressWarnings("unchecked")
 	static BooleanSupplier countingBooleanSupplier(final BooleanSupplier predicate, final long max) {
