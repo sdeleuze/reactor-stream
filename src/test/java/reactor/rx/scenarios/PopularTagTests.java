@@ -21,8 +21,8 @@ import java.util.concurrent.CountDownLatch;
 
 import org.junit.Test;
 import reactor.AbstractReactorTest;
+import reactor.core.tuple.Tuple;
 import reactor.core.util.Logger;
-import reactor.fn.tuple.Tuple;
 import reactor.rx.Fluxion;
 import reactor.rx.subscriber.InterruptableSubscriber;
 

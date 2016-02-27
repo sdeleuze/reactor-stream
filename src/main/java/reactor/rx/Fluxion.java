@@ -53,6 +53,14 @@ import reactor.core.subscriber.BlockingIterable;
 import reactor.core.subscriber.SignalEmitter;
 import reactor.core.subscriber.SubscriberWithContext;
 import reactor.core.timer.Timer;
+import reactor.core.tuple.Tuple;
+import reactor.core.tuple.Tuple2;
+import reactor.core.tuple.Tuple3;
+import reactor.core.tuple.Tuple4;
+import reactor.core.tuple.Tuple5;
+import reactor.core.tuple.Tuple6;
+import reactor.core.tuple.Tuple7;
+import reactor.core.tuple.Tuple8;
 import reactor.core.util.Assert;
 import reactor.core.util.EmptySubscription;
 import reactor.core.util.Exceptions;
@@ -68,14 +76,6 @@ import reactor.fn.Function;
 import reactor.fn.LongConsumer;
 import reactor.fn.Predicate;
 import reactor.fn.Supplier;
-import reactor.fn.tuple.Tuple;
-import reactor.fn.tuple.Tuple2;
-import reactor.fn.tuple.Tuple3;
-import reactor.fn.tuple.Tuple4;
-import reactor.fn.tuple.Tuple5;
-import reactor.fn.tuple.Tuple6;
-import reactor.fn.tuple.Tuple7;
-import reactor.fn.tuple.Tuple8;
 import reactor.rx.subscriber.InterruptableSubscriber;
 import reactor.rx.subscriber.ManualSubscriber;
 
@@ -2723,7 +2723,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	}
 
 	/**
-	 * Map this {@link Fluxion} sequence into {@link reactor.fn.tuple.Tuple2} of T1 {@link Long} timemillis and T2
+	 * Map this {@link Fluxion} sequence into {@link reactor.core.tuple.Tuple2} of T1 {@link Long} timemillis and T2
 	 * {@link <T>} associated data. The timemillis corresponds to the elapsed time between the subscribe and the first
 	 * next signal OR between two next signals.
 	 *
@@ -5046,7 +5046,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	}
 
 	/**
-	 * Emit a {@link reactor.fn.tuple.Tuple2} pair of T1 {@link Long} current system time in
+	 * Emit a {@link reactor.core.tuple.Tuple2} pair of T1 {@link Long} current system time in
 	 * millis and T2 {@link <T>} associated data for each item from this {@link Fluxion}
 	 *
 	 * <p>

@@ -20,8 +20,8 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.subscriber.SubscriberBarrier;
-import reactor.fn.tuple.Tuple;
-import reactor.fn.tuple.Tuple2;
+import reactor.core.tuple.Tuple;
+import reactor.core.tuple.Tuple2;
 
 /**
  * @author Stephane Maldini
