@@ -19,10 +19,10 @@ configure(rootProject) {
 
 	task api(type: Javadoc) {
 	  	dependsOn jar
-		group = "Reactor Fluxion Javadoc"
+		group = "Reactor Stream Javadoc"
 
 		description = "Generates aggregated Javadoc API documentation."
-		title = "Reactor Fluxion ${version} API"
+		title = "Reactor Stream ${version} API"
 
 		if (JavaVersion.current().isJava8Compatible()) {
 			compileTestJava.options.compilerArgs += "-parameters"
@@ -33,7 +33,7 @@ configure(rootProject) {
 
 		options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED
 		options.author = true
-		options.header = "Reactor Fluxion"
+		options.header = "Reactor Stream"
 		options.overview = "src/api/overview.html"
 		options.stylesheetFile = file("src/api/stylesheet.css")
 		options.links(rootProject.ext.javadocLinks)
@@ -66,7 +66,7 @@ configure(rootProject) {
 				'source-highlighter': 'coderay'
 
 		doLast {
-			file("$outputDir/pdf/index.pdf").renameTo("$outputDir/pdf/fluxion-reference-guide-${version}.pdf")
+			file("$outputDir/pdf/index.pdf").renameTo("$outputDir/pdf/stream-reference-guide-${version}.pdf")
 		}
 	}
 }

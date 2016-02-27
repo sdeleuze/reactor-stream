@@ -198,7 +198,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 				latch.countDown();
 			}
 		});
-		//fluxion.broadcastComplete();
+		//stream.broadcastComplete();
 
 		latch.await(8, TimeUnit.SECONDS);
 		if(Fluxion.class.isAssignableFrom(processor.getClass())) {
@@ -263,7 +263,7 @@ public abstract class AbstractStreamVerification extends org.reactivestreams.tck
 				System.out.println(stream.debug());
 			}
 		}
-		//fluxion.then();
+		//stream.then();
 
 		latch.await(8, TimeUnit.SECONDS);
 		System.out.println(stream.debug());

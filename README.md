@@ -1,4 +1,4 @@
-# reactor-fluxion
+# Reactor Stream
 
 [![Join the chat at https://gitter.im/reactor/reactor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/reactor/reactor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -17,7 +17,7 @@ With Gradle from repo.spring.io or Maven Central repositories (stable releases o
     }
 
     dependencies {
-      compile "io.projectreactor:reactor-fluxion:2.5.0.BUILD-SNAPSHOT"
+      compile "io.projectreactor:reactor-stream:2.5.0.BUILD-SNAPSHOT"
     }
 ```
 
@@ -27,7 +27,7 @@ A Reactive Streams `Publisher` implementing the most common Reactive Extensions 
 - Static factories on `Fluxion` allow for sequence generation from arbitrary callbacks types.
 - Instance methods allows operational building, materialized on each Fluxion#subscribe()_ or Fluxion#consume()_ eventually called.
 
-[<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/fluxion.png" width="500">](http://projectreactor.io/fluxion/docs/api/reactor/rx/Fluxion.html)
+[<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/stream.png" width="500">](http://projectreactor.io/stream/docs/api/reactor/rx/Fluxion.html)
 
 Fluxion in action :
 ```java
@@ -65,13 +65,13 @@ Fluxion.interval(1).consume(n -> someService.metric(tapped.get()));
 
 ### reactor.rx.Fluxion != java.util.stream.Stream
 
-A [Reactor Fluxion](http://projectreactor.io/fluxion/docs/api/reactor/rx/Fluxion.html) is a Reactive Streams Publisher implementing [Reactive Extensions](http://reactivex.io). With the Reactive Stream Subscription protocol, a reactive Fluxion can push or be pulled, synchronously or asynchronously, in a bounded way. Java 8 Streams usually incur less overhead especially when operating on primitive sequences. However and fundamentally, these streams do not support eventual results or **latency**.
+A [Reactor Fluxion](http://projectreactor.io/stream/docs/api/reactor/rx/Fluxion.html) is a Reactive Streams Publisher implementing [Reactive Extensions](http://reactivex.io). With the Reactive Stream Subscription protocol, a reactive Fluxion can push or be pulled, synchronously or asynchronously, in a bounded way. Java 8 Streams usually incur less overhead especially when operating on primitive sequences. However and fundamentally, these streams do not support eventual results or **latency**.
 
 ## Promise
 
 A Reactive Streams Processor extending [reactor-core](http://github.com/reactor/reactor-core) Mono and supporting "hot/deferred fulfilling".
 
-[<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/mono.png" width="500">](http://projectreactor.io/fluxion/docs/api/reactor/rx/Promise.html)
+[<img src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/mono.png" width="500">](http://projectreactor.io/stream/docs/api/reactor/rx/Promise.html)
 
 Fulfilling promise from any context:
 ```java
@@ -133,10 +133,10 @@ Fluxions endure rounds of JMH testing with some nice success CPU or Memory-wise.
 
 -------------------------------------
 ## Reference
-http://projectreactor.io/fluxion/docs/reference/
+http://projectreactor.io/stream/docs/reference/
 
 ## Javadoc
-http://projectreactor.io/fluxion/docs/api/
+http://projectreactor.io/stream/docs/api/
 
 -------------------------------------
 _Powered by [Reactive Stream Commons](http://github.com/reactor/reactive-streams-commons)_
