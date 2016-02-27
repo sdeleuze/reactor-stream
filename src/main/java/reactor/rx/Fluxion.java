@@ -42,6 +42,7 @@ import java.util.function.LongConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
@@ -4619,6 +4620,33 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 		}
 		return concat(publisher, this);
 	}
+
+	/**
+	 * Transform this {@link Fluxion} into a lazy {@link Stream} blocking on next calls.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/toiterablen.png"
+	 * alt="">
+	 *
+	 * @return a {@link Stream} of unknown size with onClose attached to {@link Subscription#cancel()}
+	 */
+	public Stream<O> stream() {
+		return stream(this instanceof Backpressurable ? this.getCapacity() : Long.MAX_VALUE);
+	}
+
+	/**
+	 * Transform this {@link Fluxion} into a lazy {@link Stream} blocking on next calls.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/toiterablen.png"
+	 * alt="">
+	 *
+	 * @return a {@link Stream} of unknown size with onClose attached to {@link Subscription#cancel()}
+	 */
+	public Stream<O> stream(long batchSize) {
+		final Supplier<Queue<O>> provider;
+		provider = QueueSupplier.get(batchSize);
+		return new BlockingIterable<>(this, batchSize, provider).stream();
+	}
+
 
 	/**
 	 * Start the chain and request unbounded demand.
