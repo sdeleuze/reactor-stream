@@ -4630,7 +4630,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * @return a {@link Stream} of unknown size with onClose attached to {@link Subscription#cancel()}
 	 */
 	public Stream<O> stream() {
-		return stream(this instanceof Backpressurable ? this.getCapacity() : Long.MAX_VALUE);
+		return stream(getCapacity() == -1 ? Long.MAX_VALUE : getCapacity());
 	}
 
 	/**
