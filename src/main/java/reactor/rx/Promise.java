@@ -131,7 +131,7 @@ public class Promise<O> extends Mono<O>
 	 * @return A {@link Promise} that is completed with the given error
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> Promise<T> from(Publisher<T> source) {
+	public static <T> Promise<T> from(Publisher<? extends T> source) {
 		if(source == null){
 			return Promise.success(null);
 		}
