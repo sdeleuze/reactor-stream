@@ -839,6 +839,22 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	}
 
 	/**
+	 * Create a {@link Fluxion} that emits the items contained in the provided {@link Stream}.
+	 * A new iterator will be created for each subscriber.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/fromstream.png" alt="">
+	 * <p>
+	 * @param s the {@link Stream} to read data from
+	 * @param <T> the {@link Stream} type to fluxion
+	 *
+	 * @return a new {@link Fluxion}
+	 */
+	public static <T> Fluxion<T> fromStream(Stream<? extends T> s) {
+		return new FluxionStream<>(s);
+	}
+
+
+	/**
 	 * Create a new {@link Fluxion} that emits an ever incrementing long starting with 0 every N seconds on
 	 * the given timer. If demand is not produced in time, an onError will be signalled. The {@link Fluxion} will never
 	 * complete.
