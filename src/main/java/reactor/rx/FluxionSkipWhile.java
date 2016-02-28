@@ -161,11 +161,6 @@ final class FluxionSkipWhile<T> extends FluxionSource<T, T> {
 		}
 
 		@Override
-		public Object connectedOutput() {
-			return null;
-		}
-
-		@Override
 		public Object upstream() {
 			return s;
 		}

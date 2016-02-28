@@ -183,11 +183,6 @@ final class FluxionDistinct<T, K, C extends Collection<? super K>> extends Fluxi
 		}
 
 		@Override
-		public Object connectedOutput() {
-			return null;
-		}
-
-		@Override
 		public Object upstream() {
 			return s;
 		}

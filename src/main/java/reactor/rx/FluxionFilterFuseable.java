@@ -204,11 +204,6 @@ final class FluxionFilterFuseable<T> extends FluxionSource<T, T>
 		}
 
 		@Override
-		public Object connectedOutput() {
-			return null;
-		}
-
-		@Override
 		public Object upstream() {
 			return s;
 		}
@@ -442,11 +437,6 @@ final class FluxionFilterFuseable<T> extends FluxionSource<T, T>
 		@Override
 		public Object connectedInput() {
 			return predicate;
-		}
-
-		@Override
-		public Object connectedOutput() {
-			return null;
 		}
 
 		@Override

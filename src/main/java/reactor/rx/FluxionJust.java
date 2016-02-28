@@ -78,11 +78,6 @@ final class FluxionJust<T> extends Fluxion<T> implements Fuseable.ScalarSupplier
 	}
 
 	@Override
-	public Object connectedInput() {
-		return null;
-	}
-
-	@Override
 	public Object connectedOutput() {
 		return value;
 	}

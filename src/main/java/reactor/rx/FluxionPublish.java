@@ -122,11 +122,6 @@ final class FluxionPublish<T> extends ConnectableFluxion<T>
 	}
 
 	@Override
-	public Object connectedInput() {
-		return null;
-	}
-
-	@Override
 	public Object connectedOutput() {
 		return connection;
 	}

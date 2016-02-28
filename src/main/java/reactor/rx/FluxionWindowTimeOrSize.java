@@ -206,11 +206,6 @@ final class FluxionWindowTimeOrSize<T> extends FluxionBatch<T, Fluxion<T>> {
 		public Object connectedInput() {
 			return currentWindow;
 		}
-
-		@Override
-		public Object connectedOutput() {
-			return null;
-		}
 	}
 
 

@@ -181,11 +181,6 @@ final class FluxionMapFuseable<T, R> extends FluxionSource<T, R>
 		}
 
 		@Override
-		public Object connectedOutput() {
-			return null;
-		}
-
-		@Override
 		public Object upstream() {
 			return s;
 		}
@@ -403,11 +398,6 @@ final class FluxionMapFuseable<T, R> extends FluxionSource<T, R>
 		@Override
 		public Object connectedInput() {
 			return mapper;
-		}
-
-		@Override
-		public Object connectedOutput() {
-			return null;
 		}
 
 		@Override

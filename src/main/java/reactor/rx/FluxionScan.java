@@ -252,11 +252,6 @@ final class FluxionScan<T, R> extends FluxionSource<T, R> {
 		}
 
 		@Override
-		public Object connectedOutput() {
-			return null;
-		}
-
-		@Override
 		public Object upstream() {
 			return s;
 		}

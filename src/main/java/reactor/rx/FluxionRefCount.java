@@ -82,11 +82,6 @@ final class FluxionRefCount<T> extends Fluxion<T>
 	}
 
 	@Override
-	public Object connectedInput() {
-		return null;
-	}
-
-	@Override
 	public Object connectedOutput() {
 		return connection;
 	}

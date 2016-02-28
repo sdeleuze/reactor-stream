@@ -186,10 +186,5 @@ final class FluxionDrop<T> extends FluxionSource<T, T> {
 		public Object connectedInput() {
 			return onDrop;
 		}
-
-		@Override
-		public Object connectedOutput() {
-			return null;
-		}
 	}
 }
