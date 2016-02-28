@@ -4624,7 +4624,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	/**
 	 * Transform this {@link Fluxion} into a lazy {@link Stream} blocking on next calls.
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/toiterablen.png"
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tostream.png"
 	 * alt="">
 	 *
 	 * @return a {@link Stream} of unknown size with onClose attached to {@link Subscription#cancel()}
@@ -4636,7 +4636,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	/**
 	 * Transform this {@link Fluxion} into a lazy {@link Stream} blocking on next calls.
 	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/toiterablen.png"
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/tostream.png"
 	 * alt="">
 	 *
 	 * @return a {@link Stream} of unknown size with onClose attached to {@link Subscription#cancel()}
