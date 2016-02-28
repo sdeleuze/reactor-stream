@@ -356,10 +356,6 @@ public final class SerializedSubscriber<T>
 		return 0;
 	}
 
-	@Override
-	public String getName() {
-		return SerializedSubscriber.class.getSimpleName();
-	}
 
 	@Override
 	public long getCapacity() {
