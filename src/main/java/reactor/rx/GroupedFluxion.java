@@ -15,14 +15,18 @@
  */
 package reactor.rx;
 
-import reactor.core.state.Groupable;
-
 /**
  * Represents a sequence of events with an associated key.
  *
  * @param <K> the key type
  * @param <V> the value type
  */
-public abstract class GroupedFluxion<K, V> extends Fluxion<V> implements Groupable<K> {
+public abstract class GroupedFluxion<K, V> extends Fluxion<V> {
 
+	/**
+	 * Return defined identifier
+	 * @return defined identifier
+	 */
+	@Override
+	public abstract K key();
 }
