@@ -125,10 +125,10 @@ public class FluxionSource<I, O> extends Fluxion<O>
 			return barrierProvider.apply(subscriber);
 		}
 	}
+}
 
-	static final class FuseableFluxionSource<I> extends FluxionSource<I, I> implements Fuseable{
-		public FuseableFluxionSource(Publisher<? extends I> source) {
-			super(source);
-		}
+final class FuseableFluxionSource<I> extends FluxionSource<I, I> implements Fuseable{
+	public FuseableFluxionSource(Publisher<? extends I> source) {
+		super(source);
 	}
 }

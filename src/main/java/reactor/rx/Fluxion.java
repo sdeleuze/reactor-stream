@@ -2086,18 +2086,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 		if (capacity == getCapacity()) {
 			return this;
 		}
-
-		return new FluxionSource<O, O>(this) {
-			@Override
-			public long getCapacity() {
-				return capacity;
-			}
-
-			@Override
-			public String getName() {
-				return "capacitySetup";
-			}
-		};
+		return FluxionConfig.withCapacity(this, capacity);
 	}
 
 	/**
@@ -5404,6 +5393,18 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	}
 
 	/**
+	 * Configure an arbitrary name for later introspection.
+	 *
+	 * @param name arbitrary {@link Fluxion} name
+	 *
+	 * @return a configured fluxion
+	 */
+	public Fluxion<O> useName(final String name) {
+		return FluxionConfig.withName(this, name);
+
+	}
+
+	/**
 	 * Configure a hinted capacity {@literal Long.MAX_VALUE} that can be used by downstream operators to adapt a
 	 * better consuming strage.
 	 *
@@ -5423,17 +5424,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * @return a configured fluxion
 	 */
 	public Fluxion<O> useTimer(final Timer timer) {
-		return new FluxionSource<O, O>(this) {
-			@Override
-			public String getName() {
-				return "timerSetup";
-			}
-
-			@Override
-			public Timer getTimer() {
-				return timer;
-			}
-		};
+		return FluxionConfig.withTimer(this, timer);
 
 	}
 
