@@ -42,7 +42,7 @@ Fluxion
     )
     .delaySubscription(Mono.delay(1))
     .retryWhen(errors -> errors.zipWith(Fluxion.range(1, 3)))
-    .capacity(128)
+    .useCapacity(128)
     .consume(someMetrics::updateCounter);
 ```
 
@@ -120,7 +120,7 @@ Fluxion.merge(
             .onBackpressureBuffer(10)
     )
     .take(20, TimeUnit.SECONDS)
-    .capacity(32)
+    .useCapacity(32)
     .consume(slowConsumer());
 ```
 

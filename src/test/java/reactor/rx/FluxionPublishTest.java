@@ -228,7 +228,7 @@ public class FluxionPublishTest {
 		TestSubscriber<Integer> ts1 = new TestSubscriber<>();
 		TestSubscriber<Integer> ts2 = new TestSubscriber<>();
 
-		ConnectableFluxion<Integer> p = Fluxion.range(1, 5).capacity(5).publish();
+		ConnectableFluxion<Integer> p = Fluxion.range(1, 5).useCapacity(5).publish();
 		
 		p.subscribe(ts1);
 		p.subscribe(ts2);
@@ -259,7 +259,7 @@ public class FluxionPublishTest {
 		TestSubscriber<Integer> ts1 = new TestSubscriber<>(0);
 		TestSubscriber<Integer> ts2 = new TestSubscriber<>(0);
 
-		ConnectableFluxion<Integer> p = Fluxion.range(1, 5).capacity(5).publish();
+		ConnectableFluxion<Integer> p = Fluxion.range(1, 5).useCapacity(5).publish();
 		
 		p.subscribe(ts1);
 		p.subscribe(ts2);

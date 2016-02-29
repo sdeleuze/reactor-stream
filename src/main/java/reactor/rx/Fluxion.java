@@ -2075,21 +2075,6 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	}
 
 	/**
-	 * Hint {@link Subscriber} to this {@link Fluxion} a preferred available capacity should be used.
-	 * {@link #toIterable()} can for instance use introspect this value to supply an appropriate queueing strategy.
-	 *
-	 * @param capacity the maximum capacity (in flight onNext) the return {@link Publisher} should expose
-	 *
-	 * @return a bounded {@link Fluxion}
-	 */
-	public Fluxion<O> capacity(final long capacity) {
-		if (capacity == getCapacity()) {
-			return this;
-		}
-		return FluxionConfig.withCapacity(this, capacity);
-	}
-
-	/**
 	 * Cast the current {@link Fluxion} produced type into a target produced type.
 	 *
 	 * <p>
@@ -5393,6 +5378,21 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	}
 
 	/**
+	 * Hint {@link Subscriber} to this {@link Fluxion} a preferred available capacity should be used.
+	 * {@link #toIterable()} can for instance use introspect this value to supply an appropriate queueing strategy.
+	 *
+	 * @param capacity the maximum capacity (in flight onNext) the return {@link Publisher} should expose
+	 *
+	 * @return a bounded {@link Fluxion}
+	 */
+	public Fluxion<O> useCapacity(final long capacity) {
+		if (capacity == getCapacity()) {
+			return this;
+		}
+		return FluxionConfig.withCapacity(this, capacity);
+	}
+
+	/**
 	 * Configure an arbitrary name for later introspection.
 	 *
 	 * @param name arbitrary {@link Fluxion} name
@@ -5410,10 +5410,10 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 *
 	 * @return {@link Fluxion} with capacity set to max
 	 *
-	 * @see #capacity(long)
+	 * @see #useCapacity(long)
 	 */
 	public final Fluxion<O> useNoCapacity() {
-		return capacity(Long.MAX_VALUE);
+		return useCapacity(Long.MAX_VALUE);
 	}
 
 	/**

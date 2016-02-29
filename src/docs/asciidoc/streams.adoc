@@ -620,7 +620,7 @@ h|consume(_Consumer<T>,Consumer<T>,Consumer<T>_)
 
 _consumeOn_
 |Control
-2+|Call `subscribe` with a `ConsumerAction` which interacts with each passed `Consumer`, each time the interest signal is detected. It will `request(Fluxion.capacity())` to the received `Subscription`, which is `Long.MAX_VALUE` by default, which results in unbounded consuming. The `publishOn` and `consumeOn` alternatives provide for signalling `onSubscribe` using the passed `Dispatcher`. Returns a `Control` component to cancel the materialized `Stream`, if necessary. Note that `ConsumeAction` takes care of unbounded recursion if the `onNext(T)` signal triggers a blocking request.
+2+|Call `subscribe` with a `ConsumerAction` which interacts with each passed `Consumer`, each time the interest signal is detected. It will `request(Fluxion.useCapacity())` to the received `Subscription`, which is `Long.MAX_VALUE` by default, which results in unbounded consuming. The `publishOn` and `consumeOn` alternatives provide for signalling `onSubscribe` using the passed `Dispatcher`. Returns a `Control` component to cancel the materialized `Stream`, if necessary. Note that `ConsumeAction` takes care of unbounded recursion if the `onNext(T)` signal triggers a blocking request.
 
 h|subscribeLater()
 |Control
@@ -630,7 +630,7 @@ h|batchConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Long,Long>*)
 
 _batchConsumeOn_
 |Control
-2+|Similar to `consume` but will request the mapped `Long` demand given the previous demand and starting with the default `Fluxion.capacity()`. Useful for adapting the demand dynamically due to various factors.
+2+|Similar to `consume` but will request the mapped `Long` demand given the previous demand and starting with the default `Fluxion.useCapacity()`. Useful for adapting the demand dynamically due to various factors.
 
 h|adaptiveConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Fluxion<Long>,Publisher<Long>>*)
 
@@ -676,7 +676,7 @@ The Reactive Streams standard encourages application developers to set reasonabl
 
 Within a Reactor `Stream`, it's possible to microbatch items to limit the amount of data in-flight at any given time. This has distinct advantages in a number of ways, not the least of which is that it limits exposure to data loss by preventing the system from accepting more data than it can afford to lose if the system was to crash.
 
-To limit the amount of data in-flight in a `Stream`, use the link:/docs/api/reactor/rx/Fluxion.html#capacity-long-[`.capacity(long)`] method.
+To limit the amount of data in-flight in a `Stream`, use the link:/docs/api/reactor/rx/Fluxion.html#capacity-long-[`.useCapacity(long)`] method.
 
 .Fluxion.just()
 [source,java]
@@ -685,7 +685,7 @@ Fluxion<String> st;
 
 st
   .dispatchOn(SchedulerGroup.single())
-  .capacity(256) // <1>
+  .useCapacity(256) // <1>
   .consume(s -> service.doWork(s)); // <2>
 ----
 <1> Limit the amount of data in-flight to no more than 256 elements at a time.
@@ -911,7 +911,7 @@ Stream
 .publishOn and dispatchOn/process with an unbounded Subscriber
 image::images/longMaxThreading.png[Unbounded threading, width=600, align="center", link="images/longMaxThreading.png"]
 
-However, `publishOn` is less useful when more than 1 request will be involved, like in step-consuming with `Fluxion.capacity(n)`.
+However, `publishOn` is less useful when more than 1 request will be involved, like in step-consuming with `Fluxion.useCapacity(n)`.
 The only request executed possibly running on the dispatcher assigned in `publishOn` is the *first one*.
 
 .Jumping between thread with a bounded demand 1
@@ -921,7 +921,7 @@ Stream
   .range(1, 100)
   .subscribeWith(TopicProcessor.create()) // <2>
   .publishOn(SchedulerGroup.io()) // <1>
-  .capacity(1); // <3>
+  .useCapacity(1); // <3>
   .subscribe(); // <4>
 ----
 <1> Assign an *onSubscribe* work queue dispatcher. Note that it is placed after process as the publishOn will run on the ringBuffer thread on subscriber and we want to alter it to the work dispatcher.
@@ -1163,7 +1163,7 @@ image::images/marble/marble-101.png[Marble Diagrams, width=650, align="center", 
 Fluxion.just(1,2,3,4,5)
   .buffer(3) // <1>
   //onOverflowBuffer()
-  .capacity(2) // <2>
+  .useCapacity(2) // <2>
   .subscribe()
 
 
@@ -1173,12 +1173,12 @@ Fluxion.just(1,2,3,4,5)
   .dispatchOn(dispatcher2) // <4>
   .subscribe()
 ----
-<1> The buffer operation set capacity(3)
-<2> subscribe() or any downstream action is set with capacity(2), an implicit onOverflowBuffer() is added
+<1> The buffer operation set useCapacity(3)
+<2> subscribe() or any downstream action is set with useCapacity(2), an implicit onOverflowBuffer() is added
 <3> A first action running on dispatcher1
 <4> A second action running on a different dispatcher2, an implicit onOverflowBuffer() is added
 
-Ultimately the `Subscriber` can request data one by one, limiting the in-flight data to one element all along the pipeline and requesting one more after each successful `onNext(T)`. The same behavior can be obtained with `capacity(1).consume(...)`.
+Ultimately the `Subscriber` can request data one by one, limiting the in-flight data to one element all along the pipeline and requesting one more after each successful `onNext(T)`. The same behavior can be obtained with `useCapacity(1).consume(...)`.
 
 [source,java]
 ----
@@ -1213,7 +1213,7 @@ h|Fluxion<T>
 h|subscribe(*Subscriber<T>*)
 |A custom `Subscriber<T>` will have the flexibility to request whenever it wishes. It's best to change the size these requests if the `Subscriber` uses blocking operations.
 
-h|capacity(*long*)
+h|useCapacity(*long*)
 |<<streams.adoc#stream-capacity, Set the capacity>> to this `Fluxion<T>` and all downstream actions.
 
 h|onOverflowBuffer(_CompletableQueue_)
@@ -1239,7 +1239,7 @@ image::images/marble/marble-requestwhen.png[requestWhen(requestMapper), width=50
 h|batchConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Long,Long>*)
 
 _batchConsumeOn_
-|Similar to `consume` but will request the mapped `Long` demand given the previous demand and starting with the default `Fluxion.capacity()`. Useful for adapting the demand from various factors.
+|Similar to `consume` but will request the mapped `Long` demand given the previous demand and starting with the default `Fluxion.useCapacity()`. Useful for adapting the demand from various factors.
 
 h|adaptiveConsume(*Consumer<T>*, _Consumer<T>, Consumer<T>_, *Function<Fluxion<Long>,Publisher<Long>>*),
 
@@ -1683,7 +1683,7 @@ stream
 ** We send at most as many individual _Result_ as demanded
 ** We complete when the query read is fully processed
 * Since the data is individual now, convertToList is unnecessary, replaced with convert
-* The Consuming aspect can start using tools such as `capacity(long)` or `buffer(int)` to batch consume the request 5 by 5.
+* The Consuming aspect can start using tools such as `useCapacity(long)` or `buffer(int)` to batch consume the request 5 by 5.
 ** As a result, the flow will be perceived faster because we don't print after every row has been read
 ** We add a time limit to the batch since it might not match the size
 ****

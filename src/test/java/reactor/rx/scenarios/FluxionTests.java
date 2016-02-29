@@ -166,7 +166,7 @@ public class FluxionTests extends AbstractReactorTest {
 		Fluxion<String> stream2 = Fluxion.just("3", "4", "5");
 		Mono<Integer> s = Fluxion.merge(stream1, stream2)
 		                         //.dispatchOn(env)
-		                         .capacity(5)
+		                         .useCapacity(5)
 		                         .log("merge")
 		                         .map(STRING_2_INTEGER)
 		                         .reduce(1, (acc, next) -> acc * next);
@@ -866,7 +866,7 @@ public class FluxionTests extends AbstractReactorTest {
 
 		                           );
 
-		InterruptableSubscriber<?> action = s.capacity(1L)
+		InterruptableSubscriber<?> action = s.useCapacity(1L)
 		                  .consume(integer -> {
 			                  latch.countDown();
 			                  System.out.println(integer);
@@ -1213,7 +1213,7 @@ public class FluxionTests extends AbstractReactorTest {
 		       .log("testOn")
 		       .publishOn(ioGroup)
 		       .dispatchOn(asyncGroup)
-		       .capacity(1)
+		       .useCapacity(1)
 		       .consume(t -> latch.countDown());
 
 		assertThat("Not totally dispatched", latch.await(30, TimeUnit.SECONDS));

@@ -583,7 +583,7 @@ class FluxionSpec extends Specification {
 		given:
 			'a composable that will accept an unknown number of values'
 			def d = Broadcaster.<Integer> create()
-			def composable = d.capacity(3)
+			def composable = d.useCapacity(3)
 
 		when:
 			'the expected accept count is set and that number of values is accepted'
@@ -1239,7 +1239,7 @@ class FluxionSpec extends Specification {
 		given:
 			'a composable'
 			def source = Broadcaster.<Integer> create()
-			def reduced = source.capacity(1).buffer()
+			def reduced = source.useCapacity(1).buffer()
 			def value = reduced.subscribeWith(Promise.prepare())
 
 		when:
