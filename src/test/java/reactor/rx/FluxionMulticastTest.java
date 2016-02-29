@@ -24,12 +24,12 @@ import reactor.core.test.TestSubscriber;
 
 public class FluxionMulticastTest {
 
-	//FIXME Fix in CORE M2
+	@Test
 	public void normal() {
 		TestSubscriber<Integer> ts1 = new TestSubscriber<>();
 		TestSubscriber<Integer> ts2 = new TestSubscriber<>();
 		
-		ConnectableFluxion<Integer> p = Fluxion.range(1, 5).multicast(EmitterProcessor.create());
+		ConnectableFluxion<Integer> p = Fluxion.range(1, 5).multicast(EmitterProcessor.create(), Fluxion::log);
 		
 		p.subscribe(ts1);
 		p.subscribe(ts2);
@@ -217,7 +217,7 @@ public class FluxionMulticastTest {
 		.assertComplete();
 	}
 
-	//FIXME Fix in CORE M2
+	@Test
 	public void normalHidden() {
 		TestSubscriber<Integer> ts1 = new TestSubscriber<>();
 		TestSubscriber<Integer> ts2 = new TestSubscriber<>();
