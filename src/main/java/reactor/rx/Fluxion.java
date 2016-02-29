@@ -1454,37 +1454,6 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 
 	/**
 	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
-	 * produced by the passed combinator function of the
-	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
-	 *
-	 * The {@link Iterable#iterator()} will be called on each {@link Publisher#subscribe(Subscriber)}.
-	 *
-	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zip.png" alt="">
-	 *
-	 * @param sources the {@link Iterable} to iterate on {@link Publisher#subscribe(Subscriber)}
-	 * @param combinator The aggregate function that will receive a unique value from each upstream and return the value
-	 * to signal downstream
-	 * @param <V> the combined produced type
-	 * @param <TUPLE>    The type of tuple to use that must match source Publishers type
-	 *
-	 * @return a zipped {@link Fluxion}
-	 *
-	 * @since 2.0
-	 */
-	public static <TUPLE extends Tuple, V> Fluxion<V> zip(Iterable<? extends Publisher<?>> sources,
-			final Function<? super TUPLE, ? extends V> combinator) {
-		return from(Flux.zip(sources, new Function<Object[], V>() {
-			@Override
-			@SuppressWarnings("unchecked")
-			public V apply(Object[] tuple) {
-				return combinator.apply((TUPLE)Tuple.of(tuple));
-			}
-		}));
-	}
-
-	/**
-	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
 	 * of the most recent items emitted by each source until any of them completes. Errors will immediately be
 	 * forwarded.
 	 * The {@link Iterable#iterator()} will be called on each {@link Publisher#subscribe(Subscriber)}.
@@ -1554,6 +1523,105 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 						.size()]));
 			}
 		});
+	}
+
+	/**
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * produced by the passed combinator function of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 *
+	 * The {@link Iterable#iterator()} will be called on each {@link Publisher#subscribe(Subscriber)}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zip.png" alt="">
+	 *
+	 * @param sources the {@link Iterable} to iterate on {@link Publisher#subscribe(Subscriber)}
+	 * @param combinator The aggregate function that will receive a unique value from each upstream and return the value
+	 * to signal downstream
+	 * @param <O> the combined produced type
+	 *
+	 * @return a zipped {@link Fluxion}
+	 */
+	public static <O> Fluxion<O> zip(Iterable<? extends Publisher<?>> sources,
+			final Function<? super Object[], ? extends O> combinator) {
+
+		return zip(sources, PlatformDependent.XS_BUFFER_SIZE, combinator);
+	}
+
+	/**
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * produced by the passed combinator function of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 *
+	 * The {@link Iterable#iterator()} will be called on each {@link Publisher#subscribe(Subscriber)}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipp.png" alt="">
+	 *
+	 * @param sources the {@link Iterable} to iterate on {@link Publisher#subscribe(Subscriber)}
+	 * @param prefetch the inner source request size
+	 * @param combinator The aggregate function that will receive a unique value from each upstream and return the value
+	 * to signal downstream
+	 * @param <O> the combined produced type
+	 *
+	 * @return a zipped {@link Fluxion}
+	 */
+	public static <O> Fluxion<O> zip(Iterable<? extends Publisher<?>> sources,
+			int prefetch,
+			final Function<? super Object[], ? extends O> combinator) {
+
+		if (sources == null) {
+			return empty();
+		}
+
+		return FluxionSource.wrap(Flux.zip(sources, prefetch, combinator));
+	}
+
+	/**
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * produced by the passed combinator function of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zip.png" alt="">
+	 * <p>
+	 * @param combinator The aggregate function that will receive a unique value from each upstream and return the
+	 * value to signal downstream
+	 * @param sources the {@link Publisher} array to iterate on {@link Publisher#subscribe(Subscriber)}
+	 * @param <O> the combined produced type
+	 *
+	 * @return a zipped {@link Fluxion}
+	 */
+	@SafeVarargs
+	@SuppressWarnings("varargs")
+	public static <I, O> Fluxion<O> zip(
+			final Function<? super Object[], ? extends O> combinator, Publisher<? extends I>... sources) {
+		return zip(combinator, PlatformDependent.XS_BUFFER_SIZE, sources);
+	}
+	/**
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * produced by the passed combinator function of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipp.png" alt="">
+	 * <p>
+	 * @param combinator The aggregate function that will receive a unique value from each upstream and return the
+	 * value to signal downstream
+	 * @param prefetch individual source request size
+	 * @param sources the {@link Publisher} array to iterate on {@link Publisher#subscribe(Subscriber)}
+	 * @param <O> the combined produced type
+	 *
+	 * @return a zipped {@link Fluxion}
+	 */
+	@SafeVarargs
+	@SuppressWarnings("varargs")
+	public static <I, O> Fluxion<O> zip(
+			final Function<? super Object[], ? extends O> combinator, int prefetch, Publisher<? extends I>... sources) {
+
+		if (sources == null) {
+			return empty();
+		}
+
+		return FluxionSource.wrap(Flux.zip(combinator, prefetch, sources));
 	}
 
 	protected Fluxion() {
@@ -5610,6 +5678,30 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	}
 
 	/**
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations
+	 * produced by the passed combinator from the most recent items emitted by each source until any of them
+	 * completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipp.png" alt="">
+	 * <p>
+	 * @param source2 The second upstream {@link Publisher} to subscribe to.
+	 * @param combinator The aggregate function that will receive a unique value from each upstream and return the value
+	 * to signal downstream
+	 * @param prefetch the request size to use for this {@link Fluxion} and the other {@link Publisher}
+	 * @param <T2> type of the value from source2
+	 * @param <V> The produced output after transformation by the combinator
+	 *
+	 * @return a zipped {@link Fluxion}
+	 *
+	 * @since 2.0
+	 */
+	@SuppressWarnings("unchecked")
+	public final <T2, V> Fluxion<V> zipWith(final Publisher<? extends T2> source2,
+			final BiFunction<? super O, ? super T2, ? extends V> combinator, int prefetch) {
+		return zip(objects -> combinator.apply((O)objects[0], (T2)objects[1]), prefetch, this, source2);
+	}
+
+	/**
 	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations of the
 	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
 	 * <p>
@@ -5625,6 +5717,25 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	@SuppressWarnings("unchecked")
 	public final <T2> Fluxion<Tuple2<O, T2>> zipWith(final Publisher<? extends T2> source2) {
 		return FluxionSource.wrap(Flux.<O, T2, Tuple2<O, T2>>zip(this, source2, TUPLE2_BIFUNCTION));
+	}
+
+	/**
+	 * "Step-Merge" especially useful in Scatter-Gather scenarios. The operator will forward all combinations of the
+	 * most recent items emitted by each source until any of them completes. Errors will immediately be forwarded.
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/zipp.png" alt="">
+	 * <p>
+	 * @param source2 The second upstream {@link Publisher} to subscribe to.
+	 * @param prefetch the request size to use for this {@link Fluxion} and the other {@link Publisher}
+	 * @param <T2> type of the value from source2
+	 *
+	 * @return a zipped {@link Fluxion}
+	 *
+	 * @since 2.5
+	 */
+	@SuppressWarnings("unchecked")
+	public final <T2> Fluxion<Tuple2<O, T2>> zipWith(final Publisher<? extends T2> source2, int prefetch) {
+		return zip(Tuple.fn2(), prefetch, this, source2);
 	}
 
 	/**
