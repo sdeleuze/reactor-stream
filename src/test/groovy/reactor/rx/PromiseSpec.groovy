@@ -20,6 +20,7 @@ import reactor.core.publisher.SchedulerGroup
 import reactor.core.util.Exceptions
 import spock.lang.Specification
 
+import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -472,7 +473,7 @@ class PromiseSpec extends Specification {
 	def combined =  Mono.any(promise1, promise2).subscribeWith(Promise.prepare())
 
 	then: "it is fulfilled"
-	combined.awaitSuccess(3205, TimeUnit.MILLISECONDS)
+	combined.awaitSuccess(Duration.ofMillis(3205))
 	combined.peek() == 2
   }
 
@@ -506,7 +507,7 @@ class PromiseSpec extends Specification {
 	promise1.onNext 1
 
 	then: "the combined promise is fulfilled"
-	combined.await(1, TimeUnit.SECONDS) == [1]
+	combined.await(Duration.ofSeconds(1)) == [1]
 	combined.success
   }
 
@@ -625,7 +626,7 @@ class PromiseSpec extends Specification {
 	and: "setting a value"
 	p1.onNext '1'
 	println "emitted"
-	 p2.get(1, TimeUnit.SECONDS)
+	 p2.get(Duration.ofSeconds(1))
 
 	then: 'No value'
 	thrown Exceptions.CancelException

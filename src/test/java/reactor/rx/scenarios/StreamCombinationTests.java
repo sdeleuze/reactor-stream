@@ -16,6 +16,7 @@
 
 package reactor.rx.scenarios;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -158,8 +159,8 @@ public class StreamCombinationTests extends AbstractReactorTest {
 		CountDownLatch latch = new CountDownLatch(elements / 2 - 2);
 
 		InterruptableSubscriber<?> tail = Fluxion.combineLatest(
-				sensorOdd().cache().throttleRequest(50),
-				sensorEven().cache().throttleRequest(100),
+				sensorOdd().cache().throttleRequest(Duration.ofMillis(50)),
+				sensorEven().cache().throttleRequest(Duration.ofMillis(100)),
 		this::computeMin)
 		                                         .log("combineLatest")
 		                                         .consume(i -> latch.countDown(), null, latch::countDown);

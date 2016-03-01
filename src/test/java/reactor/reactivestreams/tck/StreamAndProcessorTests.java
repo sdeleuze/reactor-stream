@@ -16,7 +16,7 @@
 
 package reactor.reactivestreams.tck;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 
@@ -55,7 +55,7 @@ public class StreamAndProcessorTests extends AbstractStreamVerification {
 		                                                                   .filter(integer -> integer <= 0)
 		                                                                   .every(1)
 		                                                                   .map(integer -> -integer)
-		                                                                   .buffer(batch, 50, TimeUnit.MILLISECONDS)
+		                                                                   .buffer(batch, Duration.ofMillis(50))
 		                                                                   .flatMap(Fluxion::fromIterable)
 		                                                                   .doOnNext(array -> cumulated.getAndIncrement())
 		                                                                   .flatMap(i -> Fluxion.zip(Fluxion.just(i),

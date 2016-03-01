@@ -28,6 +28,7 @@ import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.time.Duration
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiFunction
@@ -331,7 +332,7 @@ class FluxionSpec extends Specification {
 					.next()
 
 		then:
-			last.get(5, TimeUnit.SECONDS) > 20_000
+			last.get(Duration.ofSeconds(5)) > 20_000
 	}
 
 	def 'A Fluxion can sample values over time with consumeOn'() {
@@ -343,7 +344,7 @@ class FluxionSpec extends Specification {
 			'the most recent value is retrieved'
 			def last =
 			s
-					.take(4, TimeUnit.SECONDS)
+					.take(Duration.ofSeconds(4))
 					.publishOn(SchedulerGroup.io("work", 8, 4))
 					.last()
 					.subscribeWith(Promise.ready())
@@ -1303,11 +1304,11 @@ class FluxionSpec extends Specification {
 
 		when:
 			'non overlapping buffers'
-			res = numbers.throttleRequest(100).log('beforeBuffer').buffer(200l, 300l, TimeUnit.MILLISECONDS).log('afterBuffer').buffer().promise()
+			res = numbers.throttleRequest(100).log('beforeBuffer').buffer(Duration.ofMillis(200), Duration.ofMillis(300)).log('afterBuffer').buffer().promise()
 
 		then:
 			'the collected lists are available'
-			res.await(5, TimeUnit.SECONDS) == [[1, 2], [4, 5], [7, 8]]
+			res.await(Duration.ofSeconds(5)) == [[1, 2], [4, 5], [7, 8]]
 	}
 
 
@@ -1382,7 +1383,7 @@ class FluxionSpec extends Specification {
 
 		when:
 			'non overlapping buffers'
-			res = numbers.throttleRequest(100).window(200l, 300l, TimeUnit.MILLISECONDS).flatMap { it.log('fm').buffer() }
+			res = numbers.throttleRequest(100).window(Duration.ofMillis(200), Duration.ofMillis(300)).flatMap { it.log('fm').buffer() }
 					.buffer().promise()
 
 		then:
@@ -1487,7 +1488,7 @@ class FluxionSpec extends Specification {
 			def source = Broadcaster.<Integer> create()
 			def promise = Promise.ready()
 
-			source.dispatchOn(asyncGroup).log("prewindow").window(10l, TimeUnit.SECONDS).consume {
+			source.dispatchOn(asyncGroup).log("prewindow").window(Duration.ofSeconds(10)).consume {
 				it.log().buffer(2).consume { promise.onNext(it) }
 			}
 
@@ -1663,7 +1664,7 @@ class FluxionSpec extends Specification {
 
 		when:
 			'accept a value'
-			def result = s.toList().get(5, TimeUnit.SECONDS)
+			def result = s.toList().get(Duration.ofSeconds(5))
 			//println s.debug()
 
 		then:
@@ -1689,7 +1690,7 @@ class FluxionSpec extends Specification {
 
 		when:
 			'accept a value'
-			def result = s.toList().get(5, TimeUnit.SECONDS)
+			def result = s.toList().get(Duration.ofSeconds(5))
 			//println s.debug()
 
 		then:
@@ -1709,9 +1710,9 @@ class FluxionSpec extends Specification {
 
 		when:
 			'accept a value'
-			res << s.next().get(5, TimeUnit.SECONDS)
-			res << s.next().get(5, TimeUnit.SECONDS)
-			res << s.next().get(5, TimeUnit.SECONDS)
+			res << s.next().get(Duration.ofSeconds(5))
+			res << s.next().get(Duration.ofSeconds(5))
+			res << s.next().get(Duration.ofSeconds(5))
 			//println s.debug()
 
 		then:
@@ -1741,7 +1742,7 @@ class FluxionSpec extends Specification {
 
 		when:
 			'accept a value'
-			def res = s.toList().get(5, TimeUnit.SECONDS)
+			def res = s.toList().get(Duration.ofSeconds(5))
 			//println s.debug()
 
 		then:
@@ -1763,7 +1764,7 @@ class FluxionSpec extends Specification {
 			s.onNext 2
 			s.onNext 3
 			s.onComplete()
-			res.await(5, TimeUnit.SECONDS)
+			res.await(Duration.ofSeconds(5))
 			//println s.debug()
 
 		then:
@@ -1776,7 +1777,7 @@ class FluxionSpec extends Specification {
 			'a source fluxion with a given globalTimer'
 
 			def res = 0l
-			def c = Mono.delay(1)
+			def c = Mono.delay(1000)
 			def timeStart = System.currentTimeMillis()
 
 		when:
@@ -1791,7 +1792,7 @@ class FluxionSpec extends Specification {
 		when:
 			'consuming periodic'
 			def i = []
-			c = Fluxion.interval(0, 1).log().consume {
+			c = Fluxion.interval(0, 1000).log().consume {
 				i << it
 			}
 			sleep(2500)
@@ -1935,7 +1936,7 @@ class FluxionSpec extends Specification {
 				'hello future too long'
 			} as Callable<String>)
 
-			s = Fluxion.fromFuture(future, 100, TimeUnit.MILLISECONDS).dispatchOn(asyncGroup).as{ Fluxion.from(it) }
+			s = Fluxion.fromFuture(future, Duration.ofMillis(100)).dispatchOn(asyncGroup).as{ Fluxion.from(it) }
 			nexts = []
 			errors = []
 
@@ -2013,7 +2014,7 @@ class FluxionSpec extends Specification {
 		given:
 			'a source and a collected fluxion'
 			def source = Broadcaster.<Integer> create()
-			def reduced = source.buffer(5, 600, TimeUnit.MILLISECONDS)
+			def reduced = source.buffer(5, Duration.ofMillis(600))
 			def value = reduced.tap()
 			value.subscribe()
 			println value.debug()
@@ -2050,7 +2051,7 @@ class FluxionSpec extends Specification {
 		given:
 			'a source and a timeout'
 			def source = Broadcaster.<Integer> create()
-			def reduced = source.timeout(1500, TimeUnit.MILLISECONDS)
+			def reduced = source.timeout(Duration.ofMillis(1500))
 			def error = null
 			def value = reduced.onErrorResumeWith(){
 				error = it
@@ -2082,7 +2083,7 @@ class FluxionSpec extends Specification {
 		given:
 			'a source and a timeout'
 			def source = Broadcaster.<Integer> create()
-			def reduced = source.timeout(1500, TimeUnit.MILLISECONDS, Fluxion.just(10))
+			def reduced = source.timeout(Duration.ofMillis(1500), Fluxion.just(10))
 			def error = null
 			def value = reduced.doOnError(TimeoutException) {
 				error = it
@@ -2409,7 +2410,7 @@ class FluxionSpec extends Specification {
 			.log('request')
 					.requestWhen {
 				it
-						.flatMap { v -> Fluxion.interval(avgTime, TimeUnit.MILLISECONDS).map { 1l }
+						.flatMap { v -> Fluxion.interval(Duration.ofMillis(avgTime)).map { 1l }
 				}
 			}
 			.elapsed()
@@ -2429,7 +2430,7 @@ class FluxionSpec extends Specification {
 				source.onNext(1)
 			}
 			println value.debug()
-			println(((long) (value.await(10, TimeUnit.SECONDS))) + " milliseconds on average")
+			println(((long) (value.await(Duration.ofSeconds(10)))) + " milliseconds on average")
 
 		then:
 			'the average elapsed time between 2 signals is greater than throttled time'
@@ -2663,7 +2664,7 @@ class FluxionSpec extends Specification {
 			  attempts.log('zipWith').zipWith(Fluxion.range(1, 3), { t1, t2 -> t2 }).flatMap { i ->
 					println "delay retry by " + i + " second(s)"
 				  println attempts.debug()
-				Mono.delay(i)
+				Mono.delay(i * 1000)
 				}
 			}.subscribeWith(new TestSubscriber<>())
 			println value.debug()
@@ -2727,7 +2728,7 @@ class FluxionSpec extends Specification {
 			}.log('repeat').repeatWhen { attempts ->
 				attempts.zipWith(Fluxion.range(1, 3)) { t1, t2 -> t2 }.flatMap { i ->
 					println "delay repeat by " + i + " second(s)"
-				  Mono.delay(i)
+				  Mono.delay(i * 1000)
 				}
 			}.log('test').subscribe()
 	  sleep 10000
@@ -2750,7 +2751,7 @@ class FluxionSpec extends Specification {
 			}.repeatWhen { attempts ->
 				attempts.log('repeat').takeWhile{ println it; it == 0L }.flatMap { i ->
 					println "delay repeat by 1 second"
-				  Mono.delay(1)
+				  Mono.delay(1000)
 				}
 			}.log('test').subscribe()
 	  sleep 10000
@@ -2882,7 +2883,7 @@ class FluxionSpec extends Specification {
 
 		when:
 			'take to the first 2 elements'
-		stream.take(2, TimeUnit.SECONDS).after().get()
+		stream.take(Duration.ofSeconds(2)).after().get()
 
 		then:
 			'the second is the last available'
@@ -2928,7 +2929,7 @@ class FluxionSpec extends Specification {
 					.dispatchOn(asyncGroup)
 
 		when:
-			def promise = stream.log("skipTime").skip(2, TimeUnit.SECONDS).buffer().promise()
+			def promise = stream.log("skipTime").skip(Duration.ofSeconds(2)).buffer().promise()
 
 		then:
 			!promise.await()

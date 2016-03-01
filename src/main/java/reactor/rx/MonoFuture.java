@@ -34,19 +34,15 @@ final class MonoFuture<T> extends Mono<T> {
 	final Future<? extends T> future;
 	
 	final long timeout;
-	
-	final TimeUnit unit;
 
 	public MonoFuture(Future<? extends T> future) {
 		this.future = future;
 		this.timeout = 0L;
-		this.unit = null;
 	}
 
-	public MonoFuture(Future<? extends T> future, long timeout, TimeUnit unit) {
+	public MonoFuture(Future<? extends T> future, long timeout) {
 		this.future = future;
 		this.timeout = timeout;
-		this.unit = unit;
 	}
 
 	@Override
@@ -57,8 +53,8 @@ final class MonoFuture<T> extends Mono<T> {
 		
 		T v;
 		try {
-			if (unit != null) {
-				v = future.get(timeout, unit);
+			if (timeout > 0L) {
+				v = future.get(timeout, TimeUnit.MILLISECONDS);
 			} else {
 				v = future.get();
 			}

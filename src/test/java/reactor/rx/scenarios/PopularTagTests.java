@@ -15,6 +15,7 @@
  */
 package reactor.rx.scenarios;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -60,7 +61,7 @@ public class PopularTagTests extends AbstractReactorTest {
 				  .filter(w -> !w.trim().isEmpty())
 				  .doOnNext(i -> simulateLatency())
 			)
-		         .window(2, SECONDS)
+		         .window(Duration.ofSeconds(2))
 		         .flatMap(s -> s.groupBy(w -> w)
 		                       .flatMap(w -> w.count().map(c -> Tuple.of(w.key(), c)))
 		                       .bufferSort((a, b) -> -a.t2.compareTo(b.t2))
