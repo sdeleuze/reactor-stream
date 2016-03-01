@@ -3306,7 +3306,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 			Function<? super O, ? extends V> valueMapper) {
 		return new FluxionGroupBy<>(this, keyMapper, valueMapper,
 				QueueSupplier.<GroupedFluxion<K, V>>small(),
-				QueueSupplier.<V>unbounded(PlatformDependent.XS_BUFFER_SIZE),
+				QueueSupplier.<V>unbounded(),
 				PlatformDependent.SMALL_BUFFER_SIZE);
 	}
 
