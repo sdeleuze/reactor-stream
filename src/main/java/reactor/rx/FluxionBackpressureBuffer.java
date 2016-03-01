@@ -19,7 +19,7 @@ import org.reactivestreams.Processor;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.flow.Fuseable;
-import reactor.core.util.PlatformDependent;
+import reactor.core.queue.QueueSupplier;
 
 /**
  * @author Stephane Maldini
@@ -32,8 +32,7 @@ final class FluxionBackpressureBuffer<O> extends FluxionSource<O, O> implements 
 
 	@Override
 	public void subscribe(Subscriber<? super O> s) {
-		Processor<O, O> emitter = new UnicastProcessor<O>(new SpscLinkedArrayQueue<O>(PlatformDependent
-				.SMALL_BUFFER_SIZE));
+		Processor<O, O> emitter = new UnicastProcessor<O>(QueueSupplier.<O>unbounded().get());
 		emitter.subscribe(s);
 		source.subscribe(emitter);
 	}

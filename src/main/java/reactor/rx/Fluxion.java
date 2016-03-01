@@ -3306,7 +3306,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 			Function<? super O, ? extends V> valueMapper) {
 		return new FluxionGroupBy<>(this, keyMapper, valueMapper,
 				QueueSupplier.<GroupedFluxion<K, V>>small(),
-				SpscLinkedArrayQueue.<V>unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE),
+				QueueSupplier.<V>unbounded(PlatformDependent.XS_BUFFER_SIZE),
 				PlatformDependent.SMALL_BUFFER_SIZE);
 	}
 
@@ -4412,7 +4412,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 */
 	@SuppressWarnings("unchecked")
 	public final <U> Fluxion<O> sampleTimeout(Function<? super O, ? extends Publisher<U>> throttlerFactory) {
-		return new FluxionThrottleTimeout<>(this, throttlerFactory, SpscLinkedArrayQueue.unboundedSupplier(PlatformDependent
+		return new FluxionThrottleTimeout<>(this, throttlerFactory, QueueSupplier.unbounded(PlatformDependent
 				.XS_BUFFER_SIZE));
 	}
 
@@ -5494,8 +5494,8 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	public final Fluxion<Fluxion<O>> window(final Publisher<?> boundary) {
 		return new FluxionWindowBoundary<>(this,
 				boundary,
-				SpscLinkedArrayQueue.<O>unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE),
-				SpscLinkedArrayQueue.unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE));
+				QueueSupplier.<O>unbounded(PlatformDependent.XS_BUFFER_SIZE),
+				QueueSupplier.unbounded(PlatformDependent.XS_BUFFER_SIZE));
 	}
 
 	/**
@@ -5538,8 +5538,8 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 		return new FluxionWindowStartEnd<>(this,
 				bucketOpening,
 				closeSelector,
-				SpscLinkedArrayQueue.unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE),
-				SpscLinkedArrayQueue.<O>unboundedSupplier(PlatformDependent.XS_BUFFER_SIZE));
+				QueueSupplier.unbounded(PlatformDependent.XS_BUFFER_SIZE),
+				QueueSupplier.<O>unbounded(PlatformDependent.XS_BUFFER_SIZE));
 	}
 
 	/**
