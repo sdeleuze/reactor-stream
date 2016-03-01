@@ -2352,7 +2352,7 @@ class FluxionSpec extends Specification {
 	println tail.debug()
 
 	then:
-	tail.awaitAndAssertValues(1,2,3,4,5)
+	tail.awaitAndAssertNextValues(1,2,3,4,5)
 
 	when:
 	'we try to consume the tail to check if 6 has been buffered'
