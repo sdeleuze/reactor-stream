@@ -16,8 +16,6 @@
 
 package reactor.rx;
 
-import java.util.concurrent.TimeUnit;
-
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -43,14 +41,14 @@ final class FluxionWindowTimeOrSize<T> extends FluxionBatch<T, Fluxion<T>> {
 		this.timer = timer;
 	}
 
-	public FluxionWindowTimeOrSize(Publisher<T> source, int backlog, long timespan, TimeUnit unit, Timer timer) {
-		super(source, backlog, true, true, true, timespan, unit, timer);
+	public FluxionWindowTimeOrSize(Publisher<T> source, int backlog, long timespan, Timer timer) {
+		super(source, backlog, true, true, true, timespan, timer);
 		this.timer = timer;
 	}
 
 	@Override
 	public Subscriber<? super T> apply(Subscriber<? super Fluxion<T>> subscriber) {
-		return new WindowAction<>(prepareSub(subscriber), batchSize, timespan, unit, timer);
+		return new WindowAction<>(prepareSub(subscriber), batchSize, timespan, timer);
 	}
 
 	final static class Window<T> extends Fluxion<T> implements Subscriber<T>, Subscription, Producer {
@@ -136,10 +134,9 @@ final class FluxionWindowTimeOrSize<T> extends FluxionBatch<T, Fluxion<T>> {
 		public WindowAction(Subscriber<? super Fluxion<T>> actual,
 				int backlog,
 				long timespan,
-				TimeUnit unit,
 				Timer timer) {
 
-			super(actual, backlog, true, true, true, timespan, unit, timer);
+			super(actual, backlog, true, true, true, timespan, timer);
 			this.timer = timer;
 		}
 

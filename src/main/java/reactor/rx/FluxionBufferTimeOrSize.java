@@ -18,7 +18,6 @@ package reactor.rx;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -30,13 +29,13 @@ import reactor.core.timer.Timer;
  */
 final class FluxionBufferTimeOrSize<T> extends FluxionBatch<T, List<T>> {
 
-	public FluxionBufferTimeOrSize(Publisher<T> source, int maxSize, long timespan, TimeUnit unit, Timer timer) {
-		super(source, maxSize, true, false, true, timespan, unit, timer);
+	public FluxionBufferTimeOrSize(Publisher<T> source, int maxSize, long timespan, Timer timer) {
+		super(source, maxSize, true, false, true, timespan, timer);
 	}
 
 	@Override
 	public Subscriber<? super T> apply(Subscriber<? super List<T>> subscriber) {
-		return new BufferAction<>(prepareSub(subscriber), batchSize, timespan, unit, timer);
+		return new BufferAction<>(prepareSub(subscriber), batchSize, timespan, timer);
 	}
 
 	final static class BufferAction<T> extends BatchAction<T, List<T>> {
@@ -46,10 +45,9 @@ final class FluxionBufferTimeOrSize<T> extends FluxionBatch<T, List<T>> {
 		public BufferAction(Subscriber<? super List<T>> actual,
 				int maxSize,
 				long timespan,
-				TimeUnit unit,
 				Timer timer) {
 
-			super(actual, maxSize, true, false, true, timespan, unit, timer);
+			super(actual, maxSize, true, false, true, timespan, timer);
 		}
 
 		@Override

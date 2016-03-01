@@ -16,6 +16,7 @@
 
 package reactor.rx;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -129,6 +130,7 @@ import reactor.rx.subscriber.ManualSubscriber;
  * @param <O> The type of the output values
  *
  * @author Stephane Maldini
+ * @author Sebastien Deleuze
  * @since 1.1, 2.0, 2.5
  */
 public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Introspectable {
@@ -798,10 +800,25 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/fromfuture.png" alt="">
 	 *
 	 * @param future the future to poll value from
+	 * @param timeout the timeout in milliseconds
 	 * @return a new {@link Mono}
 	 */
-	public static <T> Mono<T> fromFuture(Future<? extends T> future, long time, TimeUnit unit) {
-		return new MonoFuture<>(future, time, unit);
+	public static <T> Mono<T> fromFuture(Future<? extends T> future, long timeout) {
+		return new MonoFuture<>(future, timeout);
+	}
+
+	/**
+	 * Build a {@link Mono} that will only emit the result of the future and then complete.
+	 * The future will be polled for a given amount of time on request() then onError if failed to return.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/fromfuture.png" alt="">
+	 *
+	 * @param future the future to poll value from
+	 * @return a new {@link Mono}
+	 */
+	public static <T> Mono<T> fromFuture(Future<? extends T> future, Duration duration) {
+		return fromFuture(future, duration.toMillis());
 	}
 
 	/**
@@ -860,25 +877,12 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * complete.
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/interval.png" alt="">
-	 * @param period The number of seconds to wait before the next increment
+	 * @param period The number of milliseconds to wait before the next increment
 	 *
 	 * @return a new timed {@link Fluxion}
 	 */
 	public static Fluxion<Long> interval(long period) {
-		return interval(-1L, period, TimeUnit.SECONDS, Timer.globalOrNew());
-	}
-
-	/**
-	 * Build a {@link Fluxion} that will emit ever increasing counter from 0 after the time delay on each period.
-	 * It will never complete until cancelled.
-	 * <p>
-	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/interval.png" alt="">
-	 * @param delay  the timespan in SECONDS to wait before emitting 0l
-	 * @param period the period in SECONDS before each following increment
-	 * @return a new {@link Fluxion}
-	 */
-	public static Fluxion<Long> interval(long delay, long period) {
-		return interval(delay, period, TimeUnit.SECONDS, Timer.globalOrNew());
+		return interval(0L, period, Timer.globalOrNew());
 	}
 
 	/**
@@ -888,13 +892,12 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/interval.png" alt="">
 	 *
-	 * @param period The the time relative to given unit to wait before the next increment
-	 * @param unit The unit of time
+	 * @param period The duration to wait before the next increment
 	 *
 	 * @return a new timed {@link Fluxion}
 	 */
-	public static Fluxion<Long> interval(long period, TimeUnit unit) {
-		return interval(-1L, period, unit, Timer.globalOrNew());
+	public static Fluxion<Long> interval(Duration period) {
+		return interval(period.toMillis());
 	}
 
 	/**
@@ -905,14 +908,30 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/interval.png" alt="">
 	 *
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
+	 * @param period the period in milliseconds before each following increment
 	 * @param timer  the {@link Timer} to schedule on
 	 *
 	 * @return a new timed {@link Fluxion}
 	 */
-	public static Fluxion<Long> interval(long period, TimeUnit unit, Timer timer) {
-		return interval(-1L, period, unit, timer);
+	public static Fluxion<Long> interval(long period, Timer timer) {
+		return interval(0L, period, timer);
+	}
+
+	/**
+	 * Create a new {@link Fluxion} that emits an ever incrementing long starting with 0 every N period of time unit on
+	 * the given timer. If demand is not produced in time, an onError will be signalled. The {@link Fluxion} will never
+	 * complete.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/interval.png" alt="">
+	 *
+	 * @param period the period before each following increment
+	 * @param timer  the {@link Timer} to schedule on
+	 *
+	 * @return a new timed {@link Fluxion}
+	 */
+	public static Fluxion<Long> interval(Duration period, Timer timer) {
+		return interval(period.toMillis(), timer);
 	}
 
 	/**
@@ -923,14 +942,30 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/intervald.png" alt="">
 	 *
-	 * @param delay  the timespan in [unit] to wait before emitting 0l
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
+	 * @param delay  the delay in milliseconds to wait before emitting 0l
+	 * @param period the period in milliseconds before each following increment
 	 *
 	 * @return a new timed {@link Fluxion}
 	 */
-	public static Fluxion<Long> interval(long delay, long period, TimeUnit unit) {
-		return interval(delay, period, unit, Timer.globalOrNew());
+	public static Fluxion<Long> interval(long delay, long period) {
+		return interval(delay, period, Timer.globalOrNew());
+	}
+
+	/**
+	 * Create a new {@link Fluxion} that emits an ever incrementing long starting with 0 every N period of time unit on
+	 * a global timer. If demand is not produced in time, an onError will be signalled. The {@link Fluxion} will never
+	 * complete.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/intervald.png" alt="">
+	 *
+	 * @param delay  the delay to wait before emitting 0l
+	 * @param period the period before each following increment
+	 *
+	 * @return a new timed {@link Fluxion}
+	 */
+	public static Fluxion<Long> interval(Duration delay, Duration period) {
+		return interval(delay.toMillis(), period.toMillis());
 	}
 
 	/**
@@ -941,15 +976,32 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/intervald.png" alt="">
 	 *
-	 * @param delay  the timespan in [unit] to wait before emitting 0l
-	 * @param period the period in [unit] before each following increment
-	 * @param unit   the time unit
+	 * @param delay  the timespan in milliseconds to wait before emitting 0l
+	 * @param period the period in milliseconds before each following increment
 	 * @param timer  the {@link Timer} to schedule on
 	 *
 	 * @return a new timed {@link Fluxion}
 	 */
-	public static Fluxion<Long> interval(long delay, long period, TimeUnit unit, Timer timer) {
-		return new FluxionInterval(TimeUnit.MILLISECONDS.convert(delay, unit), period, unit, timer);
+	public static Fluxion<Long> interval(long delay, long period, Timer timer) {
+		return new FluxionInterval(delay, period, timer);
+	}
+
+	/**
+	 * Create a new {@link Fluxion} that emits an ever incrementing long starting with 0 every N period of time unit on
+	 * the given timer. If demand is not produced in time, an onError will be signalled. The {@link Fluxion} will never
+	 * complete.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/intervald.png" alt="">
+	 *
+	 * @param delay  the timespan to wait before emitting 0l
+	 * @param period the period before each following increment
+	 * @param timer  the {@link Timer} to schedule on
+	 *
+	 * @return a new timed {@link Fluxion}
+	 */
+	public static Fluxion<Long> interval(Duration delay, Duration period, Timer timer) {
+		return new FluxionInterval(delay.toMillis(), period.toMillis(), timer);
 	}
 
 	/**
@@ -1827,13 +1879,12 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespan.png" alt="">
 	 *
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
+	 * @param timespan the duration to use to release a buffered list
 	 *
 	 * @return a microbatched {@link Fluxion} of {@link List} delimited by the given period
 	 */
-	public final Fluxion<List<O>> buffer(long timespan, TimeUnit unit) {
-		return buffer(timespan, unit, getTimer());
+	public final Fluxion<List<O>> buffer(Duration timespan) {
+		return buffer(timespan, getTimer());
 	}
 
 	/**
@@ -1843,14 +1894,13 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespan.png" alt="">
 	 *
-	 * @param timespan the period in unit to use to release a buffered list
-	 * @param unit the time unit
+	 * @param timespan theduration to use to release a buffered list
 	 * @param timer the {@link Timer} to schedule on
 	 *
 	 * @return a microbatched {@link Fluxion} of {@link List} delimited by the given period
 	 */
-	public final Fluxion<List<O>> buffer(long timespan, TimeUnit unit, Timer timer) {
-		return buffer(interval(timespan, unit, timer));
+	public final Fluxion<List<O>> buffer(Duration timespan, Timer timer) {
+		return buffer(interval(timespan, timer));
 	}
 
 	/**
@@ -1871,14 +1921,13 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespan.png" alt="">
 	 *
-	 * @param timespan the period in unit to use to release buffered lists
-	 * @param timeshift the period in unit to use to create a new bucket
-	 * @param unit the time unit
+	 * @param timespan the duration to use to release buffered lists
+	 * @param timeshift the duration to use to create a new bucket
 	 *
 	 * @return a microbatched {@link Fluxion} of {@link List} delimited by the given period timeshift and sized by timespan
 	 */
-	public final Fluxion<List<O>> buffer(final long timespan, final long timeshift, final TimeUnit unit) {
-		return buffer(timespan, timeshift, unit, getTimer());
+	public final Fluxion<List<O>> buffer(final Duration timespan, final Duration timeshift) {
+		return buffer(timespan, timeshift, getTimer());
 	}
 
 	/**
@@ -1899,25 +1948,23 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespan.png" alt="">
 	 *
-	 * @param timespan the period in unit to use to release buffered lists
-	 * @param timeshift the period in unit to use to create a new bucket
-	 * @param unit the time unit
+	 * @param timespan the duration to use to release buffered lists
+	 * @param timeshift the duration to use to create a new bucket
 	 * @param timer the {@link Timer} to run on
 	 *
 	 * @return a microbatched {@link Fluxion} of {@link List} delimited by the given period timeshift and sized by timespan
 
 	 */
-	public final Fluxion<List<O>> buffer(final long timespan,
-			final long timeshift,
-			final TimeUnit unit,
+	public final Fluxion<List<O>> buffer(final Duration timespan,
+			final Duration timeshift,
 			final Timer timer) {
-		if (timespan == timeshift) {
-			return buffer(timespan, unit, timer);
+		if (timespan.equals(timeshift)) {
+			return buffer(timespan, timer);
 		}
-		return buffer(interval(0L, timeshift, unit, timer), new Function<Long, Publisher<Long>>() {
+		return buffer(interval(Duration.ZERO, timeshift, timer), new Function<Long, Publisher<Long>>() {
 			@Override
 			public Publisher<Long> apply(Long aLong) {
-				return Mono.delay(timespan, unit, timer);
+				return Mono.delay(timespan, timer);
 			}
 		});
 	}
@@ -1931,13 +1978,29 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 
 	 *
 	 * @param maxSize the max collected size
-	 * @param timespan the timeout in unit to use to release a buffered list
-	 * @param unit the time unit
+	 * @param timespan the timeout in milliseconds to use to release a buffered list
 	 *
 	 * @return a microbatched {@link Fluxion} of {@link List} delimited by given size or a given period timeout
 	 */
-	public final Fluxion<List<O>> buffer(int maxSize, long timespan, TimeUnit unit) {
-		return buffer(maxSize, timespan, unit, getTimer());
+	public final Fluxion<List<O>> buffer(int maxSize, long timespan) {
+		return buffer(maxSize, timespan, getTimer());
+	}
+
+	/**
+	 * Collect incoming values into a {@link List} that will be pushed into the returned {@link Fluxion} every timespan
+	 * OR maxSize items.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespansize.png" alt="">
+
+	 *
+	 * @param maxSize the max collected size
+	 * @param timespan the timeout to use to release a buffered list
+	 *
+	 * @return a microbatched {@link Fluxion} of {@link List} delimited by given size or a given period timeout
+	 */
+	public final Fluxion<List<O>> buffer(int maxSize, Duration timespan) {
+		return buffer(maxSize, timespan.toMillis());
 	}
 
 	/**
@@ -1948,17 +2011,34 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespansize.png" alt="">
 	 *
 	 * @param maxSize the max collected size
-	 * @param timespan the timeout in unit to use to release a buffered list
-	 * @param unit the time unit
+	 * @param timespan the timeout to use to release a buffered list
 	 * @param timer the {@link Timer} to run on
 	 *
 	 * @return a microbatched {@link Fluxion} of {@link List} delimited by given size or a given period timeout
 	 */
 	public final Fluxion<List<O>> buffer(final int maxSize,
 			final long timespan,
-			final TimeUnit unit,
 			final Timer timer) {
-		return new FluxionBufferTimeOrSize<>(this, maxSize, timespan, unit, timer);
+		return new FluxionBufferTimeOrSize<>(this, maxSize, timespan, timer);
+	}
+
+	/**
+	 * Collect incoming values into a {@link List} that will be pushed into the returned {@link Fluxion} every timespan
+	 * OR maxSize items
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/buffertimespansize.png" alt="">
+	 *
+	 * @param maxSize the max collected size
+	 * @param timespan the timeout to use to release a buffered list
+	 * @param timer the {@link Timer} to run on
+	 *
+	 * @return a microbatched {@link Fluxion} of {@link List} delimited by given size or a given period timeout
+	 */
+	public final Fluxion<List<O>> buffer(final int maxSize,
+			final Duration timespan,
+			final Timer timer) {
+		return buffer(maxSize, timespan.toMillis(), timer);
 	}
 
 	/**
@@ -2399,7 +2479,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * @since 2.5
 	 */
 	public final Fluxion<O> delay(long seconds) {
-		return delay(seconds, TimeUnit.SECONDS);
+		return delay(Duration.ofSeconds(seconds));
 	}
 
 
@@ -2409,19 +2489,18 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delayonnext.png" alt="">
 	 *
-	 * @param delay period to delay each {@link Subscriber#onNext} call
-	 * @param unit unit of time
+	 * @param delay duration to delay each {@link Subscriber#onNext} call
 	 *
 	 * @return a throttled {@link Fluxion}
 	 *
 	 * @since 2.5
 	 */
-	public final Fluxion<O> delay(final long delay, final TimeUnit unit) {
+	public final Fluxion<O> delay(final Duration delay) {
 		return concatMap(new Function<O, Publisher<? extends O>>() {
 			@Override
 			public Publisher<? extends O> apply(final O o) {
 				Timer timer = getTimer();
-				return Mono.delay(delay, unit, timer != null ? timer : Timer.globalOrNew())
+				return Mono.delay(delay, timer != null ? timer : Timer.globalOrNew())
 				           .map(new Function<Long, O>() {
 					@Override
 					public O apply(Long aLong) {
@@ -2446,7 +2525,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * @since 2.5
 	 */
 	public final Fluxion<O> delaySubscription(long delay) {
-		return delaySubscription(delay, TimeUnit.SECONDS);
+		return delaySubscription(Duration.ofSeconds(delay));
 	}
 
 	/**
@@ -2456,16 +2535,15 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/delaysubscription.png" alt="">
 	 *
-	 * @param delay period in given unit before subscribing this {@link Fluxion}
-	 * @param unit unit of time
+	 * @param delay duration before subscribing this {@link Fluxion}
 	 *
 	 * @return a delayed {@link Fluxion}
 	 *
 	 * @since 2.5
 	 */
-	public final Fluxion<O> delaySubscription(long delay, TimeUnit unit) {
+	public final Fluxion<O> delaySubscription(Duration delay) {
 		Timer timer = getTimer();
-		return delaySubscription(Mono.delay(delay, unit, timer != null ? timer : Timer.globalOrNew()));
+		return delaySubscription(Mono.delay(delay, timer != null ? timer : Timer.globalOrNew()));
 	}
 
 	/**
@@ -4306,7 +4384,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * @return a sampled {@link Fluxion} by last item over a period of time
 	 */
 	public final Fluxion<O> sample(long timespan) {
-		return sample(timespan, TimeUnit.SECONDS);
+		return sample(Duration.ofSeconds(timespan));
 	}
 
 	/**
@@ -4315,13 +4393,12 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/sampletimespan.png" alt="">
 	 *
-	 * @param timespan the period in unit to emit the latest observed item
-	 * @param unit the unit of time
+	 * @param timespan the duration to emit the latest observed item
 	 *
 	 * @return a sampled {@link Fluxion} by last item over a period of time
 	 */
-	public final Fluxion<O> sample(long timespan, TimeUnit unit) {
-		return sample(interval(timespan, unit));
+	public final Fluxion<O> sample(Duration timespan) {
+		return sample(interval(timespan));
 	}
 
 	/**
@@ -4356,7 +4433,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * @return a sampled {@link Fluxion} by first item over a period of time
 	 */
 	public final Fluxion<O> sampleFirst(final long timespan) {
-		return sampleFirst(timespan, TimeUnit.SECONDS);
+		return sampleFirst(Duration.ofSeconds(timespan));
 	}
 
 	/**
@@ -4365,16 +4442,15 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/samplefirsttimespan.png" alt="">
 	 *
-	 * @param timespan the period in unit to exclude others values from this sequence
-	 * @param unit the time unit
+	 * @param timespan the duration to exclude others values from this sequence
 	 *
 	 * @return a sampled {@link Fluxion} by first item over a period of time
 	 */
-	public final Fluxion<O> sampleFirst(final long timespan, final TimeUnit unit) {
+	public final Fluxion<O> sampleFirst(final Duration timespan) {
 		return sampleFirst(new Function<O, Publisher<Long>>() {
 			@Override
 			public Publisher<Long> apply(O o) {
-				return Mono.delay(timespan, unit);
+				return Mono.delay(timespan);
 			}
 		});
 	}
@@ -4566,17 +4642,16 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/skiptime.png" alt="">
 	 *
 	 * @param timespan the time window to exclude next signals
-	 * @param unit the time unit to use
 	 *
 	 * @return a dropping {@link Fluxion} until the end of the given timespan
 	 *
 	 * @since 2.0
 	 */
-	public final Fluxion<O> skip(long timespan, TimeUnit unit) {
-		if(timespan > 0) {
+	public final Fluxion<O> skip(Duration timespan) {
+		if(!timespan.isZero()) {
 			Timer timer = getTimer();
 			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the fluxion");
-			return skipUntil(Mono.delay(timespan, unit, timer));
+			return skipUntil(Mono.delay(timespan, timer));
 		}
 		else{
 			return this;
@@ -4833,22 +4908,20 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/taketime.png" alt="">
 	 *
 	 * @param timespan the time window of items to emit from this {@link Fluxion}
-	 * @param unit the time unit to use
 	 *
 	 * @return a time limited {@link Fluxion}
 	 *
 	 * @since 2.0
 	 */
-	public final Fluxion<O> take(long timespan, TimeUnit unit) {
-		if (timespan > 0) {
+	public final Fluxion<O> take(Duration timespan) {
+		if (!timespan.isZero()) {
 			Timer timer = getTimer();
 			Assert.isTrue(timer != null, "Timer can't be found, try assigning an environment to the fluxion");
-			return takeUntil(Mono.delay(timespan, unit, timer));
+			return takeUntil(Mono.delay(timespan, timer));
 		}
-		else if(timespan == 0) {
+		else {
 			return take(0);
 		}
-		throw new IllegalArgumentException("timespan >= 0 required but it was " + timespan);
 	}
 
 	/**
@@ -4980,6 +5053,23 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	}
 
 	/**
+	 *
+	 * Relay requests of N into N delayed requests of 1 to this {@link Fluxion}.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/throttlerequest.png" alt="">
+	 *
+	 * @param period the period to delay downstream requests of N into N x delayed requests of 1
+	 *
+	 * @return a timed step-request {@link Fluxion}
+	 *
+	 * @since 2.0
+	 */
+	public final Fluxion<O> throttleRequest(final Duration period) {
+		return throttleRequest(period.toMillis());
+	}
+
+	/**
 	 * @see #sampleTimeout(Function)
 	 *
 	 * <p>
@@ -5007,7 +5097,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * @since 1.1, 2.0
 	 */
 	public final Fluxion<O> timeout(long timeout) {
-		return timeout(timeout, null);
+		return timeout(Duration.ofMillis(timeout), null);
 	}
 
 	/**
@@ -5017,15 +5107,14 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeouttime.png" alt="">
 	 *
-	 * @param timeout the timeout in milliseconds between two signals from this {@link Fluxion}
-	 * @param unit the time unit
+	 * @param timeout the timeout between two signals from this {@link Fluxion}
 	 *
 	 * @return a per-item expirable {@link Fluxion}
 	 *
 	 * @since 1.1, 2.0
 	 */
-	public final Fluxion<O> timeout(long timeout, TimeUnit unit) {
-		return timeout(timeout, unit, null);
+	public final Fluxion<O> timeout(Duration timeout) {
+		return timeout(timeout, null);
 	}
 
 	/**
@@ -5037,8 +5126,7 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/timeouttimefallback.png" alt="">
 	 *
-	 * @param timeout the timeout in milliseconds between two signals from this {@link Fluxion}
-	 * @param unit the time unit
+	 * @param timeout the timeout between two signals from this {@link Fluxion}
 	 * @param fallback the fallback {@link Publisher} to subscribe when a timeout occurs
 	 *
 	 * @return a per-item expirable {@link Fluxion} with a fallback {@link Publisher}
@@ -5046,12 +5134,11 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * @since 2.0
 	 */
 	@SuppressWarnings("unchecked")
-	public final Fluxion<O> timeout(final long timeout, final TimeUnit unit, final Publisher<? extends O> fallback) {
+	public final Fluxion<O> timeout(final Duration timeout, final Publisher<? extends O> fallback) {
 		final Timer timer = getTimer();
 		Assert.state(timer != null, "Cannot use default timer as no environment has been provided to this " + "Stream");
 
-		final Mono<Long> _timer = Mono.delay(timeout, unit == null ? TimeUnit.MILLISECONDS : unit, timer)
-				.otherwiseJust(0L);
+		final Mono<Long> _timer = Mono.delay(timeout, timer).otherwiseJust(0L);
 		final Function<O, Publisher<Long>> rest = new Function<O, Publisher<Long>>() {
 			@Override
 			public Publisher<Long> apply(O o) {
@@ -5548,17 +5635,32 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowtimespan.png" alt="">
 	 *
-	 * @param timespan the period in unit to delimit {@link Fluxion} windows
-	 * @param unit the time unit
+	 * @param timespan the duration in milliseconds to delimit {@link Fluxion} windows
 	 *
 	 * @return a windowing {@link Fluxion} of timed {@link Fluxion} buckets
 	 *
 	 * @since 2.0
 	 */
-	public final Fluxion<Fluxion<O>> window(long timespan, TimeUnit unit) {
+	public final Fluxion<Fluxion<O>> window(long timespan) {
 		Timer t = getTimer();
 		if(t == null) t = Timer.global();
-		return window(interval(timespan, unit, t));
+		return window(interval(timespan, t));
+	}
+
+	/**
+	 * Split this {@link Fluxion} sequence into continuous, non-overlapping windows delimited by a given period.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowtimespan.png" alt="">
+	 *
+	 * @param timespan the duration to delimit {@link Fluxion} windows
+	 *
+	 * @return a windowing {@link Fluxion} of timed {@link Fluxion} buckets
+	 *
+	 * @since 2.0
+	 */
+	public final Fluxion<Fluxion<O>> window(Duration timespan) {
+		return window(timespan.toMillis());
 	}
 
 	/**
@@ -5579,29 +5681,57 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsize.png" alt="">
 	 *
-	 * @param timespan the maximum {@link Fluxion} window duration in unit of time
-	 * signals.
-	 * @param timeshift the period of time to create new {@link Fluxion} windows
+	 * @param timespan the maximum {@link Fluxion} window duration in milliseconds
+	 * @param timeshift the period of time in milliseconds to create new {@link Fluxion} windows
 	 *
 	 * @return a windowing
 	 * {@link Fluxion} of {@link Fluxion} buckets delimited by an opening {@link Publisher} and a selected closing {@link Publisher}
 	 *
 	 */
-	public final Fluxion<Fluxion<O>> window(final long timespan, final long timeshift, final TimeUnit unit) {
+	public final Fluxion<Fluxion<O>> window(final long timespan, final long timeshift) {
 		if (timeshift == timespan) {
-			return window(timespan, unit);
+			return window(timespan);
 		}
 
 		Timer t = getTimer();
 		if(t == null) t = Timer.global();
 		final Timer timer = t;
 
-		return window(interval(0L, timeshift, unit, timer), new Function<Long, Publisher<Long>>() {
+		return window(interval(0L, timeshift, timer), new Function<Long, Publisher<Long>>() {
 			@Override
 			public Publisher<Long> apply(Long aLong) {
-				return Mono.delay(timespan, unit, timer);
+				return Mono.delay(timespan, timer);
 			}
 		});
+	}
+
+	/**
+	 * Split this {@link Fluxion} sequence into multiple {@link Fluxion} delimited by the given {@code timeshift}
+	 * period, starting from the first item.
+	 * Each {@link Fluxion} bucket will onComplete after {@code timespan} period has elpased.
+	 *
+	 * <p>
+	 * When timeshift > timespan : dropping windows
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsizeskip.png" alt="">
+	 * <p>
+	 * When timeshift < timespan : overlapping windows
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsizeskipover.png" alt="">
+	 * <p>
+	 * When timeshift == timespan : exact windows
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsize.png" alt="">
+	 *
+	 * @param timespan the maximum {@link Fluxion} window duration
+	 * @param timeshift the period of time to create new {@link Fluxion} windows
+	 *
+	 * @return a windowing
+	 * {@link Fluxion} of {@link Fluxion} buckets delimited by an opening {@link Publisher} and a selected closing {@link Publisher}
+	 *
+	 */
+	public final Fluxion<Fluxion<O>> window(final Duration timespan, final Duration timeshift) {
+		return window(timespan.toMillis(), timeshift.toMillis());
 	}
 
 	/**
@@ -5613,15 +5743,14 @@ public abstract class Fluxion<O> implements Publisher<O>, Backpressurable, Intro
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/projectreactor.io/master/src/main/static/assets/img/marble/windowsizetimeout.png" alt="">
 	 *
 	 * @param maxSize the maximum {@link Fluxion} window items to count before onComplete
-	 * @param timespan the timeout in unit to use to onComplete a given window if size is not counted yet
-	 * @param unit the time unit
+	 * @param timespan the timeout to use to onComplete a given window if size is not counted yet
 	 *
 	 * @return a windowing {@link Fluxion} of sized or timed {@link Fluxion} buckets
 	 *
 	 * @since 2.0
 	 */
-	public final Fluxion<Fluxion<O>> window(final int maxSize, final long timespan, final TimeUnit unit) {
-		return new FluxionWindowTimeOrSize<>(this, maxSize, timespan, unit, getTimer());
+	public final Fluxion<Fluxion<O>> window(final int maxSize, final Duration timespan) {
+		return new FluxionWindowTimeOrSize<>(this, maxSize, timespan.toMillis(), getTimer());
 	}
 
 	/**

@@ -18,6 +18,7 @@ package reactor.rx.scenarios;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -469,7 +470,7 @@ public class FluxionTests extends AbstractReactorTest {
 		}
 		source.onComplete();
 
-		Assert.assertTrue(result.await(5, TimeUnit.SECONDS) >= avgTime * 0.6);
+		Assert.assertTrue(result.await(Duration.ofSeconds(5)) >= avgTime * 0.6);
 	}
 
 	@Test
@@ -542,7 +543,7 @@ public class FluxionTests extends AbstractReactorTest {
 				                                               System.out.println("failures: " + failures + " successes:" + successes);
 				                                               circuitSwitcher.onNext(openCircuit);
 				                                               successes.set(0);
-				                                               Mono.delay(1)
+				                                               Mono.delay(1000)
 				                                                     .subscribe(Subscribers.consumer(ignore -> circuitSwitcher.onNext(
 						                                                     closeCircuit)));
 			                                               }
@@ -598,7 +599,7 @@ public class FluxionTests extends AbstractReactorTest {
 		deferred.dispatchOn(asyncGroup)
 		        .partition(8)
 		        .consume(stream -> stream.dispatchOn(asyncGroup)
-		                                 .buffer(1000 / 8, 1l, TimeUnit.SECONDS)
+		                                 .buffer(1000 / 8, Duration.ofSeconds(1))
 		                                 .consume(batch -> {
 			                                 for (String i : batch) {
 				                                 latch.countDown();
@@ -788,7 +789,7 @@ public class FluxionTests extends AbstractReactorTest {
 		batchingStreamDef
 		                 .partition(PARALLEL_STREAMS)
 		                 .consume(substream -> substream.hide().dispatchOn(asyncGroup)
-		                                                .buffer(BATCH_SIZE, TIMEOUT, TimeUnit.MILLISECONDS)
+		                                                .buffer(BATCH_SIZE, Duration.ofMillis(TIMEOUT))
 		                                                .consume(items -> {
 			                                                batchesDistribution.compute(items.size(),
 					                                                (key, value) -> value == null ? 1 : value + 1);
@@ -827,7 +828,7 @@ public class FluxionTests extends AbstractReactorTest {
 		long res = Fluxion.range(0, 1_000_000)
 		                  .flatMap(v -> Fluxion.range(v, 2))
 		                  .count()
-		                  .get(5, TimeUnit.SECONDS);
+		                  .get(Duration.ofSeconds(5));
 
 		assertTrue("Latch is " + res, res == 2_000_000);
 	}
@@ -907,7 +908,7 @@ public class FluxionTests extends AbstractReactorTest {
 						                                         return s;
 					                                         })))
 			       .autoConnect()
-			       .take(2, TimeUnit.SECONDS)
+			       .take(Duration.ofSeconds(2))
 			       .log("parallelStream")
 			       .consume(System.out::println);
 		}
@@ -1140,7 +1141,7 @@ public class FluxionTests extends AbstractReactorTest {
 
 		final Broadcaster<Integer> streamBatcher = Broadcaster.<Integer>create();
 		streamBatcher.dispatchOn(asyncGroup)
-		             .buffer(batchsize, timeout, TimeUnit.MILLISECONDS)
+		             .buffer(batchsize, Duration.ofSeconds(timeout))
 		             .log("batched")
 		             .partition(parallelStreams)
 		             .log("batched-inner")
@@ -1282,7 +1283,7 @@ public class FluxionTests extends AbstractReactorTest {
 		                        .toEpochMilli();
 		long elapsed = System.nanoTime();
 
-		InterruptableSubscriber<Long> ctrl = Fluxion.interval(delayMS, TimeUnit.MILLISECONDS)
+		InterruptableSubscriber<Long> ctrl = Fluxion.interval(Duration.ofMillis(delayMS))
 		                                            .map((signal) -> {
 			                      return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - elapsed);
 		                      })
@@ -1465,7 +1466,7 @@ public class FluxionTests extends AbstractReactorTest {
 		forkBroadcaster.onNext(3);
 		forkBroadcaster.onComplete();
 
-		List<String> res = listPromise.get(5, TimeUnit.SECONDS);
+		List<String> res = listPromise.get(Duration.ofSeconds(5));
 		System.out.println(forkBroadcaster.debug());
 		assertEquals(Arrays.asList("i0", "done1", "i0", "i1", "done2", "i0", "i1", "i2", "done3"), res);
 	}

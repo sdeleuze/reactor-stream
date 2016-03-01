@@ -53,12 +53,10 @@ final class FluxionInterval extends Fluxion<Long> {
 
 	final private long     delay;
 	final private long     period;
-	final private TimeUnit unit;
 	final private Timer    timer;
 
-	public FluxionInterval(long delay, long period, TimeUnit unit, Timer timer) {
+	public FluxionInterval(long delay, long period, Timer timer) {
 		this.delay = delay >= 0L ? delay : -1L;
-		this.unit = unit != null ? unit : TimeUnit.SECONDS;
 		this.period = period;
 		this.timer = timer;
 	}
@@ -66,7 +64,7 @@ final class FluxionInterval extends Fluxion<Long> {
 	@Override
 	public void subscribe(final Subscriber<? super Long> subscriber) {
 		try {
-			subscriber.onSubscribe(timer.interval(subscriber, period, unit, delay));
+			subscriber.onSubscribe(timer.interval(subscriber, period, delay));
 		}
 		catch (Throwable throwable) {
 			Exceptions.throwIfFatal(throwable);

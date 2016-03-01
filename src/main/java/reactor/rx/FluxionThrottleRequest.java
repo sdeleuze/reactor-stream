@@ -16,7 +16,6 @@
 
 package reactor.rx;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
@@ -81,14 +80,14 @@ final class FluxionThrottleRequest<T> extends FluxionSource<T, T> {
 			long r = BackpressureUtils.getAndSub(REQUESTED, this, 1L);
 			subscriber.onNext(ev);
 			if (r != 0L) {
-				timeoutRegistration = timer.submit(periodTask, period, TimeUnit.MILLISECONDS);
+				timeoutRegistration = timer.submit(periodTask, period);
 			}
 		}
 
 		@Override
 		protected void doRequested(long b, long n) {
 			if (timeoutRegistration == null) {
-				timeoutRegistration = timer.submit(periodTask, period, TimeUnit.MILLISECONDS);
+				timeoutRegistration = timer.submit(periodTask, period);
 			}
 		}
 

@@ -15,10 +15,10 @@
  */
 package reactor.rx.scenarios;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Test;
@@ -116,7 +116,7 @@ public class FizzBuzzTests extends AbstractReactorTest {
 			else ring.onNext(String.valueOf(curr));
 		}
 
-		Assert.isTrue(p.await(5, TimeUnit.SECONDS) != null, "Has not returned list");
+		Assert.isTrue(p.await(Duration.ofSeconds(5)) != null, "Has not returned list");
 
 	}
 }

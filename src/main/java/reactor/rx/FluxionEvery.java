@@ -16,8 +16,6 @@
 
 package reactor.rx;
 
-import java.util.concurrent.TimeUnit;
-
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.timer.Timer;
@@ -38,7 +36,7 @@ final class FluxionEvery<T> extends FluxionBatch<T, T> {
 
 	@Override
 	public Subscriber<? super T> apply(Subscriber<? super T> subscriber) {
-		return new SampleAction<T>(prepareSub(subscriber), first, batchSize, timespan, unit, timer);
+		return new SampleAction<T>(prepareSub(subscriber), first, batchSize, timespan, timer);
 	}
 
 	final static class SampleAction<T> extends BatchAction<T, T> {
@@ -49,10 +47,9 @@ final class FluxionEvery<T> extends FluxionBatch<T, T> {
 				boolean first,
 				int maxSize,
 				long timespan,
-				TimeUnit unit,
 				Timer timer) {
 
-			super(actual, maxSize, !first, first, true, timespan, unit, timer);
+			super(actual, maxSize, !first, first, true, timespan, timer);
 		}
 
 		@Override

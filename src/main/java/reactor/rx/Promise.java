@@ -16,7 +16,7 @@
 
 package reactor.rx;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.BiConsumer;
@@ -327,27 +327,26 @@ public class Promise<O> extends Mono<O>
 	 * @throws RuntimeException     if the promise is completed with an error
 	 */
 	public final O await() throws InterruptedException {
-		return await(PlatformDependent.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+		return await(PlatformDependent.DEFAULT_TIMEOUT);
 	}
 
 	/**
 	 * Block the calling thread for the specified time, waiting for the completion of this {@code Promise}.
 	 *
-	 * @param timeout the timeout value
-	 * @param unit the {@link TimeUnit} of the timeout value
+	 * @param timeout the timeout value in milliseconds
 	 *
 	 * @return the value of this {@code Promise} or {@code null} if the timeout is reached and the {@code Promise} has
 	 * not completed
 	 *
 	 * @throws InterruptedException if the thread is interruped while awaiting completion
 	 */
-	public final O await(long timeout, TimeUnit unit) throws InterruptedException {
+	public final O await(long timeout) throws InterruptedException {
 		request(1);
 		if (!isPending()) {
 			return peek();
 		}
 
-		long delay = System.currentTimeMillis() + TimeUnit.MILLISECONDS.convert(timeout, unit);
+		long delay = System.currentTimeMillis() + timeout;
 
 		for (; ; ) {
 			int endState = this.state;
@@ -370,6 +369,20 @@ public class Promise<O> extends Mono<O>
 	}
 
 	/**
+	 * Block the calling thread for the specified time, waiting for the completion of this {@code Promise}.
+	 *
+	 * @param timeout the timeout value
+	 *
+	 * @return the value of this {@code Promise} or {@code null} if the timeout is reached and the {@code Promise} has
+	 * not completed
+	 *
+	 * @throws InterruptedException if the thread is interruped while awaiting completion
+	 */
+	public final O await(Duration timeout) throws InterruptedException {
+		return await(timeout.toMillis());
+	}
+
+	/**
 	 * Block the calling thread, waiting for the completion of this {@code Promise}. A default timeout as specified in
 	 * {@link System#getProperties()} using the key {@code reactor.await.defaultTimeout} is used. The default is 30
 	 * seconds. If the promise is completed with an error a RuntimeException that wraps the error is thrown.
@@ -380,21 +393,34 @@ public class Promise<O> extends Mono<O>
 	 * @throws RuntimeException     if the promise is completed with an error
 	 */
 	public final boolean awaitSuccess() throws InterruptedException {
-		return awaitSuccess(PlatformDependent.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+		return awaitSuccess(PlatformDependent.DEFAULT_TIMEOUT);
+	}
+
+	/**
+	 * Block the calling thread for the specified time, waiting for the completion of this {@code Promise}.
+	 *
+	 * @param timeout the timeout value in milliseconds
+	 *
+	 * @return true if complete without error completed
+	 *
+	 * @throws InterruptedException if the thread is interruped while awaiting completion
+	 */
+	public final boolean awaitSuccess(long timeout) throws InterruptedException {
+		await(timeout);
+		return isSuccess();
 	}
 
 	/**
 	 * Block the calling thread for the specified time, waiting for the completion of this {@code Promise}.
 	 *
 	 * @param timeout the timeout value
-	 * @param unit the {@link TimeUnit} of the timeout value
 	 *
 	 * @return true if complete without error completed
 	 *
 	 * @throws InterruptedException if the thread is interruped while awaiting completion
 	 */
-	public final boolean awaitSuccess(long timeout, TimeUnit unit) throws InterruptedException {
-		await(timeout, unit);
+	public final boolean awaitSuccess(Duration timeout) throws InterruptedException {
+		await(timeout.toMillis());
 		return isSuccess();
 	}
 
@@ -424,16 +450,15 @@ public class Promise<O> extends Mono<O>
 	 * Block the calling thread for the specified time, waiting for the completion of this {@code Promise}. If the
 	 * promise is completed with an error a RuntimeException that wraps the error is thrown.
 	 *
-	 * @param timeout the timeout value
-	 * @param unit the {@link TimeUnit} of the timeout value
+	 * @param timeout the timeout value in milliseconds
 	 *
 	 * @return the value of this {@code Promise} or {@code null} if the timeout is reached and the {@code Promise} has
 	 * not completed
 	 */
 	@Override
-	public O get(long timeout, TimeUnit unit) {
+	public O get(long timeout) {
 		try {
-			return await(timeout, unit);
+			return await(timeout);
 		}
 		catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
@@ -441,6 +466,20 @@ public class Promise<O> extends Mono<O>
 			Exceptions.failWithCancel();
 			return null;
 		}
+	}
+
+	/**
+	 * Block the calling thread for the specified time, waiting for the completion of this {@code Promise}. If the
+	 * promise is completed with an error a RuntimeException that wraps the error is thrown.
+	 *
+	 * @param timeout the timeout value
+	 *
+	 * @return the value of this {@code Promise} or {@code null} if the timeout is reached and the {@code Promise} has
+	 * not completed
+	 */
+	@Override
+	public O get(Duration timeout) {
+		return get(timeout.toMillis());
 	}
 
 	@Override

@@ -16,7 +16,6 @@
 
 package reactor.rx;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
@@ -38,11 +37,10 @@ abstract class FluxionBatch<T, V> extends FluxionSource<T, V> {
 	protected final boolean  first;
 	protected final int      batchSize;
 	protected final long     timespan;
-	protected final TimeUnit unit;
 	protected final Timer    timer;
 
 	public FluxionBatch(Publisher<T> source, int batchSize, boolean next, boolean first, boolean flush) {
-		this(source, batchSize, next, first, flush, -1L, null, null);
+		this(source, batchSize, next, first, flush, -1L, null);
 	}
 
 	public FluxionBatch(Publisher<T> source,
@@ -51,18 +49,15 @@ abstract class FluxionBatch<T, V> extends FluxionSource<T, V> {
 			boolean first,
 			boolean flush,
 			long timespan,
-			TimeUnit unit,
 			final Timer timer) {
 		super(source);
 		if (timespan > 0) {
-			this.unit = unit != null ? unit : TimeUnit.SECONDS;
 			this.timespan = timespan;
 			this.timer = timer;
 		}
 		else {
 			this.timespan = -1L;
 			this.timer = null;
-			this.unit = null;
 		}
 
 		this.first = first;
@@ -87,7 +82,6 @@ abstract class FluxionBatch<T, V> extends FluxionSource<T, V> {
 		protected final boolean        first;
 		protected final int            batchSize;
 		protected final long           timespan;
-		protected final TimeUnit       unit;
 		protected final Timer          timer;
 		protected final Consumer<Long> flushTask;
 
@@ -100,13 +94,11 @@ abstract class FluxionBatch<T, V> extends FluxionSource<T, V> {
 				boolean first,
 				boolean flush,
 				long timespan,
-				TimeUnit unit,
 				final Timer timer) {
 
 			super(actual);
 
 			if (timespan > 0 && timer != null) {
-				this.unit = unit != null ? unit : TimeUnit.SECONDS;
 				this.timespan = timespan;
 				this.timer = timer;
 				this.flushTask = new Consumer<Long>() {
@@ -130,7 +122,6 @@ abstract class FluxionBatch<T, V> extends FluxionSource<T, V> {
 				this.timespan = -1L;
 				this.timer = null;
 				this.flushTask = null;
-				this.unit = null;
 			}
 			this.first = first;
 			this.flush = flush;
@@ -174,7 +165,7 @@ abstract class FluxionBatch<T, V> extends FluxionSource<T, V> {
 
 			if (index == 1) {
 				if (timer != null) {
-					timespanRegistration = timer.submit(flushTask, timespan, unit);
+					timespanRegistration = timer.submit(flushTask, timespan);
 				}
 				if (first) {
 					firstCallback(value);
@@ -216,7 +207,7 @@ abstract class FluxionBatch<T, V> extends FluxionSource<T, V> {
 
 		@Override
 		public String toString() {
-			return super.toString() + "{" + (timer != null ? "timed - " + timespan + " " + unit : "") + " batchSize=" +
+			return super.toString() + "{" + (timer != null ? "timed - " + timespan + " ms" : "") + " batchSize=" +
 					index + "/" +
 					batchSize + " [" + (int) ((((float) index) / ((float) batchSize)) * 100) + "%]";
 		}
